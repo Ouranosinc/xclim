@@ -22,13 +22,14 @@ import xarray as xr
 from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
+from xclim.compute.stats import get_dist
 from xclim.core.missing import AtLeastNValid
-from xclim.indices.stats import get_dist
 
 
 # sklearn's KMeans doesn't accept the standard numpy Generator, so we create a special fixture for these tests
-# This object is legacy and this fixture should only be used with KMeans, until they update their code to accept Generators instead.
-# https://numpy.org/doc/stable/reference/random/legacy.html#numpy.random.RandomState
+# This object is legacy and this fixture should only be used with KMeans, until they update their code to
+# accept Generators instead.
+# See: https://numpy.org/doc/stable/reference/random/legacy.html#numpy.random.RandomState
 @pytest.fixture
 def random_state():
     return np.random.RandomState(seed=list(map(ord, "𝕽𝔞𝖓𝔡𝖔𝔪")))

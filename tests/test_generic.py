@@ -6,36 +6,33 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from xclim import set_options
+from xclim.compute import generic, helpers, run_length
 from xclim.core.calendar import doy_to_days_since, select_time
-from xclim.indices import generic, run_length
+from xclim.core.units import rate2amount
 from xclim.testing.helpers import assert_lazy
 
 K2C = 273.15
 
 
-class TestSelectResampleOp:
+class TestStatistics:
     def test_month(self, q_series):
         q = q_series(np.arange(1000))
-        o = generic.select_resample_op(q, "count", freq="YS", month=3)
+        o = generic.statistics(q, "count", freq="YS", month=3)
         np.testing.assert_array_equal(o, 31)
-
-    def test_season_default(self, q_series):
-        # Will use freq='YS', so count J, F and D of each year.
-        q = q_series(np.arange(1000))
-        o = generic.select_resample_op(q, "min", season="DJF")
-        assert o[0] == 0
-        assert o[1] == 366
 
     def test_season(self, q_series):
         q = q_series(np.arange(1000))
-        o = generic.select_resample_op(q, "count", freq="YS-DEC", season="DJF")
+        o = generic.statistics(q, "count", freq="YS-DEC", season="DJF")
         assert o[0] == 31 + 29
 
 
-class TestSelectRollingResampleOp:
+class TestRunningStatistics:
     def test_rollingmax(self, q_series):
         q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
-        o = generic.select_rolling_resample_op(q, "max", window=14, window_center=False, window_op="mean")
+        o = generic.running_statistics(
+            q, statistic="max", window=14, window_center=False, window_statistic="mean", freq="YS"
+        )
         np.testing.assert_array_equal(
             [
                 np.mean(np.arange(353, 366 + 1)),
@@ -48,7 +45,9 @@ class TestSelectRollingResampleOp:
 
     def test_rollingmaxindexer(self, q_series):
         q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
-        o = generic.select_rolling_resample_op(q, "min", window=14, window_center=False, window_op="max", season="DJF")
+        o = generic.running_statistics(
+            q, statistic="min", window=14, window_center=False, window_statistic="max", freq="YS", season="DJF"
+        )
         np.testing.assert_array_equal(
             [14, 367, 367 + 365], o.values
         )  # 14th day for 1st year, then Jan 1st for the next two
@@ -56,7 +55,9 @@ class TestSelectRollingResampleOp:
 
     def test_freq(self, q_series):
         q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
-        o = generic.select_rolling_resample_op(q, "max", window=3, window_center=True, window_op="integral", freq="MS")
+        o = generic.running_statistics(
+            q, statistic="max", window=3, window_center=True, window_statistic="integral", freq="MS"
+        )
         np.testing.assert_array_equal(
             [
                 np.sum([30, 31, 32]) * 86400,
@@ -67,64 +68,7 @@ class TestSelectRollingResampleOp:
         assert o.attrs["units"] == "m3"
 
 
-class TestThresholdCount:
-    def test_simple(self, tas_series):
-        ts = tas_series(np.arange(365))
-        out = generic.threshold_count(ts, "<", 50, "YE")
-        np.testing.assert_array_equal(out, [50, 0])
-
-
-class TestDomainCount:
-    def test_simple(self, tas_series):
-        ts = tas_series(np.arange(365))
-        out = generic.domain_count(ts, low=10, high=20, freq="YE")
-        np.testing.assert_array_equal(out, [10, 0])
-
-
-class TestFlowGeneric:
-    @pytest.mark.parametrize("use_dask", [True, False])
-    def test_doyminmax(self, q_series, use_dask):
-        a = np.ones(365)
-        a[9] = 2
-        a[19] = -2
-        a[39] = 4
-        a[49] = -4
-        q = q_series(a)
-        if use_dask:
-            q = q.chunk({"time": 200})
-        dmx = generic.doymax(q)
-        dmn = generic.doymin(q)
-        assert dmx.values == [40]
-        assert dmn.values == [50]
-        for da in [dmx, dmn]:
-            for attr in ["units", "is_dayofyear", "calendar"]:
-                assert attr in da.attrs.keys()
-
-            assert da.attrs["units"] == "1"
-            assert da.attrs["is_dayofyear"] == 1
-
-    @pytest.mark.parametrize("use_dask", [True, False])
-    def test_doyminmax_novariance(self, q_series, use_dask):
-        q = q_series(np.ones(365))
-        if use_dask:
-            q = q.chunk({"time": 200})
-        dmx = generic.doymax(q).load()
-        dmn = generic.doymin(q).load()
-        assert dmx.isnull().all()
-        assert dmn.isnull().all()
-
-    @pytest.mark.parametrize("use_dask", [True, False])
-    def test_doyminmax_allna(self, q_series, use_dask):
-        q = q_series(np.ones(365)) * np.nan
-        if use_dask:
-            q = q.chunk({"time": 200})
-        dmx = generic.doymax(q).load()
-        dmn = generic.doymin(q).load()
-        assert dmx.isnull().all()
-        assert dmn.isnull().all()
-
-
-class TestAggregateBetweenDates:
+class TestStatisticsBetweenDates:
     def test_calendars(self):
         # generate test DataArray
         time_std = xr.date_range("1991-07-01", "1993-06-30", freq="D", calendar="standard")
@@ -133,6 +77,7 @@ class TestAggregateBetweenDates:
             np.ones((time_std.size, 4)),
             dims=("time", "lon"),
             coords={"time": time_std, "lon": [-72, -71, -70, -69]},
+            attrs={"units": "hPa"},
         )
         # generate test start and end dates
         start_v = [[200, 200, np.nan, np.nan], [200, 200, 60, 60]]
@@ -157,7 +102,7 @@ class TestAggregateBetweenDates:
             attrs={"calendar": "noleap", "is_dayofyear": 1},
         )
 
-        out = generic.aggregate_between_dates(data_std, start_std, end_std, op="sum", freq="YS-JUL")
+        out = generic.statistics_between_dates(data_std, start_std, end_std, statistic="sum", freq="YS-JUL")
 
         # expected output
         s = doy_to_days_since(start_std)
@@ -168,7 +113,7 @@ class TestAggregateBetweenDates:
         np.testing.assert_allclose(out, expected)
 
         # check calendar conversion
-        out_noleap = generic.aggregate_between_dates(data_std, start_std, end_noleap, op="sum", freq="YS-JUL")
+        out_noleap = generic.statistics_between_dates(data_std, start_std, end_noleap, statistic="sum", freq="YS-JUL")
 
         np.testing.assert_allclose(out, out_noleap)
 
@@ -181,6 +126,7 @@ class TestAggregateBetweenDates:
             np.ones((time_data.size, 4)),
             dims=("time", "lon"),
             coords={"time": time_data, "lon": [-72, -71, -70, -69]},
+            attrs={"units": "µm"},
         )
         # generate test start and end dates
         start_v = [[200, 200, np.nan, np.nan], [200, 200, 60, 60], [150, 100, 40, 10]]
@@ -204,7 +150,7 @@ class TestAggregateBetweenDates:
             attrs={"calendar": "standard", "is_dayofyear": 1},
         )
 
-        out = generic.aggregate_between_dates(data, start, end, op="sum", freq="YS")
+        out = generic.statistics_between_dates(data, start, end, statistic="sum", freq="YS")
 
         # expected output
         s = doy_to_days_since(start)
@@ -222,6 +168,7 @@ class TestAggregateBetweenDates:
             np.ones((time_data.size, 2)),
             dims=("time", "lon"),
             coords={"time": time_data, "lon": [-70, -69]},
+            attrs={"units": "cd"},
         )
         # generate test start and end dates
         start_v = [[70, 100], [200, 200], [270, 300], [35, 35], [80, 80]]
@@ -273,7 +220,7 @@ class TestAggregateBetweenDates:
             attrs={"calendar": "standard", "is_dayofyear": 1},
         )
 
-        out = generic.aggregate_between_dates(data, start, end, op="sum", freq="QS-DEC")
+        out = generic.statistics_between_dates(data, start, end, statistic="sum", freq="QS-DEC")
 
         # expected output
         s = doy_to_days_since(start)
@@ -285,44 +232,40 @@ class TestAggregateBetweenDates:
         np.testing.assert_allclose(out[1:6], expected)
 
         with pytest.raises(ValueError):
-            generic.aggregate_between_dates(data, start, end_m)
+            generic.statistics_between_dates(data, start, end_m, statistic="mean")
 
     def test_day_of_year_strings(self):
         # generate test DataArray
         time_data = xr.date_range("1990-08-01", "1995-06-01", freq="D", calendar="standard")
-        data = xr.DataArray(
-            np.ones(time_data.size),
-            dims="time",
-            coords={"time": time_data},
-        )
+        data = xr.DataArray(np.ones(time_data.size), dims="time", coords={"time": time_data}, attrs={"units": "btu"})
         # set start and end dates
         start = "02-01"
         end = "10-31"
 
-        out = generic.aggregate_between_dates(data, start, end, op="sum", freq="YS")
+        out = generic.statistics_between_dates(data, start, end, statistic="sum", freq="YS")
 
         np.testing.assert_allclose(out, np.array([np.nan, 272, 273, 272, 272, np.nan]))
 
         # given no freq and only strings for start and end dates
         with pytest.raises(ValueError):
-            generic.aggregate_between_dates(data, start, end, op="sum")
+            generic.statistics_between_dates(data, start, end, statistic="sum")
 
         # given a malformed date string
         bad_start = "02-31"
         with pytest.raises(ValueError):
-            generic.aggregate_between_dates(data, bad_start, end, op="sum", freq="YS")
+            generic.statistics_between_dates(data, bad_start, end, statistic="sum", freq="YS")
 
 
-class TestCumulativeDifference:
+class TestIntegratedDifference:
     @pytest.mark.parametrize(
         "op, expected",
-        [("gt", [0, 5, 10, 0, 0]), (">=", [0, 5, 10, 0, 0]), ("<", [20, 0, 0, 7, 0])],
+        [("gt", 15), (">=", 15), ("<", 27)],
     )
     def test_simple(self, tas_series, op, expected):
         tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
 
-        out = generic.cumulative_difference(tas, threshold="10 degC", op=op)
-        out_kelvin = generic.cumulative_difference(tas, threshold="283.15 degK", op=op)
+        out = generic.integrated_difference(tas, thresh="10 degC", condition=op, freq="YS")
+        out_kelvin = generic.integrated_difference(tas, thresh="283.15 degK", condition=op, freq="YS")
 
         np.testing.assert_allclose(out, expected)
         np.testing.assert_allclose(out, out_kelvin)
@@ -331,16 +274,16 @@ class TestCumulativeDifference:
         tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
 
         with pytest.raises(NotImplementedError):
-            generic.cumulative_difference(tas, threshold="10 degC", op="!=")
+            generic.integrated_difference(tas, thresh="10 degC", condition="!=", freq="YS")
 
     def test_delta_units(self, tas_series):
         tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
 
-        out = generic.cumulative_difference(tas, threshold="10 degC", op=">=")
+        out = generic.integrated_difference(tas, thresh="10 degC", condition=">=", freq="YS")
         assert "units_metadata" in out.attrs
 
 
-class TestFirstDayThreshold:
+class TestDayThresholdReached:
     @pytest.mark.parametrize(
         "op, expected",
         [(">", 6), (">=", 5), ("==", 5), ("!=", 1)],
@@ -350,11 +293,12 @@ class TestFirstDayThreshold:
         a[:8] = np.arange(8) / 1000
         pr = pr_series(a, start="1/1/2000")
 
-        fda = generic.first_day_threshold_reached(
+        fda = generic.day_threshold_reached(
             pr,
-            threshold="0.004 kg m-2 s-1",
-            op=op,
-            after_date="01-01",
+            thresh="0.004 kg m-2 s-1",
+            condition=op,
+            which="first",
+            date="01-01",
             window=1,
             freq="YS",
         )
@@ -370,11 +314,12 @@ class TestFirstDayThreshold:
         a[:8] = np.flip(precip)
         pr = pr_series(a, start="1/1/2000")
 
-        fdb = generic.first_day_threshold_reached(
+        fdb = generic.day_threshold_reached(
             pr,
-            threshold="0.004 kg m-2 s-1",
-            op=op,
-            after_date="01-01",
+            thresh="0.004 kg m-2 s-1",
+            condition=op,
+            which="first",
+            date="01-01",
             window=1,
             freq="YS",
         )
@@ -387,61 +332,47 @@ class TestFirstDayThreshold:
         pr = pr_series(a, start="1/1/2000")
 
         with pytest.raises(ValueError):
-            generic.first_day_threshold_reached(
+            generic.day_threshold_reached(
                 pr,
-                threshold="0.004 kg m-2 s-1",
-                op=">",
-                after_date="01-01",
+                thresh="0.004 kg m-2 s-1",
+                condition=">",
+                which="first",
+                date="01-01",
                 window=1,
                 freq="YS",
                 constrain=("<", "<="),
             )
 
 
-class TestGetDailyEvents:
-    def test_simple(self, tas_series):
-        arr = xr.DataArray(np.array([-10, 15, 20, np.nan, 10]), name="Stuff")
-
-        out = generic.get_daily_events(arr, threshold=10, op=">=")
-
-        assert out.name == "events"
-        assert out.sum() == 3
-        np.testing.assert_array_equal(out, [0, 1, 1, np.nan, 1])
-
-
 class TestGenericCountingIndices:
+    def test_simple(self, tas_series):
+        ts = tas_series(np.arange(365))
+        out = generic.count_occurrences(ts, "<", "50 K", "YE")
+        np.testing.assert_array_equal(out, [50, 0])
+
+    def test_domain(self, tas_series):
+        ts = tas_series(np.arange(365))
+        out = generic.count_domain_occurrences(ts, low_bound="10 K", high_bound="20 K", freq="YE")
+        np.testing.assert_array_equal(out, [10, 0])
+
     @pytest.mark.parametrize(
         "op_high, op_low, expected",
         [(">", "<", 1), (">", "<=", 2), (">=", "<", 3), (">=", "<=", 4)],
     )
-    def test_simple_count_level_crossings(self, tasmin_series, tasmax_series, op_high, op_low, expected):
+    def test_bivariate_occurrences(self, tasmin_series, tasmax_series, op_high, op_low, expected):
         tasmin = tasmin_series(np.array([-1, -3, 0, 5, 9, 1, 3]) + K2C)
         tasmax = tasmax_series(np.array([5, 7, 3, 6, 13, 5, 4]) + K2C)
 
-        crossings = generic.count_level_crossings(
-            tasmin,
-            tasmax,
-            threshold="5 degC",
+        crossings = generic.bivariate_count_occurrences(
+            data1=tasmin,
+            data2=tasmax,
+            thresh1="5 degC",
+            thresh2="5 degC",
             freq="YS",
-            op_high=op_high,
-            op_low=op_low,
+            condition1=op_low,
+            condition2=op_high,
         )
         np.testing.assert_array_equal(crossings, [expected])
-
-    @pytest.mark.parametrize("op_high, op_low", [("<=", "<="), (">=", ">="), ("<", ">"), ("==", "!=")])
-    def test_forbidden_op(self, tasmin_series, tasmax_series, op_high, op_low):
-        tasmin = tasmin_series(np.zeros(7) + K2C)
-        tasmax = tasmax_series(np.ones(7) + K2C)
-
-        with pytest.raises(ValueError):
-            generic.count_level_crossings(
-                tasmin,
-                tasmax,
-                threshold="0.5 degC",
-                freq="YS",
-                op_high=op_high,
-                op_low=op_low,
-            )
 
     @pytest.mark.parametrize(
         "op, constrain, expected, should_fail",
@@ -461,9 +392,9 @@ class TestGenericCountingIndices:
 
         if should_fail:
             with pytest.raises(ValueError):
-                generic.count_occurrences(tas, "4 degC", freq="YS", op=op, constrain=constrain)
+                generic.count_occurrences(tas, thresh="4 degC", freq="YS", condition=op, constrain=constrain)
         else:
-            occurrences = generic.count_occurrences(tas, "4 degC", freq="YS", op=op, constrain=constrain)
+            occurrences = generic.count_occurrences(tas, thresh="4 degC", freq="YS", condition=op, constrain=constrain)
             np.testing.assert_array_equal(occurrences, [expected])
 
     @pytest.mark.parametrize(
@@ -481,9 +412,13 @@ class TestGenericCountingIndices:
 
         if should_fail:
             with pytest.raises(ValueError):
-                generic.first_occurrence(tas, threshold="11 degC", freq="YS", op=op, constrain=constrain)
+                generic.day_threshold_reached(
+                    tas, thresh="11 degC", freq="YS", which="first", condition=op, constrain=constrain
+                )
         else:
-            first = generic.first_occurrence(tas, threshold="11 degC", freq="YS", op=op, constrain=constrain)
+            first = generic.day_threshold_reached(
+                tas, thresh="11 degC", freq="YS", which="first", condition=op, constrain=constrain
+            )
 
             np.testing.assert_array_equal(first, [expected])
 
@@ -502,9 +437,13 @@ class TestGenericCountingIndices:
 
         if should_fail:
             with pytest.raises(ValueError):
-                generic.last_occurrence(tas, threshold="11 degC", freq="YS", op=op, constrain=constrain)
+                generic.day_threshold_reached(
+                    tas, thresh="11 degC", freq="YS", which="last", condition=op, constrain=constrain
+                )
         else:
-            first = generic.last_occurrence(tas, threshold="11 degC", freq="YS", op=op, constrain=constrain)
+            first = generic.day_threshold_reached(
+                tas, thresh="11 degC", freq="YS", which="last", condition=op, constrain=constrain
+            )
 
             np.testing.assert_array_equal(first, [expected])
 
@@ -703,32 +642,32 @@ class TestSpellMask:
     def test_single_variable(self):
         data = xr.DataArray([0, 1, 2, 3, 2, 1, 0, 0], dims=("time",))
 
-        out = generic.spell_mask(data, 3, "min", ">=", 2)
+        out = helpers.spell_mask(data, 3, "min", ">=", 2)
         np.testing.assert_array_equal(out, np.array([0, 0, 1, 1, 1, 0, 0, 0]).astype(bool))
 
-        out = generic.spell_mask(data, 3, "max", ">=", 2)
+        out = helpers.spell_mask(data, 3, "max", ">=", 2)
         np.testing.assert_array_equal(out, np.array([1, 1, 1, 1, 1, 1, 1, 0]).astype(bool))
 
-        out = generic.spell_mask(data, 2, "mean", ">=", 2)
+        out = helpers.spell_mask(data, 2, "mean", ">=", 2)
         np.testing.assert_array_equal(out, np.array([0, 0, 1, 1, 1, 0, 0, 0]).astype(bool))
 
-        out = generic.spell_mask(data, 3, "mean", ">", 2, weights=[0.2, 0.4, 0.4])
+        out = helpers.spell_mask(data, 3, "mean", ">", 2, weights=[0.2, 0.4, 0.4])
         np.testing.assert_array_equal(out, np.array([0, 1, 1, 1, 1, 0, 0, 0]).astype(bool))
 
     def test_multiple_variables(self):
         data1 = xr.DataArray([0, 1, 2, 3, 2, 1, 0, 0], dims=("time",))
         data2 = xr.DataArray([1, 2, 3, 2, 1, 0, 0, 0], dims=("time",))
 
-        out = generic.spell_mask([data1, data2], 3, "min", ">=", [2, 2])
+        out = helpers.spell_mask([data1, data2], 3, "min", ">=", [2, 2])
         np.testing.assert_array_equal(out, np.array([0, 0, 0, 0, 0, 0, 0, 0]).astype(bool))
 
-        out = generic.spell_mask([data1, data2], 3, "min", ">=", [2, 2], var_reducer="any")
+        out = helpers.spell_mask([data1, data2], 3, "min", ">=", [2, 2], var_reducer="any")
         np.testing.assert_array_equal(out, np.array([0, 1, 1, 1, 1, 0, 0, 0]).astype(bool))
 
-        out = generic.spell_mask([data1, data2], 2, "mean", ">=", [2, 2])
+        out = helpers.spell_mask([data1, data2], 2, "mean", ">=", [2, 2])
         np.testing.assert_array_equal(out, np.array([0, 0, 1, 1, 0, 0, 0, 0]).astype(bool))
 
-        out = generic.spell_mask([data1, data2], 3, "mean", ">", [2, 1.5], weights=[0.2, 0.4, 0.4])
+        out = helpers.spell_mask([data1, data2], 3, "mean", ">", [2, 1.5], weights=[0.2, 0.4, 0.4])
         np.testing.assert_array_equal(out, np.array([0, 1, 1, 1, 1, 0, 0, 0]).astype(bool))
 
     def test_errors(self):
@@ -736,65 +675,214 @@ class TestSpellMask:
 
         # Threshold must be seq
         with pytest.raises(ValueError, match="must be a sequence of the same length"):
-            generic.spell_mask([data, data], 3, "min", "<=", 2)
+            helpers.spell_mask([data, data], 3, "min", "<=", 2)
 
         # Threshold must be same length
         with pytest.raises(ValueError, match="must be a sequence of the same length"):
-            generic.spell_mask([data, data], 3, "min", "<=", [2])
+            helpers.spell_mask([data, data], 3, "min", "<=", [2])
 
         # Weights must have win_reducer = 'mean'
-        with pytest.raises(ValueError, match="is only supported if 'win_reducer' is 'mean'"):
-            generic.spell_mask(data, 3, "min", "<=", 2, weights=[1, 2, 3])
+        with pytest.raises(ValueError, match="is only supported if 'window_statistic' is 'mean'"):
+            helpers.spell_mask(data, 3, "min", "<=", 2, weights=[1, 2, 3])
 
         # Weights must have same length as window
         with pytest.raises(ValueError, match="Weights have a different length"):
-            generic.spell_mask(data, 3, "mean", "<=", 2, weights=[1, 2])
+            helpers.spell_mask(data, 3, "mean", "<=", 2, weights=[1, 2])
 
 
-def test_spell_length_statistics_quantified(tasmin_series):
-    tn = tasmin_series(np.arange(365) + K2C, start="2001-01-01").expand_dims(site=[0, 1])
-    thresh = xr.DataArray([330, 360], dims=("site",), coords={"site": tn.site}, attrs={"units": "°C"})
-    out = generic.spell_length_statistics(
-        tn,
-        thresh,
-        window=1,
-        win_reducer="min",
-        op=">",
-        spell_reducer="sum",
-        freq="YS",
-    )
-    np.testing.assert_allclose(out, [[34], [4]])
-
-
-def test_spell_length_statistics_multi(tasmin_series, tasmax_series):
-    tn = tasmin_series(
-        np.zeros(
-            365,
+class TestSpellLengthStatistics:
+    def test_spell_length_statistics_quantified(self, tasmin_series):
+        tn = tasmin_series(np.arange(365) + K2C, start="2001-01-01").expand_dims(site=[0, 1])
+        thresh = xr.DataArray([330, 360], dims=("site",), coords={"site": tn.site}, attrs={"units": "°C"})
+        out = generic.spell_length_statistics(
+            tn,
+            window=1,
+            window_statistic="min",
+            condition=">",
+            thresh=thresh,
+            statistic="sum",
+            freq="YS",
         )
-        + 270,
-        start="2001-01-01",
-    )
-    tx = tasmax_series(
-        np.zeros(
-            365,
-        )
-        + 270,
-        start="2001-01-01",
-    )
+        np.testing.assert_allclose(out, [[34], [4]])
 
-    outc, outs, outm = generic.bivariate_spell_length_statistics(
-        tn,
-        "0 °C",
-        tx,
-        "1°C",
-        window=5,
-        win_reducer="min",
-        op="<",
-        spell_reducer=["count", "sum", "max"],
-        freq="YS",
+    def test_spell_length_statistics_multi(self, tasmin_series, tasmax_series):
+        tn = tasmin_series(
+            np.zeros(
+                365,
+            )
+            + 270,
+            start="2001-01-01",
+        )
+        tx = tasmax_series(
+            np.zeros(
+                365,
+            )
+            + 270,
+            start="2001-01-01",
+        )
+
+        outc, outs, outm = generic.bivariate_spell_length_statistics(
+            tn,
+            tx,
+            window=5,
+            window_statistic="min",
+            thresh1="0 °C",
+            thresh2="1 °C",
+            condition="<",
+            statistic=["count", "sum", "max"],
+            freq="YS",
+        )
+        xr.testing.assert_equal(outs, outm)
+        np.testing.assert_allclose(outc, 1)
+
+    # Imported from HotSpellFrequency
+    @pytest.mark.parametrize(
+        "thresh,window,op,expected",
+        [
+            ("30 C", 3, ">", 2),  # Some HS
+            ("30 C", 4, ">", 1),  # One long HS
+            ("29 C", 3, ">", 2),  # Two HS
+            ("29 C", 3, ">=", 1),  # One long HS
+            ("10 C", 3, ">", 1),  # No HS
+            ("40 C", 5, ">", 0),  # Windowed
+        ],
     )
-    xr.testing.assert_equal(outs, outm)
-    np.testing.assert_allclose(outc, 1)
+    def test_simple(self, tasmax_series, thresh, window, op, expected):
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
+
+        hsf = generic.spell_length_statistics(
+            tx,
+            window=window,
+            window_statistic="min",
+            condition=op,
+            thresh=thresh,
+            statistic="count",
+            freq="YS",
+        )
+        np.testing.assert_allclose(hsf.values, expected)
+
+    @pytest.mark.parametrize(
+        "resample_before_rl,expected",
+        [
+            (True, 1),
+            (False, 0),
+        ],
+    )
+    def test_resampling_order(self, tasmax_series, resample_before_rl, expected):
+        a = np.zeros(365)
+        a[5:35] = 31
+        tx = tasmax_series(a + K2C).chunk()
+
+        hsf = generic.spell_length_statistics(
+            tx,
+            window=3,
+            window_statistic="min",
+            condition=">",
+            thresh="30 °C",
+            statistic="count",
+            freq="MS",
+            resample_before_rl=resample_before_rl,
+        ).load()
+        assert hsf[1] == expected
+
+    @pytest.mark.parametrize("resample_map", [True, False])
+    def test_resampling_map(self, tasmax_series, resample_map):
+        pytest.importorskip("flox")
+        a = np.zeros(365)
+        a[5:35] = 31
+        tx = tasmax_series(a + K2C).chunk()
+
+        with set_options(resample_map_blocks=resample_map):
+            hsf = generic.spell_length_statistics(
+                tx,
+                window=3,
+                window_statistic="min",
+                condition=">",
+                thresh="30 °C",
+                statistic="count",
+                freq="MS",
+                resample_before_rl=True,
+            ).load()
+        assert hsf[1] == 1
+
+    # imported from dry_spell_frequency
+    @pytest.mark.parametrize(
+        "pr,thresh1,thresh2,window,outs",
+        [
+            (
+                [1.01] * 6 + [0.01] * 3 + [0.51] * 2 + [0.75] * 2 + [0.51] + [0.01] * 3 + [1.01] * 3,
+                3,
+                3,
+                7,
+                (1, 12, 20, 12, 20),
+            ),
+            (
+                [0.01] * 6 + [1.01] * 3 + [0.51] * 2 + [0.75] * 2 + [0.51] + [0.01] * 3 + [0.01] * 3,
+                3,
+                3,
+                7,
+                (2, 18, 20, 10, 20),
+            ),
+            ([3.01] * 358 + [0.99] * 14 + [3.01] * 358, 1, 14, 14, (0, 7, 7, 7, 7)),
+        ],
+    )
+    def test_dry_spell(self, pr_series, pr, thresh1, thresh2, window, outs):
+        pr = rate2amount(pr_series(np.array(pr), start="1981-01-01", units="mm/day"))
+
+        out_events, out_total_d_sum, out_total_d_max, out_max_d_sum, out_max_d_max = outs
+
+        events = generic.spell_length_statistics(
+            pr,
+            window=window,
+            window_statistic="sum",
+            condition="<",
+            thresh=f"{thresh1} mm",
+            statistic="count",
+            freq="YS",
+        )
+        total_d_sum = generic.spell_length_statistics(
+            pr,
+            window=window,
+            window_statistic="sum",
+            condition="<",
+            thresh=f"{thresh2} mm",
+            statistic="sum",
+            freq="YS",
+        )
+        total_d_max = generic.spell_length_statistics(
+            pr, window=window, window_statistic="max", condition="<", thresh=f"{thresh1} mm", statistic="sum", freq="YS"
+        )
+        max_d_sum = generic.spell_length_statistics(
+            pr,
+            window=window,
+            window_statistic="sum",
+            condition="<",
+            thresh=f"{thresh2} mm",
+            statistic="max",
+            freq="YS",
+        )
+        max_d_max = generic.spell_length_statistics(
+            pr, window=window, window_statistic="max", condition="<", thresh=f"{thresh1} mm", statistic="max", freq="YS"
+        )
+        np.testing.assert_allclose(events[0], [out_events], rtol=1e-1)
+        np.testing.assert_allclose(total_d_sum[0], [out_total_d_sum], rtol=1e-1)
+        np.testing.assert_allclose(total_d_max[0], [out_total_d_max], rtol=1e-1)
+        np.testing.assert_allclose(max_d_sum[0], [out_max_d_sum], rtol=1e-1)
+        np.testing.assert_allclose(max_d_max[0], [out_max_d_max], rtol=1e-1)
+
+    def test_dry_spell_with_indexer(self, pr_series):
+        pr = rate2amount(pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d"))
+        out = generic.spell_length_statistics(
+            pr,
+            window=7,
+            window_statistic="sum",
+            condition="<",
+            thresh="3.1 mm",
+            statistic="sum",
+            freq="MS",
+            date_bounds=("01-10", "12-31"),
+        )
+        np.testing.assert_allclose(out, [9] + [0] * 11)
 
 
 class TestThresholdedEvents:
@@ -809,8 +897,9 @@ class TestThresholdedEvents:
             out = generic.thresholded_events(
                 pr,
                 thresh="1 mm",
-                op=">=",
+                condition=">=",
                 window=3,
+                window_stop=1,
             )
 
         assert out.event.size == np.ceil(arr.size / (3 + 1))
@@ -836,7 +925,7 @@ class TestThresholdedEvents:
 
         # different window stop
         out = (
-            generic.thresholded_events(pr, thresh="2 mm", op=">=", window=3, window_stop=4)
+            generic.thresholded_events(pr, thresh="2 mm", condition=">=", window=3, window_stop=4)
             .load()
             .dropna("event", how="all")
         )
@@ -861,7 +950,7 @@ class TestThresholdedEvents:
             out = generic.thresholded_events(
                 pr,
                 thresh="1 mm",
-                op=">=",
+                condition=">=",
                 window=3,
                 window_stop=3,
             )
@@ -886,7 +975,7 @@ class TestThresholdedEvents:
             pr = pr.chunk(-1)
 
         with assert_lazy:
-            out = generic.thresholded_events(pr, thresh="1 mm", op=">=", window=3, freq="MS", window_stop=3)
+            out = generic.thresholded_events(pr, thresh="1 mm", condition=">=", window=3, freq="MS", window_stop=3)
         assert out.event_length.shape == (2, 6)
         out = out.load().dropna("event", how="all")
 
@@ -924,3 +1013,103 @@ def test_day_to_day_variability(tas_series):
     tas = tas_series(a, calendar="360_day", start="2000-01-01")
     dtdt = generic.day_to_day_variability(tas)
     np.testing.assert_array_equal(dtdt, [1.0])
+
+
+class TestSeason:
+    @pytest.mark.parametrize(
+        "d1,d2,mid_date,expected",
+        [
+            ("1950-01-01", "1951-01-01", "07-01", np.nan),  # No growing season
+            ("2000-01-01", "2000-12-31", "07-01", 365),  # All year growing season
+            ("2000-07-10", "2001-01-01", "07-01", np.nan),  # End happens before start
+            ("2000-06-15", "2000-07-15", "07-01", 198),  # Normal case
+            ("2000-06-15", "2000-07-25", "07-15", 208),  # PCC Case
+            ("2000-06-15", "2000-07-15", "10-01", 275),  # Late mid_date
+            ("2000-06-15", "2000-07-15", "01-10", np.nan),  # Early mid_date
+            ("2000-06-15", "2000-07-15", "06-15", np.nan),  # mid_date on first day
+        ],
+    )
+    def test_end(self, tas_series, d1, d2, mid_date, expected):
+        # generate a year of data
+        tas = tas_series(np.zeros(365), start="2000/1/1")
+        warm_period = tas.sel(time=slice(d1, d2))
+        tas = tas.where(~tas.time.isin(warm_period.time), 280)
+        gs_end = generic.season(
+            tas, condition=">=", thresh="5 °C", window=5, aspect="end", freq="YS", mid_date=mid_date
+        )
+        np.testing.assert_array_equal(gs_end, expected)
+        for attr in ["units", "is_dayofyear", "calendar"]:
+            assert attr in gs_end.attrs.keys()
+        assert gs_end.attrs["units"] == "1"
+        assert gs_end.attrs["is_dayofyear"] == 1
+
+    @pytest.mark.parametrize(
+        "d1,d2,expected",
+        [
+            ("1950-01-01", "1951-01-01", 0),  # No growing season
+            ("2000-01-01", "2000-12-31", 365),  # All year growing season
+            ("2000-07-10", "2001-01-01", 0),  # End happens before start
+            ("2000-06-15", "2001-01-01", 199),  # No end
+            ("2000-06-15", "2000-07-15", 31),  # Normal case
+        ],
+    )
+    def test_length_edge_cases(self, tas_series, d1, d2, expected):
+        # test for different growing length
+
+        # generate a year of data
+        tas = tas_series(np.zeros(365), start="2000/1/1")
+        warm_period = tas.sel(time=slice(d1, d2))
+        tas = tas.where(~tas.time.isin(warm_period.time), 280)
+        gsl = generic.season(tas, condition=">=", thresh="5 °C", window=5, aspect="length", freq="YS", mid_date="07-01")
+        np.testing.assert_array_equal(gsl, expected)
+
+
+def static_tmin_tmax_setup(tasmin_series, tasmax_series):
+    max_values = np.add([22, 10, 35.2, 25.1, 18.9, 12, 16], K2C)
+    min_values = np.add([17, 3.5, 22.7, 16, 12.4, 7, 12], K2C)
+    tasmax = tasmax_series(max_values)
+    tasmin = tasmin_series(min_values)
+    return tasmin, tasmax
+
+
+class TestDifferenceStatistics:
+    @pytest.mark.parametrize(
+        "op,expected",
+        [
+            ("max", 12.5),
+            (np.max, 12.5),
+            ("min", 4.0),
+            (np.min, 4.0),
+            ("std", 2.72913233),
+            (np.std, 2.72913233),
+        ],
+    )
+    def test_static_reduce_daily_temperature_range(self, tasmin_series, tasmax_series, op, expected):
+        tasmin, tasmax = static_tmin_tmax_setup(tasmin_series, tasmax_series)
+        dtr = generic.difference_statistics(tasmin, tasmax, freq="YS", statistic=op).squeeze("time")
+        assert dtr.units == "K"
+
+        if isinstance(op, str):
+            output = getattr(np, op)(tasmax - tasmin)
+        else:
+            output = op(tasmax - tasmin)
+        np.testing.assert_array_almost_equal(dtr, expected)
+        np.testing.assert_array_almost_equal(dtr, output)
+
+
+class TestInterdayDifferenceStatistics:
+    def test_static_variable_daily_temperature_range(self, tasmin_series, tasmax_series):
+        tasmin, tasmax = static_tmin_tmax_setup(tasmin_series, tasmax_series)
+        dtr = generic.interday_difference_statistics(tasmin, tasmax, statistic="mean", freq="YS")
+
+        np.testing.assert_almost_equal(dtr, 2.667, decimal=3)
+        assert dtr.units_metadata == "temperature: difference"
+
+
+class TestExtremeRange:
+    def test_static_extreme_temperature_range(self, tasmin_series, tasmax_series):
+        tasmin, tasmax = static_tmin_tmax_setup(tasmin_series, tasmax_series)
+        etr = generic.extreme_range(tasmin, tasmax, freq="YS")
+
+        np.testing.assert_array_almost_equal(etr, 31.7)
+        assert etr.units_metadata == "temperature: difference"

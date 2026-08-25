@@ -1,4 +1,4 @@
-"""Agroclimatic indice definitions."""
+"""Agroclimatic index function definitions."""
 
 from __future__ import annotations
 
@@ -9,31 +9,26 @@ import numpy as np
 import xarray
 from scipy.stats import rv_continuous
 
-import xclim.indices.run_length as rl
-from xclim.core import DateStr, DayOfYearStr, Quantified
-from xclim.core.calendar import parse_offset, select_time
-from xclim.core.units import (
-    amount2lwethickness,
-    convert_units_to,
-    declare_units,
-    rate2amount,
-    to_agg_units,
-)
-from xclim.core.utils import uses_dask
-from xclim.indices._simple import tn_min
-from xclim.indices._threshold import (
-    first_day_temperature_above,
-    first_day_temperature_below,
-)
-from xclim.indices.generic import aggregate_between_dates, get_zones
-from xclim.indices.helpers import (
+import xclim.compute.run_length as rl
+from xclim.compute.classify import get_zones
+from xclim.compute.generic import day_threshold_reached, statistics, statistics_between_dates
+from xclim.compute.helpers import (
     _gather_lat,
     gladstones_day_length_latitude_coefficient,
     huglin_day_length_latitude_coefficient,
     jones_day_length_latitude_coefficient,
     resample_map,
 )
-from xclim.indices.stats import standardized_index
+from xclim.compute.stats import standardized_index
+from xclim.core import DateStr, DayOfYearStr, Freq, Quantified
+from xclim.core.calendar import parse_offset, select_time
+from xclim.core.units import (
+    amount2lwethickness,
+    convert_units_to,
+    declare_units,
+    rate2amount,
+)
+from xclim.core.utils import uses_dask
 
 # Frequencies: YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -113,8 +108,12 @@ def corn_heat_units(
 
     .. math::
 
-       YX_i & = 3.33(TX_i -10) - 0.084(TX_i -10)^2, &\text{if } TX_i > 10°C
-       YN_i & = 1.8(TN_i -4.44), &\text{if } TN_i > 4.44°C
+       \begin{aligned}
+       YX_i &= 3.33(TX_i - 10) - 0.084(TX_i - 10)^2,
+       &\text{if } TX_i > 10^\circ\mathrm{C} \\
+       YN_i &= 1.8(TN_i - 4.44),
+       &\text{if } TN_i > 4.44^\circ\mathrm{C}
+       \end{aligned}
 
     Where :math:`YX_{i}` and :math:`YN_{i}` is 0 when :math:`TX_i \leq 10°C` and :math:`TN_i \leq 4.44°C`, respectively.
 
@@ -122,19 +121,19 @@ def corn_heat_units(
     ----------
     :cite:cts:`audet_atlas_2012,bootsma_risk_1999`
     """
-    tasmin = convert_units_to(tasmin, "degC")
-    tasmax = convert_units_to(tasmax, "degC")
-    thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
-    thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
+    _tasmin = convert_units_to(tasmin, "degC")
+    _tasmax = convert_units_to(tasmax, "degC")
+    _thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
+    _thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
 
-    mask_tasmin = tasmin > thresh_tasmin
-    mask_tasmax = tasmax > thresh_tasmax
+    mask_tasmin = _tasmin > _thresh_tasmin
+    mask_tasmax = _tasmax > _thresh_tasmax
 
     chu: xarray.DataArray = (
-        xarray.where(mask_tasmin, 1.8 * (tasmin - thresh_tasmin), 0)
+        xarray.where(mask_tasmin, 1.8 * (_tasmin - _thresh_tasmin), 0)
         + xarray.where(
             mask_tasmax,
-            (3.33 * (tasmax - thresh_tasmax) - 0.084 * (tasmax - thresh_tasmax) ** 2),
+            (3.33 * (_tasmax - _thresh_tasmax) - 0.084 * (_tasmax - _thresh_tasmax) ** 2),
             0,
         )
     ) / 2
@@ -154,7 +153,7 @@ def huglin_index(
     tasmax: xarray.DataArray,
     lat: xarray.DataArray | None = None,
     thresh: Quantified = "10 degC",
-    method: str = "smoothed",
+    method: Literal["huglin", "interpolated", "jones"] = "huglin",
     cap_value: float = 1.0,
     start_date: str | DayOfYearStr = "04-01",
     end_date: str | DayOfYearStr = "10-01",
@@ -177,18 +176,17 @@ def huglin_index(
         Latitude coordinate.
         If None, a CF-conformant "latitude" field must be available within the passed DataArray.
     thresh : Quantified
-        The temperature threshold.
-    method : {"huglin", "icclim", "interpolated", "jones"}
+        The temperature threshold. Default: "10 degC".
+    method : {"huglin", "interpolated", "jones"}
         The formula to use for the latitude coefficient calculation.
         The "huglin" method uses a stepwise latitude coefficient for values
         between 40° and 50° based on :cite:t:`huglin_nouveau_1978`.
         The "interpolated" method uses a smoothed curve latitude coefficient for values
         based on the intervals set in :cite:t:`huglin_nouveau_1978`.
         The "jones" method integrates axial tilt, latitude, and day-of-year based on :cite:t:`hall_spatial_2010`.
-        The "icclim" method is deprecated but is identical to method "huglin".
     cap_value : float
         The value to use for the latitude coefficient when latitude is above 50°N or below 50°S.
-        Only applicable for methods "huglin", "icclim", and "interpolated" (default: 1.0).
+        Only applicable for methods "huglin" and "interpolated" (default: 1.0).
     start_date : str or DayOfYearStr
         The hemisphere-based start date to consider (north = April, south = October).
     end_date : str or DayOfYearStr
@@ -210,17 +208,17 @@ def huglin_index(
 
     .. math::
 
-       HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left(\frac{TX_i + TG_i)}{2} - T_{thresh} \right) * k
+       HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left(\frac{TX_i + TG_i}{2} - T_{thresh} \right) * k
 
     There are a few methods provided for calculating the day-length multiplication factor (:math:`k`) based on latitude:
 
-    - For the `"huglin"/"icclim"` and `"interpolated"` methods, values for k increase from `1.0` at 40°N or 40°S to `1.06` at 50°N or 50°S,
-      where the `interpolated` method uses a smoothed curve and the `huglin/icclim` method uses a stepwise function.
+    - For the `"huglin"` and `"interpolated"` methods, values for k increase from `1.0` at 40°N or 40°S to `1.06` at 50°N or 50°S,
+      where the `interpolated` method uses a smoothed curve and the `huglin` method uses a stepwise function.
       Values above 50°N or below 50°S are set via the `cap_value` variable, with `1.0` set as default.
-      See: :py:func:`xclim.indices.helpers.huglin_day_length_latitude_coefficient` for more information.
+      See: :py:func:`xclim.compute.helpers.huglin_day_length_latitude_coefficient` for more information.
     - For the `"jones"` method, A more robust day-length calculation based on latitude, calendar, day-of-year,
       and obliquity is used. The current implementation requires an annual frequency for consistent results.
-      See: :py:func:`xclim.indices.generic.jones_day_length_coefficient` or :cite:t:`hall_spatial_2010` for more information.
+      See: :py:func:`xclim.compute.generic.jones_day_length_coefficient` or :cite:t:`hall_spatial_2010` for more information.
 
     For compatibility with the original ICCLIM implementation :cite:p:`project_team_eca&d_algorithm_2013`,
     `end_date` should be set to `11-01` with `method="huglin"`.
@@ -241,13 +239,7 @@ def huglin_index(
 
     k: int | xarray.DataArray = 1
     k_aggregated: xarray.DataArray | None = None
-    if (method := method.lower()) in ["huglin", "icclim", "interpolated"]:
-        if method == "icclim":
-            warnings.warn(
-                "Method 'icclim' is deprecated. Use 'stepwise' instead.",
-                DeprecationWarning,
-            )
-            method = "huglin"
+    if (method := method.lower()) in ["huglin", "interpolated"]:
         k = huglin_day_length_latitude_coefficient(lat, method=method, cap_value=cap_value)
     elif method.lower() == "jones":
         k_aggregated = jones_day_length_latitude_coefficient(
@@ -260,7 +252,7 @@ def huglin_index(
         )
     else:
         raise NotImplementedError(
-            "Method is not implemented. Only 'huglin', 'icclim', 'interpolated', and 'jones' are supported."
+            "Method is not implemented. Only 'huglin', 'interpolated', and 'jones' are supported."
         )
 
     hi: xarray.DataArray = (((_tas + _tasmax) / 2) - _thresh).clip(min=0) * k
@@ -286,14 +278,14 @@ def biologically_effective_degree_days(
     tasmax: xarray.DataArray,
     lat: xarray.DataArray | None = None,
     thresh_tasmin: Quantified = "10 degC",
-    method: Literal["gladstones", "icclim", "jones", "smoothed", "stepwise"] = "gladstones",
+    method: Literal["gladstones", "huglin", "icclim", "interpolated", "jones"] = "gladstones",
     cap_value: float = 1.0,
     low_dtr: Quantified = "10 degC",
     high_dtr: Quantified = "13 degC",
     max_daily_degree_days: Quantified = "9 degC",
     start_date: str | DayOfYearStr = "04-01",
     end_date: str | DayOfYearStr = "11-01",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Biologically effective growing degree days.
@@ -363,7 +355,7 @@ def biologically_effective_degree_days(
     here differs from the approach detailed in the Heliothermal Index of Huglin (HI) by not considering the latitude coefficient.
 
     The tasmax ceiling of 19°C is assumed to be the maximum temperature beyond which no further gains from warmer daily
-    temperatures occur. Indice originally published in :cite:t:`gladstones_viticulture_1992`.
+    temperatures occur. Index originally published in :cite:t:`gladstones_viticulture_1992`.
 
     Let :math:`TX_{i}` and :math:`TN_{i}` be the daily maximum and minimum temperature at day :math:`i`, :math:`lat` the latitude
     of the point of interest, :math:`degdays_{max}` the maximum amount of degrees that can be summed per day (typically, 9).
@@ -415,13 +407,13 @@ def biologically_effective_degree_days(
         tr_adj = 0
     elif method in ["gladstones", "huglin", "interpolated", "jones"]:
         # Temperature range adjustment
-        low_dtr = convert_units_to(low_dtr, "degC")
-        high_dtr = convert_units_to(high_dtr, "degC")
+        _low_dtr = convert_units_to(low_dtr, "degC")
+        _high_dtr = convert_units_to(high_dtr, "degC")
         dtr = _tasmax - _tasmin
         tr_adj = 0.25 * xarray.where(
-            dtr > high_dtr,
-            dtr - high_dtr,
-            xarray.where(dtr < low_dtr, dtr - low_dtr, 0),
+            dtr > _high_dtr,
+            dtr - _high_dtr,
+            xarray.where(dtr < _low_dtr, dtr - _low_dtr, 0),
         )
 
         if lat is None:
@@ -486,12 +478,12 @@ def cool_night_index(
 
     Warnings
     --------
-    This indice is calculated using minimum temperature resampled to monthly average, and therefore will accept monthly
+    This index is calculated using minimum temperature resampled to monthly average, and therefore will accept monthly
     averaged data as inputs.
 
     Notes
     -----
-    Given that this indice only examines September and March months, it is possible to send in DataArrays containing
+    Given that this index only examines September and March months, it is possible to send in DataArrays containing
     only these timesteps. Users should be aware that due to the missing values checks in wrapped Indicators, datasets
     that are missing several months will be flagged as invalid. This check can be ignored by setting the following
     context:
@@ -507,12 +499,10 @@ def cool_night_index(
 
     Examples
     --------
-    >>> from xclim.indices import cool_night_index
+    >>> from xclim.compute import cool_night_index
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
     >>> cni = cool_night_index(tasmin)
     """
-    if not isinstance(freq, str):
-        raise TypeError("Freq must be a string.")
     if parse_offset(freq) != (1, "Y", True, "JAN"):
         raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `YS-JAN`")
 
@@ -546,7 +536,7 @@ def cool_night_index(
 def dryness_index(  # numpydoc ignore=SS05
     pr: xarray.DataArray,
     evspsblpot: xarray.DataArray,
-    lat: xarray.DataArray | str | None = None,
+    lat: xarray.DataArray | Literal["north", "south"] | None = None,
     wo: Quantified = "200 mm",
     freq: Literal["YS", "YS-JAN"] = "YS",
 ) -> xarray.DataArray:
@@ -579,13 +569,13 @@ def dryness_index(  # numpydoc ignore=SS05
 
     Warnings
     --------
-    Dryness Index expects CF-Convention conformant potential evapotranspiration (positive up). This indice is calculated
+    Dryness Index expects CF-Convention conformant potential evapotranspiration (positive up). This index is calculated
     using evapotranspiration and precipitation resampled and converted to monthly total accumulations, and therefore
     will accept monthly fluxes as inputs.
 
     Notes
     -----
-    Given that this indice only examines monthly total accumulations for six-month periods depending on the hemisphere,
+    Given that this index only examines monthly total accumulations for six-month periods depending on the hemisphere,
     it is possible to send in DataArrays containing only these timesteps. Users should be aware that due to the missing
     values checks in wrapped Indicators, datasets that are missing several months will be flagged as invalid. This check
     can be ignored by setting the following context:
@@ -645,11 +635,9 @@ def dryness_index(  # numpydoc ignore=SS05
 
     Examples
     --------
-    >>> from xclim.indices import dryness_index
+    >>> from xclim.compute import dryness_index
     >>> dryi = dryness_index(pr_dataset, evspsblpot_dataset, wo="200 mm")
     """
-    if not isinstance(freq, str):
-        raise TypeError("Freq must be a string.")
     if parse_offset(freq) != (1, "Y", True, "JAN"):
         raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `YS-JAN`")
 
@@ -743,7 +731,7 @@ def latitude_temperature_index(
     tas: xarray.DataArray,
     lat: xarray.DataArray | None = None,
     lat_factor: float = 75,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     """
     Latitude-Temperature Index.
@@ -814,12 +802,12 @@ def rain_season(
     window_not_dry_start: int = 30,
     thresh_dry_start: Quantified = "1.0 mm",
     window_dry_start: int = 7,
-    method_dry_start: str = "per_day",
+    method_dry_start: Literal["per_day", "total"] = "per_day",
     date_min_start: DayOfYearStr = "05-01",
     date_max_start: DayOfYearStr = "12-31",
     thresh_dry_end: Quantified = "0.0 mm",
     window_dry_end: int = 20,
-    method_dry_end: str = "per_day",
+    method_dry_end: Literal["per_day", "total"] = "per_day",
     date_min_end: DayOfYearStr = "09-01",
     date_max_end: DayOfYearStr = "12-31",
     freq="YS-JAN",
@@ -1000,16 +988,16 @@ def rain_season(
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
-    freq: str | None = "MS",
+    freq: Freq | None = "MS",
     window: int = 1,
-    dist: str | rv_continuous = "gamma",
-    method: str = "ML",
+    dist: Literal["gamma", "fisk", "genextreme", "lognorm"] | rv_continuous = "gamma",
+    method: Literal["APP", "ML", "PWM"] = "ML",
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
-    prob_zero_interpolation: str | float = "upper",
-    plotting_position_zero: str | tuple[float, float] = "ecdf",
+    prob_zero_interpolation: Literal["center", "upper"] | float = "upper",
+    plotting_position_zero: Literal["ecdf", "weibull"] | tuple[float, float] = "ecdf",
     **indexer,
 ) -> xarray.DataArray:
     r"""
@@ -1032,7 +1020,7 @@ def standardized_precipitation_index(
         uses a deterministic function that does not involve any optimization, which can be sensitive to noise.
         `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
-        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+        Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
         If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
@@ -1042,7 +1030,7 @@ def standardized_precipitation_index(
         Default option `None` means that the calibration period finishes at the end of the input dataset.
     params : xarray.DataArray
         Fit parameters.
-        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The `params` can be computed using ``xclim.compute.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
     prob_zero_interpolation : {"center", "upper"} or float
         Interpolation method used to assign a probability to zero values (only used if `zero_inflated` is True).
@@ -1060,7 +1048,7 @@ def standardized_precipitation_index(
         See :py:func:`scipy.stats.mstats.plotting_positions`
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -1069,20 +1057,19 @@ def standardized_precipitation_index(
 
     See Also
     --------
-    xclim.indices.stats.standardized_index : Standardized Index.
-    xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
+    xclim.compute.stats.standardized_index : Standardized Index.
+    xclim.compute.stats.standardized_index_fit_params : Standardized Index Fit Params.
 
     Notes
     -----
     * N-month SPI / N-day SPI is determined by choosing the `window = N` and the appropriate frequency `freq`.
-    * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
-      a log-logistic distribution
+    * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of a log-logistic distribution
     * Supported frequencies are daily ("D"), weekly ("W"), and monthly ("MS").
     * Weekly frequency will only work if the input array has a "standard" (non-cftime) calendar.
     * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
     * "APP" method only supports two-parameter distributions. Parameter `loc` needs to be fixed to use method `APP`.
     * The results from `climate_indices` library can be reproduced with `method = "APP"` and `fitwkargs = {"floc": 0}`, except for the maximum
-      and minimum values allowed which are greater in xclim ±8.21, . See `xclim.indices.stats.standardized_index`
+      and minimum values allowed which are greater in xclim ±8.21, . See `xclim.compute.stats.standardized_index`
 
     References
     ----------
@@ -1091,7 +1078,7 @@ def standardized_precipitation_index(
     Examples
     --------
     >>> from datetime import datetime
-    >>> from xclim.indices import standardized_precipitation_index
+    >>> from xclim.compute import standardized_precipitation_index
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> pr = ds.pr
     >>> cal_start, cal_end = "1990-05-01", "1990-08-31"
@@ -1108,7 +1095,7 @@ def standardized_precipitation_index(
     >>> # To properly reproduce the example, we also need to specify that we use a
     >>> # (potentially) zero-inflated distribution. For a monthly SPI, this should rarely
     >>> # make a difference.
-    >>> from xclim.indices.stats import standardized_index_fit_params
+    >>> from xclim.compute.stats import standardized_index_fit_params
     >>> params = standardized_index_fit_params(
     ...     pr.sel(time=slice(cal_start, cal_end)),
     ...     freq="MS",
@@ -1161,10 +1148,10 @@ def standardized_precipitation_index(
 )
 def standardized_precipitation_evapotranspiration_index(
     wb: xarray.DataArray,
-    freq: str | None = "MS",
+    freq: Freq | None = "MS",
     window: int = 1,
-    dist: str | rv_continuous = "gamma",
-    method: str = "ML",
+    dist: Literal["gamma", "fisk", "genextreme", "lognorm"] | rv_continuous = "gamma",
+    method: Literal["APP", "ML", "PWM"] = "ML",
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
@@ -1195,7 +1182,7 @@ def standardized_precipitation_evapotranspiration_index(
         uses a deterministic function that does not involve any optimization, which can be sensitive to noise.
         `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
-        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+        Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
         If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
@@ -1205,11 +1192,11 @@ def standardized_precipitation_evapotranspiration_index(
         Default option `None` means that the calibration period finishes at the end of the input dataset.
     params : xarray.DataArray, optional
         Fit parameters.
-        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The `params` can be computed using ``xclim.compute.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -1219,8 +1206,8 @@ def standardized_precipitation_evapotranspiration_index(
     See Also
     --------
     standardized_precipitation_index : Standardized Precipitation Index.
-    xclim.indices.stats.standardized_index : Standardized Index.
-    xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
+    xclim.compute.stats.standardized_index : Standardized Index.
+    xclim.compute.stats.standardized_index_fit_params : Standardized Index Fit Params.
     """
     fitkwargs = fitkwargs or {}
     dist_methods = {
@@ -1267,7 +1254,7 @@ def qian_weighted_mean_average(tas: xarray.DataArray, dim: str = "time") -> xarr
     tas : xr.DataArray
         Daily mean temperature.
     dim : str
-        Time dimension.
+        Time dimension. Default: "time".
 
     Returns
     -------
@@ -1276,7 +1263,7 @@ def qian_weighted_mean_average(tas: xarray.DataArray, dim: str = "time") -> xarr
 
     Notes
     -----
-    Qian Modified Weighted Mean Indice originally proposed in :cite:p:`qian_observed_2010`,
+    Qian Modified Weighted Mean index originally proposed in :cite:p:`qian_observed_2010`,
     based on :cite:p:`bootsma_impacts_2005`.
 
     Let :math:`X_{n}` be the average temperature for day :math:`n` and :math:`X_{t}` be the daily mean temperature
@@ -1308,10 +1295,10 @@ def effective_growing_degree_days(
     tasmin: xarray.DataArray,
     *,
     thresh: Quantified = "5 degC",
-    method: str = "bootsma",
+    method: Literal["bootsma", "qian"] = "bootsma",
     after_date: DayOfYearStr = "07-01",
     dim: str = "time",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Effective growing degree days.
@@ -1350,7 +1337,7 @@ def effective_growing_degree_days(
 
     .. math::
 
-       EGDD_i = \sum_{i=\text{j_{start}}^{\text{j_{end}}} max\left(TG - Thresh, 0 \right)
+       EGDD_i = \sum_{i=j_{start}}^{j_{end}} \max\left(TG - Thresh, 0\right)
 
     Where :math:`TG` is the mean daly temperature, and :math:`j_{start}` and :math:`j_{end}` are the start and end dates
     of the growing season. The growing season start date methodology is determined via the `method` flag.
@@ -1363,44 +1350,43 @@ def effective_growing_degree_days(
     ----------
     :cite:cts:`bootsma_impacts_2005`
     """
-    tasmax = convert_units_to(tasmax, "degC")
-    tasmin = convert_units_to(tasmin, "degC")
-    thresh = convert_units_to(thresh, "degC")
-    thresh_with_units = f"{thresh} degC"
+    _tasmax = convert_units_to(tasmax, "degC")
+    _tasmin = convert_units_to(tasmin, "degC")
+    _thresh = convert_units_to(thresh, "degC")
 
-    tas = (tasmin + tasmax) / 2
+    tas = (_tasmin + _tasmax) / 2
     tas.attrs["units"] = "degC"
 
     if method.lower() == "bootsma":
-        fda = first_day_temperature_above(tas=tas, thresh=thresh_with_units, window=1, freq=freq)
+        fda = day_threshold_reached(tas, condition=">", thresh=thresh, which="first", window=1, freq=freq)
         start = fda + 10
     elif method.lower() == "qian":
         tas_weighted = qian_weighted_mean_average(tas=tas, dim=dim)
-        start = first_day_temperature_above(tas_weighted, thresh=thresh_with_units, window=5, freq=freq)
+        start = day_threshold_reached(tas_weighted, condition=">", thresh=thresh, which="first", window=5, freq=freq)
     else:
         raise NotImplementedError(f"Method: {method}.")
 
     # The day before the first day below 0 degC
     end = (
-        first_day_temperature_below(
-            tasmin,
+        day_threshold_reached(
+            _tasmin,
+            condition="<",
             thresh="0 degC",
-            after_date=after_date,
+            date=after_date,
+            which="first",
             window=1,
             freq=freq,
         )
         - 1
     )
 
-    deg_days = (tas - thresh).clip(min=0)
-    egdd: xarray.DataArray = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
-    egdd = to_agg_units(egdd, tas, op="integral", deffreq="D")
-    return egdd
+    deg_days = (tas - _thresh).clip(min=0).assign_attrs(**tas.attrs)
+    return statistics_between_dates(deg_days, start=start, end=end, statistic="integral", freq=freq)
 
 
 @declare_units(tasmin="[temperature]")
 def hardiness_zones(  # numpydoc ignore=SS05
-    tasmin: xarray.DataArray, window: int = 30, method: str = "usda", freq: str = "YS"
+    tasmin: xarray.DataArray, window: int = 30, method: Literal["usda", "anbg"] = "usda", freq: Freq = "YS"
 ):
     """
     Hardiness zones.
@@ -1438,9 +1424,9 @@ def hardiness_zones(  # numpydoc ignore=SS05
         zone_min, zone_max, zone_step = "-15 degC", "20 degC", "5 degC"
 
     else:
-        raise NotImplementedError(f"Method must be one of `usda` or `anbg`. Got {method}.")
+        raise NotImplementedError(f"Method {method} not supported. Must be either `usda` or `anbg`.")
 
-    tn_min_rolling = tn_min(tasmin, freq=freq).rolling(time=window).mean()
+    tn_min_rolling = statistics(tasmin, statistic="min", freq=freq).rolling(time=window).mean()
     zones: xarray.DataArray = get_zones(tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step)
 
     zones = zones.assign_attrs(units="")
@@ -1494,7 +1480,7 @@ def _apply_chill_portion_one_season(tas_K):
 
 
 @declare_units(tas="[temperature]")
-def chill_portions(tas: xarray.DataArray, freq: str = "YS", **indexer) -> xarray.DataArray:
+def chill_portions(tas: xarray.DataArray, freq: Freq = "YS", **indexer) -> xarray.DataArray:
     r"""
     Chill portion based on the dynamic model.
 
@@ -1513,7 +1499,7 @@ def chill_portions(tas: xarray.DataArray, freq: str = "YS", **indexer) -> xarray
         Resampling frequency.
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -1537,23 +1523,24 @@ def chill_portions(tas: xarray.DataArray, freq: str = "YS", **indexer) -> xarray
 
     Examples
     --------
-    >>> from xclim.indices import chill_portions
-    >>> from xclim.indices.helpers import make_hourly_temperature
+    >>> from xclim.compute import chill_portions
+    >>> from xclim.compute.helpers import make_hourly_temperature
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax
     >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)
     >>> cp = chill_portions(tas_hourly)
     """
-    tas_K: xarray.DataArray = select_time(convert_units_to(tas, "K"), drop=True, **indexer)
-    return resample_map(tas_K, "time", freq, _apply_chill_portion_one_season).assign_attrs(units="")
+    tas_K = select_time(convert_units_to(tas, "K"), drop=True, **indexer)
+    cp: xarray.DataArray = resample_map(tas_K, "time", freq, _apply_chill_portion_one_season).assign_attrs(units="")
+    return cp
 
 
 @declare_units(tas="[temperature]")
-def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: str = "YS") -> xarray.DataArray:
+def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: Freq = "YS") -> xarray.DataArray:
     """
     Chill units using the Utah model.
 
-    Chill units are a measure to estimate the bud breaking potential of different crop based on Richardson et al. (1974).
+    Chill units are a measure to estimate the bud breaking potential of different crop based on :cite:t:`richardson_chill_1974`.
     The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can actual decrease,
     the potential for bud breaking. Providing `positive_only=True` will ignore days with negative chill units.
 
@@ -1577,8 +1564,8 @@ def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: str = 
 
     Examples
     --------
-    >>> from xclim.indices import chill_units
-    >>> from xclim.indices.helpers import make_hourly_temperature
+    >>> from xclim.compute import chill_units
+    >>> from xclim.compute.helpers import make_hourly_temperature
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax
     >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)

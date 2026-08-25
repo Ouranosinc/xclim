@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-import xclim.indices as xci
 from xclim import atmos, convert, core, set_options
+from xclim.compute import water_budget
 from xclim.core.calendar import build_climatology_bounds, percentile_doy
 from xclim.core.units import convert_units_to
 
@@ -193,7 +193,7 @@ class TestStandardizedPrecip:
             tasmax = ds.tasmax
             tas = tasmax - 2.5
             tasmin = tasmax - 5
-            wb = xci.water_budget(pr, None, tasmin, tasmax, tas, None)
+            wb = water_budget(pr, None, tasmin, tasmax, tas, None)
             wbMM = convert_units_to(wb, "mm/day", context="hydro")  # noqa
 
         out3 = atmos.standardized_precipitation_evapotranspiration_index(
@@ -264,8 +264,9 @@ class TestWetPrcptot:
 
         # Reference value
         t = core.units.convert_units_to(thresh, pr, context="hydro")
+        # this transforms with rate2amount, instead of stat=integral, very slight differences are to be expected
         pa = atmos.precip_accumulation(pr.where(pr >= t, 0))
-        np.testing.assert_array_equal(out, pa)
+        np.testing.assert_array_almost_equal(out, pa, 3)
 
 
 class TestDailyIntensity:
@@ -408,7 +409,7 @@ class TestMaxNDay:
         np.testing.assert_allclose(out2.values[0, 0, 0], 50.57, atol=1e-2)
 
 
-class TestMaxConsecWetDays:
+class TestWetSpellMaxLength:
     nc_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
@@ -420,13 +421,13 @@ class TestMaxConsecWetDays:
         # put a nan somewhere
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
-        pr_min = "5 mm/d"
-        out1 = atmos.maximum_consecutive_wet_days(pr, thresh=pr_min, freq="MS")
-        out2 = atmos.maximum_consecutive_wet_days(prMM, thresh=pr_min, freq="MS")
+        pr_min = "5 mm"
+        out1 = atmos.wet_spell_max_length(pr, thresh=pr_min, freq="MS")
+        out2 = atmos.wet_spell_max_length(prMM, thresh=pr_min, freq="MS")
 
         # test kg m-2 s-1
         pr.attrs["units"] = "kg m-2 s-1"
-        out3 = atmos.maximum_consecutive_wet_days(pr, thresh=pr_min, freq="MS")
+        out3 = atmos.wet_spell_max_length(pr, thresh=pr_min, freq="MS")
 
         np.testing.assert_array_equal(out1, out2)
         np.testing.assert_array_equal(out1, out3)
@@ -435,9 +436,9 @@ class TestMaxConsecWetDays:
         x1 = prMM[:31, 0, 0] * 0.0
         x1[5:10] = 10
         x1.attrs["units"] = "mm/day"
-        cwd1 = atmos.maximum_consecutive_wet_days(x1, freq="MS")
+        cwd1 = atmos.wet_spell_max_length(x1, freq="MS")
 
-        assert cwd1 == 5
+        assert cwd1 == 9
 
         assert np.isnan(out1.values[0, 1, 0])
 
@@ -445,7 +446,7 @@ class TestMaxConsecWetDays:
         assert np.isnan(out1.values[0, -1, -1])
 
 
-class TestMaxConsecDryDays:
+class TestDrySpellMaxLength:
     nc_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
@@ -457,13 +458,13 @@ class TestMaxConsecDryDays:
         # put a nan somewhere
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
-        pr_min = "5 mm/d"
-        out1 = atmos.maximum_consecutive_dry_days(pr, thresh=pr_min, freq="MS")
-        out2 = atmos.maximum_consecutive_dry_days(prMM, thresh=pr_min, freq="MS")
+        pr_min = "5 mm"
+        out1 = atmos.dry_spell_max_length(pr, thresh=pr_min, freq="MS")
+        out2 = atmos.dry_spell_max_length(prMM, thresh=pr_min, freq="MS")
 
         # test kg m-2 s-1
         pr.attrs["units"] = "kg m-2 s-1"
-        out3 = atmos.maximum_consecutive_dry_days(pr, thresh=pr_min, freq="MS")
+        out3 = atmos.dry_spell_max_length(pr, thresh=pr_min, freq="MS")
 
         np.testing.assert_array_equal(out1, out2)
         np.testing.assert_array_equal(out1, out3)
@@ -472,7 +473,7 @@ class TestMaxConsecDryDays:
         x1 = prMM[:31, 0, 0] * 0.0 + 50.0
         x1[5:10] = 0
         x1.attrs["units"] = "mm/day"
-        cdd1 = atmos.maximum_consecutive_dry_days(x1, freq="MS")
+        cdd1 = atmos.dry_spell_max_length(x1, freq="MS")
 
         assert cdd1 == 5
 
@@ -617,10 +618,10 @@ def test_dry_spell(atmosds):
     pr = atmosds.pr
 
     events = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
-    total_d_sum = atmos.dry_spell_total_length(pr, thresh="3 mm", window=7, op="sum", freq="YS")
-    total_d_max = atmos.dry_spell_total_length(pr, thresh="3 mm", window=7, op="max", freq="YS")
-    max_d_sum = atmos.dry_spell_max_length(pr, thresh="3 mm", window=7, op="sum", freq="YS")
-    max_d_max = atmos.dry_spell_max_length(pr, thresh="3 mm", window=7, op="max", freq="YS")
+    total_d_sum = atmos.dry_spell_total_length(pr, thresh="3 mm", window=7, window_statistic="sum", freq="YS")
+    total_d_max = atmos.dry_spell_total_length(pr, thresh="3 mm", window=7, window_statistic="max", freq="YS")
+    max_d_sum = atmos.dry_spell_max_length(pr, thresh="3 mm", window=7, window_statistic="sum", freq="YS")
+    max_d_max = atmos.dry_spell_max_length(pr, thresh="3 mm", window=7, window_statistic="max", freq="YS")
     total_d_sum = total_d_sum.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
     total_d_max = total_d_max.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
     max_d_sum = max_d_sum.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
@@ -633,13 +634,13 @@ def test_dry_spell(atmosds):
     np.testing.assert_allclose(max_d_max, [14, 14], rtol=1e-1)
 
     assert (
-        "The annual number of dry periods of 7 day(s) or more, "
-        "during which the total precipitation on a window of 7 day(s) is below 3 mm."
+        "The annual number of dry periods of at least 7 days. "
+        "a period is dry if its total precipitation on a window of 7 days is below 3 mm."
     ) in events.description
-    assert "The annual number of days in dry periods of 7 day(s) or more" in total_d_sum.description
-    assert "The annual number of days in dry periods of 7 day(s) or more" in total_d_max.description
-    assert "The maximum annual number of consecutive days in a dry period of 7 day(s) or more" in max_d_sum.description
-    assert "The maximum annual number of consecutive days in a dry period of 7 day(s) or more" in max_d_max.description
+    assert "The annual number of days in dry periods of at least 7 days" in total_d_sum.description
+    assert "The annual number of days in dry periods of at least 7 days" in total_d_max.description
+    assert "The maximum annual number of consecutive days in a dry period of at least 7 days" in max_d_sum.description
+    assert "The maximum annual number of consecutive days in a dry period of at least 7 days" in max_d_max.description
 
 
 def test_dry_spell_total_length_indexer(pr_series):
@@ -647,19 +648,14 @@ def test_dry_spell_total_length_indexer(pr_series):
     out = atmos.dry_spell_total_length(
         pr,
         window=7,
-        op="sum",
+        window_statistic="sum",
         thresh="3.1 mm",
         freq="MS",
     )
     np.testing.assert_allclose(out, [np.nan] + [0] * 11)
 
     out = atmos.dry_spell_total_length(
-        pr,
-        window=7,
-        op="sum",
-        thresh="3.1 mm",
-        freq="MS",
-        date_bounds=("01-10", "12-31"),
+        pr, window=7, window_statistic="sum", thresh="3.1 mm", freq="MS", date_bounds=("01-10", "12-31")
     )
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
@@ -669,37 +665,32 @@ def test_dry_spell_max_length_indexer(pr_series):
     out = atmos.dry_spell_max_length(
         pr,
         window=7,
-        op="sum",
+        window_statistic="sum",
         thresh="3.1 mm",
         freq="MS",
     )
     np.testing.assert_allclose(out, [np.nan] + [0] * 11)
 
     out = atmos.dry_spell_total_length(
-        pr,
-        window=7,
-        op="sum",
-        thresh="3.1 mm",
-        freq="MS",
-        date_bounds=("01-10", "12-31"),
+        pr, window=7, window_statistic="sum", thresh="3.1 mm", freq="MS", date_bounds=("01-10", "12-31")
     )
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
 
 def test_dry_spell_frequency_op(open_dataset):
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
-    test_sum = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="MS", op="sum")
-    test_max = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="MS", op="max")
+    test_sum = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="MS", window_statistic="sum")
+    test_max = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="MS", window_statistic="max")
 
     np.testing.assert_allclose(test_sum[0, :14], [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0], rtol=1e-1)
     np.testing.assert_allclose(test_max[0, :14], [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 2, 1], rtol=1e-1)
     assert (
-        "The monthly number of dry periods of 7 day(s) or more, "
-        "during which the total precipitation on a window of 7 day(s) is below 3 mm."
+        "The monthly number of dry periods of at least 7 days. a period is dry if its "
+        "total precipitation on a window of 7 days is below 3 mm."
     ) in test_sum.description
     assert (
-        "The monthly number of dry periods of 7 day(s) or more, "
-        "during which the maximal precipitation on a window of 7 day(s) is below 3 mm."
+        "The monthly number of dry periods of at least 7 days. "
+        "a period is dry if its maximal precipitation on a window of 7 days is below 3 mm."
     ) in test_max.description
 
 
@@ -751,12 +742,12 @@ class TestSnowfallMeteoSwiss:
                 [
                     [3.585, 3.839, 4.446],
                     [5.148, 5.884, 5.764],
-                    [5.910, 0.0, 0.0],
+                    [5.910, np.nan, np.nan],
                 ],
                 [
                     [5.093, 5.284, 5.539],
                     [5.946, 6.840, 9.702],
-                    [9.522, 0.0, 0.0],
+                    [9.522, np.nan, np.nan],
                 ],
             ]
         )
@@ -773,7 +764,7 @@ def test_precipitation_concentration_index(pr_series):
     a[30:60] = 2 / 30
     pr = pr_series(a, start="2000-01-01", calendar="360_day")
     expected = 100 * (1 + 2**2) / ((1 + 2) ** 2)
-    pci = xci.precipitation_concentration_index(pr)
+    pci = atmos.precipitation_concentration_index(pr)
 
     np.testing.assert_array_equal(pci, expected)
 

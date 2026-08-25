@@ -1,8 +1,8 @@
 """
-Statistical indices module
-==========================
+Statistical functions module
+============================
 
-Functions to aid in computing various statistical indices.
+Functions to aid in computing various statistical indicators
 
 See the `frequency_analysis` notebook for working examples.
 """
@@ -12,18 +12,18 @@ from __future__ import annotations
 import json
 import warnings
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import scipy.stats
 import xarray as xr
 from scipy.stats import rv_continuous
 
-from xclim.core import DateStr, Quantified
+from xclim.compute.generic import statistics
+from xclim.core import DateStr, Freq, Quantified
 from xclim.core.calendar import compare_offsets, resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
 from xclim.core.utils import uses_dask
-from xclim.indices import generic
 
 __all__ = [
     "_fit_start",
@@ -246,20 +246,20 @@ def parametric_quantile(
     -----
     When all quantiles are above 0.5, the `isf` method is used instead of `ppf` because accuracy is sometimes better.
     """
-    q = np.atleast_1d(q)
+    _q = np.atleast_1d(q)
 
     dist = get_dist(dist or p.attrs["scipy_dist"])
 
     # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
-    if np.all(q > 0.5):
+    if np.all(_q > 0.5):
 
         def func(x):
-            return dist.isf(1 - q, *x)
+            return dist.isf(1 - _q, *x)
 
     else:
 
         def func(x):
-            return dist.ppf(q, *x)
+            return dist.ppf(_q, *x)
 
     data = xr.apply_ufunc(
         func,
@@ -270,7 +270,7 @@ def parametric_quantile(
         dask="parallelized",
         output_dtypes=[float],
         keep_attrs=True,
-        dask_gufunc_kwargs={"output_sizes": {"quantile": len(q)}},
+        dask_gufunc_kwargs={"output_sizes": {"quantile": len(_q)}},
     )
 
     # Assign quantile coordinates and transpose to preserve original dimension order
@@ -292,8 +292,6 @@ def parametric_quantile(
     return out
 
 
-# FIXME: xclim-v1 — `parametric_cdf` should be like `parametric_pdf`, i.e.:
-# The new coordinate should be labeled as `v` and not `cdf`
 def parametric_cdf(
     p: xr.DataArray,
     v: xr.DataArray | float | Sequence[float],
@@ -333,23 +331,23 @@ def parametric_cdf(
         da_v,
         p,
         input_core_dims=[["v"], ["dparams"]],
-        output_core_dims=[["cdf"]],
+        output_core_dims=[["v"]],
         vectorize=True,
         dask="parallelized",
         output_dtypes=[float],
         keep_attrs=True,
-        dask_gufunc_kwargs={"output_sizes": {"cdf": len(v)}},
-    ).assign_coords(cdf=da_v.v.values)
-    data["cdf"].attrs = da_v.attrs
+        dask_gufunc_kwargs={"output_sizes": {"v": len(v)}},
+    ).assign_coords(v=da_v.v.values)
+    data["v"].attrs = da_v.attrs
 
     # Assign value coordinates and transpose to preserve original dimension order
-    out = data.transpose(*(d if d != "dparams" else "cdf" for d in p.dims))
+    out = data.transpose(*(d if d != "dparams" else "v" for d in p.dims))
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
     attrs = {
         "long_name": f"{dist.name} cdf",
         "description": f"CDF estimated by the {dist.name} distribution",
-        "cell_methods": "dparams: cdf",
+        "cell_methods": "dparams: v",
         "history": update_history(
             "Compute parametric cdf from distribution parameters",
             new_name="parametric_cdf",
@@ -484,11 +482,11 @@ def fa(
 
 def frequency_analysis(
     da: xr.DataArray,
-    mode: str,
+    mode: Literal["min", "max"],
     t: int | Sequence[int],
     dist: str | rv_continuous,
     window: int = 1,
-    freq: str | None = None,
+    freq: Freq | None = None,
     method: str = "ML",
     **indexer: int | float | str,
 ) -> xr.DataArray:
@@ -537,10 +535,10 @@ def frequency_analysis(
         da.attrs.update(attrs)
 
     # Assign default resampling frequency if not provided
-    freq = freq or generic.default_freq(**indexer)
+    freq = freq or ("YS-DEC" if indexer.get("season") == "DJF" else "YS")
 
     # Extract the time series of min or max over the period
-    sel = generic.select_resample_op(da, op=mode, freq=freq, **indexer)
+    sel = statistics(da, statistic=mode, freq=freq, **indexer)
 
     if uses_dask(sel):
         sel = sel.chunk({"time": -1})
@@ -581,7 +579,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
 
     Parameters
     ----------
-    x : array-like
+    x : array_like
         Input data.
     dist : str
         Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
@@ -767,7 +765,7 @@ def dist_method(
     )
 
 
-def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: int, **indexer):
+def preprocess_standardized_index(da: xr.DataArray, freq: Freq | None, window: int, **indexer):
     r"""
     Perform resample and roll operations involved in computing a standardized index.
 
@@ -784,7 +782,7 @@ def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: in
         i.e. a monthly resampling, the window is an integer number of months.
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
@@ -838,7 +836,7 @@ def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: in
 
 def standardized_index_fit_params(
     da: xr.DataArray,
-    freq: str | None,
+    freq: Freq | None,
     window: int,
     dist: str | rv_continuous,
     method: str,
@@ -872,20 +870,15 @@ def standardized_index_fit_params(
     zero_inflated : bool
         If True, the zeroes of `da` are treated separately when fitting a probability density function.
     fitkwargs : dict, optional
-        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+        Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
     xarray.DataArray
         Standardized Index fitting parameters.
-
-    Warnings
-    --------
-    The coord `prob_of_zero` in the output will be removed in future versions. It can still be computed from new coords
-    as out['number_of_zeros']/out['number_of_notnull']
 
     Notes
     -----
@@ -919,19 +912,12 @@ def standardized_index_fit_params(
     dist_and_methods = {
         "gamma": ["ML", "APP"],
         "fisk": ["ML", "APP"],
-        # FIXME: xclim-v1 — remove "APP"
-        "genextreme": ["ML", "APP"],
+        "genextreme": ["ML"],
         "lognorm": ["ML", "APP"],
     }
     if isinstance(dist, str):
         if dist not in dist_and_methods:
             raise NotImplementedError(f"The distribution `{dist}` is not supported.")
-        # FIXME: xclim-v1 — remove this warning
-        if dist == "genextreme" and method == "APP":
-            warnings.warn(
-                "The method 'APP' will not be available for distribution 'genextreme' in the future."
-                " The shape parameter is fixed in this approximation and should not be used as a final answer."
-            )
         if method not in dist_and_methods[dist]:
             raise NotImplementedError(f"The method `{method}` is not supported for distribution `{dist}`.")
     dist = get_dist(dist)
@@ -947,8 +933,6 @@ def standardized_index_fit_params(
         params = da.where(da != 0).groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
         params["number_of_zeros"] = number_of_zeros
         params["number_of_notnull"] = number_of_notnull
-        # FIXME: xclim-v1 – Drop this variable
-        params["prob_of_zero"] = number_of_zeros / number_of_notnull
     else:
         params = da.groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
     cal_range = (
@@ -970,7 +954,7 @@ def standardized_index_fit_params(
 
 def standardized_index(
     da: xr.DataArray,
-    freq: str | None,
+    freq: Freq | None,
     window: int | None,
     dist: str | rv_continuous | None,
     method: str | None,
@@ -979,8 +963,8 @@ def standardized_index(
     cal_start: DateStr | None,
     cal_end: DateStr | None,
     params: Quantified | None = None,
-    prob_zero_interpolation: str | float = "upper",
-    plotting_position_zero: str | tuple[float, float] = "ecdf",
+    prob_zero_interpolation: Literal["center", "upper"] | float = "upper",
+    plotting_position_zero: Literal["ecdf", "weibull"] | tuple[float, float] = "ecdf",
     **indexer,
 ) -> xr.DataArray:
     r"""
@@ -1009,7 +993,7 @@ def standardized_index(
     zero_inflated : bool
         If True, the zeroes of `da` are treated separately.
     fitkwargs : dict, optional
-        Kwargs passed to :py:func:`xclim.indices.stats.fit` used to impose values of certains parameters
+        Kwargs passed to :py:func:`xclim.compute.stats.fit` used to impose values of certains parameters
         (`floc`, `fscale`). If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma`
         which is allowed.
     cal_start : DateStr, optional
@@ -1020,7 +1004,7 @@ def standardized_index(
         Default option `None` means that the calibration period finishes at the end of the input dataset.
     params : xarray.DataArray
         Fit parameters.
-        The `params` can be computed using :py:func:`xclim.indices.stats.standardized_index_fit_params` in advance.
+        The `params` can be computed using :py:func:`xclim.compute.stats.standardized_index_fit_params` in advance.
         The output can be given here as input, and it overrides other options.
     prob_zero_interpolation : {"center", "upper"} or float
         Interpolation method used to assign a probability to zero values (only used if `zero_inflated` is True).
@@ -1038,7 +1022,7 @@ def standardized_index(
         See :py:func:`scipy.stats.mstats.plotting_positions`
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
@@ -1081,8 +1065,7 @@ def standardized_index(
                 "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
                 "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
             )
-        # FIMXE: xclim-v1 – remove 'prob_of_zero' below
-        zero_inflated = any(k in params.attrs for k in ["number_of_zeros", "prob_of_zero"])
+        zero_inflated = any(k in params.attrs for k in ["number_of_zeros"])
 
     # assign values to interp_factor and alpha,beta, if needed
     if zero_inflated is not None:
@@ -1110,21 +1093,6 @@ def standardized_index(
             zero_inflated=zero_inflated,
             fitkwargs=fitkwargs,
         )
-    # FIXME: xclim-v1 – Remove this check
-    elif "prob_of_zero" in params.coords and "number_of_zeros" not in params.coords:
-        warnings.warn(
-            "Received `params` computed with an old version of `xclim`. The computation will default to "
-            "`prob_zero_interpolation`=='upper' and `plotting_position_zero` == 'ecdf'. To have access to the new modes"
-            " allowed by the new options `prob_zero_interpolation` and `plotting_position_zero`,"
-            " please recompute `params` with the newest version of `xclim`. Also, be aware that "
-            "the coord `prob_of_zero` will be dropped in a future version. It can be re-computed with "
-            "`params['number_of_zeros']/params['number_of_zeros']`"
-        )
-        params["number_of_zeros"] = params["prob_of_zero"]
-        params["number_of_not_null"] = 0 * params["prob_of_zero"] + 1
-        alpha_beta = (0, 1)
-        interp_factor = 1
-
     # If params only contains a subset of main dataset time grouping
     # (e.g. 8/12 months, etc.), it needs to be broadcasted
     group = params.attrs["group"]
