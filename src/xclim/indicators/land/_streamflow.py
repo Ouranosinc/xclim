@@ -26,8 +26,8 @@ from xclim.core.indicator import (
 __all__ = [
     "base_flow_index",
     "base_flow_index_seasonal_ratio",
-    "doy_qmax",
-    "doy_qmin",
+    "doy_rivomax",
+    "doy_rivomin",
     "flow_index",
     "high_flow_frequency",
     "lag_snowpack_flow_peaks",
@@ -79,10 +79,10 @@ rb_flashiness_index = Streamflow(
 )
 
 
-doy_qmax = Streamflow(
+doy_rivomax = Streamflow(
     title="Day of year of the maximum streamflow",
-    identifier="doy_qmax",
-    var_name="q{indexer}_doy_qmax",
+    identifier="doy_rivomax",
+    var_name="doy_rivomax",
     long_name="Day of the year of the maximum streamflow over {indexer}",
     description="Day of the year of the maximum streamflow over {indexer}.",
     units="",
@@ -92,10 +92,10 @@ doy_qmax = Streamflow(
 )
 
 
-doy_qmin = Streamflow(
+doy_rivomin = Streamflow(
     title="Day of year of the minimum streamflow",
-    identifier="doy_qmin",
-    var_name="q{indexer}_doy_qmin",
+    identifier="doy_rivomin",
+    var_name="doy_rivomin",
     long_name="Day of the year of the minimum streamflow over {indexer}",
     description="Day of the year of the minimum streamflow over {indexer}.",
     units="",
@@ -110,7 +110,7 @@ flow_index = ReducingIndicator(
     context="hydro",
     title="Flow index",
     identifier="flow_index",
-    var_name="q_flow_index",
+    var_name="rivo_flow_index",
     long_name="Flow index",
     description="{q}th quantile normalized by the median flow.",
     units="1",
@@ -121,7 +121,7 @@ flow_index = ReducingIndicator(
 high_flow_frequency = Streamflow(
     title="High flow frequency",
     identifier="high_flow_frequency",
-    var_name="q_high_flow_frequency",
+    var_name="rivo_high_flow_frequency",
     long_name="High flow frequency",
     description="{freq} frequency of flows greater than {threshold_factor} times the median flow.",
     units="days",
@@ -132,7 +132,7 @@ high_flow_frequency = Streamflow(
 low_flow_frequency = Streamflow(
     title="Low flow frequency",
     identifier="low_flow_frequency",
-    var_name="q_low_flow_frequency",
+    var_name="rivo_low_flow_frequency",
     long_name="Low flow frequency",
     description="{freq} frequency of flows smaller than a fraction ({threshold_factor}) of the mean flow.",
     units="days",

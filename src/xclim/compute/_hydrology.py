@@ -209,10 +209,10 @@ def standardized_streamflow_index(
     >>> from datetime import datetime
     >>> from xclim.compute import standardized_streamflow_index
     >>> ds = xr.open_dataset(path_to_q_file)
-    >>> q = ds.q_sim
+    >>> rivo = ds.q_sim
     >>> cal_start, cal_end = "2006-05-01", "2008-06-01"
     >>> ssi_3 = standardized_streamflow_index(
-    ...     q,
+    ...     rivo,
     ...     freq="MS",
     ...     window=3,
     ...     dist="genextreme",
@@ -223,7 +223,7 @@ def standardized_streamflow_index(
     >>> # Fitting parameters can also be obtained first, then reused as input.
     >>> from xclim.compute.stats import standardized_index_fit_params
     >>> params = standardized_index_fit_params(
-    ...     q.sel(time=slice(cal_start, cal_end)),
+    ...     rivo.sel(time=slice(cal_start, cal_end)),
     ...     freq="MS",
     ...     window=3,
     ...     dist="genextreme",
