@@ -10,13 +10,13 @@ from xclim.compute import reducers
 
 class TestDoyMinMax:
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_doyminmax(self, q_series, use_dask):
+    def test_doyminmax(self, rivo_series, use_dask):
         a = np.ones(365)
         a[9] = 2
         a[19] = -2
         a[39] = 4
         a[49] = -4
-        q = q_series(a)
+        q = rivo_series(a)
         if use_dask:
             q = q.chunk({"time": 200})
         dmx = reducers.doymax(q)
@@ -25,8 +25,8 @@ class TestDoyMinMax:
         assert dmn.values == [50]
 
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_doyminmax_novariance(self, q_series, use_dask):
-        q = q_series(np.ones(365))
+    def test_doyminmax_novariance(self, rivo_series, use_dask):
+        q = rivo_series(np.ones(365))
         if use_dask:
             q = q.chunk({"time": 200})
         dmx = reducers.doymax(q).load()
@@ -35,8 +35,8 @@ class TestDoyMinMax:
         assert dmn.isnull().all()
 
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_doyminmax_allna(self, q_series, use_dask):
-        q = q_series(np.ones(365)) * np.nan
+    def test_doyminmax_allna(self, rivo_series, use_dask):
+        q = rivo_series(np.ones(365)) * np.nan
         if use_dask:
             q = q.chunk({"time": 200})
         dmx = reducers.doymax(q).load()

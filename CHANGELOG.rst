@@ -43,6 +43,7 @@ Breaking changes
 * `pre-commit` has been replaced by `prek`. `prek` is a `pre-commit-config.yml` compatible reimplementation built in Rust. (:pull:`2355`).
 * Approximate method `APP` not allowed anymore when using the `genextreme` distribution for standardized indices (e.g. ``xclim.indicators.atmos.standardized_precipitation_index`` and similar indicators).
 * The output of ``xclim.compute.stats.parametric_cdf`` has a dimension `v` instead `cdf` (`cdf` more appropriately describes the output variable).
+* `q` has been changed to `rivo` in hydrological indicators (``xclim.indicators.land``). (:pull:`2407`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^

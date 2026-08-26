@@ -31,8 +31,8 @@ class TestFit:
         assert out.shape == (2, 1, 2)
         np.testing.assert_array_equal(out.isnull(), False)
 
-    def test_options(self, q_series, random):
-        q = q_series(random.random(19))
+    def test_options(self, rivo_series, random):
+        q = rivo_series(random.random(19))
         out = generic.fit(q, dist="norm")
         np.testing.assert_array_equal(out.isnull(), False)
 

@@ -46,8 +46,8 @@ __all__ = [
 ]
 
 
-@declare_units(q="[discharge]")
-def base_flow_index(q: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
+@declare_units(rivo="[discharge]")
+def base_flow_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Base flow index.
 
@@ -55,7 +55,7 @@ def base_flow_index(q: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Rate of river discharge.
     freq : str
         Resampling frequency.
@@ -81,8 +81,8 @@ def base_flow_index(q: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
        \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
     """
     # TODO: Could be refactored with generic.select_rolling_resample_op, but `skipa=False` cannot be passed right now.
-    m7 = q.rolling(time=7, center=True).mean(skipna=False).resample(time=freq)
-    mq = q.resample(time=freq)
+    m7 = rivo.rolling(time=7, center=True).mean(skipna=False).resample(time=freq)
+    mq = rivo.resample(time=freq)
 
     m7m = m7.min(dim="time")
     out = m7m / mq.mean(dim="time")
@@ -90,8 +90,8 @@ def base_flow_index(q: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     return out
 
 
-@declare_units(q="[discharge]")
-def rb_flashiness_index(q: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
+@declare_units(rivo="[discharge]")
+def rb_flashiness_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Richards-Baker flashiness index.
 
@@ -100,7 +100,7 @@ def rb_flashiness_index(q: xarray.DataArray, freq: Freq = "YS") -> xarray.DataAr
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Rate of river discharge.
     freq : str
         Resampling frequency.
@@ -122,19 +122,19 @@ def rb_flashiness_index(q: xarray.DataArray, freq: Freq = "YS") -> xarray.DataAr
     ----------
     :cite:cts:`baker_new_2004`
     """
-    d = np.abs(q.diff(dim="time")).resample(time=freq)
-    mq = q.resample(time=freq)
+    d = np.abs(rivo.diff(dim="time")).resample(time=freq)
+    mq = rivo.resample(time=freq)
     out = d.sum(dim="time") / mq.sum(dim="time")
     out.attrs["units"] = ""
     return out
 
 
 @declare_units(
-    q="[discharge]",
+    rivo="[discharge]",
     params="[]",
 )
 def standardized_streamflow_index(
-    q: xarray.DataArray,
+    rivo: xarray.DataArray,
     freq: Freq | None = "MS",
     window: int = 1,
     dist: Literal["genextreme", "fisk"] | rv_continuous = "genextreme",
@@ -150,7 +150,7 @@ def standardized_streamflow_index(
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Rate of river discharge.
     freq : str, optional
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes
@@ -246,7 +246,7 @@ def standardized_streamflow_index(
 
     zero_inflated = False
     ssi = standardized_index(
-        q,
+        rivo,
         freq=freq,
         window=window,
         dist=dist,
@@ -572,8 +572,8 @@ def standardized_groundwater_index(
     return sgi
 
 
-@declare_units(q="[discharge]")
-def flow_index(q: xarray.DataArray, p: float = 0.95) -> xarray.DataArray:
+@declare_units(rivo="[discharge]")
+def flow_index(rivo: xarray.DataArray, p: float = 0.95) -> xarray.DataArray:
     """
     Flow index.
 
@@ -581,7 +581,7 @@ def flow_index(q: xarray.DataArray, p: float = 0.95) -> xarray.DataArray:
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Daily streamflow data.
     p : float
         Percentile for calculating the flow index, between 0 and 1. Default of 0.95 is for high flows.
@@ -595,15 +595,15 @@ def flow_index(q: xarray.DataArray, p: float = 0.95) -> xarray.DataArray:
     ----------
     :cite:cts:`Clausen2000`
     """
-    qp = q.quantile(p, dim="time")
-    q_median = q.median(dim="time")
+    qp = rivo.quantile(p, dim="time")
+    q_median = rivo.median(dim="time")
     out = qp / q_median
     out.attrs["units"] = "1"
     return out
 
 
-@declare_units(q="[discharge]")
-def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: Freq = "YS-OCT") -> xarray.DataArray:
+@declare_units(rivo="[discharge]")
+def high_flow_frequency(rivo: xarray.DataArray, threshold_factor: int = 9, freq: Freq = "YS-OCT") -> xarray.DataArray:
     """
     High flow frequency.
 
@@ -613,7 +613,7 @@ def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: Fr
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Daily streamflow data.
     threshold_factor : int
         Factor by which the median flow is multiplied to set the high flow threshold, default is 9.
@@ -629,13 +629,15 @@ def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: Fr
     ----------
     :cite:cts:`addor2018,Clausen2000`
     """
-    median_flow = q.median(dim="time")
-    thresh = (threshold_factor * median_flow).assign_attrs(units=q.attrs["units"])
-    return generic.count_occurrences(q, condition=">", thresh=thresh, freq=freq)
+    median_flow = rivo.median(dim="time")
+    thresh = (threshold_factor * median_flow).assign_attrs(units=rivo.attrs["units"])
+    return generic.count_occurrences(rivo, condition=">", thresh=thresh, freq=freq)
 
 
-@declare_units(q="[discharge]")
-def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq: Freq = "YS-OCT") -> xarray.DataArray:
+@declare_units(rivo="[discharge]")
+def low_flow_frequency(
+    rivo: xarray.DataArray, threshold_factor: float = 0.2, freq: Freq = "YS-OCT"
+) -> xarray.DataArray:
     """
     Low flow frequency.
 
@@ -645,7 +647,7 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Daily streamflow data.
     threshold_factor : float
         Factor by which the mean flow is multiplied to set the low flow threshold, default is 0.2.
@@ -661,9 +663,9 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
     ----------
     :cite:cts:`Olden2003`
     """
-    mean_flow = q.mean(dim="time")
-    thresh = (threshold_factor * mean_flow).assign_attrs(units=q.attrs["units"])
-    return generic.count_occurrences(q, condition="<", thresh=thresh, freq=freq)
+    mean_flow = rivo.mean(dim="time")
+    thresh = (threshold_factor * mean_flow).assign_attrs(units=rivo.attrs["units"])
+    return generic.count_occurrences(rivo, condition="<", thresh=thresh, freq=freq)
 
 
 @declare_units(pr="[precipitation]")
@@ -704,9 +706,9 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
 
 
 # TODO: change a to `area`?
-@declare_units(q="[discharge]", pr="[precipitation]", area="[area]")
+@declare_units(rivo="[discharge]", pr="[precipitation]", area="[area]")
 def runoff_ratio(
-    q: xarray.DataArray,
+    rivo: xarray.DataArray,
     pr: xarray.DataArray,
     area: Quantified,
     freq: Freq = "YS",
@@ -718,12 +720,12 @@ def runoff_ratio(
 
     Parameters
     ----------
-    q : xarray.DataArray
-        Streamflow in discharge units.
+    rivo : xarray.DataArray
+        Daily streamflow data.
     pr : xarray.DataArray
-        Mean daily precipitation in precipitation units.
+        Mean daily precipitation.
     area : Quantified
-        Watershed area in area units.
+        Watershed area.
     freq : str
         Resampling frequency.
 
@@ -753,7 +755,7 @@ def runoff_ratio(
     ----------
     :cite:cts:'knoben_2024'
     """
-    q = convert_units_to(q, "mm3/hr")
+    q = convert_units_to(rivo, "mm3/hr")
     area = convert_units_to(area, "mm2")
     pr = convert_units_to(pr, "mm/hr")
 
@@ -819,10 +821,10 @@ def _timemax(da):
 
 
 # TODO: Change the indicator name? That seems a bit off
-@declare_units(snw="[snowamount]", q="[discharge]")
+@declare_units(snw="[snowamount]", rivo="[discharge]")
 def lag_snowpack_flow_peaks(
     snw: xarray.DataArray,
-    q: xarray.DataArray,
+    rivo: xarray.DataArray,
     freq: Freq = "YS-OCT",
     p: float = 0.9,
 ) -> xarray.DataArray:
@@ -839,8 +841,8 @@ def lag_snowpack_flow_peaks(
     ----------
     snw : xarray.DataArray
         Surface snow amount.
-    q : xarray.DataArray
-        Streamflow.
+    rivo : xarray.DataArray
+        Daily streamflow data.
     freq : str
         Resampling frequency. Defaults to the water year starting on the 1st of October.
     p : float
@@ -880,15 +882,15 @@ def lag_snowpack_flow_peaks(
         thresh = q.quantile(q=p, dim="time")
         return dt_q.where(q >= thresh).mean(dim="time")
 
-    dt_high_q = resample_map(q, "time", freq, _mean_timedelta_over_perc, map_kwargs={"p": p, "t0": t0})
+    dt_high_q = resample_map(rivo, "time", freq, _mean_timedelta_over_perc, map_kwargs={"p": p, "t0": t0})
 
     lag = (dt_high_q - dt_snw_max) / (86400)
     lag.attrs["units"] = "days"
     return lag
 
 
-@declare_units(q="[discharge]")
-def sen_slope(q: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArray, xarray.DataArray]:
+@declare_units(rivo="[discharge]")
+def sen_slope(rivo: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArray, xarray.DataArray]:
     """
     Temporal robustness analysis of streamflow.
 
@@ -896,8 +898,8 @@ def sen_slope(q: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArray,
 
     Parameters
     ----------
-    q : xarray.DataArray
-        Observed streamflow vector.
+    rivo : xarray.DataArray
+        Daily streamflow data.
     freq : str
         Resampling frequency.
 
@@ -940,15 +942,15 @@ def sen_slope(q: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArray,
         p_vals = out.isel(var=1)
         return sen_slope, p_vals
 
-    sen_slope, p_value = _mann_kendall(q, freq)
+    sen_slope, p_value = _mann_kendall(rivo, freq)
     sen_slope.attrs["units"] = ""
     p_value.attrs["units"] = ""
     return sen_slope, p_value
 
 
-@declare_units(q="[discharge]", qsim="[discharge]")
+@declare_units(rivo="[discharge]", rivosim="[discharge]")
 def sen_slope_ratio(
-    q: xarray.Dataset, qsim: xarray.DataArray, freq: Freq = "YS"
+    rivo: xarray.Dataset, rivosim: xarray.DataArray, freq: Freq = "YS"
 ) -> tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray, xarray.DataArray, xarray.DataArray]:
     """
     Temporal robustness analysis of streamflow.
@@ -958,9 +960,9 @@ def sen_slope_ratio(
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Observed streamflow vector.
-    qsim : xarray.DataArray, optional
+    rivosim : xarray.DataArray, optional
         Simulated streamflow vector.
     freq : str
         Resampling frequency.
@@ -986,17 +988,17 @@ def sen_slope_ratio(
     ----------
     :cite:cts:`sauquet_2025`
     """
-    sen_slope_obs, p_value = sen_slope(q, freq)
-    sen_slope_sim, p_value_sim = sen_slope(qsim, freq)
+    sen_slope_obs, p_value = sen_slope(rivo, freq)
+    sen_slope_sim, p_value_sim = sen_slope(rivosim, freq)
     sen_slope_sim = sen_slope_sim
     p_value_sim = p_value_sim
     ratio = (sen_slope_obs / sen_slope_sim).assign_attrs({"units": ""})
     return sen_slope_obs, p_value, sen_slope_sim, p_value_sim, ratio
 
 
-@declare_units(q="[discharge]")
+@declare_units(rivo="[discharge]")
 def base_flow_index_seasonal_ratio(
-    q: xarray.DataArray, freq: Freq = "QS-DEC", numerator: str = "DJF", denominator: str = "JJA"
+    rivo: xarray.DataArray, freq: Freq = "QS-DEC", numerator: str = "DJF", denominator: str = "JJA"
 ) -> tuple[DataArray, DataArray, DataArray, DataArray, DataArray]:
     """
     Seasonal Base flow index (bfi) and ratio of winter to summer base flow index.
@@ -1006,7 +1008,7 @@ def base_flow_index_seasonal_ratio(
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Rate of river discharge.
     freq : str
         Resampling frequency.
@@ -1032,7 +1034,7 @@ def base_flow_index_seasonal_ratio(
     :cite:cts:`singh_2019`
     :cite:cts:`jaffres_2021`
     """
-    bfi = split_time_to_season_year(base_flow_index(q, freq), freq)
+    bfi = split_time_to_season_year(base_flow_index(rivo, freq), freq)
     den = bfi.sel(season=denominator)
     ratio = bfi.sel(season=numerator) / den.where(den > 0)
     ratio = ratio.assign_attrs({"units": "", "denominator": denominator, "numerator": numerator})
