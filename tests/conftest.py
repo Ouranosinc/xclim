@@ -181,7 +181,7 @@ def qspec_series():
 
 
 @pytest.fixture
-def ndq_series(random):
+def ndrivo_series(random):
     nx, ny, nt = 2, 3, 5000
     x = np.arange(0, nx)
     y = np.arange(0, ny)

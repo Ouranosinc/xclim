@@ -9,22 +9,22 @@ import xarray as xr
 from xclim import land
 
 
-def test_base_flow_index(ndq_series):
-    out = land.base_flow_index(ndq_series, freq="YS")
+def test_base_flow_index(ndrivo_series):
+    out = land.base_flow_index(ndrivo_series, freq="YS")
 
     assert out.attrs["units"] == "1"
     assert isinstance(out, xr.DataArray)
 
 
-def test_rb_flashiness_index(ndq_series):
-    out = land.base_flow_index(ndq_series, freq="YS")
+def test_rb_flashiness_index(ndrivo_series):
+    out = land.base_flow_index(ndrivo_series, freq="YS")
 
     assert out.attrs["units"] == "1"
     assert isinstance(out, xr.DataArray)
 
 
-def test_qdoy_max(ndq_series, rivo_series):
-    out = land.doy_qmax(ndq_series, freq="YS", season="JJA")
+def test_rivo_max_doy(ndrivo_series, rivo_series):
+    out = land.rivo_max_doy(ndrivo_series, freq="YS", season="JJA")
     assert out.attrs["units"] == "1"
 
     a = np.ones(450)
@@ -72,9 +72,9 @@ def test_snw_storm_days(snw_series):
 def test_flow_index(rivo_series):
     a = np.ones(365 * 2) * 10
     a[10:50] = 50
-    q = rivo_series(a)
+    rivo = rivo_series(a)
 
-    out = land.flow_index(q, p=0.95)
+    out = land.flow_index(rivo, q=0.95)
     np.testing.assert_array_equal(out, 5)
 
 
