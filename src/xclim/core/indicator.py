@@ -233,7 +233,14 @@ class Output(dict):  # numpydoc ignore=PR01
     units_metadata: str | None
     """Additional CF metadata for the units."""
 
-    def __init__(self, var_name: str | None = None, dimensionality: str | None = None, units: str | None = None, units_metadata: str | None = None, **kwargs):
+    def __init__(
+        self,
+        var_name: str | None = None,
+        dimensionality: str | None = None,
+        units: str | None = None,
+        units_metadata: str | None = None,
+        **kwargs,
+    ):
         """
         Create an output attributes dictionary.
 
@@ -968,7 +975,9 @@ class IndicatorBase(IndexWrapper):
         """
         return outs, meta
 
-    def _finalize(self, outs: list[DataArray], das: dict[str, DataArray], params: dict[str, Any], meta: dict[str, Any]) -> Any:
+    def _finalize(
+        self, outs: list[DataArray], das: dict[str, DataArray], params: dict[str, Any], meta: dict[str, Any]
+    ) -> Any:
         """
         Finalize the computation.
 

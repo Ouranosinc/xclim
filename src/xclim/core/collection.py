@@ -136,7 +136,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         name: str | None = None,
         computes: dict[str, Callable] | ModuleType | PathLike | None = None,
         translations: dict[str, dict | PathLike] | None = None,
-        mode: Literal["raise", "warn", "ignore"] = "raise",
+        mode: Literal["raise", warn, ignore] = "raise",
         encoding: str = "UTF8",
         validate: bool | PathLike = True,
     ):
