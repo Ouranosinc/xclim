@@ -1168,6 +1168,10 @@ def resample_map(
     """
     resample_kwargs = resample_kwargs or {}
     map_kwargs = map_kwargs or {}
+    if freq is None:
+        # necessary for using resample_before_rl
+        args = map_kwargs.pop("args", [])
+        return func(obj, *args, **map_kwargs)
     if map_blocks == "from_context":
         map_blocks = OPTIONS[MAP_BLOCKS]
 

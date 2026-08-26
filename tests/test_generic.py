@@ -26,6 +26,11 @@ class TestStatistics:
         o = generic.statistics(q, "count", freq="YS-DEC", season="DJF")
         assert o[0] == 31 + 29
 
+    def test_noresampling(self, q_series):
+        q = q_series(np.arange(1000))
+        o = generic.statistics(q, "count", freq=None)
+        assert o == 1000
+
 
 class TestRunningStatistics:
     def test_rollingmax(self, q_series):
@@ -65,6 +70,14 @@ class TestRunningStatistics:
             ],  # m3 s-1 being summed by the frequency of the data
             o.isel(time=slice(0, 2)).values,
         )
+        assert o.attrs["units"] == "m3"
+
+    def test_nofreq(self, q_series):
+        q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
+        o = generic.running_statistics(
+            q, statistic="max", window=3, window_center=True, window_statistic="integral", freq=None
+        )
+        np.testing.assert_array_equal(o, np.sum(q[-3:]) * 86400)
         assert o.attrs["units"] == "m3"
 
 
@@ -306,6 +319,26 @@ class TestDayThresholdReached:
 
     @pytest.mark.parametrize(
         "op, expected",
+        [(">", 6), (">=", 5), ("==", 5), ("!=", 1)],
+    )
+    def test_generic_precip_above_noresampling(self, pr_series, op, expected):
+        a = np.zeros(365)
+        a[:8] = np.arange(8) / 1000
+        pr = pr_series(a, start="1/1/2000")
+
+        fda = generic.day_threshold_reached(
+            pr,
+            thresh="0.004 kg m-2 s-1",
+            condition=op,
+            which="first",
+            date="01-01",
+            window=1,
+            freq=None,
+        )
+        assert fda == expected
+
+    @pytest.mark.parametrize(
+        "op, expected",
         [("lt", 5), ("le", 4), ("eq", 4), ("ne", 1)],
     )
     def test_generic_precip_below(self, pr_series, op, expected):
@@ -395,6 +428,22 @@ class TestGenericCountingIndices:
                 generic.count_occurrences(tas, thresh="4 degC", freq="YS", condition=op, constrain=constrain)
         else:
             occurrences = generic.count_occurrences(tas, thresh="4 degC", freq="YS", condition=op, constrain=constrain)
+            np.testing.assert_array_equal(occurrences, [expected])
+
+    @pytest.mark.parametrize(
+        "op, constrain, expected",
+        [
+            ("<", ("!=", "<"), 4),
+        ],
+    )
+    def test_count_occurrences_noresampling(self, tas_series, op, constrain, expected, should_fail):
+        tas = tas_series(np.arange(10) + K2C)
+
+        if should_fail:
+            with pytest.raises(ValueError):
+                generic.count_occurrences(tas, thresh="4 degC", freq=None, condition=op, constrain=constrain)
+        else:
+            occurrences = generic.count_occurrences(tas, thresh="4 degC", freq=None, condition=op, constrain=constrain)
             np.testing.assert_array_equal(occurrences, [expected])
 
     @pytest.mark.parametrize(
@@ -705,6 +754,20 @@ class TestSpellLengthStatistics:
         )
         np.testing.assert_allclose(out, [[34], [4]])
 
+    def test_spell_length_statistics_quantified_noresampling(self, tasmin_series):
+        tn = tasmin_series(np.arange(365 + 1) + K2C, start="2001-01-01").expand_dims(site=[0, 1])
+        thresh = xr.DataArray([330, 360], dims=("site",), coords={"site": tn.site}, attrs={"units": "°C"})
+        out = generic.spell_length_statistics(
+            tn,
+            window=1,
+            window_statistic="min",
+            condition=">",
+            thresh=thresh,
+            statistic="sum",
+            freq=None,
+        )
+        np.testing.assert_allclose(out, [34 + 1, 4 + 1])
+
     def test_spell_length_statistics_multi(self, tasmin_series, tasmax_series):
         tn = tasmin_series(
             np.zeros(
@@ -785,8 +848,16 @@ class TestSpellLengthStatistics:
         ).load()
         assert hsf[1] == expected
 
-    @pytest.mark.parametrize("resample_map", [True, False])
-    def test_resampling_map(self, tasmax_series, resample_map):
+    @pytest.mark.parametrize(
+        "resample_map, freq, expected",
+        [
+            (True, "MS", 1),
+            (False, "MS", 1),
+            (True, None, 1),
+            (False, None, 1),
+        ],
+    )
+    def test_resampling_map(self, tasmax_series, resample_map, freq, expected):
         pytest.importorskip("flox")
         a = np.zeros(365)
         a[5:35] = 31
@@ -800,10 +871,11 @@ class TestSpellLengthStatistics:
                 condition=">",
                 thresh="30 °C",
                 statistic="count",
-                freq="MS",
+                freq=freq,
                 resample_before_rl=True,
             ).load()
-        assert hsf[1] == 1
+        out = hsf[1] if freq is not None else hsf.values.item()
+        assert out == expected
 
     # imported from dry_spell_frequency
     @pytest.mark.parametrize(
@@ -1097,11 +1169,25 @@ class TestInterdayDifferenceStatistics:
         np.testing.assert_almost_equal(dtr, 2.667, decimal=3)
         assert dtr.units_metadata == "temperature: difference"
 
+    def test_static_variable_daily_temperature_range_noresampling(self, tasmin_series, tasmax_series):
+        tasmin, tasmax = static_tmin_tmax_setup(tasmin_series, tasmax_series)
+        dtr = generic.interday_difference_statistics(tasmin, tasmax, statistic="mean", freq=None)
+
+        np.testing.assert_almost_equal(dtr, 2.667, decimal=3)
+        assert dtr.units_metadata == "temperature: difference"
+
 
 class TestExtremeRange:
     def test_static_extreme_temperature_range(self, tasmin_series, tasmax_series):
         tasmin, tasmax = static_tmin_tmax_setup(tasmin_series, tasmax_series)
         etr = generic.extreme_range(tasmin, tasmax, freq="YS")
+
+        np.testing.assert_array_almost_equal(etr, 31.7)
+        assert etr.units_metadata == "temperature: difference"
+
+    def test_static_extreme_temperature_range_noresampling(self, tasmin_series, tasmax_series):
+        tasmin, tasmax = static_tmin_tmax_setup(tasmin_series, tasmax_series)
+        etr = generic.extreme_range(tasmin, tasmax, freq=None)
 
         np.testing.assert_array_almost_equal(etr, 31.7)
         assert etr.units_metadata == "temperature: difference"
