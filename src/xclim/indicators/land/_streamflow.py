@@ -26,13 +26,13 @@ from xclim.core.indicator import (
 __all__ = [
     "base_flow_index",
     "base_flow_index_seasonal_ratio",
-    "doy_rivomax",
-    "doy_rivomin",
     "flow_index",
     "high_flow_frequency",
     "lag_snowpack_flow_peaks",
     "low_flow_frequency",
     "rb_flashiness_index",
+    "rivo_max_doy",
+    "rivo_min_doy",
     "runoff_ratio",
     "sen_slope",
     "standardized_groundwater_index",
@@ -79,10 +79,10 @@ rb_flashiness_index = Streamflow(
 )
 
 
-doy_rivomax = Streamflow(
+rivo_max_doy = Streamflow(
     title="Day of year of the maximum streamflow",
-    identifier="doy_rivomax",
-    var_name="doy_rivomax",
+    identifier="rivo_max_doy",
+    var_name="rivo_max_doy",
     long_name="Day of the year of the maximum streamflow over {indexer}",
     description="Day of the year of the maximum streamflow over {indexer}.",
     units="",
@@ -92,10 +92,10 @@ doy_rivomax = Streamflow(
 )
 
 
-doy_rivomin = Streamflow(
+rivo_min_doy = Streamflow(
     title="Day of year of the minimum streamflow",
-    identifier="doy_rivomin",
-    var_name="doy_rivomin",
+    identifier="rivo_min_doy",
+    var_name="rivo_min_doy",
     long_name="Day of the year of the minimum streamflow over {indexer}",
     description="Day of the year of the minimum streamflow over {indexer}.",
     units="",
