@@ -436,15 +436,11 @@ class TestGenericCountingIndices:
             ("<", ("!=", "<"), 4),
         ],
     )
-    def test_count_occurrences_noresampling(self, tas_series, op, constrain, expected, should_fail):
+    def test_count_occurrences_noresampling(self, tas_series, op, constrain, expected):
         tas = tas_series(np.arange(10) + K2C)
 
-        if should_fail:
-            with pytest.raises(ValueError):
-                generic.count_occurrences(tas, thresh="4 degC", freq=None, condition=op, constrain=constrain)
-        else:
-            occurrences = generic.count_occurrences(tas, thresh="4 degC", freq=None, condition=op, constrain=constrain)
-            np.testing.assert_array_equal(occurrences, [expected])
+        occurrences = generic.count_occurrences(tas, thresh="4 degC", freq=None, condition=op, constrain=constrain)
+        np.testing.assert_array_equal(occurrences, [expected])
 
     @pytest.mark.parametrize(
         "op, constrain, expected, should_fail",
