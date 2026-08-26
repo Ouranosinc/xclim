@@ -80,7 +80,6 @@ def base_flow_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArr
 
        \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
     """
-    # TODO: Could be refactored with generic.select_rolling_resample_op, but `skipa=False` cannot be passed right now.
     m7 = rivo.rolling(time=7, center=True).mean(skipna=False).resample(time=freq)
     mq = rivo.resample(time=freq)
 
