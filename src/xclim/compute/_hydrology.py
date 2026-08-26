@@ -905,7 +905,6 @@ def sen_slope(q: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArray,
     -------
     sen_slope : xarray.DataArray, [dimensionless]
         Sen's slope estimates.
-
     p_value : xarray.DataArray, [dimensionless]
         Mann-Kendall metric indicating slope tendency.
 

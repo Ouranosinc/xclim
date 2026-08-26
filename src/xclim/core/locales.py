@@ -229,7 +229,7 @@ def get_local_formatter(
         mods = attrs_mapping.pop("modifiers")
         return AttrFormatter(attrs_mapping, mods)
 
-    warnings.warn(f"No `attrs_mapping` entry found for locale {loc_name}, using default (english) formatter.")
+    warnings.warn(f"No `attrs_mapping` entry found for locale {loc_name}, using default (English) formatter.")
     return default_formatter
 
 

@@ -137,12 +137,12 @@ class InputKind(IntEnum):
     """
     Constants for input parameter kinds.
 
-    For use by external parses to determine what kind of data the indicator expects.
+    For use by external parsers to determine what kind of data the indicator expects.
     On the creation of an indicator, the appropriate constant is stored in
     :py:attr:`xclim.core.indicator.Indicator.parameters`. The integer value is what gets stored in the output
     of :py:meth:`xclim.core.indicator.Indicator.json`.
 
-    For developers : for each constant, the docstring specifies the annotation a parameter of a compute function
+    For developers: For each constant, the docstring specifies the annotation a parameter of a compute function
     should use in order to be picked up by the indicator constructor. Notice that we are using the annotation format
     as described in `PEP 604 <https://peps.python.org/pep-0604/>`_, i.e. with '|' indicating a union and without import
     objects from `typing`.

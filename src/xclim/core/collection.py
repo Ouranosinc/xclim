@@ -136,7 +136,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         name: str | None = None,
         computes: dict[str, Callable] | ModuleType | PathLike | None = None,
         translations: dict[str, dict | PathLike] | None = None,
-        mode: str = "raise",
+        mode: Literal["raise", "warn", "ignore"] = "raise",
         encoding: str = "UTF8",
         validate: bool | PathLike = True,
     ):
@@ -169,7 +169,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         encoding : str
             The encoding used to open the `.yaml` and `.json` files.
             It defaults to UTF-8, overriding python's mechanism which is machine dependent.
-        validate : bool or path
+        validate : bool or PathLike
             If True (default), the yaml module is validated against the `xclim` schema.
             Can also be the path to a YAML schema against which to validate;
             Or False, in which case validation is simply skipped.

@@ -177,13 +177,13 @@ class Parameter:
                 out[field] = str(getattr(self, field))
         return out
 
-    def _gen_doc(self, name: str = None) -> str:
+    def _gen_doc(self, name: str | None = None) -> str:
         """
         Generate an item of a numpydoc style Parameters section for this parameter.
 
         Parameters
         ----------
-        name: str, optional
+        name : str, optional
             A new name for this parameter if it was overridden from the "compute_name".
 
         Returns
@@ -205,7 +205,7 @@ class Parameter:
 
         return f"{name or self.compute_name} : {annot}\n {self.description}{default}{unit}"
 
-    def _gen_signature(self, name: str = None) -> inspect.Parameter:
+    def _gen_signature(self, name: str | None = None) -> inspect.Parameter:
         """Generate a :py:class:`inspect.Parameter` object from this Parameter."""
         name = name or self.compute_name
         if self.kind == InputKind.KWARGS:
@@ -233,7 +233,7 @@ class Output(dict):  # numpydoc ignore=PR01
     units_metadata: str | None
     """Additional CF metadata for the units."""
 
-    def __init__(self, var_name=None, dimensionality=None, units=None, units_metadata=None, **kwargs):
+    def __init__(self, var_name: str | None = None, dimensionality: str | None = None, units: str | None = None, units_metadata: str | None = None, **kwargs):
         """
         Create an output attributes dictionary.
 
@@ -241,7 +241,7 @@ class Output(dict):  # numpydoc ignore=PR01
         ----------
         var_name : str, optional
             The name of the output variable.
-        dimensionality, str, optional
+        dimensionality : str, optional
             A pint-like dimensionality string. This is not added to the attribute dictionary
             This field is a human-readable indication for documenting the output.
         units : str, optional
@@ -613,8 +613,8 @@ class IndicatorBase(IndexWrapper):
         if "compute" in kwds:
             if cls.compute is not IndexWrapper.compute:
                 raise TypeError(
-                    "Can't change the compute function of an indicator, create from a base class instead."
-                    f" Indicator {identifier} got {kwds['compute']} but already has {cls.compute}"
+                    "Can't change the compute function of an indicator, create from a base class instead. "
+                    f"Indicator {identifier} got {kwds['compute']} but already has {cls.compute}."
                 )
             # Create a new subclass, using IndexWrapper's parsing
             # Python doesn't have a hook purely for class creation, so we cheat by creating a transitory instance
@@ -879,7 +879,7 @@ class IndicatorBase(IndexWrapper):
     def _parse_arguments(self, kwargs):
         """Extract variable and optional variables from call arguments."""
         # Extract variables + inject injected
-        das = dict()
+        das = {}
         params = kwargs.copy()
         for name, param in self._all_parameters.items():
             if not param.injected:
@@ -968,7 +968,7 @@ class IndicatorBase(IndexWrapper):
         """
         return outs, meta
 
-    def _finalize(self, outs: list[DataArray], das: dict[str, DataArray], params: dict[str, Any], meta: dict[str, Any]):
+    def _finalize(self, outs: list[DataArray], das: dict[str, DataArray], params: dict[str, Any], meta: dict[str, Any]) -> Any:
         """
         Finalize the computation.
 
@@ -1196,7 +1196,7 @@ class _MetadataFormatter(_DataTreeIterator):
         attrs : Output or dict[str, str]
             The attributes to format and update. All will be formatted except `units` or `units_metadata`,
             which were already handled at computation time.
-        fmtargs: dict[str, Any]
+        fmtargs : dict[str, Any]
             Arguments to the formatter, as given by :py:meth:`MetadataFormatter._get_formatter_args`.
         meta : dict, optional
             A dictionary of things subclasses can populate and use.
@@ -1316,9 +1316,9 @@ class _DeprecationWarner(_LocaleMetadataFormatter):
             else:
                 vv = self._version_deprecated
             warnings.warn(
-                f"`{self.title}` is deprecated as of `xclim` v{vv} and will be removed in a future release."
+                f"`{self.title}` is deprecated as of `xclim` v{vv} and will be removed in a future release. "
                 f"{alternative} See the `xclim` release notes for more information: "
-                "https://xclim.readthedocs.io/en/stable/history.html",
+                "https://xclim.readthedocs.io/en/stable/changelog.html",
                 FutureWarning,
                 stacklevel=3,
             )
@@ -1560,14 +1560,14 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
             or dictionaries of properties to override the ones parsed from the docstring.
             See :py:class:`~xclim.core.indicator.Parameter` for valid properties. Additionally,
             `name` can be passed to change the name of the argument in the call signature.
-        attrs : list of dicts
+        attrs : list of dict
             Attributes to be formatted and added to the computation's output.
             Any attribute are accepted, but `var_name` is required for multi-output indicators.
             The list must be the same length as the number of outputs of the compute function.
         context : str
             A `pint` unit context enabled during the computation of this indicator.
             For example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day' for all inputs an outputs.
-        src_freq : str, sequence of strings, optional
+        src_freq : str or sequence of str, optional
             The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
         **attrs_kwargs
             For convenience, output attributes can also be passed by name to the constructor.
