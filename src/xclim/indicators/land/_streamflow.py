@@ -112,7 +112,7 @@ flow_index = ReducingIndicator(
     identifier="flow_index",
     var_name="q_flow_index",
     long_name="Flow index",
-    description="{p}th percentile normalized by the median flow.",
+    description="{q}th quantile normalized by the median flow.",
     units="1",
     compute=flow_index,
 )
@@ -201,7 +201,7 @@ lag_snowpack_flow_peaks = Streamflow(
     units="days",
     long_name="Time lag between maximum snowpack and river high flows",
     description="Number of days between the annual maximum snowpack, measured by the snow water"
-    "equivalent, and the mean date when river flow exceeds a percentile threshold"
+    "equivalent, and the mean date when river flow exceeds a quantile threshold"
     "during a given year.",
     cell_methods="",
     keywords="streamflow, snw",

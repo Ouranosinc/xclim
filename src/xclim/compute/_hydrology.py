@@ -573,29 +573,29 @@ def standardized_groundwater_index(
 
 
 @declare_units(rivo="[discharge]")
-def flow_index(rivo: xarray.DataArray, p: float = 0.95) -> xarray.DataArray:
+def flow_index(rivo: xarray.DataArray, q: float = 0.95) -> xarray.DataArray:
     """
     Flow index.
 
-    Calculate the pth percentile of daily streamflow normalized by the median flow.
+    Calculate the qth quantile of daily streamflow normalized by the median flow.
 
     Parameters
     ----------
     rivo : xarray.DataArray
         Daily streamflow data.
-    p : float
-        Percentile for calculating the flow index, between 0 and 1. Default of 0.95 is for high flows.
+    q : float
+        Quantile for calculating the flow index, between 0 and 1. Default of 0.95 is for high flows.
 
     Returns
     -------
     xarray.DataArray
-        Normalized Qp, which is the p th percentile of daily streamflow normalized by the median flow.
+        Normalized rivoq, which is the qth quantile of daily streamflow normalized by the median flow.
 
     References
     ----------
     :cite:cts:`Clausen2000`
     """
-    qp = rivo.quantile(p, dim="time")
+    qp = rivo.quantile(q, dim="time")
     q_median = rivo.median(dim="time")
     out = qp / q_median
     out.attrs["units"] = "1"
@@ -826,13 +826,13 @@ def lag_snowpack_flow_peaks(
     snw: xarray.DataArray,
     rivo: xarray.DataArray,
     freq: Freq = "YS-OCT",
-    p: float = 0.9,
+    q: float = 0.9,
 ) -> xarray.DataArray:
     """
     Time lag between maximum snowpack and river high flows.
 
     Number of days between the annual maximum snowpack, measured by the surface snow
-    amount, and the mean date when river flow exceeds a percentile threshold
+    amount, and the mean date when river flow exceeds a quantile threshold
     during a given year.
     If the time lag between maximum snowpack and river high flows is ≤ 50 days,
     the watershed is likely in a nival regime.
@@ -845,8 +845,8 @@ def lag_snowpack_flow_peaks(
         Daily streamflow data.
     freq : str
         Resampling frequency. Defaults to the water year starting on the 1st of October.
-    p : float
-        Percentile for calculating the flow index, between 0 and 1. Default of 0.9 is for high flows.
+    q : float
+        Quantile for calculating the flow index, between 0 and 1. Default of 0.9 is for high flows.
 
     Returns
     -------
@@ -877,12 +877,12 @@ def lag_snowpack_flow_peaks(
     # Convert to float, and ensure a NaT gets converted to a nan
     dt_snw_max = xarray.where(dt_snw_max.isnull(), np.nan, dt_snw_max.astype("timedelta64[s]").astype(float))
 
-    def _mean_timedelta_over_perc(q, p, t0):
-        dt_q = (q.time - t0).astype("timedelta64[s]").astype(float)
-        thresh = q.quantile(q=p, dim="time")
-        return dt_q.where(q >= thresh).mean(dim="time")
+    def _mean_timedelta_over_perc(rivo, q, t0):
+        dt_q = (rivo.time - t0).astype("timedelta64[s]").astype(float)
+        thresh = rivo.quantile(q=q, dim="time")
+        return dt_q.where(rivo >= thresh).mean(dim="time")
 
-    dt_high_q = resample_map(rivo, "time", freq, _mean_timedelta_over_perc, map_kwargs={"p": p, "t0": t0})
+    dt_high_q = resample_map(rivo, "time", freq, _mean_timedelta_over_perc, map_kwargs={"q": q, "t0": t0})
 
     lag = (dt_high_q - dt_snw_max) / (86400)
     lag.attrs["units"] = "days"
