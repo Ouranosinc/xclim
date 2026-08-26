@@ -229,7 +229,7 @@ def standardized_streamflow_index(
     ...     dist="genextreme",
     ...     method="ML",
     ... )  # First getting params
-    >>> ssi_3 = standardized_streamflow_index(q, params=params)
+    >>> ssi_3 = standardized_streamflow_index(rivo, params=params)
     """
     fitkwargs = fitkwargs or {}
     dist_methods = {
