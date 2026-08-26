@@ -471,7 +471,7 @@ def bivariate_count_occurrences(
 
 def count_percentile_occurrences(
     data: xr.DataArray,
-    percentile: float,
+    per: float,
     condition: Condition,
     reference_period: TimeRange,
     freq: Freq | None,
@@ -492,7 +492,7 @@ def count_percentile_occurrences(
     ----------
     data : xr.DataArray
         An array. Should have a daily step.
-    percentile : float
+    per : float
         The percentile to compute on the reference period, between 0 and 100.
     condition :  {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical comparison operator. Computed as  ``data[i] {condition} climatology[doy(i)]``.
@@ -519,9 +519,9 @@ def count_percentile_occurrences(
     Returns
     -------
     xr.DataArray
-        Number of timesteps where data is {condition} the {percentile}th percentile computed over {reference_period}.
+        Number of timesteps where data is {condition} the {per}th percentile computed over {reference_period}.
     """
-    clim = percentile_doy(data.sel(time=slice(*reference_period)), window=window, per=percentile)
+    clim = percentile_doy(data.sel(time=slice(*reference_period)), window=window, per=per)
     data = select_time(data, **indexer)
 
     @percentile_bootstrap
@@ -539,7 +539,7 @@ def count_thresholded_percentile_occurrences(
     data: xr.DataArray,
     data_condition: Condition,
     thresh: Quantified,
-    percentile: float,
+    per: float,
     condition: Condition,
     reference_period: TimeRange,
     freq: Freq | None,
@@ -565,7 +565,7 @@ def count_thresholded_percentile_occurrences(
         Logical comparison operator to filter data with threshold.
     thresh : Quantified
         Threshold for the ``data_condition``.
-    percentile : float
+    per : float
         The percentile to compute on the reference period, between 0 and 100.
     condition :  {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical comparison operator to find occurrences. Computed as  ``data[i] {condition} climatology[doy(i)]``.
@@ -592,14 +592,14 @@ def count_thresholded_percentile_occurrences(
     Returns
     -------
     xr.DataArray
-        Number of timesteps where data is {condition} the {percentile}th percentile computed over {reference_period}.
+        Number of timesteps where data is {condition} the {per}th percentile computed over {reference_period}.
         Only data {data_condition} {thresh} is considered.
     """
     thresh = convert_units_to(thresh, data, context="infer")
     data = data.where(compare(data, data_condition, thresh, constrain))
     return count_percentile_occurrences(
         data,
-        percentile,
+        per,
         condition=condition,
         freq=freq,
         reference_period=reference_period,
@@ -1116,7 +1116,7 @@ def interday_difference_statistics(
     return statistics(vdtr, statistic=statistic, freq=freq, **indexer)
 
 
-def percentile(data: xr.DataArray, percentile: float, freq: Freq | None, **indexer):
+def percentile(data: xr.DataArray, per: float, freq: Freq | None, **indexer):
     """
     Calculate the percentile statistic for each requested period.
 
@@ -1124,7 +1124,7 @@ def percentile(data: xr.DataArray, percentile: float, freq: Freq | None, **index
     ----------
     data : xr.DataArray
         An array.
-    percentile : float
+    per : float
         A percentile (0, 100).
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
@@ -1135,9 +1135,9 @@ def percentile(data: xr.DataArray, percentile: float, freq: Freq | None, **index
     Returns
     -------
     xr.DataArray, [same as data]
-        {percentile}th percentile of the data.
+        {per}th percentile of the data.
     """
-    q = percentile / 100
+    q = per / 100
     data = select_time(data, **indexer)
     out = resample_map(data, "time", freq, "quantile", map_kwargs={"q": q, "dim": "time"}).drop_vars("quantile")
     out.attrs["units"] = data.attrs["units"]
@@ -1149,7 +1149,7 @@ def thresholded_percentile(
     data: xr.DataArray,
     condition: Condition,
     thresh: Quantified,
-    percentile: float,
+    per: float,
     freq: Freq | None,
     constrain: Sequence[Condition] | None = None,
     **indexer,
@@ -1165,7 +1165,7 @@ def thresholded_percentile(
         Logical comparison operator. Calculated as ``data {condition} thresh``.
     thresh : Quantified
         Threshold.
-    percentile : float
+    per : float
         A percentile (0, 100).
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
@@ -1178,12 +1178,12 @@ def thresholded_percentile(
     Returns
     -------
     xr.DataArray
-        {percentile}th percentile of the data where it is {condition} {thresh}.
+        {per}th percentile of the data where it is {condition} {thresh}.
     """
     thresh = convert_units_to(thresh, data, context="infer")
     cond = compare(data, condition, thresh, constrain)
     # FIXME: Call signature variable shadows existing function name
-    return percentile(data.where(cond), percentile, freq, **indexer)  # ty: ignore[call-non-callable]
+    return per(data.where(cond), per, freq, **indexer)  # ty: ignore[call-non-callable]
 
 
 def statistics_between_dates(
