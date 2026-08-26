@@ -1138,7 +1138,7 @@ def percentile(data: xr.DataArray, percentile: float, freq: Freq | None, **index
     """
     q = percentile / 100
     data = select_time(data, **indexer)
-    out = resample_map(data, "time", freq, lambda da: da.quantile, map_kwargs={"q": q}).drop_vars("quantile")
+    out = resample_map(data, "time", freq, "quantile", map_kwargs={"q": q, "dim": "time"}).drop_vars("quantile")
     out.attrs["units"] = data.attrs["units"]
     return out
 

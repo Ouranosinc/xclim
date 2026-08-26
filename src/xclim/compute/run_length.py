@@ -425,7 +425,7 @@ def windowed_run_events(
         else:
             d = rle(da, dim=dim, index=index)
             d = xr.where(d >= window, 1, 0)
-        out = resample_map(d, dim, freq, lambda da: da.sum(dim=dim))
+        out = resample_map(d, dim, freq, "sum", map_kwargs={"dim": dim})
     return out
 
 
@@ -476,7 +476,7 @@ def windowed_run_count(
     else:
         d = rle(da, dim=dim, index=index)
         d = d.where(d >= window, 0)
-        out = resample_map(d, dim, freq, lambda da: da.sum(dim=dim))
+        out = resample_map(d, dim, freq, "sum", map_kwargs={"dim": dim})
 
     return out
 
@@ -526,8 +526,7 @@ def windowed_max_run_sum(
         d_rle = rle(da > 0, dim=dim, index=index)
 
         d = d_rse.where(d_rle >= window, 0)
-        out = resample_map(d, dim, freq, lambda da: da.max(dim=dim))
-
+        out = resample_map(d, dim, freq, "max", map_kwargs={"dim": dim})
     return out
 
 
