@@ -525,9 +525,10 @@ def count_percentile_occurrences(
     data = select_time(data, **indexer)
 
     @percentile_bootstrap
-    def _count_percentile_occurrences(data, per, freq, bootstrap, condition):
+    def _count_percentile_occurrences(data, per, freq, bootstrap, op):
         thresh = resample_doy(clim, data)
-        out = thresholded_statistics(data, condition, thresh, "sum", freq, constrain)
+        cond = compare(data, op, thresh, constrain)
+        out = resample_map(cond, "time", freq, "sum", map_kwargs={"dim": "time"})
         return to_agg_units(out, data, "count", dim="time")
 
     return _count_percentile_occurrences(data, clim, freq, bootstrap, condition)
