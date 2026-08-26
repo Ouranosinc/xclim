@@ -331,8 +331,8 @@ def count_occurrences(
         Number of timesteps where data {condition} {thresh}.
     """
     thresh = convert_units_to(thresh, data, context="infer")
-    cond = compare(select_time(data, **indexer), condition, thresh, constrain) * 1
-    out = statistics(cond, "sum", freq)
+    cond = compare(select_time(data, **indexer), condition, thresh, constrain)
+    out = resample_map(cond, "time", freq, "sum", map_kwargs={"dim": "time"})
     return to_agg_units(out, data, "count")
 
 
@@ -384,7 +384,7 @@ def count_domain_occurrences(
         & compare(data, high_condition, high, constrain=("<", "<="))
     ) * 1
     cond = select_time(cond, **indexer)
-    out = statistics(cond, "sum", freq)
+    out = resample_map(cond, "time", freq, "sum", map_kwargs={"dim": "time"})
     return to_agg_units(out, data, "count")
 
 
@@ -464,9 +464,8 @@ def bivariate_count_occurrences(
         cond = cond1 | cond2
     else:
         raise ValueError(f"Unsupported value for var_reducer: {var_reducer}")
-
     cond = select_time(cond, **indexer)
-    out = statistics(cond, "sum", freq)
+    out = resample_map(cond, "time", freq, "sum", map_kwargs={"dim": "time"})
     return to_agg_units(out, data1, "count", dim="time")
 
 
@@ -1063,8 +1062,10 @@ def extreme_range(data1: xr.DataArray, data2: xr.DataArray, freq: Freq, **indexe
         The DataArray for the extreme temperature range.
     """
     data2 = convert_units_to(data2, data1, context="infer")
-    out = statistics(data2, statistic="max", freq=freq, **indexer) - statistics(
-        data1, statistic="min", freq=freq, **indexer
+    data2 = select_time(data2, **indexer)
+    data1 = select_time(data1, **indexer)
+    out = resample_map(data2, "time", freq, "max", map_kwargs={"dim": "time"}) - resample_map(
+        data1, "time", freq, "min", map_kwargs={"dim": "time"}
     )
     u = str2pint(data1.units)
     out.attrs.update(pint2cfattrs(u, is_difference=True))

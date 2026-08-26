@@ -23,6 +23,8 @@ from packaging.version import Version
 from xarray import CFTimeIndex
 from xarray import __version__ as __xr_version__
 
+from xclim.compute.reducers import XCLIM_OPS
+
 if Version(__xr_version__) >= Version("24.9.0"):
     XR2409 = True
 else:
@@ -1131,7 +1133,7 @@ def resample_map(
     obj: DataType,
     dim: str,
     freq: Freq,
-    func: Callable,
+    func: Callable | str,
     map_blocks: bool | Literal["from_context"] = "from_context",
     resample_kwargs: dict | None = None,
     map_kwargs: dict | None = None,
@@ -1149,8 +1151,9 @@ def resample_map(
         Dimension over which to resample.
     freq : str
         Resampling frequency along `dim`.
-    func : callable
-        Function to map on each resampled group.
+    func : callable or str
+        Function to map on each resampled group. If a string is given, it is converted to a callable from
+        a given registry.
     map_blocks : bool or "from_context"
         If True, the resample().map() call is wrapped inside a `map_blocks`.
         If False, this does not do anything special.
@@ -1168,10 +1171,16 @@ def resample_map(
     """
     resample_kwargs = resample_kwargs or {}
     map_kwargs = map_kwargs or {}
+    if isinstance(func, str):
+        # Get function for xclim-implemented statistics
+        func = XCLIM_OPS.get(func, func)
+        func = func if not isinstance(func, str) else getattr(type(obj), func)
+
     if freq is None:
         # necessary for using resample_before_rl
         args = map_kwargs.pop("args", [])
         return func(obj, *args, **map_kwargs)
+
     if map_blocks == "from_context":
         map_blocks = OPTIONS[MAP_BLOCKS]
 
