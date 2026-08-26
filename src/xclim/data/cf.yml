@@ -711,7 +711,7 @@ indicators:
       data_threshold: 1 mm day-1
       freq:
         default: YS
-      percentile_condition: '>'
+      per_condition: '>'
       reference_period:
       - '1961'
       - '1990'
@@ -733,7 +733,7 @@ indicators:
       data_threshold: 1 mm day-1
       freq:
         default: YS
-      percentile_condition: '>'
+      per_condition: '>'
       reference_period:
       - '1961'
       - '1990'
@@ -756,7 +756,7 @@ indicators:
       data_threshold: 1 mm day-1
       freq:
         default: YS
-      percentile_condition: '>'
+      per_condition: '>'
       reference_period:
       - '1961'
       - '1990'
