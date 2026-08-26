@@ -1180,11 +1180,10 @@ def select_between_doys(
     doy_bounds : 2-tuple of optional integers or DataArray
         The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
         1 (January 1st) to 365 or 366 (December 31st).
-        If DataArrays are passed (not supported with 360-day calendar `da`), they must have the same coordinates
-        on the dimensions they share. They may have a time dimension, in which case the selection is done
-        independently for each period defined by the coordinate, which means the time coordinate must have an
-        inferable frequency (see :py:func:`xr.infer_freq`) or the frequency must be passed explicitly with the
-        `bounds_freq` argument.
+        If DataArrays are passed, they must have the same coordinates on the dimensions they share. They may
+        have a time dimension, in which case the selection is done independently for each period defined by the
+        coordinate, which means the time coordinate must have an inferable frequency (see :py:func:`xr.infer_freq`)
+        or the frequency must be passed explicitly with the `bounds_freq` argument.
         If None is passed as a bound, it is replaced by the start or end of the year (1 or 366) if the other
         bound is an integer, or by the start or end of the period defined by the inferred or passed frequency
         of DataArrays.
@@ -1339,11 +1338,10 @@ def select_time(
     doy_bounds : 2-tuple of optional integers or DataArray, optional
         The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
         1 (January 1st) to 365 or 366 (December 31st).
-        If DataArrays are passed (not supported with 360-day calendar `da`), they must have the same coordinates
-        on the dimensions they share. They may have a time dimension, in which case the selection is done
-        independently for each period defined by the coordinate, which means the time coordinate must have an
-        inferable frequency (see :py:func:`xr.infer_freq`) or the frequency must be passed explicitly with the
-        `bounds_freq` argument.
+        If DataArrays are passed, they must have the same coordinates on the dimensions they share. They may
+        have a time dimension, in which case the selection is done independently for each period defined by the
+        coordinate, which means the time coordinate must have an inferable frequency (see :py:func:`xr.infer_freq`)
+        or the frequency must be passed explicitly with the `bounds_freq` argument.
         If None is passed as a bound, it is replaced by the start or end of the year (1 or 366) if the other
         bound is an integer, or by the start or end of the period defined by the inferred or passed frequency
         of DataArrays.
@@ -1351,9 +1349,8 @@ def select_time(
         bounds".
     date_bounds : 2-tuple of optional strings, optional
         The bounds as (start, end) of the period of interest expressed as dates in the month-day (%m-%d) format.
-        If None is passed as a bounds (not supported for 360_day calendars), it is replaced by the start or end
-        of the period defined by the `bounds_freq` argument, corresponding to 1st January or 31st December for
-        default "YS" bounds frequency.
+        If None is passed as a bounds, it is replaced by the start or end of the period defined by the
+        `bounds_freq` argument, corresponding to 1st January or 31st December for default "YS" bounds frequency.
     include_bounds : bool or 2-tuple of bool, optional
         Whether the bounds of `doy_bounds` or `date_bounds` should be inclusive or not.
         Either one value for both or a tuple. Default is True, meaning bounds are inclusive.
