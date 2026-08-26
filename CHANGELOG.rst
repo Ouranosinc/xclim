@@ -43,7 +43,7 @@ Breaking changes
 * `pre-commit` has been replaced by `prek`. `prek` is a `pre-commit-config.yml` compatible reimplementation built in Rust. (:pull:`2355`).
 * Approximate method `APP` not allowed anymore when using the `genextreme` distribution for standardized indices (e.g. ``xclim.indicators.atmos.standardized_precipitation_index`` and similar indicators).
 * The output of ``xclim.compute.stats.parametric_cdf`` has a dimension `v` instead `cdf` (`cdf` more appropriately describes the output variable).
-* `q` has been changed to `rivo` in hydrological indicators (``xclim.indicators.land``). (:pull:`2407`)
+* `q` has been changed to `rivo` in hydrological indicators (``xclim.indicators.land``). (:issue:`2407`, :pull:`2408`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -56,7 +56,6 @@ Internal changes
 * The LaTeX formulas and tables of many indice docstrings were failing to render in ReadTheDocs due to small syntax typos. These have been addressed. (:pull:`2355`).
 * A page has been added to the documentation (`governance.rst`) that describes the method through which decisions concerning `xclim` are made as well as the responsibilities of maintainers. (:pull:`2391`).
 * The security policy now details a brief security assurance that discusses the measures taken to ensure source code and package integrity. (:pull:`2391`).
-* Removed ``swe_series`` unused fixture.
 
 v0.62.0 (2026-08-17)
 --------------------
