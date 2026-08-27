@@ -1593,6 +1593,7 @@ def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: Freq =
         cu = daily.where(daily > 0)
     return cu.resample(time=freq).sum().assign_attrs(units="")
 
+
 # TODO: declare_units()
 def canadian_hardiness_zones(
     tasmin: xarray.DataArray,
