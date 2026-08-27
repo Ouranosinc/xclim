@@ -871,7 +871,7 @@ def test_resamplingIndicator_new_error():
 
 
 def test_resampling_indicator_with_indexing(tas_series):
-    tas = tas_series(np.ones(731) + 273.15, start="2003-01-01")
+    tas = tas_series(np.ones(731), start="2003-01-01", units="°C")
 
     out = xclim.atmos.tx_days_above(tas, thresh="0 degC", freq="YS")
     np.testing.assert_allclose(out, [365, 366])
@@ -882,8 +882,16 @@ def test_resampling_indicator_with_indexing(tas_series):
     out = xclim.atmos.tx_days_above(tas, thresh="0 degC", freq="YS-JUL", doy_bounds=(1, 50))
     np.testing.assert_allclose(out, [50, 50, np.nan])
 
+    out = xclim.atmos.tx_days_above(tas, thresh="0 degC", freq="YS", doy_bounds=(50, None))
+    np.testing.assert_allclose(out, [316, 317])
+
     out = xclim.atmos.tx_days_above(tas, thresh="0 degC", freq="YS", date_bounds=("02-29", "04-01"))
     np.testing.assert_allclose(out, [32, 33])
+
+    out = xclim.atmos.tx_days_above(
+        tas, thresh="0 degC", freq="YS-JUL", date_bounds=(None, "04-01"), bounds_freq="YS-JUL"
+    )
+    np.testing.assert_allclose(out, [np.nan, 275, np.nan])
 
 
 def test_indicator_indexing_doy_bounds_spatial(tasmin_series):
@@ -893,9 +901,23 @@ def test_indicator_indexing_doy_bounds_spatial(tasmin_series):
     end = xr.DataArray([200, 20, np.nan, 200, np.nan], dims=("lat",), coords={"lat": da.lat})
     out = atmos.tn_days_above(da, thresh="0 °C", doy_bounds=(start, end))
 
+    # 340, 20 is an invalid indexer for default freq (YS)
+    # such cases return an entirely masked array
+    # No values are missing as there are no values to count
     np.testing.assert_array_equal(
         out,
-        [[151.0, 151.0], [46.0, 46.0], [266.0, 266.0], [200.0, 200.0], [365.0, 365.0]],
+        [[151.0, 151.0], [0, 0], [266.0, 266.0], [200.0, 200.0], [365.0, 365.0]],
+    )
+
+    out = atmos.tn_days_above(da, thresh="0 °C", freq="YS-JUL", doy_bounds=(start, end), bounds_freq="YS-JUL")
+    # with freq YS-JUL
+    # 50, 200 is an invalid indexer
+    # 340, 20 is valid but incomplete for first and last year
+    # 100, NaN is valid but incomplete for last year
+    # NaN, 200 is valid but incomplete for first year
+    # NaN, NaN is valid (include NaN by default) but incomplete for first and last year
+    np.testing.assert_array_equal(
+        out, [[0, 0, 0], [np.nan, 46, np.nan], [82, 82, np.nan], [np.nan, 19, 19], [np.nan, 365, np.nan]]
     )
 
 
@@ -911,6 +933,24 @@ def test_indicator_indexing_doy_bounds_temporal(tasmin_series):
     # such cases return an entirely masked array
     # No values are missing as there are no values to count
     np.testing.assert_array_equal(out, [151, 0, 266, 200, 365])
+
+    out = atmos.tn_days_above(da, thresh="0 °C", freq="YS", doy_bounds=(None, end))
+    # start as None = 1 for freq YS (default) and includes doy NaNs (default)
+    # None, 200: 1 to 200
+    # None, 20: 1 to 20
+    # None, NaN: 1 to 365
+    # None, 200: 1 to 200
+    # None, NaN: 1 to 365
+    np.testing.assert_array_equal(out, [200, 20, 365, 200, 365])
+
+    out = atmos.tn_days_above(da, thresh="0 °C", freq="YS", doy_bounds=(start, None), include_doy_bounds_nans=False)
+    # end as None = 365 for freq YS (default) and excludes doy NaNs
+    # 50, None: 50 to 365
+    # 340, None: 340 to 365
+    # 100, None: 100 to 365
+    # NaN, None: masked, no values to count (0)
+    # NaN, None: masked, no values to count (0)
+    np.testing.assert_array_equal(out, [316, 26, 266, 0, 0])
 
 
 def test_all_inputs_known():

@@ -8,7 +8,7 @@ import xarray as xr
 
 from xclim import set_options
 from xclim.compute import generic, helpers, run_length
-from xclim.core.calendar import doy_to_days_since, select_time
+from xclim.core.calendar import doy_to_days_since, select_between_doys, select_time
 from xclim.core.units import rate2amount
 from xclim.testing.helpers import assert_lazy
 
@@ -530,6 +530,16 @@ class TestTimeSelection:
         )
         xr.testing.assert_equal(out, exp)
 
+        out = select_time(da, drop=True, doy_bounds=(None, 75))
+        exp = xr.concat(
+            (
+                self.series("2003-02-13", "2003-03-16", "default"),
+                self.series("2004-01-01", "2004-03-15", "default"),
+            ),
+            "time",
+        )
+        xr.testing.assert_equal(out, exp)
+
         da = self.series("2003-02-13", "2004-12-31", "proleptic_gregorian")
 
         out = select_time(da, drop=True, doy_bounds=(25, 80))
@@ -542,13 +552,23 @@ class TestTimeSelection:
         )
         xr.testing.assert_equal(out, exp)
 
+        out = select_time(da, drop=True, doy_bounds=(25, None))
+        exp = xr.concat(
+            (
+                self.series("2003-02-13", "2003-12-31", "proleptic_gregorian"),
+                self.series("2004-01-25", "2004-12-31", "proleptic_gregorian"),
+            ),
+            "time",
+        )
+        xr.testing.assert_equal(out, exp)
+
     @pytest.mark.parametrize("include_bounds", [True, False])
     def test_select_time_doys_2D_spatial(self, include_bounds):
         # first doy of da is 44, last is 366
         da = self.series("2003-02-13", "2004-12-31", "default").expand_dims(lat=[0, 10, 15, 20, 25])
         # 5 cases
         # normal : start < end
-        # over NYE : end < start
+        # over NYE : end < start -> invalid index, no data selected
         # end is nan (i.e. 366)
         # start is nan (i.e. 1)
         # both are nan (no drop)
@@ -556,13 +576,29 @@ class TestTimeSelection:
         end = xr.DataArray([200, 20, np.nan, 200, np.nan], dims=("lat",), coords={"lat": da.lat})
         out = select_time(da, doy_bounds=(start, end), include_bounds=include_bounds)
 
-        exp = [151 * 2, 26 + 20 + 27, 266 + 267, 200 - 43 + 200, 365 - 43 + 366]
+        exp = [151 * 2, 0, 266 + 267, 200 - 43 + 200, 365 - 43 + 366]
         if not include_bounds:
             exp[0] = exp[0] - 4  # 2 years * 2
-            exp[1] = exp[1] - 3  # 2 on 1st year, 1 on 2nd (end bnd is after end of data)
+            # still invalid index on exp[1]
             exp[2] = exp[2] - 2  # "Open" bound so always included, 1 real bnd on each year
             exp[3] = exp[3] - 2  # Same
             # No real bound on exp[4]
+        np.testing.assert_array_equal(out.notnull().sum("time"), exp)
+
+    def test_select_time_doys_2D_spatial_360(self):
+        # first doy of da is 44, last is 366
+        da = self.series("2003-02-13", "2004-12-30", "360_day").expand_dims(lat=[0, 10, 15, 20, 25])
+        # 5 cases
+        # Same as above, but with 360 days calendar.
+        start = xr.DataArray(
+            [50, 340, 100, np.nan, np.nan], dims=("lat",), coords={"lat": da.lat}, attrs={"calendar": "360_day"}
+        )
+        end = xr.DataArray(
+            [200, 20, np.nan, 200, np.nan], dims=("lat",), coords={"lat": da.lat}, attrs={"calendar": "360_day"}
+        )
+        out = select_time(da, doy_bounds=(start, end))
+
+        exp = [151 * 2, 0, 261 + 261, 200 - 42 + 200, 360 - 42 + 360]
         np.testing.assert_array_equal(out.notnull().sum("time"), exp)
 
     @pytest.mark.parametrize("include_bounds", [True, False])
@@ -592,6 +628,34 @@ class TestTimeSelection:
             # No real bounds on year 6
         np.testing.assert_array_equal(out.notnull().resample(time="YS-JUL").sum(), exp)
 
+    @pytest.mark.parametrize("include_bounds", [True, False])
+    @pytest.mark.parametrize("include_nans", [True, False])
+    def test_select_time_doys_mix(self, include_bounds, include_nans):
+        # try mix of int and DataArray for start and end
+        da = self.series("2003-02-13", "2006-12-31", "default")
+        time = xr.date_range("2003-01-01", freq="YS", periods=4)
+        start = xr.DataArray([30, 340, 100, np.nan], dims=("time",), coords={"time": time})
+        out = select_time(da, doy_bounds=(start, 200), include_bounds=include_bounds)
+
+        exp = [157, 0, 101, 200]
+        if not include_bounds:
+            exp[0] = exp[0] - 1  # 1 real bound
+            # still invalid index on exp[1]
+            exp[2] = exp[2] - 2  # 2 real bounds
+            exp[3] = exp[3] - 1  # 1 real bound
+
+        np.testing.assert_array_equal(out.notnull().resample(time="YS").sum(), exp)
+        xr.testing.assert_equal(out, select_between_doys(da, (start, 200), include_bounds=include_bounds))
+
+        end = xr.DataArray([200, 20, 100, np.nan], dims=("time",), coords={"time": time})
+        out = select_time(da, doy_bounds=(30, end), include_doy_bounds_nans=include_nans)
+
+        exp = [157, 0, 71, 336]
+        if not include_nans:
+            exp[3] = 0  # no selection on last year
+
+        np.testing.assert_array_equal(out.notnull().resample(time="YS").sum(), exp)
+
     def test_select_time_dates(self):
         da = self.series("2003-02-13", "2004-11-01", "all_leap")
         da = da.where(da.time.dt.dayofyear != 92, drop=True)  # no 04-01
@@ -620,6 +684,19 @@ class TestTimeSelection:
         )
         xr.testing.assert_equal(out, exp)
 
+    def test_select_time_open_dates(self):
+        # Case 1: default (YS) inferable freq (>= 3 years)
+        da = self.series("2003-01-01", "2005-12-31", "default")
+        out = select_time(da, date_bounds=(None, "03-31"))
+        exp = [90, 91, 90]  # 91 for leap year 2004
+        np.testing.assert_array_equal(out.notnull().resample(time="YS").sum(), exp)
+
+        # Case 2: not inferable freq (< 3 years) so explicitly set "YS-JUL" freq
+        da = self.series("2003-01-01", "2004-06-30", "default")
+        out = select_time(da, date_bounds=("07-01", None), bounds_freq="YS-JUL")
+        exp = [181, 366]
+        np.testing.assert_array_equal(out.notnull().resample(time="YS-JUL").sum(), exp)
+
     def test_select_time_errors(self):
         da = self.series("2003-01-01", "2004-01-01", "standard")
 
@@ -633,6 +710,10 @@ class TestTimeSelection:
 
         with pytest.raises(ValueError):
             select_time(da, date_bounds=("02-30",))
+
+        # timeseries too short to infer frequency and bounds_freq not provided
+        with pytest.raises(ValueError):
+            select_time(da, date_bounds=(None, "03-03"))
 
         with pytest.raises(TypeError):
             select_time(da, doy_bounds=(300, 203, 202))
