@@ -1183,7 +1183,7 @@ def thresholded_percentile(
     thresh = convert_units_to(thresh, data, context="infer")
     cond = compare(data, condition, thresh, constrain)
     # FIXME: Call signature variable shadows existing function name
-    return per(data.where(cond), per, freq, **indexer)  # ty: ignore[call-non-callable]
+    return percentile(data.where(cond), per, freq, **indexer)  # ty: ignore[call-non-callable]
 
 
 def statistics_between_dates(
