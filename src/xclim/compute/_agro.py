@@ -1589,7 +1589,7 @@ def canadian_hardiness_zones(
     pr: xarray.DataArray,
     snd: xarray.DataArray,
     sfcWindmax: xarray.DataArray,
-    freq: str = "YS",
+    freq: str = "30YS",
 ) -> xarray.DataArray:
     """
     Canadian hardiness zones.
@@ -1623,7 +1623,7 @@ def canadian_hardiness_zones(
 
     References
     ----------
-    :cite:cts:`ouellet_hardiness_1967b,ouellet_hardiness_1967c`
+    :cite:cts:`ouellet_hardiness_1967b,ouellet_hardiness_1967c,mckenney_updated_2025`
     """
     _tasmin = convert_units_to(tasmin, "degC")
     _tasmax = convert_units_to(tasmax, "degC")
@@ -1632,34 +1632,42 @@ def canadian_hardiness_zones(
     _sfcWindmax = convert_units_to(sfcWindmax, "km h-1")
 
     # Monthly mean of minimum temperatures of the coldest month
-    x1 = statistics(_tasmin, statistic="mean", freq="MS").resample(time=freq).min()
+    x1 = statistics(_tasmin, statistic="mean", freq="MS").resample(time="YS").min().resample(time=freq).mean()
 
     # Length of the frost free period (FFP)
-    x2 = season(
-        _tasmin,
-        thresh="0.0 degC",
-        window=5,
-        condition=">",
-        aspect="length",
-        freq=freq,
-        mid_date=None,
+    x2 = (
+        season(
+            _tasmin,
+            thresh="0.0 degC",
+            window=5,
+            condition=">",
+            aspect="length",
+            freq="YS",
+            mid_date=None,
+        )
+        .resample(time=freq)
+        .mean()
     )
 
     # Precipitation in the period from June to November, inclusive
     _pr_constrained = (
-        select_time(_pr, date_bounds=("06-01", "12-01"), include_bounds=(True, False)).resample(time=freq).sum()
+        select_time(_pr, date_bounds=("06-01", "12-01"), include_bounds=(True, False))
+        .resample(time="YS")
+        .sum()
+        .resample(time=freq)
+        .mean()
     )
     # Empirical adjustment for millimeters of precipitation
     x3 = _pr_constrained / (_pr_constrained + 25.4)
 
     # Monthly mean of maximum temperatures of the warmest month
-    x4 = statistics(_tasmax, statistic="mean", freq="MS").resample(time=freq).max()
+    x4 = statistics(_tasmax, statistic="mean", freq="MS").resample(time="YS").max().resample(time=freq).mean()
 
     # Winter factor
-    x5 = (0 - x1) * _pr.sel(time=_pr["time"].dt.month == 1).resample(time=freq).sum()
+    x5 = (0 - x1) * select_time(_pr, month=1).resample(time="YS").sum().resample(time=freq).mean()
 
     # Mean maximum snow depth
-    snd_above_0 = _snd.where(_snd > 0, np.nan).resample(time=freq).mean()
+    snd_above_0 = _snd.resample(time="YS").max().resample(time=freq).mean()
     x6 = snd_above_0 / (snd_above_0 + 25.4)
 
     # Maximum wind gust in experienced in a 30-year period
