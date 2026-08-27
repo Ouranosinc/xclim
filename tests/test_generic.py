@@ -237,7 +237,7 @@ class TestStatisticsBetweenDates:
     def test_day_of_year_strings(self):
         # generate test DataArray
         time_data = xr.date_range("1990-08-01", "1995-06-01", freq="D", calendar="standard")
-        data = xr.DataArray(np.ones(time_data.size), dims="time", coords={"time": time_data}, attrs={"units": "btu"})
+        data = xr.DataArray(np.ones(time_data.size), dims="time", coords={"time": time_data}, attrs={"units": "m"})
         # set start and end dates
         start = "02-01"
         end = "10-31"

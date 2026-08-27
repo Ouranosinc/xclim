@@ -1036,6 +1036,7 @@ day_to_day_temperature_variability = TempWithIndexing(
     long_name="Mean of the day-to-day temperature variability",
     description="{freq} mean of the day-to-day variability computed as the {subfreq} standard deviation",
     compute=generic.day_to_day_variability,
+    input={"data": "tas"},
     parameters={"subfreq": "MS"},
     cell_methods="time: standard_deviation within months time: mean over months",
 )
