@@ -1829,11 +1829,13 @@ New features and enhancements
 * A convenience function (``xclim.core.dataflags.ecad_compliant``) is also offered as a method for asserting that data adheres to all relevant ECAD/ICCLIM checks. For more information on usage, consult the docstring/documentation.
 * A new utility "``dataflags``" is also available for performing fast quality control checks from the command-line (`xclim dataflags --help`). See the CLI documentation page for usage examples.
 * Added missing typed call signatures, expected returns and docstrings for many ``xclim.core.calendar`` functions.
+* Generic functions ``xclim.generic.percentile``, ``xclim.generic.count_occurences`` now accept `freq=None`: This simply skips the resampling part, and performs the reduction on the full time series. This also applies to functions in ``xclim.compute.run_length``.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * All "ANUCLIM" indices and indicators have lost their `src_timestep` argument. Most of them were not using it and now every function infers the frequency from the data directly. This may add stricter constraints on the time coordinate, the same as for ``xarray.infer_freq``.
 * Many functions found within ``xclim.core.cfchecks`` (``generate_cfcheck`` and ``check_valid_*``) have been removed as existing indicator CF-standard checks and data checks rendered them redundant/obsolete.
+
 
 Bug fixes
 ^^^^^^^^^
