@@ -29,7 +29,7 @@ def test_rivo_max_doy(ndrivo_series, rivo_series):
 
     a = np.ones(450)
     a[100] = 2
-    out = land.doy_qmax(rivo_series(a), freq="YS")
+    out = land.rivo_max_doy(rivo_series(a), freq="YS")
     assert out[0] == 101
 
 
