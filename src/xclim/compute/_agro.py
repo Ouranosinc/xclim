@@ -49,6 +49,7 @@ __all__ = [
     "hardiness_zones",
     "huglin_index",
     "latitude_temperature_index",
+    "precipitation_concentration_index",
     "qian_weighted_mean_average",
     "rain_season",
     "standardized_precipitation_evapotranspiration_index",
@@ -243,7 +244,12 @@ def huglin_index(
         k = huglin_day_length_latitude_coefficient(lat, method=method, cap_value=cap_value)
     elif method.lower() == "jones":
         k_aggregated = jones_day_length_latitude_coefficient(
-            dates=tas.time, lat=lat, method=method, start_date=start_date, end_date=end_date, freq=freq
+            dates=tas.time,
+            lat=lat,
+            method=method,
+            start_date=start_date,
+            end_date=end_date,
+            freq=freq,
         )
     else:
         raise NotImplementedError(
@@ -420,7 +426,12 @@ def biologically_effective_degree_days(
             k = gladstones_day_length_latitude_coefficient(dates=tasmin.time, lat=lat)
         elif method == "jones":
             k_aggregated = jones_day_length_latitude_coefficient(
-                dates=tasmin.time, lat=lat, method=method, start_date=start_date, end_date=end_date, freq=freq
+                dates=tasmin.time,
+                lat=lat,
+                method=method,
+                start_date=start_date,
+                end_date=end_date,
+                freq=freq,
             )
 
     else:
@@ -1582,7 +1593,7 @@ def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: Freq =
         cu = daily.where(daily > 0)
     return cu.resample(time=freq).sum().assign_attrs(units="")
 
-
+# TODO: declare_units()
 def canadian_hardiness_zones(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
@@ -1687,3 +1698,50 @@ def canadian_hardiness_zones(
     suitability_index.attrs["units"] = ""
 
     return suitability_index
+
+
+@declare_units(tas="[precipitation]")
+def precipitation_concentration_index(pr: xarray.DataArray, freq: str = "YS", subfreq: str = "MS") -> xarray.DataArray:
+    r"""
+    Precipitation Concentration Index.
+
+    A measure of the unevenness of precipitation distribution within a period.
+    Computed as the ratio of the sum of squared sub-period totals to the square of the
+    sum of sub-period totals, multiplied by 100 :cite:p:`oliver_precipitation_1980`.
+
+    Parameters
+    ----------
+    pr : xr.DataArray
+        Precipitation flux or rate, with units convertible to a precipitation unit (e.g. ``"mm/day"``).
+    freq : str
+        Resampling frequency for the output (main period). Default is ``"YS"`` (yearly).
+    subfreq : str
+        Resampling frequency for computing sub-period totals. Default is ``"MS"`` (monthly).
+
+    Returns
+    -------
+    xr.DataArray, [%]
+        Precipitation Concentration Index for each period defined by `freq`.
+
+    Notes
+    -----
+    The precipitation concentration index (PCI) can be calculated as follows:
+
+    .. math::
+
+       PCI = \frac{\sum_{i=1}^{n} p_i^2}{\left(\sum_{i=1}^{n} p_i\right)^2} \times 100
+
+    where :math:`p_i` is the precipitation total for sub-period :math:`i` and :math:`n` is the number
+    of sub-periods per main period.
+
+    A PCI of 8.3 (i.e. :math:`100/n`) indicates perfectly uniform precipitation. Higher values indicate
+    increasing concentration. Values above ~20 indicate a highly irregular or seasonal distribution.
+
+    References
+    ----------
+    :cite:cts:`oliver_precipitation_1980`
+    """
+    monthly = pr.resample(time=subfreq).sum()
+    return (((monthly**2).resample(time=freq).sum() / (monthly.resample(time=freq).sum()) ** 2) * 100).assign_attrs(
+        units="%"
+    )

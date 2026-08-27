@@ -4,7 +4,7 @@ Changelog
 
 v1.0.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -23,6 +23,10 @@ Major changes
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * The `xclim` command-line tool now accepts both ``-h`` and ``--help`` to show the help summary. (:pull:`2316`).
+* The `select_time` function has been improved. (:issue:`2365`, :issue:`2393`, :pull:`2374`):
+    * Open `date_bounds` and `doy_bounds` are now supported (i.e., `None` as start or end).
+    * The `include_doy_bounds_nans` argument has been added to control whether NaN values in the bounds should be filled or not. When set to `True`, missing values in the start or end bounds are replaced by the start and end of the period, respectively.
+    * The `bounds_freq` argument has been added to allow users to specify the frequency to use when using open `date_bounds`.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -43,6 +47,9 @@ Breaking changes
 * `pre-commit` has been replaced by `prek`. `prek` is a `pre-commit-config.yml` compatible reimplementation built in Rust. (:pull:`2355`).
 * Approximate method `APP` not allowed anymore when using the `genextreme` distribution for standardized indices (e.g. ``xclim.indicators.atmos.standardized_precipitation_index`` and similar indicators).
 * The output of ``xclim.compute.stats.parametric_cdf`` has a dimension `v` instead `cdf` (`cdf` more appropriately describes the output variable).
+* `mask_between_doys` has been renamed to `select_between_doys`. (:pull:`2374`):
+    * The function now returns the selected values instead of a boolean mask.
+    * For array-like ``doy_bounds`` without ``time`` dimension, the start and end bounds must now be consecutive according to the frequency (default ``freq="YS"``). Otherwise, the indexing is invalid and no data are selected.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -59,7 +66,7 @@ Internal changes
 
 v0.62.0 (2026-08-17)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sascha Hofmann (:user:`saschahofmann`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -71,6 +78,7 @@ New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.indices.helpers.make_hourly_temperature`` now accepts `infill_polar_days`. If set to `True`, this means that polar days and nights are set to 24 and 0 hours duration, respectively. The default behaviour is unchanged (`infill_polar_days=False`) and fills these cases with NaNs. (:issue:`2381`, :pull:`2382`).
 * Run length indices now support a quantile reducer. (:pull:`2369`).
+* Implemented two new indicators: ``xclim.atmos.day_to_day_temperature_variability`` and ``xclim.atmos.precipitation_concentration_index``. (:issue:`2356`, :pull:`2363`.)
 * ``xclim.ensembles.robustness_fractions`` now accepts `strict_sign` which can be set to false to include zero-change in both positive and negative fractions. Default behaviour (True) is unchanged. (:pull:`2387`).
 
 Breaking changes
