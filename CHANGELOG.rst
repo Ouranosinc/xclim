@@ -4,7 +4,7 @@ Changelog
 
 v1.0.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -23,6 +23,10 @@ Major changes
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * The `xclim` command-line tool now accepts both ``-h`` and ``--help`` to show the help summary. (:pull:`2316`).
+* The `select_time` function has been improved. (:issue:`2365`, :issue:`2393`, :pull:`2374`):
+    * Open `date_bounds` and `doy_bounds` are now supported (i.e., `None` as start or end).
+    * The `include_doy_bounds_nans` argument has been added to control whether NaN values in the bounds should be filled or not. When set to `True`, missing values in the start or end bounds are replaced by the start and end of the period, respectively.
+    * The `bounds_freq` argument has been added to allow users to specify the frequency to use when using open `date_bounds`.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -43,8 +47,10 @@ Breaking changes
 * `pre-commit` has been replaced by `prek`. `prek` is a `pre-commit-config.yml` compatible reimplementation built in Rust. (:pull:`2355`).
 * Approximate method `APP` not allowed anymore when using the `genextreme` distribution for standardized indices (e.g. ``xclim.indicators.atmos.standardized_precipitation_index`` and similar indicators).
 * The output of ``xclim.compute.stats.parametric_cdf`` has a dimension `v` instead `cdf` (`cdf` more appropriately describes the output variable).
+* `mask_between_doys` has been renamed to `select_between_doys`. (:pull:`2374`):
+    * The function now returns the selected values instead of a boolean mask.
+    * For array-like ``doy_bounds`` without ``time`` dimension, the start and end bounds must now be consecutive according to the frequency (default ``freq="YS"``). Otherwise, the indexing is invalid and no data are selected.
 * `q` has been changed to `rivo` in hydrological indicators (``xclim.indicators.land``). ``xclim.land.doy_q{min|max}`` are renamed to ``xclim.land.rivo_{min|max}_doy``.  (:issue:`2407`, :pull:`2408`).
-
 
 Internal changes
 ^^^^^^^^^^^^^^^^
