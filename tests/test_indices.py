@@ -346,6 +346,31 @@ class TestAgroclimaticIndices:
         np.testing.assert_array_equal(out, np.array([np.nan, expected]))
 
 
+class TestCanadianHardinessZones:
+    def test_simple(self, atmosds):
+        ds = atmosds
+
+        tasmin = ds.tasmin
+        tasmax = ds.tasmax
+        pr = ds.pr
+        snd = ds.snd
+        sfcWindmax = generic.statistics(ds.sfcWind, statistic="max", freq="MS")
+
+        # Should be caulculated over 30 years, but only four years of data available
+        chz = xcc.canadian_hardiness_zones(
+            tasmin=tasmin,
+            tasmax=tasmax,
+            pr=pr,
+            snd=snd,
+            sfcWindmax=sfcWindmax,
+            freq="4YS",
+        )
+
+        np.testing.assert_allclose(
+            chz, np.array([[58.1458], [74.6359], [-4.0576], [27.4931], [96.5160]]), rtol=1e-4
+        )
+
+
 class TestStandardizedIndices:
     # gamma/APP reference results: Obtained with `monocongo/climate_indices` library
     # MS/fisk/ML reference results: Obtained with R package `SPEI`
