@@ -603,12 +603,9 @@ def _boundary_run(
 
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
     if window == 1:
-        if freq is not None:
-            out: xr.DataArray = resample_map(
-                da, dim, freq, find_boundary_run, map_kwargs={"position": position, "coord": coord, "dim": dim}
-            )
-        else:
-            out = find_boundary_run(da, position, coord, dim)
+        out: xr.DataArray = resample_map(
+            da, dim, freq, find_boundary_run, map_kwargs={"position": position, "coord": coord, "dim": dim}
+        )
 
     elif ufunc_1dim:
         if position == "last":
@@ -624,12 +621,9 @@ def _boundary_run(
         d = _cumsum_reset(da, dim=dim, index=position)
         d = xr.where(d >= window, 1, 0)
         # for "first" run, return "first" element in the run (and conversely for "last" run)
-        if freq is not None:
-            out: xr.DataArray = resample_map(
-                d, dim, freq, find_boundary_run, map_kwargs={"position": position, "coord": coord, "dim": dim}
-            )
-        else:
-            out = find_boundary_run(d, position, coord, dim)
+        out: xr.DataArray = resample_map(
+            d, dim, freq, find_boundary_run, map_kwargs={"position": position, "coord": coord, "dim": dim}
+        )
 
     return out
 
@@ -818,7 +812,7 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: Freq | None = No
     # Get run lengths
     rls = rle(da, dim)
 
-    def _get_out(_rls):  # numpydoc ignore=GL08
+    def _get_out(_rls, dim):  # numpydoc ignore=GL08
         _out = xr.where(
             # Construct an integer array and find the max
             _rls[dim].copy(data=np.arange(_rls[dim].size)) == _rls.argmax(dim),
@@ -828,10 +822,7 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: Freq | None = No
         _out = _out.ffill(dim) == _out.max(dim)
         return _out
 
-    if freq is not None:
-        out = resample_map(rls, dim, freq, _get_out)
-    else:
-        out = _get_out(rls)
+    out = resample_map(rls, dim, freq, _get_out, map_kwargs={"dim": dim})
 
     return da.copy(data=out.transpose(*da.dims).data)
 
@@ -1885,14 +1876,11 @@ def find_events(
     if condition_stop is None:
         condition_stop = ~condition
 
-    if freq is None:
-        return _find_events(condition, condition_stop, data, window, window_stop)
-
     ds = xr.Dataset({"da_start": condition, "da_stop": condition_stop})
     if data is not None:
         ds = ds.assign(data=data)
 
-    def _func(grp):
+    def _func(grp, window, window_stop):
         return _find_events(grp.da_start, grp.da_stop, grp.get("data", None), window, window_stop)
 
-    return resample_map(ds, "time", freq, _func)
+    return resample_map(ds, "time", freq, _func, map_kwargs={"window": window, "window_stop": window_stop})
