@@ -1152,7 +1152,7 @@ def resample_map(
     freq : str
         Resampling frequency along `dim`.
     func : callable or str
-        Function to map on each resampled group. 
+        Function to map on each resampled group.
         If str, it is converted to a callable from a given registry.
     map_blocks : bool or "from_context"
         If True, the resample().map() call is wrapped inside a `map_blocks`.
