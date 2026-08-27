@@ -698,13 +698,15 @@ def to_agg_units(
     if not isinstance(statistic, str):
         statistic = statistic.__name__
 
-    is_difference = True if statistic in ["std", "var"] else None
+    is_difference = (
+        True if statistic in ["std", "var"] or "difference" in orig.attrs.get("units_metadata", "") else None
+    )
 
     if statistic in ["min", "max", "mean", "sum", "std"]:
-        out.attrs["units"] = orig.attrs["units"]
+        out.attrs.update(pint2cfattrs(str2pint(orig.units), is_difference))
 
     elif statistic in ["var"]:
-        out.attrs["units"] = pint2cfunits(str2pint(orig.units) ** 2)
+        out.attrs.update(pint2cfattrs(str2pint(orig.units) ** 2, is_difference))
 
     elif statistic in ["doymin", "doymax"]:
         out.attrs.update(units="1", is_dayofyear=np.int32(1), calendar=get_calendar(orig))

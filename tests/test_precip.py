@@ -758,9 +758,21 @@ class TestSnowfallMeteoSwiss:
         )
 
 
+def test_precipitation_concentration_index(pr_series):
+    a = np.zeros(360)
+    a[0:30] = 1 / 30
+    a[30:60] = 2 / 30
+    pr = pr_series(a, start="2000-01-01", calendar="360_day")
+    expected = 100 * (1 + 2**2) / ((1 + 2) ** 2)
+    pci = atmos.precipitation_concentration_index(pr)
+
+    np.testing.assert_array_equal(pci, expected)
+
+
 def test_aridity_index(pr_series, evspsblpot_series):
     pr = pr_series([2] * (365 * 10 + 2), start="1900-01-01", units="mm/d")
     pet = evspsblpot_series([1] * (365 * 10 + 2), start="1900-01-01", units="mm/d")
     ai = atmos.aridity_index(pr, pet, freq="YS")
+
     assert ai.attrs["units"] == "1"
     np.testing.assert_allclose(ai.values, [2.0] * 10)
