@@ -1033,7 +1033,7 @@
        id="tspan131"><tspan
          fill="rgb(0,0,0)"
          stroke="none"
-         id="tspan130">CF checks (standard_name, cell_methods)</tspan></tspan></tspan></text>
+         id="tspan130">CF checks (standard_name)</tspan></tspan></tspan></text>
        </g>
       </g>
       <g
@@ -1425,7 +1425,7 @@
        id="tspan187"><tspan
          fill="rgb(0,0,0)"
          stroke="none"
-         id="tspan186">.cf_attrs[i][‘units’]</tspan></tspan></tspan><tspan
+         id="tspan186">.attrs[i].units</tspan></tspan></tspan><tspan
      class="TextParagraph"
      font-family="Liberation Mono, monospace"
      font-size="423px"
@@ -1449,7 +1449,7 @@
        id="tspan193"><tspan
          fill="rgb(0,0,0)"
          stroke="none"
-         id="tspan192">.cf_attrs[i]</tspan></tspan></tspan><tspan
+         id="tspan192">.attrs[i]</tspan></tspan></tspan><tspan
      class="TextParagraph"
      font-family="Liberation Mono, monospace"
      font-size="423px"
@@ -1464,7 +1464,7 @@
          id="tspan195">  </tspan><tspan
          fill="rgb(0,0,0)"
          stroke="none"
-         id="tspan196">var_name</tspan></tspan></tspan><tspan
+         id="tspan196">.var_name</tspan></tspan></tspan><tspan
      class="TextParagraph"
      font-family="Liberation Mono, monospace"
      font-size="423px"
@@ -1479,7 +1479,7 @@
          id="tspan199">  </tspan><tspan
          fill="rgb(0,0,0)"
          stroke="none"
-         id="tspan200">standard_name,        </tspan></tspan></tspan><tspan
+         id="tspan200">['standard_name'],        </tspan></tspan></tspan><tspan
      class="TextParagraph"
      font-family="Liberation Mono, monospace"
      font-size="423px"
@@ -1494,7 +1494,7 @@
          id="tspan203">  </tspan><tspan
          fill="rgb(0,0,0)"
          stroke="none"
-         id="tspan204">cell_methods,</tspan></tspan></tspan><tspan
+         id="tspan204">['cell_methods'],</tspan></tspan></tspan><tspan
      class="TextParagraph"
      font-family="Liberation Mono, monospace"
      font-size="423px"
@@ -1509,7 +1509,7 @@
          id="tspan207">  </tspan><tspan
          fill="rgb(0,0,0)"
          stroke="none"
-         id="tspan208">long_name,</tspan></tspan></tspan><tspan
+         id="tspan208">['long_name'],</tspan></tspan></tspan><tspan
      class="TextParagraph"
      font-family="Liberation Mono, monospace"
      font-size="423px"
@@ -1524,7 +1524,7 @@
          id="tspan211">  </tspan><tspan
          fill="rgb(0,0,0)"
          stroke="none"
-         id="tspan212">description,</tspan></tspan></tspan><tspan
+         id="tspan212">['description'],</tspan></tspan></tspan><tspan
      class="TextParagraph"
      font-family="Liberation Mono, monospace"
      font-size="423px"
@@ -1539,7 +1539,7 @@
          id="tspan215">  </tspan><tspan
          fill="rgb(0,0,0)"
          stroke="none"
-         id="tspan216">comment,</tspan></tspan></tspan><tspan
+         id="tspan216">['comment'],</tspan></tspan></tspan><tspan
      class="TextParagraph"
      font-family="Liberation Mono, monospace"
      font-size="423px"
@@ -1554,22 +1554,8 @@
          id="tspan219">  </tspan><tspan
          fill="rgb(0,0,0)"
          stroke="none"
-         id="tspan220">keywords,</tspan></tspan></tspan><tspan
-     class="TextParagraph"
-     font-family="Liberation Mono, monospace"
-     font-size="423px"
-     font-weight="400"
-     id="tspan226"><tspan
-       class="TextPosition"
-       x="15252"
-       y="23130"
-       id="tspan225"><tspan
-         fill="rgb(0,0,0)"
-         stroke="none"
-         id="tspan223">  </tspan><tspan
-         fill="rgb(0,0,0)"
-         stroke="none"
-         id="tspan224">references</tspan></tspan></tspan></text>
+         id="tspan220">... etc.</tspan></tspan></tspan>
+       </text>
        </g>
       </g>
       <g

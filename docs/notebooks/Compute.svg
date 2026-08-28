@@ -206,7 +206,7 @@
       <g class="com.sun.star.drawing.TextShape">
        <g id="id14">
         <rect class="BoundingBox" stroke="none" fill="none" x="5800" y="12720" width="8801" height="867"/>
-        <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Mono, monospace" font-size="459px" font-weight="400"><tspan class="TextPosition" x="6050" y="13226"><tspan fill="rgb(242,203,248)" stroke="none">.cf_attrs[0][‘long_name’]</tspan></tspan></tspan></text>
+        <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Mono, monospace" font-size="459px" font-weight="400"><tspan class="TextPosition" x="6050" y="13226"><tspan fill="rgb(242,203,248)" stroke="none">.attrs[0][‘long_name’]</tspan></tspan></tspan></text>
        </g>
       </g>
       <g class="com.sun.star.drawing.CustomShape">

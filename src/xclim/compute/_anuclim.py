@@ -114,8 +114,6 @@ def temperature_seasonality(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.
     -------
     xarray.DataArray, [%]
         Mean temperature coefficient of variation.
-    freq : str
-        Resampling frequency.
 
     Notes
     -----

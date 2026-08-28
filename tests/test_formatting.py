@@ -3,9 +3,11 @@ from __future__ import annotations
 import datetime as dt
 import re
 
+import pytest
+import xarray as xr
+
 from xclim import __version__
 from xclim.core import formatting as fmt
-from xclim.indicators.atmos import degree_days_exceedance_date, heat_wave_frequency
 
 
 def test_prefix_attrs():
@@ -23,26 +25,15 @@ def test_prefix_attrs():
     assert out == source
 
 
-def test_indicator_docstring():
-    doc = heat_wave_frequency.__doc__.split("\n")
-    assert doc[0] == "Heat wave frequency (realm: atmos)"
-    assert doc[5] == "Based on function :py:func:`~xclim.compute.generic.bivariate_spell_length_statistics`."
-    assert (
-        doc[6] == "With injected parameters: window_statistic=min, statistic=count, min_gap=1, constrain=('>', '>=')."
-    )
-    assert doc[7] == "Keywords : temperature health,."
-    assert doc[13] == "    Default : `ds.tasmin`. [Required units : [temperature]]"
-    assert (
-        doc[45]
-        == "    Total number of series of at least {window} consecutive days with daily minimum temperature above "
-        "{thresh_tasmin} and daily maximum temperature above {thresh_tasmax}, "
-        "with additional attributes: **description**: {freq} number of heat wave events within a given period. "
-        "A heat wave occurs when daily minimum and maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, "
-        "respectively, over at least {window} days."
-    )
+def test_update_history():
+    a = xr.DataArray([0], attrs={"history": "Text1"}, name="a")
+    b = xr.DataArray([0], attrs={"history": "Text2"})
+    c = xr.Dataset(attrs={"history": "Text3"})
 
-    doc = degree_days_exceedance_date.__doc__.split("\n")
-    assert doc[21] == "    Default : >. "
+    merged = fmt.update_history("text", a, new_name="d", b=b, c=c)
+
+    assert "d: text" in merged.split("\n")[0]
+    assert "a: Text1" in merged
 
 
 def test_update_xclim_history(atmosds):
@@ -63,3 +54,43 @@ def test_update_xclim_history(atmosds):
     assert matches[2] == "func"
     assert matches[3] == "da=tas, arg1=1, arg2=[1, 2], arg3=None"
     assert matches[4] == __version__
+
+
+def test_default_formatter():
+    assert fmt.default_formatter.format("{freq}", freq="YS") == "annual"
+    assert fmt.default_formatter.format("{freq:noun}", freq="MS") == "months"
+    assert fmt.default_formatter.format("{month}", month="m3") == "march"
+
+
+def test_AttrFormatter():
+    ft = fmt.AttrFormatter(
+        mapping={"evil": ["méchant", "méchante"], "nice": ["beau", "belle"]},
+        modifiers=["m", "f"],
+    )
+    # Normal cases
+    assert ft.format("{adj:m}", adj="evil") == "méchant"
+    assert ft.format("{adj:f}", adj="nice") == "belle"
+    # Missing mod:
+    assert ft.format("{adj}", adj="evil") == "méchant"
+    # Mod with unknown value
+    with pytest.warns(match="Requested formatting `m` for unknown string `funny`."):
+        ft.format("{adj:m}", adj="funny")
+
+
+@pytest.mark.parametrize("new_line", ["<>", "\n"])
+@pytest.mark.parametrize("missing_str", ["<Missing>", None])
+def test_merge_attributes(missing_str, new_line):
+    a = xr.DataArray([0], attrs={"text": "Text1"}, name="a")
+    b = xr.DataArray([0], attrs={})
+    c = xr.Dataset(attrs={"text": "Text3"})
+
+    merged = fmt.merge_attributes("text", a, missing_str=missing_str, new_line=new_line, b=b, c=c)
+
+    assert merged.startswith("a: Text1")
+
+    if missing_str is not None:
+        assert merged.count(new_line) == 2
+        assert f"b: {missing_str}" in merged
+    else:
+        assert merged.count(new_line) == 1
+        assert "b:" not in merged

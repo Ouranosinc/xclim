@@ -1555,7 +1555,7 @@ def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: Freq =
 
     Returns
     -------
-    xr.DataArray, [unitless]
+    xr.DataArray, [dimensionless]
         Chill units using the Utah model.
 
     References

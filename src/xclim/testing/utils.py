@@ -166,8 +166,8 @@ def list_input_variables(submodules: Sequence[str] | None = None, realms: Sequen
     from collections import defaultdict  # pylint: disable=import-outside-toplevel
 
     from xclim import indicators  # pylint: disable=import-outside-toplevel
+    from xclim.core import InputKind  # pylint: disable=import-outside-toplevel
     from xclim.core.indicator import registry  # pylint: disable=import-outside-toplevel
-    from xclim.core.utils import InputKind  # pylint: disable=import-outside-toplevel
 
     submodules = submodules or [sub for sub in dir(indicators) if not sub.startswith("__")]
     realms = realms or ["atmos", "ocean", "land", "seaIce"]
