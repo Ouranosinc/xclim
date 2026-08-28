@@ -8,7 +8,7 @@ from xclim.core.indicator import Indicator
 __all__ = ["jetstream_metric_woollings"]
 
 
-class JetStream(Indicator):
+class JetStream(Indicator):  # pylint: disable=too-many-ancestors
     """Indicator involving daily u- and/or v-component wind series."""
 
     src_freq = "D"

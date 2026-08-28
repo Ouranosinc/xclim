@@ -431,13 +431,13 @@ class IndexWrapper:  # numpydoc ignore=PR01
                         if doc_params[name].is_optional or default is None:
                             choices.add(None)
                     except ValueError:
-                        logging.error(
+                        # If the literal_eval fails, we just ignore the choices.
+                        msg = (
                             f"Choices defined in the description of parameter {name}"
                             f" of function {compute} could not be parsed. "
                             f"Got: {choices_raw}."
                         )
-                        # If the literal_eval fails, we just ignore the choices.
-                        pass
+                        logging.error(msg)
 
             annotation = _empty if sigparam.annotation == _empty_default else sigparam.annotation
             inputs[name] = Parameter(
@@ -469,15 +469,15 @@ class IndexWrapper:  # numpydoc ignore=PR01
         new = type(
             cls.__name__,
             (cls,),
-            dict(
-                title=title,
-                abstract=abstract,
-                _all_parameters=inputs,
-                attrs=outputs,
-                notes=notes,
-                references=references,
-                compute=staticmethod(compute),
-            ),
+            {
+                "title": title,
+                "abstract": abstract,
+                "_all_parameters": inputs,
+                "attrs": outputs,
+                "notes": notes,
+                "references": references,
+                "compute": staticmethod(compute),
+            },
         )
         return super().__new__(new)
 
@@ -738,7 +738,7 @@ class IndicatorBase(IndexWrapper):
                     f"Parameter {key} was passed but it does not exist on the "
                     f"compute function (not one of {parameters.keys()})"
                 )
-            elif isinstance(val, dict) and Parameter.is_parameter_dict(val):
+            if isinstance(val, dict) and Parameter.is_parameter_dict(val):
                 if "units" in val:
                     raise ValueError(
                         "Can only change expected dimensions/units of a parameter through the `input` argument."
@@ -1413,7 +1413,7 @@ class _InputChecker(_DeprecationWarner):
             )
 
 
-class _Convenience(_InputChecker):
+class _Convenience(_InputChecker):  # pylint: disable=too-many-ancestors
     """
     Adds pre-processing to the constructor arguments so it can accept some v0 names
     and CF attributes passed by name instead of within `attrs`.
@@ -1479,7 +1479,7 @@ class _Convenience(_InputChecker):
         raise AttributeError(attr)
 
 
-class _Registrer(_Convenience):
+class _Registrer(_Convenience):  # pylint: disable=too-many-ancestors
     """Register the indicator in the xclim registry."""
 
     def __init__(self, *args, **kwargs):
@@ -1489,7 +1489,7 @@ class _Registrer(_Convenience):
         registry[self.identifier] = self
 
 
-class Indicator(_Registrer):  # numpydoc ignore=PR01
+class Indicator(_Registrer):  # pylint: disable=too-many-ancestors # numpydoc ignore=PR01
     r"""
     Climate indicator base class.
 
@@ -1599,7 +1599,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
         )
 
 
-class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02
+class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02 # pylint: disable=too-many-ancestors
     r"""
     Class adding missing value checks to indicators.
 
@@ -1680,7 +1680,7 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02
         return outs, meta
 
 
-class ReducingIndicator(CheckMissingIndicator):  # numpydoc ignore=PR01,PR02
+class ReducingIndicator(CheckMissingIndicator):  # numpydoc ignore=PR01,PR02 # pylint: disable=too-many-ancestors
     """Indicator that performs a time-reducing computation."""
 
     def _get_missing_freq(self, params):
@@ -1688,7 +1688,7 @@ class ReducingIndicator(CheckMissingIndicator):  # numpydoc ignore=PR01,PR02
         return None
 
 
-class ResamplingIndicator(CheckMissingIndicator):  # numpydoc ignore=PR02
+class ResamplingIndicator(CheckMissingIndicator):  # numpydoc ignore=PR02 # pylint: disable=too-many-ancestors
     """
     Indicator that performs a resampling computation.
 
@@ -1736,7 +1736,7 @@ class ResamplingIndicator(CheckMissingIndicator):  # numpydoc ignore=PR02
         return das, params, meta
 
 
-class IndexingIndicator(Indicator):
+class IndexingIndicator(Indicator):  # pylint: disable=too-many-ancestors
     """Indicator that also adds the "indexer" kwargs to subset the inputs before computation."""
 
     @classmethod
@@ -1764,23 +1764,23 @@ class IndexingIndicator(Indicator):
         return das, params, meta
 
 
-class ResamplingIndicatorWithIndexing(ResamplingIndicator, IndexingIndicator):
+class ResamplingIndicatorWithIndexing(ResamplingIndicator, IndexingIndicator):  # pylint: disable=too-many-ancestors
     """Resampling indicator that also adds "indexer" kwargs to subset the inputs before computation."""
 
 
-class Daily(ResamplingIndicator):
+class Daily(ResamplingIndicator):  # pylint: disable=too-many-ancestors
     """Class for daily inputs and resampling computes."""
 
     src_freq = "D"
 
 
-class Hourly(ResamplingIndicator):
+class Hourly(ResamplingIndicator):  # pylint: disable=too-many-ancestors
     """Class for hourly inputs and resampling computes."""
 
     src_freq = "h"
 
 
-class StandardizedIndexes(ResamplingIndicator):
+class StandardizedIndexes(ResamplingIndicator):  # pylint: disable=too-many-ancestors
     """Resampling but flexible inputs indicators."""
 
     src_freq = ["D", "MS"]

@@ -922,8 +922,8 @@ def sen_slope(q: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArray,
     if not HAS_PYMANNKENDALL:
         msg = "`sen_slope` requires access to the `pymannkendall` library."
         raise ModuleNotFoundError(msg)
-    else:
-        import pymannkendall as mk
+
+    import pymannkendall as mk  # pylint: disable=import-outside-toplevel
 
     def _mann_kendall(q, freq):
         qr = q.resample(time=freq).mean()
@@ -991,8 +991,8 @@ def sen_slope_ratio(
     """
     sen_slope_obs, p_value = sen_slope(q, freq)
     sen_slope_sim, p_value_sim = sen_slope(qsim, freq)
-    sen_slope_sim = sen_slope_sim
-    p_value_sim = p_value_sim
+    sen_slope_sim = sen_slope_sim  # TODO: What's going on here?
+    p_value_sim = p_value_sim  # TODO: What's going on here?
     ratio = (sen_slope_obs / sen_slope_sim).assign_attrs({"units": ""})
     return sen_slope_obs, p_value, sen_slope_sim, p_value_sim, ratio
 

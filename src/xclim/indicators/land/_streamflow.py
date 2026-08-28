@@ -40,14 +40,14 @@ __all__ = [
 ]
 
 
-class StreamflowNoResampling(Indicator):
+class StreamflowNoResampling(Indicator):  # pylint: disable=too-many-ancestors
     """Indicators involving streamflow without resampling."""
 
     context = "hydro"
     keywords = ["streamflow", "hydrology"]
 
 
-class Streamflow(ResamplingIndicator):
+class Streamflow(ResamplingIndicator):  # pylint: disable=too-many-ancestors
     """Streamflow class."""
 
     context = "hydro"

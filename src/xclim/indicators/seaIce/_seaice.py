@@ -8,7 +8,7 @@ from xclim.core.indicator import Indicator
 __all__ = ["sea_ice_area", "sea_ice_extent"]
 
 
-class SiconcAreacello(Indicator):
+class SiconcAreacello(Indicator):  # pylint: disable=too-many-ancestors
     """Class for indicators having sea ice concentration and grid cell area inputs."""
 
     missing = "skip"

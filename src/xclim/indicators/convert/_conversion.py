@@ -38,7 +38,7 @@ __all__ = [
 ]
 
 
-class Converter(Indicator):
+class Converter(Indicator):  # pylint: disable=too-many-ancestors
     """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)."""
 
     pass

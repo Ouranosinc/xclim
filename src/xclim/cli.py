@@ -28,7 +28,7 @@ from xclim.testing.utils import (
     show_versions,
 )
 
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 
 # Distributed is not a dependency of xclim
 distributed = False

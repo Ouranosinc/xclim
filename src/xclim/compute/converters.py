@@ -563,7 +563,8 @@ def saturation_vapor_pressure(
 
     References
     ----------
-    :cite:cts:`ecwmf_physical_2016,goff_low-pressure_1946,hardy_its-90_1998,sonntag_important_1990,tetens_uber_1930,vomel_saturation_2016,world_meteorological_organization_guide_2008,buck_new_1981,alduchov_improved_1996`
+    :cite:cts:`ecwmf_physical_2016,goff_low-pressure_1946,hardy_its-90_1998,sonntag_important_1990,tetens_uber_1930,\
+        vomel_saturation_2016,world_meteorological_organization_guide_2008,buck_new_1981,alduchov_improved_1996`
 
     Examples
     --------
@@ -1881,7 +1882,7 @@ def fao_allen98(net_radiation, tas, wind, es, ea, delta_svp, gamma, G="0 MJ m-2 
     sfcWind="[speed]",
     pr="[precipitation]",
 )
-def potential_evapotranspiration(
+def potential_evapotranspiration(  # pylint: disable=too-many-statements
     tasmin: xr.DataArray | None = None,
     tasmax: xr.DataArray | None = None,
     tas: xr.DataArray | None = None,

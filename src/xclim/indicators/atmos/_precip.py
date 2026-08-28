@@ -71,7 +71,7 @@ __all__ = [
 ]
 
 
-class FireWeather(Indicator):
+class FireWeather(Indicator):  # pylint: disable=too-many-ancestors
     """Non resampling - precipitation related indicators."""
 
     src_freq = "D"
@@ -79,14 +79,14 @@ class FireWeather(Indicator):
     keywords = ["fire"]
 
 
-class Precip(Daily):
+class Precip(Daily):  # pylint: disable=too-many-ancestors
     """Indicator involving daily pr series."""
 
     context = "hydro"
     keywords = ["precipitation"]
 
 
-class PrecipAmount(Precip):
+class PrecipAmount(Precip):  # pylint: disable=too-many-ancestors
     """
     Class that converts 'pr' to an amount before computation.
 
@@ -106,7 +106,7 @@ class PrecipAmount(Precip):
         return das | {"pr": rate2amount(das["pr"])}, params, meta
 
 
-class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
+class PrecipWithIndexing(ResamplingIndicatorWithIndexing):  # pylint: disable=too-many-ancestors
     """Indicator involving daily pr series and allowing indexing."""
 
     src_freq = "D"
@@ -114,7 +114,7 @@ class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
     keywords = ["precipitation"]
 
 
-class PrecipTempWithIndexing(ResamplingIndicatorWithIndexing):
+class PrecipTempWithIndexing(ResamplingIndicatorWithIndexing):  # pylint: disable=too-many-ancestors
     """Indicator involving pr and one of tas, tasmin or tasmax, allowing indexing."""
 
     src_freq = "D"
@@ -122,20 +122,18 @@ class PrecipTempWithIndexing(ResamplingIndicatorWithIndexing):
     keywords = ["precipitation"]
 
 
-class PrecipTemp(Precip):
+class PrecipTemp(Precip):  # pylint: disable=too-many-ancestors
     """Indicator involving pr and one of tas, tasmin or tasmax, allowing indexing."""
 
-    pass
 
-
-class HrPrecip(Hourly):
+class HrPrecip(Hourly):  # pylint: disable=too-many-ancestors
     """Indicator involving hourly pr series."""
 
     context = "hydro"
     keywords = ["precipitation"]
 
 
-class DailyPrecipNoResample(Indicator):
+class DailyPrecipNoResample(Indicator):  # pylint: disable=too-many-ancestors
     """Non-resampling indicators acting on daily precipitation data."""
 
     src_freq = "D"

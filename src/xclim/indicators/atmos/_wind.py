@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 
-class Wind(Daily):
+class Wind(Daily):  # pylint: disable=too-many-ancestors
     """Indicator involving daily sfcWind series."""
 
     keywords = ["wind"]

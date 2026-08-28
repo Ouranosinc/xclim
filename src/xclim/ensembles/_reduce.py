@@ -472,8 +472,7 @@ def plot_rsqprofile(fig_data: dict) -> None:
     """
     if not MPL_INSTALLED:
         raise ModuleNotFoundError("Matplotlib is not installed. No plotting functions are supported.")
-    else:
-        import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # pylint: disable=import-outside-toplevel
 
     rsq = fig_data["rsq"]
     n_sim = fig_data["realizations"]

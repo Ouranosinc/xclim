@@ -30,13 +30,13 @@ __all__ = [
 
 
 # We need to declare the base class here so the `land` module is detected automatically.
-class Snow(Daily):
+class Snow(Daily):  # pylint: disable=too-many-ancestors
     """Indicators dealing with snow variables."""
 
     keywords = ["snow"]
 
 
-class SnowWithIndexing(ResamplingIndicatorWithIndexing):
+class SnowWithIndexing(ResamplingIndicatorWithIndexing):  # pylint: disable=too-many-ancestors
     """Indicators dealing with snow variables, allowing indexing."""
 
     src_freq = "D"

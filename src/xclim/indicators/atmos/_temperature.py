@@ -109,32 +109,32 @@ __all__ = [
 
 
 # We need to declare the class here so that the `atmos` realm is automatically detected.
-class TempDailyNoResampling(Indicator):
+class TempDailyNoResampling(Indicator):  # pylint: disable=too-many-ancestors
     """Indicators involving daily temperature without resampling."""
 
     src_freq = "D"
 
 
-class Temp(Daily):
+class Temp(Daily):  # pylint: disable=too-many-ancestors
     """Indicators involving daily temperature."""
 
     keywords = ["temperature"]
 
 
-class TempHourly(Hourly):
+class TempHourly(Hourly):  # pylint: disable=too-many-ancestors
     """Temperature indicators involving hourly temperature."""
 
     keywords = ["temperature"]
 
 
-class TempWithIndexing(ResamplingIndicatorWithIndexing):
+class TempWithIndexing(ResamplingIndicatorWithIndexing):  # pylint: disable=too-many-ancestors
     """Indicators involving daily temperature and adding an indexing possibility."""
 
     src_freq = "D"
     keywords = ["temperature"]
 
 
-class TempHourlyWithIndexing(ResamplingIndicatorWithIndexing):
+class TempHourlyWithIndexing(ResamplingIndicatorWithIndexing):  # pylint: disable=too-many-ancestors
     """Indicators involving hourly temperature and adding an indexing possibility."""
 
     src_freq = "h"
