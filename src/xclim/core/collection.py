@@ -189,6 +189,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         When the given `filename` has no suffix (usually '.yaml' or '.yml'), the function will try to load
         custom compute functions definitions from a file with the same name but with a `.py` extension. Similarly,
         it will try to load translations in `*.<lang>.json` files, where `<lang>` is the IETF language tag.
+        Note that the file name _can not_ contain a dot (``.``) for this logic to work.
 
         For example. a set of custom indicators could be fully described by the following files:
 
@@ -197,9 +198,10 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
             - `example.fr.json` : French translations
         """
         filepath = Path(filename)
+        # A stem was passed, try to load module, functions and translations with same name but different suffixes
+        is_stem = filepath.suffix not in ['.yml', '.yaml']
 
-        if not filepath.suffix:
-            # A stem was passed, try to load files
+        if is_stem:
             yml_path = filepath.with_suffix(".yml")
         else:
             yml_path = filepath
@@ -224,7 +226,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         default_base = registry.get(yml.get("base"), base_registry.get(yml.get("base"), Daily))
         doc = yml.get("doc")
 
-        if not filepath.suffix and computes is None and (ind_file := filepath.with_suffix(".py")).is_file():
+        if is_stem and computes is None and (ind_file := filepath.with_suffix(".py")).is_file():
             # No suffix means we try to automatically detect the python file
             computes = ind_file
 
@@ -232,7 +234,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
             computes = load_module(computes, name=coll_name)
 
         _translations: dict[str, dict] = {}
-        if not filepath.suffix and translations is None:
+        if is_stem and translations is None:
             # No suffix mean we try to automatically detect the json files.
             for loc_file in filepath.parent.glob(f"{filepath.stem}.*.json"):
                 locale = loc_file.suffixes[0][1:]
