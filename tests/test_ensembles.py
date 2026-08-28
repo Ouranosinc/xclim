@@ -767,3 +767,28 @@ def test_robustness_coefficient():
 
     R = ensembles.robustness_coefficient(fut.to_dataset(), ref.to_dataset())
     np.testing.assert_almost_equal(R.tas, 0.83743842)
+
+
+def test_multimember_robustness(robust_data):
+    ref, fut = robust_data
+    ref["realization"] = [
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CCCma_CanESM5_ssp370_r1i1p1f1_NAM",
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CCCma_CanESM5_ssp370_r2i1p1f1_NAM",
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CSIRO-ARCCSS_ACCESS-CM2_ssp370_r1i1p1f1_NAM",
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CSIRO-ARCCSS_ACCESS-CM2_ssp370_r3i1p1f1_NAM",
+    ]
+    fut["realization"] = [
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CCCma_CanESM5_ssp370_r1i1p1f1_NAM",
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CCCma_CanESM5_ssp370_r2i1p1f1_NAM",
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CSIRO-ARCCSS_ACCESS-CM2_ssp370_r1i1p1f1_NAM",
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CSIRO-ARCCSS_ACCESS-CM2_ssp370_r3i1p1f1_NAM",
+    ]
+    fracs = ensembles.robustness_fractions(fut, ref, test="multimember")
+
+    assert fracs.changed.attrs["test"] == "multimember"
+
+    np.testing.assert_array_almost_equal(fracs.positive, [1.0, 0.5, 1.0, 1.0])
+    np.testing.assert_array_almost_equal(fracs.agree, [1.0, 0.5, 1.0, 1.0])
+    np.testing.assert_array_almost_equal(fracs.valid, [1.0, 1.0, 1.0, 0.5])
+    np.testing.assert_array_almost_equal(fracs.changed, [0.5, 1.0, 1.0, 1.0])
+    np.testing.assert_array_almost_equal(fracs.changed_positive, [0.5, 0.5, 1.0, 1.0])

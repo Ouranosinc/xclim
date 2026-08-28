@@ -9,13 +9,16 @@ more specifically :cite:p:`collins_long-term_2013` (AR5) and :cite:cts:`ipccatla
 
 from __future__ import annotations
 
+import re
 import sys
 import textwrap
+from collections import defaultdict
 from collections.abc import Callable
 from inspect import Parameter, signature
 from typing import cast
 
 import numpy as np
+import pandas as pd
 import scipy.stats as spstats
 import xarray as xr
 
@@ -66,6 +69,65 @@ def significance_test(func: Callable) -> Callable:
     """
     SIGNIFICANCE_TESTS[func.__name__[1:].replace("_", "-")] = func
     return func
+
+
+def stack_ensemble_member(ens: xr.DataArray):
+    """
+    Split the "realization" dimension into "realization" and "member" dimensions.
+
+    Each realization label is expected to contain an ensemble-member identifier
+    of the form ``rXiYpZfW`` (e.g. "r1i1p1f1"). This identifier is stripped out
+    to form a new "sub_id" (the rest of the label), which becomes the new
+    "realization" coordinate.
+
+    The actual label text is discarded and replaced with a "member" index: for each
+    sub_id, its occurrences are numbered 0, 1, 2, ... in order of appearance,
+    regardless of what the original rXiYpZfW values were.
+
+    Parameters
+    ----------
+    ens : xr.DataArray
+        An array with a "realization" dimension whose coordinate values are
+        strings, each containing exactly one ``_rXiYpZfW_`` pattern.
+
+    Returns
+    -------
+    xr.DataArray
+        The input array with the "realization" dimension replaced by two
+        dimensions: "realization" (the sub_id, i.e. the original label with the
+        rXiYpZfW pattern removed) and "member" (an integer position, starting at 0,
+        counting occurrences of each sub_id).
+
+    Examples
+    --------
+    Given realization labels::
+
+        ["MIROC6_r1i1p1f1_hist", "MIROC6_r2i1p1f1_hist", "CanESM5_r1i1p2f1_hist"]
+
+    the result has realization coordinates ``["MIROC6_hist", "CanESM5_hist"]`` and
+    member coordinates ``[0, 1]``.
+    """
+    pattern = re.compile(r"_(r\d+i\d+p\d+f\d+)_?")  # rXiYpZfW anywhere, optional trailing underscore
+
+    sub_ids = []
+    for r in ens["realization"].values.astype(str):
+        m = pattern.search(r)
+        if not m:
+            raise ValueError(f"No _rXiYpZfW_ pattern found in '{r}'")
+        sub_id = r[: m.start()] + "_" + r[m.end() :]  # everything except the matched block
+        sub_ids.append(sub_id)
+
+    # count occurrences of each sub_id, in order of appearance
+    counters = defaultdict(int)
+    numbers = []
+    for s in sub_ids:
+        numbers.append(counters[s])
+        counters[s] += 1
+
+    midx = pd.MultiIndex.from_arrays([sub_ids, numbers], names=["sub_id", "member"])
+    ens = ens.assign_coords({"realization": midx}).unstack("realization")
+    ens = ens.rename({"sub_id": "realization"})
+    return ens
 
 
 # This function's docstring is modified to include the registered test names and docs.
@@ -194,6 +256,11 @@ def robustness_fractions(
     >>> ref = tgmean.sel(time=slice("1990", "2020"))
     >>> fractions = ensembles.robustness_fractions(fut, ref, test="ttest")
     """
+    if test == "multimember":
+        fut = stack_ensemble_member(fut)
+        if ref is not None:
+            ref = stack_ensemble_member(ref)
+
     # Realization dimension name
     realization = "realization"
 
@@ -225,6 +292,9 @@ def robustness_fractions(
             invalid = MissingAny()
         delta = fut.mean("time") - ref.mean("time")
         valid = ~invalid(fut) & ~invalid(ref)
+        if test == "multimember":
+            delta = delta.mean("member")
+            valid = valid.all(dim="member")
 
     if test is None:
         test_params = {}
@@ -643,15 +713,16 @@ def _ipcc_ar6_c(fut, ref, *, ref_pi=None):
     :math:`\sqrt{2}*1.645*\sigma_{20yr}`, where :math:`\sigma_{20yr}` is the standard deviation of 20-year
     means computed from non-overlapping periods after detrending with a quadratic fit.
     Otherwise, when such pre-industrial control data is not available, the threshold is defined in relation to
-    the historical data (`ref`) as :math:`\sqrt{\frac{2}{20}}*1.645*\sigma_{1yr}, where :math:`\sigma_{1yr}`
-    is the inter-annual standard deviation measured after linearly detrending the data.
+    the historical data (`ref`) as :math:`\sqrt{\frac{2}{n}}*1.645*\sigma_{1yr}, where :math:`\sigma_{1yr}`
+    is the inter-annual standard deviation measured after linearly detrending the data
+    and n is the number of years in the reference period.
     See notebook :ref:`notebooks/ensembles:Ensembles` for more details.
     """
     # Ensure annual
     refy = ref.resample(time="YS").mean()
     if ref_pi is None:
         ref_detrended = detrend(refy, dim="time", deg=1)
-        gamma = np.sqrt(2 / 20) * 1.645 * ref_detrended.std("time")
+        gamma = np.sqrt(2 / len(refy.time)) * 1.645 * ref_detrended.std("time")
     else:
         ref_detrended = detrend(refy, dim="time", deg=2)
         gamma = np.sqrt(2) * 1.645 * ref_detrended.resample(time="20YS").mean().std("time")
@@ -671,6 +742,48 @@ def _gen_test_entry(namefunc):
         entry = textwrap.indent(entry, "    ")
 
     return entry
+
+
+@significance_test
+def _multimember(
+    fut,
+    ref,
+):
+    r"""
+    Robustness test for multi-member ensembles.
+
+
+    Change is considered significant if the delta exceeds a threshold related to the
+    internal variability.
+    The threshold is defined as :math:`1.645*\sqrt{\frac{\tilde{\sigma}^2_{ref}}{n_{ref}}
+    + \frac{\tilde{\sigma}^2_{fut}}{n_{fut}}}, where :math:`\tilde{\sigma}}`
+    is the pooled interannual variance across members and time measured after linearly
+    detrending the data and n is the number of years in the period.
+    This is a multimember extension of the "ipcc-ar6-c" test.
+
+    When using this test, the input dimension realization must be filled with ids
+    containing the rXiYpZfW pattern as it will be stacked with ``stack_ensemble_member``.
+    The realization will become the sub_id (the original label with the rXiYpZfW pattern
+    removed) and a new member dimension will be created.
+    Delta for each realization will be computed as the mean across members.
+    """
+    # Ensure annual
+    refy = ref.resample(time="YS").mean()
+    futy = fut.resample(time="YS").mean()
+    nref = len(refy.time)
+    nfut = len(futy.time)
+
+    ref_detrended = detrend(refy, dim="time", deg=1)
+    fut_detrended = detrend(futy, dim="time", deg=1)
+
+    ref_var = ref_detrended.var(["time", "member"])
+    fut_var = fut_detrended.var(["time", "member"])
+
+    gamma = 1.645 * np.sqrt((ref_var / nref) + (fut_var / nfut))
+
+    delta = (fut.mean("time") - ref.mean("time")).mean("member")
+    changed = abs(delta) > gamma
+    return changed, None
 
 
 robustness_fractions.__doc__ = robustness_fractions.__doc__.format(

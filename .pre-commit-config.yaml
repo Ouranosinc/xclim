@@ -100,11 +100,12 @@ repos:
     hooks:
       - id: rstcheck
         additional_dependencies: [ 'rstcheck[sphinx,toml]' ]
-  - repo: https://github.com/njzjz/mirrors-bibtex-tidy
-    rev: v1.14.0
-    hooks:
-      - id: bibtex-tidy
-        args: [ '--v2', '--modify', '--wrap' ]
+  #TODO: put back when figure out why it fails
+  # - repo: https://github.com/njzjz/mirrors-bibtex-tidy
+  #   rev: v1.14.0
+  #   hooks:
+  #     - id: bibtex-tidy
+  #       args: [ '--v2', '--modify', '--wrap' ]
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.0
     hooks:
