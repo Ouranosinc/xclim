@@ -324,7 +324,7 @@ class Output(dict):  # numpydoc ignore=PR01
         elif self.dimensionality:
             dim = f", {self.dimensionality}"
         sname = "" if self.get("standard_name") is None else f"{self['standard_name']}, "
-        add = ""
+        add = "."
         if other := (set(self.keys()) - {"standard_name", "long_name"}):
             add = f". With additional attributes: {', '.join([f'**{k}**: ``{self[k]}``' for k in other])}"
         return f"{name}xarray.DataArray{dim}\n  {sname}{self.get('long_name', '')}{add}"
