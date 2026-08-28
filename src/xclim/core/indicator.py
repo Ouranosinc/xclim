@@ -1485,7 +1485,7 @@ class _Registrer(_Convenience):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.identifier in registry:
-            warnings.warn(f"Indicator {self.identifier} already exists and will be overwritten.", stacklevel=1)
+            warnings.warn(f"Indicator {self.identifier} already exists and will be overwritten.", stacklevel=4)
         registry[self.identifier] = self
 
 
