@@ -15,7 +15,7 @@ lint = [
   "yamllint >=1.35.1"
 ]
 typing = [
-  "pylint >=3.3.1",
+  "pylint >=4.0",
   "ty >=0.0.35"
 ]
 io = [

@@ -35,7 +35,7 @@ dependencies:
   - flake8 >=7.3.0
   - flake8-rst-docstrings >=0.4.0
   - numpydoc >=1.10.0
-  - pylint >=3.3.1
+  - pylint >=4.0
   - ruff >=0.13.3
   - ty >=0.0.35
   - vulture >=2.14
