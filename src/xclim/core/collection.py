@@ -199,7 +199,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         """
         filepath = Path(filename)
         # A stem was passed, try to load module, functions and translations with same name but different suffixes
-        is_stem = filepath.suffix not in ['.yml', '.yaml']
+        is_stem = filepath.suffix not in [".yml", ".yaml"]
 
         if is_stem:
             yml_path = filepath.with_suffix(".yml")
