@@ -189,7 +189,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         When the given `filename` has no suffix (usually '.yaml' or '.yml'), the function will try to load
         custom compute functions definitions from a file with the same name but with a `.py` extension. Similarly,
         it will try to load translations in `*.<lang>.json` files, where `<lang>` is the IETF language tag.
-        Note that the file name _can not_ contain a dot (``.``) for this logic to work.
+        Note that the file name *can not* contain a dot (``.``) for this logic to work.
 
         For example. a set of custom indicators could be fully described by the following files:
 
