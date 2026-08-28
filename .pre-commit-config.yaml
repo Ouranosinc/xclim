@@ -100,7 +100,7 @@ repos:
     hooks:
       - id: rstcheck
         additional_dependencies: [ 'rstcheck[sphinx,toml]' ]
-  #TODO: put back when figure out why it fails
+  #TODO: put back when figure out why install fails
   # - repo: https://github.com/njzjz/mirrors-bibtex-tidy
   #   rev: v1.14.0
   #   hooks:
