@@ -448,7 +448,7 @@ def robustness_categories(
         directly the output of :py:func:`robustness_fractions`.
         If the member dimension is present, the deltas for each realization are averaged
         over the member dimension before computing the fractions and the realization
-        validity mask is the logical AND of the member validity masks.
+        validity mask is the logical AND of the existing member validity masks.
     agree : xr.DataArray, optional
         The fraction of members agreeing on the sign of change.
         Can also be passed as a variable of the first argument.
