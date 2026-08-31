@@ -32,7 +32,7 @@ New indicators and features
     * Open `date_bounds` and `doy_bounds` are now supported (i.e., `None` as start or end).
     * The `include_doy_bounds_nans` argument has been added to control whether NaN values in the bounds should be filled or not. When set to `True`, missing values in the start or end bounds are replaced by the start and end of the period, respectively.
     * The `bounds_freq` argument has been added to allow users to specify the frequency to use when using open `date_bounds`.
-* Add 'multimember' test for ``xclim.ensembles.robustness_fractions`` (:pull:`2387`).
+* Add 'multimember' test for ``xclim.ensembles.robustness_fractions`` (:pull:`2411`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -55,8 +55,10 @@ Breaking changes
 * The output of ``xclim.compute.stats.parametric_cdf`` has a dimension `v` instead `cdf` (`cdf` more appropriately describes the output variable).
 * ``mask_between_doys`` has been renamed to ``select_between_doys``. (:pull:`2374`):
     * The function now returns the selected values instead of a boolean mask.
-    * For array-like ``doy_bounds`` without ``time`` dimension, the start and end bounds must now be consecutive according to the frequency (default: ``freq="YS"``). Otherwise, the indexing is invalid and no data are selected.
+    * For array-like ``doy_bounds`` without ``time`` dimension, the start and end bounds must now be consecutive according to the frequency (default ``freq="YS"``). Otherwise, the indexing is invalid and no data are selected.
 * Translation: ``xclim.core.locales.get_local_attrs`` has been rewritten and only accepts a single "locale" now. Locale dictionaries are now case-insensitive. (:pull:`2397`).
+* Replace hard-coded length of period to actually use the length of the input in ``xclim.ensembles.robustness_fractions``. (:pull:`2387`, :issue:`2406`).
+
 
 Internal changes
 ^^^^^^^^^^^^^^^^
