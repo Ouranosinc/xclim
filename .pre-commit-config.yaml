@@ -100,7 +100,7 @@ repos:
     hooks:
       - id: rstcheck
         additional_dependencies: [ 'rstcheck[sphinx,toml]' ]
-  - repo: https://github.com/FlamingTempura/bibtex-tidy
+  - repo: https://github.com/njzjz/mirrors-bibtex-tidy
     rev: v1.14.0
     hooks:
       - id: bibtex-tidy
