@@ -324,7 +324,7 @@ class Output(dict):  # numpydoc ignore=PR01
         elif self.dimensionality:
             dim = f", {self.dimensionality}"
         sname = "" if self.get("standard_name") is None else f"{self['standard_name']}, "
-        add = ""
+        add = "."
         if other := (set(self.keys()) - {"standard_name", "long_name"}):
             add = f". With additional attributes: {', '.join([f'**{k}**: ``{self[k]}``' for k in other])}"
         return f"{name}xarray.DataArray{dim}\n  {sname}{self.get('long_name', '')}{add}"
@@ -1485,7 +1485,7 @@ class _Registrer(_Convenience):  # pylint: disable=too-many-ancestors
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.identifier in registry:
-            warnings.warn(f"Indicator {self.identifier} already exists and will be overwritten.", stacklevel=1)
+            warnings.warn(f"Indicator {self.identifier} already exists and will be overwritten.", stacklevel=4)
         registry[self.identifier] = self
 
 
