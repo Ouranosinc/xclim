@@ -57,7 +57,7 @@ Breaking changes
     * The function now returns the selected values instead of a boolean mask.
     * For array-like ``doy_bounds`` without ``time`` dimension, the start and end bounds must now be consecutive according to the frequency (default ``freq="YS"``). Otherwise, the indexing is invalid and no data are selected.
 * Translation: ``xclim.core.locales.get_local_attrs`` has been rewritten and only accepts a single "locale" now. Locale dictionaries are now case-insensitive. (:pull:`2397`).
-* Replace hard-coded length of period to actually use the length of the input in ``xclim.ensembles.robustness_fractions``. (:pull:`2387`, :issue:`2406`).
+* Replace hard-coded length of period to actually use the length of the input in ``xclim.ensembles.robustness_fractions``. (:pull:`2411`, :issue:`2406`).
 
 
 Internal changes
