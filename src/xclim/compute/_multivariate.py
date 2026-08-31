@@ -258,7 +258,7 @@ def warm_and_dry_days(
 
     Returns
     -------
-    xarray.DataArray,
+    xarray.DataArray
         The total number of days when warm and dry conditions coincide.
 
     Warnings

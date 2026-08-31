@@ -1270,7 +1270,7 @@ def test_degree_days_exceedance_date(open_dataset):
     )
     np.testing.assert_array_equal(out, np.array([[153, 136, 9, 6]]).T)
     assert (
-        "Day of year when the integral of degree days (mean daily temperature > 4 degc) exceeds 200 k days."
+        "Day of year when the integral of degree days (mean daily temperature > 4 degC) exceeds 200 K days."
         in out.attrs["description"]
     )
 
@@ -1279,8 +1279,8 @@ def test_degree_days_exceedance_date(open_dataset):
     )
     np.testing.assert_array_equal(out, np.array([[199, 193, 190, 190]]).T)
     assert (
-        "Day of year when the integral of degree days (mean daily temperature > 4 degc) "
-        "exceeds 200 k days, with the cumulative sum starting from 07-01." in out.attrs["description"]
+        "Day of year when the integral of degree days (mean daily temperature > 4 degC) "
+        "exceeds 200 K days, with the cumulative sum starting from 07-01." in out.attrs["description"]
     )
 
     with set_options(check_missing="skip"):
@@ -1362,7 +1362,7 @@ def test_corn_heat_units(open_dataset):
 
     np.testing.assert_allclose(chu[0, 180:185], np.array([12.933, 11.361, 11.1365, 13.419, 15.569]), rtol=1e-4)
 
-    assert "minimum and maximum daily temperatures both exceed 4.44 degc and 10 degc, respectively." in chu.description
+    assert "minimum and maximum daily temperatures both exceed 4.44 degC and 10 degC, respectively." in chu.description
 
 
 class TestFreezeThawSpell:
@@ -1382,12 +1382,12 @@ class TestFreezeThawSpell:
         np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 1, 1])
 
         assert out.attrs["long_name"] == (
-            "Frequency of events where maximum daily temperatures are above 0 degc "
-            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+            "Frequency of events where maximum daily temperatures are above 0 degC "
+            "and minimum daily temperatures are at or below 0 degC for at least 2 consecutive day(s)."
         )
         assert out.attrs["description"] in [
-            "Annual number of freeze-thaw spells, where maximum daily temperatures are above 0 degc "
-            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+            "Annual number of freeze-thaw spells, where maximum daily temperatures are above 0 degC "
+            "and minimum daily temperatures are at or below 0 degC for at least 2 consecutive day(s)."
         ]
 
     def test_freezethaw_spell_mean_length(self, open_dataset):
@@ -1406,12 +1406,12 @@ class TestFreezeThawSpell:
         np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 4, 2])
 
         assert out.attrs["long_name"] == (
-            "Average length of events where maximum daily temperatures are above 0 degc "
-            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+            "Average length of events where maximum daily temperatures are above 0 degC "
+            "and minimum daily temperatures are at or below 0 degC for at least 2 consecutive day(s)."
         )
         assert out.attrs["description"] in [
-            "Annual average length of freeze-thaw spells, where maximum daily temperatures are above 0 degc "
-            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+            "Annual average length of freeze-thaw spells, where maximum daily temperatures are above 0 degC "
+            "and minimum daily temperatures are at or below 0 degC for at least 2 consecutive day(s)."
         ]
 
     def test_freezethaw_spell_max_length(self, open_dataset):
@@ -1430,12 +1430,12 @@ class TestFreezeThawSpell:
         np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 4, 2])
 
         assert out.attrs["long_name"] == (
-            "Maximal length of events where maximum daily temperatures are above 0 degc "
-            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+            "Maximal length of events where maximum daily temperatures are above 0 degC "
+            "and minimum daily temperatures are at or below 0 degC for at least 2 consecutive day(s)."
         )
         assert out.attrs["description"] in [
-            "Annual maximal length of freeze-thaw spells, where maximum daily temperatures are above 0 degc "
-            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+            "Annual maximal length of freeze-thaw spells, where maximum daily temperatures are above 0 degC "
+            "and minimum daily temperatures are at or below 0 degC for at least 2 consecutive day(s)."
         ]
 
 

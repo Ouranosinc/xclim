@@ -123,6 +123,7 @@ dependencies = [
   "cftime >=1.4.1",
   "click >=8.1",
   "dask[array] >=2024.8.1",
+  "docstring_parser",
   "filelock >=3.14.0",
   "numba >=0.60.0",
   "numpy >=2.0",
@@ -168,7 +169,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.99.0-dev.21"
+current_version = "0.99.0-dev.22"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false

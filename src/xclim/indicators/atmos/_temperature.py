@@ -6,14 +6,13 @@ from xarray import DataArray
 
 from xclim import compute
 from xclim.compute import generic
-from xclim.core import cfchecks
+from xclim.core import InputKind, cfchecks
 from xclim.core.indicator import (
     Daily,
     Hourly,
     Indicator,
     ResamplingIndicatorWithIndexing,
 )
-from xclim.core.utils import InputKind
 
 __all__ = [
     "australian_hardiness_zones",
@@ -119,27 +118,27 @@ class TempDailyNoResampling(Indicator):
 class Temp(Daily):
     """Indicators involving daily temperature."""
 
-    keywords = "temperature"
+    keywords = ["temperature"]
 
 
 class TempHourly(Hourly):
     """Temperature indicators involving hourly temperature."""
 
-    keywords = "temperature"
+    keywords = ["temperature"]
 
 
 class TempWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicators involving daily temperature and adding an indexing possibility."""
 
     src_freq = "D"
-    keywords = "temperature"
+    keywords = ["temperature"]
 
 
 class TempHourlyWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicators involving hourly temperature and adding an indexing possibility."""
 
     src_freq = "h"
-    keywords = "temperature"
+    keywords = ["temperature"]
 
 
 tn_days_above = Temp(
@@ -308,7 +307,7 @@ heat_wave_frequency = Temp(
     abstract="Number of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed given "
     "thresholds for a number of days.",
     cell_methods="",
-    keywords="health,",
+    keywords=["health"],
     input={"data1": "tasmin", "data2": "tasmax"},
     compute=generic.bivariate_spell_length_statistics,
     parameters={
@@ -353,7 +352,7 @@ heat_wave_max_length = Temp(
     abstract="Maximal duration of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed "
     "given thresholds for a number of days.",
     cell_methods="",
-    keywords="health,",
+    keywords=["health"],
     input={"data1": "tasmin", "data2": "tasmax"},
     compute=generic.bivariate_spell_length_statistics,
     parameters={
@@ -382,7 +381,7 @@ heat_wave_total_length = Temp(
     abstract="Total length of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed "
     "given thresholds for a number of days.",
     cell_methods="",
-    keywords="health,",
+    keywords=["health"],
     input={"data1": "tasmin", "data2": "tasmax"},
     compute=generic.bivariate_spell_length_statistics,
     parameters={
@@ -430,7 +429,7 @@ heat_spell_frequency = Temp(
     abstract="Number of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum"
     "temperatures exceed given thresholds for a number of days.",
     cell_methods="",
-    keywords="health,",
+    keywords=["health"],
     compute=generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters={
@@ -1718,7 +1717,7 @@ maximum_consecutive_warm_days = Temp(
 class FireSeasonBase(Indicator):
     """Special Indicator class for FireSeason that accepts any tas[min/max] and optional snd and is not resampling."""
 
-    keywords = "fire"
+    keywords = ["fire"]
 
     def cfcheck(self, tas: DataArray, snd: DataArray = None):
         r"""
@@ -1926,7 +1925,7 @@ chill_portions = TempHourly(
     cell_methods="time: sum",
     description="Chill portions are a measure to estimate the bud breaking potential of different crops. "
     "The constants and functions are taken from Luedeling et al. (2009) which formalises "
-    "the method described in Fishman et al. (1987). ",
+    "the method described in Fishman et al. (1987).",
     abstract="Chill portions are a measure to estimate the bud breaking potential of different crops. "
     "The constants and functions are taken from Luedeling et al. (2009) which formalises "
     "the method described in Fishman et al. (1987). "

@@ -19,6 +19,11 @@ Major changes
 * Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures. (:pull:`2258`):
     * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
     * A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
+* Refactor of the ``xclim.core.indicator.Indicator`` class itself  (:pull:`2397`). Most breaking changes are:
+    * Output attributes are stored in ``Indicator.attrs`` (renamed from ``cf_attrs``), which is a list of ``xclim.core.indicator.Output`` objects (not dictionaries).
+    * Removal of ``Indicator.from_dict``. Renamed ``Indicator.translate_attrs`` to ``Indicator.translate``.
+    * The ``xclim.core.indicator.registry`` now holds ``Indicator`` _instances_ (not classes) and is case-insensitive.
+    * "Virtual submodules" were transformed into ``xclim.core.collection.IndicatorCollection`` instances (and not actual python modules). Indicators created this way automatically have the collection's name prepended to their identifier.
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -48,10 +53,10 @@ Breaking changes
 * `pre-commit` has been replaced by `prek`. `prek` is a `pre-commit-config.yml` compatible reimplementation built in Rust. (:pull:`2355`).
 * Approximate method `APP` not allowed anymore when using the `genextreme` distribution for standardized indices (e.g. ``xclim.indicators.atmos.standardized_precipitation_index`` and similar indicators).
 * The output of ``xclim.compute.stats.parametric_cdf`` has a dimension `v` instead `cdf` (`cdf` more appropriately describes the output variable).
-* `mask_between_doys` has been renamed to `select_between_doys`. (:pull:`2374`):
+* ``mask_between_doys`` has been renamed to ``select_between_doys``. (:pull:`2374`):
     * The function now returns the selected values instead of a boolean mask.
-    * For array-like ``doy_bounds`` without ``time`` dimension, the start and end bounds must now be consecutive according to the frequency (default ``freq="YS"``). Otherwise, the indexing is invalid and no data are selected.
-* Replace hard-coded length of period to actually use the length of the input in ``xclim.ensembles.robustness_fractions``. (:pull:`2387`, :issue:`2406`).
+    * For array-like ``doy_bounds`` without ``time`` dimension, the start and end bounds must now be consecutive according to the frequency (default: ``freq="YS"``). Otherwise, the indexing is invalid and no data are selected.
+* Translation: ``xclim.core.locales.get_local_attrs`` has been rewritten and only accepts a single "locale" now. Locale dictionaries are now case-insensitive. (:pull:`2397`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

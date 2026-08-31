@@ -30,7 +30,7 @@ fetch('_static/indicators.json')
   .then(data => data.json())
   .then(data => {
     indicators = Object.entries(data).map(([k, v]) => {
-      return {id: k.toLowerCase(), ...v}
+      return {id: k, ...v}
     });
     miniSearch.addAll(indicators);
     indFilter();
@@ -52,7 +52,7 @@ function escapeHTML(str){
 
 function makeKeywordLabel(ind) {
     /* Print list of keywords only if there is at least one. */
-    if (ind.keywords[0].length > 0) {
+    if (ind.keywords.length > 0) {
         const keywords = ind.keywords.map(v => `<code class="keywordlabel">${v.trim()}</code>`).join('');
         return `<div class="keywords">Keywords: ${keywords}</div>`;
         }

@@ -18,7 +18,7 @@ indicators:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
     compute: tg_mean_warmcold_quarter
-    cf_attrs:
+    attrs:
       standard_name: air_temperature
       cell_methods: "time: mean"
       units: K
@@ -28,7 +28,7 @@ indicators:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
     compute: tg_mean_warmcold_quarter
-    cf_attrs:
+    attrs:
       standard_name: air_temperature
       cell_methods: "time: mean"
       units: K
@@ -38,7 +38,7 @@ indicators:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
     compute: prcptot
-    cf_attrs:
+    attrs:
       long_name: Annual Precipitation
       standard_name: lwe_thickness_of_precipitation_amount
       cell_methods: "time: sum"
@@ -48,7 +48,7 @@ indicators:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
     compute: prcptot_wetdry_period
-    cf_attrs:
+    attrs:
       standard_name: lwe_thickness_of_precipitation_amount
       cell_methods: "time: sum"
       units: mm
@@ -59,7 +59,7 @@ indicators:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
     compute: prcptot_wetdry_period
-    cf_attrs:
+    attrs:
       standard_name: lwe_thickness_of_precipitation_amount
       cell_methods: "time: sum"
       units: mm
@@ -70,16 +70,16 @@ indicators:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
     compute: precip_seasonality
-    cf_attrs:
+    attrs:
       cell_methods: "time: standard_deviation"
-      description: >
-        "The standard deviation of the precipitation estimates expressed
-        as a percentage of the mean of those estimates."
+      description: >-
+        The standard deviation of the precipitation estimates expressed
+        as a percentage of the mean of those estimates.
   P16_PrecipWettestQuarter:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
     compute: prcptot_wetdry_quarter
-    cf_attrs:
+    attrs:
       standard_name: lwe_thickness_of_precipitation_amount
       cell_methods: "time: sum"
       units: mm
@@ -89,7 +89,7 @@ indicators:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
     compute: prcptot_wetdry_quarter
-    cf_attrs:
+    attrs:
       standard_name: lwe_thickness_of_precipitation_amount
       cell_methods: "time: sum"
       units: mm
@@ -99,7 +99,7 @@ indicators:
     src_freq: ['D', '7D', 'MS']
     allowed_periods: ["Y"]
     compute: prcptot_warmcold_quarter
-    cf_attrs:
+    attrs:
       standard_name: lwe_thickness_of_precipitation_amount
       cell_methods: "time: sum"
       units: mm
@@ -109,7 +109,7 @@ indicators:
     src_freq: ['D', '7D', 'MS']
     allowed_periods: ["Y"]
     compute: prcptot_warmcold_quarter
-    cf_attrs:
+    attrs:
       standard_name: lwe_thickness_of_precipitation_amount
       cell_methods: "time: sum"
       units: mm
@@ -118,57 +118,86 @@ indicators:
   P1_AnnMeanTemp:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
-    compute: tg_mean
-    cf_attrs:
+    attrs:
       units: K
       cell_methods: "time: mean"
       long_name: Annual Mean Temperature
       standard_name: air_temperature
+    compute: statistics
+    input:
+      data: tas
+    parameters:
+      statistic: mean
+      out_units: null
+      freq:
+        default: YS
   P2_MeanDiurnalRange:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
-    compute: daily_temperature_range
-    cf_attrs:
+    compute: difference_statistics
+    attrs:
       units: K
       long_name: Mean Diurnal Range
       cell_methods: "time: range"
+    input:
+      data1: tasmin
+      data2: tasmax
+    parameters:
+      statistic: mean
+      absolute: False
+      freq:
+        default: YS
   P3_Isothermality:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
     compute: isothermality
-    cf_attrs:
+    attrs:
       cell_methods: "time: range"
       description: "The mean diurnal range (P2) divided by the Annual Temperature Range (P7)."
   P4_TempSeasonality:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
     compute: temperature_seasonality
-    cf_attrs:
+    attrs:
       cell_methods: "time: standard_deviation"
-      description: >
-        "The standard deviation of the mean temperatures expressed as a percentage of the mean of those temperatures.
+      description: >-
+        The standard deviation of the mean temperatures expressed as a percentage of the mean of those temperatures.
         For this calculation, the mean in degrees Kelvin is used. This avoids the possibility of having to divide by
-        zero, but it does mean that the values are usually quite small."
+        zero, but it does mean that the values are usually quite small.
   P5_MaxTempWarmestPeriod:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
-    compute: tx_max
-    cf_attrs:
+    attrs:
       long_name: Max Temperature of Warmest Period
       description: The highest maximum temperature in all periods of the year.
       standard_name: air_temperature
       units: K
       cell_methods: "time: maximum"
+    compute: statistics
+    input:
+      data: tasmax
+    parameters:
+      statistic: max
+      out_units: null
+      freq:
+        default: YS
   P6_MinTempColdestPeriod:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
-    compute: tn_min
-    cf_attrs:
+    attrs:
       long_name: Min Temperature of Coldest Period
       description: The lowest minimum temperature in all periods of the year.
       standard_name: air_temperature
       units: K
       cell_methods: "time: minimum"
+    compute: statistics
+    input:
+      data: tasmin
+    parameters:
+      statistic: min
+      out_units: null
+      freq:
+        default: YS
   P7_TempAnnualRange:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
@@ -176,7 +205,7 @@ indicators:
     input:
       data1: tasmin
       data2: tasmax
-    cf_attrs:
+    attrs:
       long_name: Temperature Annual Range
       cell_methods: "time: range"
       units: K
@@ -187,7 +216,7 @@ indicators:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
     compute: tg_mean_wetdry_quarter
-    cf_attrs:
+    attrs:
       standard_name: air_temperature
       cell_methods: "time: mean"
       units: K
@@ -197,7 +226,7 @@ indicators:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
     compute: tg_mean_wetdry_quarter
-    cf_attrs:
+    attrs:
       standard_name: air_temperature
       cell_methods: "time: mean"
       units: K

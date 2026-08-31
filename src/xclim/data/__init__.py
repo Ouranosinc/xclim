@@ -2,9 +2,9 @@
 Data files for xclim
 ====================
 
-JSON and YAML definitions for virtual modules and internationalisation support.
+JSON and YAML definitions for virtual submodules and internationalisation support.
 
-Currently, the following virtual modules are defined:
+Currently, the following indicator collections / virtual modules are defined:
   * ANUCLIM (`anuclim.yml`)
   * CF (`cf.yml`)
   * ICCLIM (`icclim.yml`)
