@@ -107,6 +107,9 @@ def stack_ensemble_member(ens: xr.DataArray):
     the result has realization coordinates ``["MIROC6_hist", "CanESM5_hist"]`` and
     member coordinates ``[0, 1]``.
     """
+    if "realization" not in ens.dims:
+        raise ValueError("Input array must have a 'realization' dimension.")
+
     pattern = re.compile(r"_(r\d+i\d+p\d+f\d+)_?")  # rXiYpZfW anywhere, optional trailing underscore
 
     sub_ids = []
@@ -162,6 +165,8 @@ def robustness_fractions(
         Name of the statistical test used to determine if there was significant change. See notes.
     weights : xr.DataArray
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
+        If test is "multimember", weights will be applied along the "realization"
+        dimension after ``stack_ensemble_member`` (i.e., weights should be given for each sub_id).
     invalid : xc.core.missing.MissingBase instance
         A Missing class from :py:mod:`xclim.core.missing` to use to flag points what are invalid.
         Invalid points are not included in the fractions. Default is MissingAny, which means any
@@ -292,6 +297,7 @@ def robustness_fractions(
             invalid = MissingAny()
         delta = fut.mean("time") - ref.mean("time")
         valid = ~invalid(fut) & ~invalid(ref)
+
         if test == "multimember":
             delta = delta.mean("member")
             valid = valid.all(dim="member")
