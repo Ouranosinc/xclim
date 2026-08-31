@@ -783,9 +783,15 @@ def test_multimember_robustness(robust_data):
         "ESPO_CaSR_CMIP6_ScenarioMIP_CSIRO-ARCCSS_ACCESS-CM2_ssp370_r1i1p1f1_NAM",
         "ESPO_CaSR_CMIP6_ScenarioMIP_CSIRO-ARCCSS_ACCESS-CM2_ssp370_r3i1p1f1_NAM",
     ]
-    fracs = ensembles.robustness_fractions(fut, ref, test="multimember")
+    ref = ensembles.stack_ensemble_member(ref)
+    fut = ensembles.stack_ensemble_member(fut)
 
-    assert fracs.changed.attrs["test"] == "multimember"
+    assert ref.realization.size == 2
+    assert fut.member.size == 2
+
+    fracs = ensembles.robustness_fractions(fut, ref, test="signal-to-noise")
+
+    assert fracs.changed.attrs["test"] == "signal-to-noise"
 
     np.testing.assert_array_almost_equal(fracs.positive, [1.0, 0.5, 1.0, 1.0])
     np.testing.assert_array_almost_equal(fracs.agree, [1.0, 0.5, 1.0, 1.0])

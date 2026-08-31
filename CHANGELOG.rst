@@ -32,7 +32,7 @@ New indicators and features
     * Open `date_bounds` and `doy_bounds` are now supported (i.e., `None` as start or end).
     * The `include_doy_bounds_nans` argument has been added to control whether NaN values in the bounds should be filled or not. When set to `True`, missing values in the start or end bounds are replaced by the start and end of the period, respectively.
     * The `bounds_freq` argument has been added to allow users to specify the frequency to use when using open `date_bounds`.
-* Add 'multimember' test for ``xclim.ensembles.robustness_fractions`` (:pull:`2411`).
+* Add multimember support and new test 'signal-to-noise' for ``xclim.ensembles.robustness_fractions`` (:pull:`2411`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
