@@ -617,8 +617,15 @@ def _ttest(fut, ref, *, p_change=0.05):
 
     Accepts argument p_change (float, default : 0.05) the p-value threshold for rejecting the hypothesis
     of no significant change.
+
+    For the multimember case, the members and years are pooled for the future and averaged for the reference.
     """
-    # TODO: add multimember support
+    if "member" in fut.dims:
+        # for multimember ensembles, pool the members and year
+        fut = fut.stack(sample=["time", "member"])
+        fut = fut.drop_vars(["time", "member"])
+        fut = fut.rename({"sample": "time"})
+        ref = ref.mean("member")
 
     def _ttest_func(f, r):
         # scipy>=1.9: popmean.axis[-1] must equal 1 for both fut and ref
@@ -649,8 +656,16 @@ def _welch_ttest(fut, ref, *, p_change=0.05):
     Two-sided T-test, without assuming equal population variance.
 
     Same significance criterion and argument as 'ttest'.
+
+    For the multimember case, the members and years are pooled for the future and the reference.
     """
-    # TODO: add multimember support
+    if "member" in fut.dims:
+        fut = fut.stack(sample=["time", "member"])
+        fut = fut.drop_vars(["time", "member"])
+        fut = fut.rename({"sample": "time"})
+        ref = ref.stack(sample=["time", "member"])
+        ref = ref.drop_vars(["time", "member"])
+        ref = ref.rename({"sample": "time"})
 
     # Test hypothesis of no significant change
     # equal_var=False -> Welch's T-test
@@ -682,8 +697,17 @@ def _mannwhitney_utest(ref, fut, *, p_change=0.05):
     Two-sided Mann-Whiney U-test.
 
     Same significance criterion and argument as 'ttest'.
+
+    For the multimember case, the members and years are pooled for the future and the reference.
+
     """
-    # TODO: add multimember support
+    if "member" in fut.dims:
+        fut = fut.stack(sample=["time", "member"])
+        fut = fut.drop_vars(["time", "member"])
+        fut = fut.rename({"sample": "time"})
+        ref = ref.stack(sample=["time", "member"])
+        ref = ref.drop_vars(["time", "member"])
+        ref = ref.rename({"sample": "time"})
 
     def mwu_wrapper(f, r):  # This specific test can't manage an all-NaN slice
         if np.isnan(f).all() or np.isnan(r).all():
@@ -712,8 +736,17 @@ def _brownforsythe_test(fut, ref, *, p_change=0.05):
     Brown-Forsythe test assuming skewed, non-normal distributions.
 
     Same significance criterion and argument as 'ttest'.
+
+    For the multimember case, the members and years are pooled for the future and the reference.
+
     """
-    # TODO: add multimember support
+    if "member" in fut.dims:
+        fut = fut.stack(sample=["time", "member"])
+        fut = fut.drop_vars(["time", "member"])
+        fut = fut.rename({"sample": "time"})
+        ref = ref.stack(sample=["time", "member"])
+        ref = ref.drop_vars(["time", "member"])
+        ref = ref.rename({"sample": "time"})
 
     pvals = xr.apply_ufunc(
         lambda f, r: spstats.levene(f, r, center="median")[1],
@@ -764,26 +797,25 @@ def _ipcc_ar6_c(fut, ref, *, ref_pi=None):
 
 
 @significance_test
-def _signal_to_noise(
-    fut,
-    ref,
-):
+def _signal_to_noise(fut, ref, confidence=0.9):
     r"""
     Robustness test using the signal-to-noise ratio.
 
 
     Change is considered significant if the delta exceeds a threshold related to the
     internal variability (noise).
-    The threshold is defined as :math:`1.645*\sqrt{\frac{\tilde{\sigma}^2_{ref}}{n_{ref}}
+    The threshold is defined as :math:`z*\sqrt{\frac{\tilde{\sigma}^2_{ref}}{n_{ref}}
     + \frac{\tilde{\sigma}^2_{fut}}{n_{fut}}}, where :math:`\tilde{\sigma}}`
     is the pooled interannual variance across members and time measured after linearly
-    detrending the data and n is the number of years in the period.
-    The 1.645  value signifies a 90% confidence level.
+    detrending the data, n is the number of years in the period and z is the z-score
+    corresponding to the two-sided confidence level.
+    (ex. A 90% confidence level gives a z-score of 1.645.)
     This is similar to the "ipcc-ar6-c" test, but there is no assumption that the
     variance will be the same in the past and in the future. Further, this test can handle
     multimember ensembles, while the "ipcc-ar6-c" test assumes a single member per realization.
 
     """
+    z = spstats.norm.ppf(confidence / 2 + 0.5)
     # Ensure annual
     refy = ref.resample(time="YS").mean()
     futy = fut.resample(time="YS").mean()
@@ -800,7 +832,7 @@ def _signal_to_noise(
         ref_var = ref_detrended.var("time")
         fut_var = fut_detrended.var("time")
 
-    gamma = 1.645 * np.sqrt((ref_var / nref) + (fut_var / nfut))
+    gamma = z * np.sqrt((ref_var / nref) + (fut_var / nfut))
 
     delta = fut.mean("time") - ref.mean("time")
     if "member" in delta.dims:
