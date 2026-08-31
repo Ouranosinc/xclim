@@ -772,7 +772,8 @@ def _ipcc_ar6_c(fut, ref, *, ref_pi=None):
     Change is considered significant if the delta exceeds a threshold related to the internal variability.
     If pre-industrial data is given in argument `ref_pi`, the threshold is defined as
     :math:`\sqrt{2}*1.645*\sigma_{20yr}`, where :math:`\sigma_{20yr}` is the standard deviation of 20-year
-    means computed from non-overlapping periods after detrending with a quadratic fit.
+    means computed from non-overlapping periods after detrending with a quadratic fit and
+    1.645 is the z-score for the 90% confidence interval of the two-sided test .
     Otherwise, when such pre-industrial control data is not available, the threshold is defined in relation to
     the historical data (`ref`) as :math:`\sqrt{\frac{2}{n}}*1.645*\sigma_{1yr}, where :math:`\sigma_{1yr}`
     is the inter-annual standard deviation measured after linearly detrending the data
