@@ -783,8 +783,8 @@ def test_multimember_robustness(robust_data):
         "ESPO_CaSR_CMIP6_ScenarioMIP_CSIRO-ARCCSS_ACCESS-CM2_ssp370_r1i1p1f1_NAM",
         "ESPO_CaSR_CMIP6_ScenarioMIP_CSIRO-ARCCSS_ACCESS-CM2_ssp370_r3i1p1f1_NAM",
     ]
-    ref = ensembles.stack_ensemble_member(ref)
-    fut = ensembles.stack_ensemble_member(fut)
+    ref = ensembles.unstack_ensemble_member(ref)
+    fut = ensembles.unstack_ensemble_member(fut)
 
     assert ref.realization.size == 2
     assert fut.member.size == 2

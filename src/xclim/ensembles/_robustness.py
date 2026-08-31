@@ -71,7 +71,7 @@ def significance_test(func: Callable) -> Callable:
     return func
 
 
-def stack_ensemble_member(ens: xr.DataArray):
+def unstack_ensemble_member(ens: xr.DataArray):
     """
     Split the "realization" dimension into "realization" and "member" dimensions.
 
