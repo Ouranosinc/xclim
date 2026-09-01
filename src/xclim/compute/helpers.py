@@ -23,6 +23,13 @@ from packaging.version import Version
 from xarray import CFTimeIndex
 from xarray import __version__ as __xr_version__
 
+from xclim.compute import run_length as rl
+from xclim.core import Condition, DayOfYearStr, Freq, Quantified, Reducer
+from xclim.core.calendar import ensure_cftime_array, get_calendar, parse_offset, select_time
+from xclim.core.options import MAP_BLOCKS, OPTIONS
+from xclim.core.units import convert_units_to
+from xclim.core.utils import _chunk_like, uses_dask
+
 if Version(__xr_version__) >= Version("24.9.0"):
     XR2409 = True
 else:
@@ -35,12 +42,6 @@ try:
 except ImportError:
     rechunk_for_blockwise = None
 
-from xclim.compute import run_length as rl
-from xclim.core import Condition, DayOfYearStr, Freq, Quantified, Reducer
-from xclim.core.calendar import ensure_cftime_array, get_calendar, parse_offset, select_time
-from xclim.core.options import MAP_BLOCKS, OPTIONS
-from xclim.core.units import convert_units_to
-from xclim.core.utils import _chunk_like, uses_dask
 
 __all__ = [
     "cosine_of_solar_zenith_angle",
@@ -339,7 +340,9 @@ def day_angle(time: xr.DataArray) -> xr.DataArray:
     if XR2409:
         decimal_year = time.dt.decimal_year
     else:
-        from xarray.coding.calendar_ops import _datetime_to_decimal_year  # ty: ignore[unresolved-import]
+        from xarray.coding.calendar_ops import (  # pylint: disable=import-outside-toplevel
+            _datetime_to_decimal_year,  # ty: ignore[unresolved-import]
+        )
 
         decimal_year = _datetime_to_decimal_year(times=time, calendar=time.dt.calendar)
     return ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")

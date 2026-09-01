@@ -68,8 +68,8 @@ class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
         else:
             for k, v in other:
                 self[k] = v
-        for k in kwargs:
-            self[k] = kwargs[k]
+        for k, v in kwargs.items():
+            self[k] = v
 
     def __iter__(self) -> Iterator[str]:
         return iter(self._data)
@@ -639,7 +639,7 @@ def make_clix_meta_yaml(  # noqa: C901
     adapted : os.PathLike
         The path where to write the adapted yaml.
     """
-    from ..compute import clix
+    from ..compute import clix  # pylint: disable=import-outside-toplevel
 
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
 

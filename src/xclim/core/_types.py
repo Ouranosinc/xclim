@@ -260,7 +260,7 @@ def infer_kind_from_parameter(param) -> InputKind:
 
     annot = annot - {"None"}
 
-    if annot == {"DataArray", "bool"} or annot == {"DataArray", "float"} or annot == {"DataArray", "int"}:
+    if annot in ({"DataArray", "bool"}, {"DataArray", "float"}, {"DataArray", "int"}):
         return InputKind.MASK
 
     # Not a mask and not a required variable

@@ -1849,7 +1849,7 @@ def add_season_coord(ds: DataType, freq: Freq) -> DataType:
         seasons = dict(zip(_MONTH_NUMBERS.values(), _MONTH_NUMBERS.keys(), strict=False))
         season_coords = [seasons[m] for m in ds.time.dt.month.values]
     season_length = len(season_coords[0]) if base != "M" else 1
-    attrs = dict(mult=mult, base=base, isstart=isstart, anchor=anchor or "JAN", season_length=season_length)
+    attrs = {"mult": mult, "base": base, "isstart": isstart, "anchor": anchor or "JAN", "season_length": season_length}
     return ds.assign_coords(season=("time", season_coords, attrs))
 
 
