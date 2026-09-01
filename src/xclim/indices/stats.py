@@ -23,7 +23,7 @@ import statsmodels.formula.api as smf
 import xarray as xr
 from formulaic import model_matrix, parser
 from scipy.optimize import minimize
-from scipy.stats import rv_continuous
+from scipy.stats import chi2, rv_continuous
 
 from xclim.core import DateStr, Quantified
 from xclim.core.calendar import compare_offsets, resample_doy, select_time
@@ -1439,26 +1439,29 @@ def _fit_covariate_1d(
     params,
     log_links=None,
     fixed_params=None,
+    init_params=None,
     method="Nelder-Mead",
     **minimize_kwargs,
 ):
     """Core 1-d fit, called once per grid cell/station by apply_ufunc."""
     log_links = log_links if log_links is not None else {}
     fixed_params = fixed_params if fixed_params is not None else {}
-    reduced_formulas = {k: formulas[k] for k in formulas if k not in fixed_params}
+    fixed_formulas = {k: formulas[k] for k in formulas if k not in fixed_params}
     mask = np.isnan(y)
     y = y[~mask]
     covariates = covariates[:, ~mask]
-    nparams = sum(len(terms) for terms in reduced_formulas.values())
+    nparams = sum(len(terms) for terms in fixed_formulas.values())
     if params is None:
         fitkwargs = {f"f{k}": fixed_params[k] for k in fixed_params}
-        pp = _fitfunc_1d(y, dist=dist, nparams=len(reduced_formulas), method="MLE", **fitkwargs)
+        pp = _fitfunc_1d(y, dist=dist, nparams=len(fixed_formulas), method="MLE", **fitkwargs)
         # silent failure if not enough values and fixed arguments
         ppd = dict(zip(_dist_param_names(dist), pp, strict=True))
-        params = {k: ppd[k] for k in reduced_formulas}
-    params_list = initialize_params(params, reduced_formulas, log_links)
-
-    nll = make_nll(dist, reduced_formulas, covariates, log_links, fixed_params)
+        params = {k: ppd[k] for k in fixed_formulas}
+    if init_params is None:
+        params_list = initialize_params(params, fixed_formulas, log_links)
+    else:
+        params_list = init_params
+    nll = make_nll(dist, fixed_formulas, covariates, log_links, fixed_params)
     opt = minimize(nll, params_list, args=(y,), method=method, **minimize_kwargs)
 
     aic = np.array(2 * nparams + 2 * nll(opt.x, y))
@@ -1490,6 +1493,7 @@ def fit_covariate(
     params=None,
     log_links=None,
     fixed_params=None,
+    init_params=None,
     method="Nelder-Mead",
     **minimize_kwargs,
 ) -> xr.Dataset:
@@ -1524,6 +1528,8 @@ def fit_covariate(
         Parameter names modeled on the log scale.
     fixed_params : dict[float], optional
         Not yet supported.
+    init_params : list[float], optional
+        Initial values of the parameters. The applicable log-links are assumed to have been applied.
     method : str
         Passed to `scipy.optimize.minimize`.
     **minimize_kwargs
@@ -1573,6 +1579,7 @@ def fit_covariate(
             formulas=formulas,
             params=params,
             fixed_params=fixed_params,
+            init_params=init_params,
             log_links=log_links,
             method=method,
             **minimize_kwargs,
@@ -1591,8 +1598,9 @@ def fit_covariate(
     out = out.assign_coords(dparams_raw=dparams_raw)
     if covariate_prediction is not None:
         out = _expand_covariate(out, covariate_prediction, dim_out)
-    lab = f"{out.name}_aic"
-    return xr.merge([out, aic.to_dataset(name=lab)], compat="override")
+    out.name = da.name
+    aic.name = f"{da.name}_aic"
+    return xr.merge([out, aic], compat="override")
 
 
 def _expand_covariate(p, covariate_target, dim=None):
@@ -1787,3 +1795,41 @@ def weighted_sum(
             ds[v].attrs["description"] = f"Weighted sum of {description}"
     ds.attrs = ds.attrs
     return ds.drop_vars(dim)
+
+
+def likelihood_ratio_test(aic, p, dim, null_coord, p_value_thresh=0.05) -> tuple[float, float]:
+    """
+    Likelihood ratio test comparing a null and alternative model.
+
+    Parameters
+    ----------
+    aic : xr.Dataset | xr.DataArray
+        AIC.
+    p : xr.Dataset | xr.DataArray
+        Parameters.
+    dim : str
+        Dimension along which we have the null and other hypothesis.
+    null_coord : str
+        Coordinate of `dparams` representing the null hypothesis.
+    p_value_thresh : float
+        Threshold of the p-value representing a conclusive hypothesis.
+
+    Returns
+    -------
+    xr.Dataset | xr.DataArray
+        A mask giving which methods should be excluded.
+    """
+    null_coord = {dim: null_coord}
+    k = p.notnull().sum(dim="dparams")
+    # aic = 2k - 2LL
+    ll = (2 * k - aic) / 2
+    ll_null = ll.loc[null_coord]
+    lr_stat = 2 * (ll - ll_null)
+    k_null = k.loc[null_coord]
+    df = k - k_null
+    pval = xr.apply_ufunc(
+        chi2.sf, lr_stat, df, input_core_dims=[[], []], output_core_dims=[[]], dask="parallelized", vectorize=True
+    )
+    lrt = pval <= p_value_thresh
+    lrt.loc[null_coord] = (~lrt.drop_sel(null_coord)).all(dim=dim)
+    return lrt
