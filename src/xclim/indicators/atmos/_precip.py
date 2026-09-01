@@ -125,8 +125,6 @@ class PrecipTempWithIndexing(ResamplingIndicatorWithIndexing):
 class PrecipTemp(Precip):
     """Indicator involving pr and one of tas, tasmin or tasmax, allowing indexing."""
 
-    pass
-
 
 class HrPrecip(Hourly):
     """Indicator involving hourly pr series."""

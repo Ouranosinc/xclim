@@ -71,6 +71,8 @@ Internal changes
 * A page has been added to the documentation (`governance.rst`) that describes the method through which decisions concerning `xclim` are made as well as the responsibilities of maintainers. (:pull:`2391`).
 * The security policy now details a brief security assurance that discusses the measures taken to ensure source code and package integrity. (:pull:`2391`).
 * Removed ``swe_series`` unused fixture.
+* Updated `pylint` to use v4.0+ standards and addressed several small linting issues. (:pull:`2409`).
+* Project metadata now compatible with `flit >=4.0` standards. (:pull:`2412`).
 
 v0.62.0 (2026-08-17)
 --------------------

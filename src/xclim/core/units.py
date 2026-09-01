@@ -30,7 +30,7 @@ from xclim.core.calendar import get_calendar, parse_offset
 from xclim.core.options import datacheck
 
 try:
-    from xarray import DataTree
+    from xarray import DataTree  # pylint: disable=ungrouped-imports
 except ImportError:
     DataTree = False
 
