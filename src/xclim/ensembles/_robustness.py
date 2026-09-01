@@ -157,7 +157,7 @@ def robustness_fractions(
     ----------
     fut : xr.DataArray
         Future period values along 'realization' (and, optionally, `member`) and 'time' (..., nr, nt1)
-        or if `ref` is None, Delta values along `realization` (..., nr).
+        or if `ref` is None, Delta values along `realization` (..., nr) (and, optionally, `member`).
         When the `member` dimension is present, the delta for each realization will be
         the average delta across its members.
     ref : xr.DataArray, optional
@@ -174,7 +174,7 @@ def robustness_fractions(
         A Missing class from :py:mod:`xclim.core.missing` to use to flag points what are invalid.
         Invalid points are not included in the fractions. Default is MissingAny, which means any
         nan along the "time" dimension means the timeseries is invalid.
-        For multimember ensemble, if any member of a realization is missing data, the realization is not included.
+        For multimember ensemble, if any member of a realization is missing data, the realization is invalid.
         Not used if only deltas are passed as `fut`.
     strict_sign : bool
         Whether to include zeros When determining the sign of change. True (default) does not include
@@ -218,7 +218,7 @@ def robustness_fractions(
         - valid
             - The weighted fraction of valid realizations.
               By default, a realization is valid if there are no NaNs along the time axes
-              of `fut` and `ref` for all members.
+              of `fut` and `ref` for all existing members of this realization.
 
         - pvals
             - The p-values estimated by the significance tests.
@@ -267,6 +267,8 @@ def robustness_fractions(
     >>> fut = tgmean.sel(time=slice("2020", "2050"))
     >>> ref = tgmean.sel(time=slice("1990", "2020"))
     >>> fractions = ensembles.robustness_fractions(fut, ref, test="ttest")
+
+    See notebook :ref:`notebooks/ensembles:Ensembles` for more a multimember example.
     """
     # Realization dimension name
     realization = "realization"
@@ -281,6 +283,8 @@ def robustness_fractions(
 
     # Get dummy weights to simplify code
     if weights is not None:
+        if "member" in weights.dims:
+            raise ValueError("Weights cannot have a 'member' dimension, only a 'realization' dimension.")
         w = weights
     else:
         w = xr.DataArray(
@@ -292,6 +296,9 @@ def robustness_fractions(
     if ref is None:
         delta = fut
         valid = delta.notnull()
+        if "member" in delta.dims:
+            delta = delta.mean("member")
+            valid = valid.sum("member") == fut.n_members
         if test not in [None, "threshold"]:
             raise ValueError("When deltas are given (ref=None), 'test' must be None or 'threshold'.")
     else:
@@ -368,34 +375,36 @@ def robustness_fractions(
     out = xr.Dataset(
         {
             "changed": change_frac.assign_attrs(
-                description=f"Fraction of valid members showing significant change. {test_str}",
+                description=f"Fraction of valid realizations showing significant change. {test_str}",
                 units="",
                 test=str(test),
             ),
             "positive": pos_frac.assign_attrs(
-                description=f"Fraction of valid members showing {strict} positive change.",
+                description=f"Fraction of valid realizations showing {strict} positive change.",
                 units="",
             ),
             "changed_positive": change_pos_frac.assign_attrs(
-                description=f"Fraction of valid members showing significant and {strict} positive change. {test_str}",
+                description=f"Fraction of valid realizations showing significant and {strict}"
+                f"positive change. {test_str}",
                 units="",
                 test=str(test),
             ),
             "negative": neg_frac.assign_attrs(
-                description=f"Fraction of valid members showing {strict} negative change.",
+                description=f"Fraction of valid realizations showing {strict} negative change.",
                 units="",
             ),
             "changed_negative": change_neg_frac.assign_attrs(
-                description=f"Fraction of valid members showing significant and {strict} negative change. {test_str}",
+                description=f"Fraction of valid realizations showing significant and "
+                f"{strict} negative change. {test_str}",
                 units="",
                 test=str(test),
             ),
             "valid": valid_frac.assign_attrs(
-                description="Fraction of valid members (No missing values along time).",
+                description="Fraction of valid realizations (No missing values along time).",
                 units="",
             ),
             "agree": agree_frac.assign_attrs(
-                description="Fraction of valid members agreeing on the sign of change. "
+                description="Fraction of valid realizations agreeing on the sign of change. "
                 + (
                     "Maximum between the positive, negative and no change fractions."
                     if strict_sign
