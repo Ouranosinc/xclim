@@ -11,7 +11,7 @@ xclim: Climate services library |logo| |logo-dark| |logo-light|
 +----------------------------+-----------------------------------------------------+
 | Coding Standards           | |ruff| |prek| |pre-commit-ci| |ossf-bp| |fossa|     |
 +----------------------------+-----------------------------------------------------+
-| Development Status         | |status| |build| |coveralls|                        |
+| Development Status         | |status| |build| |coveralls| |zizmor|               |
 +----------------------------+-----------------------------------------------------+
 
 .. warning::
@@ -241,6 +241,10 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |versions| image:: https://img.shields.io/pypi/pyversions/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
         :alt: Supported Python Versions
+
+.. |zizmor| image:: https://img.shields.io/badge/%F0%9F%8C%88-zizmor-white?labelColor=white
+        :target: https://zizmor.sh/
+        :alt: zizmor
 
 .. Ouranos Logos
 
