@@ -1413,7 +1413,7 @@ class _InputChecker(_DeprecationWarner):
             )
 
 
-class _Convenience(_InputChecker):  # pylint: disable=too-many-ancestors
+class _Convenience(_InputChecker):
     """
     Adds pre-processing to the constructor arguments so it can accept some v0 names
     and CF attributes passed by name instead of within `attrs`.
@@ -1479,7 +1479,7 @@ class _Convenience(_InputChecker):  # pylint: disable=too-many-ancestors
         raise AttributeError(attr)
 
 
-class _Registrer(_Convenience):  # pylint: disable=too-many-ancestors
+class _Registrer(_Convenience):
     """Register the indicator in the xclim registry."""
 
     def __init__(self, *args, **kwargs):
@@ -1489,7 +1489,7 @@ class _Registrer(_Convenience):  # pylint: disable=too-many-ancestors
         registry[self.identifier] = self
 
 
-class Indicator(_Registrer):  # pylint: disable=too-many-ancestors # numpydoc ignore=PR01
+class Indicator(_Registrer):  # numpydoc ignore=PR01
     r"""
     Climate indicator base class.
 
@@ -1736,7 +1736,7 @@ class ResamplingIndicator(CheckMissingIndicator):  # numpydoc ignore=PR02 # pyli
         return das, params, meta
 
 
-class IndexingIndicator(Indicator):  # pylint: disable=too-many-ancestors
+class IndexingIndicator(Indicator):
     """Indicator that also adds the "indexer" kwargs to subset the inputs before computation."""
 
     @classmethod
@@ -1764,23 +1764,23 @@ class IndexingIndicator(Indicator):  # pylint: disable=too-many-ancestors
         return das, params, meta
 
 
-class ResamplingIndicatorWithIndexing(ResamplingIndicator, IndexingIndicator):  # pylint: disable=too-many-ancestors
+class ResamplingIndicatorWithIndexing(ResamplingIndicator, IndexingIndicator):
     """Resampling indicator that also adds "indexer" kwargs to subset the inputs before computation."""
 
 
-class Daily(ResamplingIndicator):  # pylint: disable=too-many-ancestors
+class Daily(ResamplingIndicator):
     """Class for daily inputs and resampling computes."""
 
     src_freq = "D"
 
 
-class Hourly(ResamplingIndicator):  # pylint: disable=too-many-ancestors
+class Hourly(ResamplingIndicator):
     """Class for hourly inputs and resampling computes."""
 
     src_freq = "h"
 
 
-class StandardizedIndexes(ResamplingIndicator):  # pylint: disable=too-many-ancestors
+class StandardizedIndexes(ResamplingIndicator):
     """Resampling but flexible inputs indicators."""
 
     src_freq = ["D", "MS"]

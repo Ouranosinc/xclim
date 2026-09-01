@@ -10,7 +10,7 @@ from xclim.core.indicator import ReducingIndicator, ResamplingIndicator
 __all__ = ["fit", "return_level", "statistics"]
 
 
-class Generic(ReducingIndicator):  # pylint: disable=too-many-ancestors
+class Generic(ReducingIndicator):
     """Generic class."""
 
     realm = "generic"

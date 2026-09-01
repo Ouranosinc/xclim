@@ -380,6 +380,7 @@ disable = [
     "redefined-outer-name",
     "superfluous-parens",
     "suppressed-message",
+    "too-many-ancestors",
     "unused-argument",
     "use-symbolic-message-instead",
     "useless-suppression"

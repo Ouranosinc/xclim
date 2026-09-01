@@ -71,7 +71,7 @@ __all__ = [
 ]
 
 
-class FireWeather(Indicator):  # pylint: disable=too-many-ancestors
+class FireWeather(Indicator):
     """Non resampling - precipitation related indicators."""
 
     src_freq = "D"
@@ -79,14 +79,14 @@ class FireWeather(Indicator):  # pylint: disable=too-many-ancestors
     keywords = ["fire"]
 
 
-class Precip(Daily):  # pylint: disable=too-many-ancestors
+class Precip(Daily):
     """Indicator involving daily pr series."""
 
     context = "hydro"
     keywords = ["precipitation"]
 
 
-class PrecipAmount(Precip):  # pylint: disable=too-many-ancestors
+class PrecipAmount(Precip):
     """
     Class that converts 'pr' to an amount before computation.
 
@@ -106,7 +106,7 @@ class PrecipAmount(Precip):  # pylint: disable=too-many-ancestors
         return das | {"pr": rate2amount(das["pr"])}, params, meta
 
 
-class PrecipWithIndexing(ResamplingIndicatorWithIndexing):  # pylint: disable=too-many-ancestors
+class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicator involving daily pr series and allowing indexing."""
 
     src_freq = "D"
@@ -114,7 +114,7 @@ class PrecipWithIndexing(ResamplingIndicatorWithIndexing):  # pylint: disable=to
     keywords = ["precipitation"]
 
 
-class PrecipTempWithIndexing(ResamplingIndicatorWithIndexing):  # pylint: disable=too-many-ancestors
+class PrecipTempWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicator involving pr and one of tas, tasmin or tasmax, allowing indexing."""
 
     src_freq = "D"
@@ -122,18 +122,18 @@ class PrecipTempWithIndexing(ResamplingIndicatorWithIndexing):  # pylint: disabl
     keywords = ["precipitation"]
 
 
-class PrecipTemp(Precip):  # pylint: disable=too-many-ancestors
+class PrecipTemp(Precip):
     """Indicator involving pr and one of tas, tasmin or tasmax, allowing indexing."""
 
 
-class HrPrecip(Hourly):  # pylint: disable=too-many-ancestors
+class HrPrecip(Hourly):
     """Indicator involving hourly pr series."""
 
     context = "hydro"
     keywords = ["precipitation"]
 
 
-class DailyPrecipNoResample(Indicator):  # pylint: disable=too-many-ancestors
+class DailyPrecipNoResample(Indicator):
     """Non-resampling indicators acting on daily precipitation data."""
 
     src_freq = "D"

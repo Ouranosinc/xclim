@@ -255,8 +255,7 @@ exclude = [
   "docs/_*",
   "docs/modules.rst",
   "docs/paper/*",
-  "docs/xclim*.rst",
-  "pylintrc"
+  "docs/xclim*.rst"
 ]
 
 [tool.numpydoc_validation]
