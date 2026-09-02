@@ -22,6 +22,7 @@ import scipy.stats
 import statsmodels.formula.api as smf
 import xarray as xr
 from formulaic import model_matrix, parser
+from numpy.lib.stride_tricks import sliding_window_view
 from scipy.optimize import minimize
 from scipy.stats import chi2, rv_continuous
 
@@ -1431,6 +1432,39 @@ def make_nll(
     return _nll
 
 
+def _np_rolling(y, window):
+    pad_left = window // 2
+    pad_right = window - 1 - pad_left
+    y_pad = np.pad(y, (pad_left, pad_right), mode="constant", constant_values=np.nan)
+    return sliding_window_view(y_pad, window)
+
+
+def _get_initial_estimate_from_lmom(y, dist, formulas, covariates, window=30):
+    yr = _np_rolling(y, window)
+    if "lmoments3" in str(type(dist)):
+        method = "PWM"
+    else:
+        method = "MLE"
+    keys = tuple(_dist_param_names(dist))
+    fitkwargs = {}
+    values = np.array([_fitfunc_1d(yr0, dist=dist, nparams=len(keys), method=method, **fitkwargs) for yr0 in yr])
+    i = 0
+    ii = 0
+    estimates = []
+    for terms in formulas.values():
+        lt = len(terms)
+        arr = values[:, ii]
+        mask = np.isfinite(arr)
+        covariate = covariates[i : i + lt, :]
+        cov_mask = covariate[:, mask]
+        estimate, _, _, _ = np.linalg.lstsq(cov_mask.T, arr[mask])
+        estimates.append(estimate)
+        i += lt
+        ii += 1
+    estimates = np.concatenate(estimates)
+    return estimates
+
+
 def _fit_covariate_1d(
     y,
     covariates,
@@ -1439,7 +1473,8 @@ def _fit_covariate_1d(
     params,
     log_links=None,
     fixed_params=None,
-    init_params=None,
+    init_params_method="stationnary",
+    only_init=False,
     method="Nelder-Mead",
     **minimize_kwargs,
 ):
@@ -1451,21 +1486,28 @@ def _fit_covariate_1d(
     y = y[~mask]
     covariates = covariates[:, ~mask]
     nparams = sum(len(terms) for terms in fixed_formulas.values())
-    if params is None:
+    if params is not None:
+        params_list = initialize_params(params, fixed_formulas, log_links)
+    elif init_params_method == "stationary":
         fitkwargs = {f"f{k}": fixed_params[k] for k in fixed_params}
         pp = _fitfunc_1d(y, dist=dist, nparams=len(fixed_formulas), method="MLE", **fitkwargs)
         # silent failure if not enough values and fixed arguments
         ppd = dict(zip(_dist_param_names(dist), pp, strict=True))
         params = {k: ppd[k] for k in fixed_formulas}
-    if init_params is None:
         params_list = initialize_params(params, fixed_formulas, log_links)
+    elif init_params_method == "nonstationary":
+        params_list = _get_initial_estimate_from_lmom(y, dist, fixed_formulas, covariates)
     else:
-        params_list = init_params
-    nll = make_nll(dist, fixed_formulas, covariates, log_links, fixed_params)
-    opt = minimize(nll, params_list, args=(y,), method=method, **minimize_kwargs)
+        raise ValueError("`init_params_method` must be ['stationary','nonstationary'] ")
 
-    aic = np.array(2 * nparams + 2 * nll(opt.x, y))
-    opars = iter(opt.x)
+    nll = make_nll(dist, fixed_formulas, covariates, log_links, fixed_params)
+    if only_init:
+        sol = params_list
+    else:
+        opt = minimize(nll, params_list, args=(y,), method=method, **minimize_kwargs)
+        sol = opt.x
+    aic = np.array(2 * nparams + 2 * nll(sol, y))
+    opars = iter(sol)
     fpars = iter(fixed_params.values())
     pars = []
     # like in scipy, fixed params are also included in the results
@@ -1493,7 +1535,8 @@ def fit_covariate(
     params=None,
     log_links=None,
     fixed_params=None,
-    init_params=None,
+    init_params_method="stationary",
+    only_init=False,
     method="Nelder-Mead",
     **minimize_kwargs,
 ) -> xr.Dataset:
@@ -1528,8 +1571,10 @@ def fit_covariate(
         Parameter names modeled on the log scale.
     fixed_params : dict[float], optional
         Not yet supported.
-    init_params : list[float], optional
-        Initial values of the parameters. The applicable log-links are assumed to have been applied.
+    init_params_method : {'stationary', 'nonstationary'}
+        Method used to obtain starting values for parameters.
+    only_init : bool
+        If `True`, output the starting parameters.
     method : str
         Passed to `scipy.optimize.minimize`.
     **minimize_kwargs
@@ -1579,7 +1624,8 @@ def fit_covariate(
             formulas=formulas,
             params=params,
             fixed_params=fixed_params,
-            init_params=init_params,
+            init_params_method=init_params_method,
+            only_init=only_init,
             log_links=log_links,
             method=method,
             **minimize_kwargs,
