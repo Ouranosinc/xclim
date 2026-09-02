@@ -9,9 +9,9 @@ xclim: Climate services library |logo| |logo-dark| |logo-light|
 +----------------------------+-----------------------------------------------------+
 | Open Source                | |license| |ossf-score| |zenodo| |pyOpenSci| |joss|  |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |ruff| |pre-commit-ci| |ossf-bp| |fossa|            |
+| Coding Standards           | |ruff| |prek| |pre-commit-ci| |ossf-bp| |fossa|     |
 +----------------------------+-----------------------------------------------------+
-| Development Status         | |status| |build| |coveralls|                        |
+| Development Status         | |status| |build| |coveralls| |zizmor|               |
 +----------------------------+-----------------------------------------------------+
 
 .. warning::
@@ -226,6 +226,10 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/main
         :alt: pre-commit.ci status
 
+.. |prek| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/j178/prek/master/docs/assets/badge-v0.json
+        :target: https://github.com/j178/prek
+        :alt: prek
+
 .. |ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
         :target: https://github.com/astral-sh/ruff
         :alt: Ruff
@@ -237,6 +241,10 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |versions| image:: https://img.shields.io/pypi/pyversions/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
         :alt: Supported Python Versions
+
+.. |zizmor| image:: https://img.shields.io/badge/%F0%9F%8C%88-zizmor-white?labelColor=white
+        :target: https://zizmor.sh/
+        :alt: zizmor
 
 .. Ouranos Logos
 

@@ -32,7 +32,8 @@ xarray.CFTimeIndex.__module__ = "xarray"
 
 import xclim  # noqa
 from xclim import indicators as _indicators  # noqa
-from xclim.core.indicator import registry  # noqa
+from xclim.core.indicator import Indicator  # noqa
+from xclim.core.collection import IndicatorCollection  # noqa
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
@@ -47,9 +48,14 @@ sys.path.insert(0, os.path.abspath("."))
 indicators = {}
 # FIXME: Include cf module when its indicators documentation is improved.
 for module in ("atmos", "convert", "generic", "land", "seaIce", "icclim", "anuclim"):
-    for key, ind in getattr(_indicators, module).__dict__.items():
-        if hasattr(ind, "_registry_id") and ind._registry_id in registry:  # noqa
-            indicators[ind._registry_id] = {  # noqa
+    mod = getattr(_indicators, module)
+    if isinstance(mod, IndicatorCollection):
+        items = mod.items()
+    else:
+        items = mod.__dict__.items()
+    for key, ind in items:
+        if isinstance(ind, Indicator):
+            indicators[ind.identifier] = {  # noqa
                 "realm": ind.realm,
                 "title": ind.title,
                 "name": key,
@@ -57,10 +63,10 @@ for module in ("atmos", "convert", "generic", "land", "seaIce", "icclim", "anucl
                 "abstract": ind.abstract,
                 "vars": {
                     param_name: f"{param.description}"
-                    for param_name, param in ind._all_parameters.items()  # noqa
-                    if param.kind < 2 and not param.injected
+                    for param_name, param in ind.parameters.items()  # noqa
+                    if param.kind < 2
                 },
-                "keywords": ind.keywords.split(","),
+                "keywords": ind.keywords,
             }
 # Sort by title
 indicators = dict(sorted(indicators.items(), key=lambda kv: kv[1]["title"]))
@@ -117,7 +123,7 @@ autodoc_use_legacy_class_based = True  # required for Indicators API with sphinx
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
 
-suppress_warnings = ["sphinx_autodoc_typehints.guarded_import"]
+suppress_warnings = ["sphinx_autodoc_typehints.guarded_import", "sphinx_autodoc_typehints.forward_reference"]
 
 linkcheck_ignore = [
     # too labourious to fully check

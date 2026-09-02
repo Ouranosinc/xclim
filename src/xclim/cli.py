@@ -14,9 +14,8 @@ import xarray as xr
 from dask.diagnostics.progress import ProgressBar
 
 import xclim as xc
-from xclim.core import MissingVariableError, indicator
+from xclim.core import InputKind, MissingVariableError, indicator
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
-from xclim.core.utils import InputKind
 from xclim.testing.utils import (
     TESTDATA_BRANCH,
     TESTDATA_CACHE_DIR,
@@ -29,7 +28,7 @@ from xclim.testing.utils import (
     show_versions,
 )
 
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 
 # Distributed is not a dependency of xclim
 distributed = False
@@ -42,13 +41,8 @@ except ImportError:
 
 
 def _get_indicator(indicator_name):
-    if "." in indicator_name:
-        mod, name = indicator_name.split(".")
-        indid = f"{mod}.{name.upper()}"
-    else:
-        indid = indicator_name.upper()
     try:
-        return indicator.registry[indid].get_instance()
+        return indicator.registry[indicator_name]
     except KeyError as e:
         raise click.BadArgumentUsage(f"Indicator '{indicator_name}' not found in xclim.") from e
 
@@ -317,13 +311,13 @@ def indicators(info):  # numpydoc ignore=PR01
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
     rows = []
-    for name, indcls in indicator.registry.items():
+    for name, ind in indicator.registry.items():
         left = click.style(name.lower(), fg="yellow")
-        right = ", ".join([var.get("long_name", var["var_name"]) for var in indcls.cf_attrs])
-        if indcls.cf_attrs[0]["var_name"] != name.lower():
-            right += " (" + ", ".join([var["var_name"] for var in indcls.cf_attrs]) + ")"
+        right = ", ".join([var.get("long_name", var.var_name) for var in ind.attrs])
+        if ind.attrs[0].var_name.lower() != name:
+            right += " (" + ", ".join([var.var_name for var in ind.attrs]) + ")"
         if info:
-            right += "\n" + indcls.abstract
+            right += "\n" + ind.abstract
         rows.append((left, right))
     rows.sort(key=lambda row: row[0])
     formatter.write_dl(rows)

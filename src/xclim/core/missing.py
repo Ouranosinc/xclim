@@ -30,7 +30,7 @@ import textwrap
 import numpy as np
 import xarray as xr
 
-from xclim.core._types import Freq
+from xclim.core import Freq
 from xclim.core.calendar import (
     compare_offsets,
     is_offset_divisor,
@@ -331,8 +331,8 @@ class MissingSomeButNotAll(MissingBase):
         if freq is not None:
             valid = valid.resample(time=freq)
         # The number of valid values should fit the expected count or be zero.
-        sum = valid.sum(dim="time")
-        return ~((sum == count) | (sum == 0))
+        summation = valid.sum(dim="time")
+        return ~((summation == count) | (summation == 0))
 
 
 # TODO: Make coarser method controllable.

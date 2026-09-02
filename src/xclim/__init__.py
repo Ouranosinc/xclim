@@ -5,15 +5,16 @@ from __future__ import annotations
 import importlib.resources as _resources
 
 from xclim import compute, ensembles
+from xclim import indicators as _indicators
 from xclim.core import calendar, units
-from xclim.core.indicator import build_indicator_module_from_yaml
+from xclim.core.collection import IndicatorCollection
 from xclim.core.locales import load_locale as _load_locale
 from xclim.core.options import set_options
 from xclim.indicators import atmos, convert, generic, land, seaIce
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.99.0-dev.19"
+__version__ = "0.99.0-dev.24"
 
 with _resources.as_file(_resources.files("xclim.data")) as _module_data:
     # Load official locales
@@ -22,6 +23,6 @@ with _resources.as_file(_resources.files("xclim.data")) as _module_data:
         _load_locale(_filename, _filename.stem)
 
     # Virtual modules creation:
-    build_indicator_module_from_yaml(_module_data / "icclim", mode="raise")
-    build_indicator_module_from_yaml(_module_data / "anuclim", mode="raise")
-    build_indicator_module_from_yaml(_module_data / "cf", mode="raise")
+    _indicators.icclim = IndicatorCollection.from_yaml(_module_data / "icclim", mode="raise")
+    _indicators.anuclim = IndicatorCollection.from_yaml(_module_data / "anuclim", mode="raise")
+    _indicators.cf = IndicatorCollection.from_yaml(_module_data / "cf", mode="raise")

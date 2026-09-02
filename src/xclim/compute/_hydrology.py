@@ -903,10 +903,10 @@ def sen_slope(q: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArray,
 
     Returns
     -------
-    tuple[xarray.DataArray, xarray.DataArray]
-        Returns Sen slope and p-value of in the input
-        ``sen_slope`` : Sen's slope estimates.
-        ``p_value`` : Mann-Kendall metric indicating slope tendency.
+    sen_slope : xarray.DataArray, [dimensionless]
+        Sen's slope estimates.
+    p_value : xarray.DataArray, [dimensionless]
+        Mann-Kendall metric indicating slope tendency.
 
     Notes
     -----
@@ -922,8 +922,8 @@ def sen_slope(q: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArray,
     if not HAS_PYMANNKENDALL:
         msg = "`sen_slope` requires access to the `pymannkendall` library."
         raise ModuleNotFoundError(msg)
-    else:
-        import pymannkendall as mk
+
+    import pymannkendall as mk  # pylint: disable=import-outside-toplevel
 
     def _mann_kendall(q, freq):
         qr = q.resample(time=freq).mean()
@@ -967,13 +967,16 @@ def sen_slope_ratio(
 
     Returns
     -------
-    tuple[xarray.DataArray, xarray.DataArray]
-        Returns Sen slope and p-value of both inputs and the ratio of slopes
-        ``sen_slope`` : Sen's slope estimates.
-        ``p_value`` : Mann-Kendall metric indicating slope tendency.
-        ``sen_slope_sim`` : Sen's slope estimates of the simulation dataset.
-        ``p_value_sim`` : Mann-Kendall metric indicating slope tendency of the simulation dataset.
-        ``ratio`` : Ratio of the slopes.
+    sen_slope : xarray.DataArray, [dimensionless]
+        Sen's slope estimates.
+    p_value: xarray.DataArray, [dimensionless]
+        Mann-Kendall metric indicating slope tendency.
+    sen_slope_sim: xarray.DataArray, [dimensionless]
+        Sen's slope estimates of the simulation dataset.
+    p_value_sim: xarray.DataArray, [dimensionless]
+        Mann-Kendall metric indicating slope tendency of the simulation dataset.
+    ratio: xarray.DataArray, [dimensionless]
+        Ratio of the slopes.
 
     Notes
     -----
@@ -988,8 +991,8 @@ def sen_slope_ratio(
     """
     sen_slope_obs, p_value = sen_slope(q, freq)
     sen_slope_sim, p_value_sim = sen_slope(qsim, freq)
-    sen_slope_sim = sen_slope_sim
-    p_value_sim = p_value_sim
+    sen_slope_sim = sen_slope_sim  # TODO: What's going on here?
+    p_value_sim = p_value_sim  # TODO: What's going on here?
     ratio = (sen_slope_obs / sen_slope_sim).assign_attrs({"units": ""})
     return sen_slope_obs, p_value, sen_slope_sim, p_value_sim, ratio
 

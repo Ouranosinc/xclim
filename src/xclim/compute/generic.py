@@ -40,6 +40,7 @@ from xclim.compute.reducers import XCLIM_OPS
 from xclim.core import Condition, DayOfYearStr, Freq, Quantified, Reducer, TimeRange
 from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import (
+    compare_offsets,
     doy_to_days_since,
     get_calendar,
     percentile_doy,
@@ -393,9 +394,9 @@ def bivariate_count_occurrences(
     data1: xr.DataArray,
     data2: xr.DataArray,
     condition1: Condition,
-    condition2: Condition,
+    condition2: Condition | None,
     thresh1: Quantified,
-    thresh2: Quantified,
+    thresh2: Quantified | None,
     freq: Freq | None,
     var_reducer: Literal["all", "any"] = "all",
     constrain1: Sequence[Condition] | None = None,
@@ -416,12 +417,12 @@ def bivariate_count_occurrences(
         An array.
     condition1 : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical comparison operator for data variable 1.
-    condition2 : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+    condition2 : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
         Logical comparison operator for data variable 2.
         If None, ``condition1`` is used.
     thresh1 : Quantified
         Threshold for data variable 1.
-    thresh2 : Quantified
+    thresh2 : Quantified, optional
         Threshold for data variable 2.
         If None, ``thresh1`` is used.
     freq : str, optional
@@ -1483,3 +1484,36 @@ def thresholded_events(
             da_stop = ~compare(data, condition, _thresh_stop)
 
     return rl.find_events(da_start, window, da_stop, window_stop or window, data, freq)
+
+
+def day_to_day_variability(data: xr.DataArray, freq: Freq = "YS", subfreq: Freq = "MS"):
+    """
+    Compute the mean of day-to-day variability.
+
+    Computes the standard deviation of the variable within each sub-period (e.g. month),
+    then averages those standard deviations over the main resampling period (e.g. year).
+    This provides a measure of typical day-to-day variability as described in :cite:t:`kotz_2021`.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        The input variable.
+    freq : str
+        Resampling frequency used to average the sub-period standard deviations. Default is ``"YS"`` (yearly).
+    subfreq : str
+        Resampling frequency used to compute the standard deviation. Default is ``"MS"`` (monthly).
+
+    Returns
+    -------
+    xr.DataArray, [same as data]
+        Mean of the sub-period standard deviations over each period defined by `freq`.
+
+    References
+    ----------
+    :cite:cts:`kotz_2021`
+    """
+    if compare_offsets(freq, "<=", subfreq):
+        raise ValueError("Averaging frequency must be larger than the variability frequency.")
+    variability = data.resample(time=subfreq).std(keep_attrs=True)
+    out = variability.resample(time=freq).mean(keep_attrs=True)
+    return to_agg_units(out, to_agg_units(variability, data, "std"), "mean")

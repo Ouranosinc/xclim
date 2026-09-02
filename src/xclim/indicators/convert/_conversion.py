@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from xclim.compute import converters
-from xclim.core.cfchecks import cfcheck_from_name
+from xclim.core import InputKind
 from xclim.core.indicator import Indicator
-from xclim.core.utils import InputKind
 
 __all__ = [
     "clearness_index",
@@ -42,22 +41,7 @@ __all__ = [
 class Converter(Indicator):
     """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)."""
 
-    def cfcheck(self, **das) -> None:
-        r"""
-        Verify the CF-compliance of the input data.
-
-        Parameters
-        ----------
-        **das : Mapping[str, xarray.DataArray]
-            The input data arrays.
-        """
-        for varname, vardata in das.items():
-            try:
-                # Only check standard_name, and not cell_methods which depends on the variable's frequency.
-                cfcheck_from_name(varname, vardata, attrs=["standard_name"])
-            except KeyError:  # noqa: S110
-                # Silently ignore unknown variables.
-                pass
+    pass
 
 
 humidex = Converter(
@@ -68,7 +52,7 @@ humidex = Converter(
     long_name="Humidex index",
     description="Humidex index describing the temperature felt by the average person in response to relative humidity.",
     cell_methods="",
-    keywords="heatwave",
+    keywords=["heatwave"],
     abstract="The humidex describes the temperature felt by a person when relative humidity is taken into account. "
     "It can be interpreted as the equivalent temperature felt when the air is dry.",
     compute=converters.humidex,

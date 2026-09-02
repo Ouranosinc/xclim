@@ -33,14 +33,14 @@ __all__ = [
 class Snow(Daily):
     """Indicators dealing with snow variables."""
 
-    keywords = "snow"
+    keywords = ["snow"]
 
 
 class SnowWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicators dealing with snow variables, allowing indexing."""
 
     src_freq = "D"
-    keywords = "snow"
+    keywords = ["snow"]
 
 
 snd_season_length = Snow(
