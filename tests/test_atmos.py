@@ -148,4 +148,4 @@ class TestCanadianHardinessZones:
             freq="4YS",
         )
 
-        np.testing.assert_allclose(chz, np.array([[58.1458], [74.6359], [-4.0576], [27.4931], [96.5160]]), rtol=1e-4)
+        np.testing.assert_array_equal(chz, np.array([[11.0], [14.0], [np.nan], [5.0], [19.0]]))

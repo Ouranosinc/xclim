@@ -346,29 +346,6 @@ class TestAgroclimaticIndices:
         np.testing.assert_array_equal(out, np.array([np.nan, expected]))
 
 
-class TestCanadianHardinessZones:
-    def test_simple(self, atmosds):
-        ds = atmosds
-
-        tasmin = ds.tasmin
-        tasmax = ds.tasmax
-        pr = ds.pr
-        snd = ds.snd
-        wsgmax10m = generic.statistics(ds.sfcWind, statistic="max", freq="MS")
-
-        # Should be caulculated over 30 years, but only four years of data available
-        chz = xcc.canadian_hardiness_zones(
-            tasmin=tasmin,
-            tasmax=tasmax,
-            pr=pr,
-            snd=snd,
-            wsgmax10m=wsgmax10m,
-            freq="4YS",
-        )
-
-        np.testing.assert_allclose(chz, np.array([[58.1458], [74.6359], [-4.0576], [27.4931], [96.5160]]), rtol=1e-4)
-
-
 class TestStandardizedIndices:
     # gamma/APP reference results: Obtained with `monocongo/climate_indices` library
     # MS/fisk/ML reference results: Obtained with R package `SPEI`
@@ -2740,32 +2717,54 @@ class TestDrynessIndex:
         np.testing.assert_allclose(di_wet, di_plus_100)
 
 
-@pytest.mark.parametrize(
-    "tmin,meth,zone",
-    [
-        (-6, "usda", 16),
-        (19, "usda", 25),
-        (-47, "usda", 1),
-        (-6, "anbg", 1),
-        (19, "anbg", 6),
-        (-47, "anbg", np.nan),
-    ],
-    # There are 26 USDA zones: 1a -> 1, 1b -> 2, ... 13b -> 26
-    # There are 7 angb zones: 1,2, ..., 7
-    # Example for "angb":
-    # Zone 1 : -15 degC <= tmin < -10 degC
-    # Zone 2 : -10 degC <= tmin < -5 degC
-    # ...
-    # Zone 7 : 15 degC <= tmin <= 20 degC
-    # Below -15 degC or above 20 degC, this is NaN
-)
-def test_hardiness_zones(tasmin_series, tmin, meth, zone):
-    tasmin = tasmin_series(np.zeros(10957) + 20, start="1997-01-01", units="degC")
-    tasmin = tasmin.where(tasmin.time.dt.dayofyear != 1, tmin)
+class TestHardinessZones:
+    @pytest.mark.parametrize(
+        "tmin,meth,zone",
+        [
+            (-6, "usda", 16),
+            (19, "usda", 25),
+            (-47, "usda", 1),
+            (-6, "anbg", 1),
+            (19, "anbg", 6),
+            (-47, "anbg", np.nan),
+        ],
+        # There are 26 USDA zones: 1a -> 1, 1b -> 2, ... 13b -> 26
+        # There are 7 angb zones: 1,2, ..., 7
+        # Example for "angb":
+        # Zone 1 : -15 degC <= tmin < -10 degC
+        # Zone 2 : -10 degC <= tmin < -5 degC
+        # ...
+        # Zone 7 : 15 degC <= tmin <= 20 degC
+        # Below -15 degC or above 20 degC, this is NaN
+    )
+    def test_hardiness_zones(self, tasmin_series, tmin, meth, zone):
+        tasmin = tasmin_series(np.zeros(10957) + 20, start="1997-01-01", units="degC")
+        tasmin = tasmin.where(tasmin.time.dt.dayofyear != 1, tmin)
 
-    hz = xcc.hardiness_zones(tasmin=tasmin, method=meth)
-    np.testing.assert_array_equal(hz[-1], zone)
-    assert hz[:-1].isnull().all()
+        hz = xcc.hardiness_zones(tasmin=tasmin, method=meth)
+        np.testing.assert_array_equal(hz[-1], zone)
+        assert hz[:-1].isnull().all()
+
+    def test_canadian_hardiness_zones(self, atmosds):
+        ds = atmosds
+
+        tasmin = ds.tasmin
+        tasmax = ds.tasmax
+        pr = ds.pr
+        snd = ds.snd
+        wsgmax10m = generic.statistics(ds.sfcWind, statistic="max", freq="MS")
+
+        # Should be caulculated over 30 years, but only four years of data available
+        chz = xcc.canadian_hardiness_zones(
+            tasmin=tasmin,
+            tasmax=tasmax,
+            pr=pr,
+            snd=snd,
+            wsgmax10m=wsgmax10m,
+            freq="4YS",
+        )
+
+        np.testing.assert_array_equal(chz, np.array([[11.0], [14.0], [np.nan], [5.0], [19.0]]))
 
 
 class TestWindProfile:

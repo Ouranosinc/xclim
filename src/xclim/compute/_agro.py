@@ -1697,9 +1697,10 @@ def canadian_hardiness_zones(
         + (22.37 * x6)
         - (0.01832 * x7)
     )
-
     canadian_hardiness_index = canadian_hardiness_index.assign_attrs(units="")
-    return canadian_hardiness_index
+
+    zones = get_zones(canadian_hardiness_index, zone_min="0", zone_max="99", zone_step="5")
+    return zones
 
 
 @declare_units(tas="[precipitation]")
