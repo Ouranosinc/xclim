@@ -698,10 +698,10 @@ indicators:
   rPRCpDAYS:
     attrs:
     - cell_methods: 'time: sum over days'
-      long_name: Number of days when precipitation is above the {percentile}th percentile
+      long_name: Number of days when precipitation is above the {per}th percentile
       standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
       units: '1'
-      var_name: r{percentile}pDAYS
+      var_name: r{per}pDAYS
     compute: clix.count_thresholded_percentile_occurrences
     context: hydro
     input:
@@ -711,19 +711,19 @@ indicators:
       data_threshold: 1 mm day-1
       freq:
         default: YS
-      percentile_condition: '>'
+      per_condition: '>'
       reference_period:
       - '1961'
       - '1990'
     references: 2022 Ad hoc group
-    title: Number of days when precipitation is above the {percentile}th percentile
+    title: Number of days when precipitation is above the {per}th percentile
   rPRCpPCT:
     attrs:
     - cell_methods: 'time: sum over days'
-      long_name: Percentage of total precipitation amount from days above the {percentile}th
+      long_name: Percentage of total precipitation amount from days above the {per}th
         percentile
       units: '%'
-      var_name: r{percentile}pPCT
+      var_name: r{per}pPCT
     compute: clix.count_thresholded_percentile_occurrences
     context: hydro
     input:
@@ -733,20 +733,20 @@ indicators:
       data_threshold: 1 mm day-1
       freq:
         default: YS
-      percentile_condition: '>'
+      per_condition: '>'
       reference_period:
       - '1961'
       - '1990'
     references: 2022 Ad hoc group
-    title: Percentage of total precipitation amount from days above the {percentile}th
+    title: Percentage of total precipitation amount from days above the {per}th
       percentile
   rPRCpSUM:
     attrs:
     - cell_methods: 'time: sum over days'
-      long_name: Total precipitation amount from days above the {percentile}th percentile
+      long_name: Total precipitation amount from days above the {per}th percentile
       standard_name: lwe_thickness_of_precipitation_amount
       units: mm
-      var_name: r{percentile}pSUM
+      var_name: r{per}pSUM
     compute: clix.count_thresholded_percentile_occurrences
     context: hydro
     input:
@@ -756,12 +756,12 @@ indicators:
       data_threshold: 1 mm day-1
       freq:
         default: YS
-      percentile_condition: '>'
+      per_condition: '>'
       reference_period:
       - '1961'
       - '1990'
     references: 2022 Ad hoc group
-    title: Total precipitation amount from days above the {percentile}th percentile
+    title: Total precipitation amount from days above the {per}th percentile
   rPRCpctl:
     attrs:
     - long_name: '{percentiles}th percentile of precipitation during wet days (Precip
@@ -1078,7 +1078,7 @@ indicators:
       condition: <
       freq:
         default: YS
-      percentile: 10
+      per: 10
       reference_period:
       - '1961'
       - '1990'
@@ -1096,7 +1096,7 @@ indicators:
       condition: '>'
       freq:
         default: YS
-      percentile: 90
+      per: 90
       reference_period:
       - '1961'
       - '1990'
@@ -1170,10 +1170,10 @@ indicators:
     references: CLIPC
     title: Number of days with Tmean >= {threshold}C
   tmgtPRCp:
-    attrs:
-    - long_name: Percentage of days when Tmean > {percentile}th percentile
+    cf_attrs:
+    - long_name: Percentage of days when Tmean > {per}th percentile
       units: '%'
-      var_name: tmgt{percentile}p
+      var_name: tmgt{per}p
     compute: clix.count_percentile_occurrences
     input:
       data: tas
@@ -1185,7 +1185,7 @@ indicators:
       - '1961'
       - '1990'
     references: CLIPC
-    title: Percentage of days when Tmean > {percentile}th percentile
+    title: Percentage of days when Tmean > {per}th percentile
   tmgtTT:
     attrs:
     - cell_methods: 'time: sum over days'
@@ -1257,10 +1257,10 @@ indicators:
     references: ET-SCI
     title: Number of days with Tmean < 5C
   tmltPRCp:
-    attrs:
-    - long_name: Percentage of days when Tmean < {percentile}th percentile
+    cf_attrs:
+    - long_name: Percentage of days when Tmean < {per}th percentile
       units: '%'
-      var_name: tmlt{percentile}p
+      var_name: tmlt{per}p
     compute: clix.count_percentile_occurrences
     input:
       data: tas
@@ -1272,7 +1272,7 @@ indicators:
       - '1961'
       - '1990'
     references: CLIPC
-    title: Percentage of days when Tmean < {percentile}th percentile
+    title: Percentage of days when Tmean < {per}th percentile
   tmltTT:
     attrs:
     - cell_methods: 'time: sum over days'
@@ -1414,7 +1414,7 @@ indicators:
       condition: <
       freq:
         default: YS
-      percentile: 10
+      per: 10
       reference_period:
       - '1961'
       - '1990'
@@ -1432,7 +1432,7 @@ indicators:
       condition: '>'
       freq:
         default: YS
-      percentile: 90
+      per: 90
       reference_period:
       - '1961'
       - '1990'
@@ -1470,10 +1470,10 @@ indicators:
     references: CLIPC
     title: Number of days with Tmin >= {threshold}C
   tngtPRCp:
-    attrs:
-    - long_name: Percentage of days when Tmin > {percentile}th percentile
+    cf_attrs:
+    - long_name: Percentage of days when Tmin > {per}th percentile
       units: '%'
-      var_name: tngt{percentile}p
+      var_name: tngt{per}p
     compute: clix.count_percentile_occurrences
     input:
       data: tasmin
@@ -1485,7 +1485,7 @@ indicators:
       - '1961'
       - '1990'
     references: CLIPC
-    title: Percentage of days when Tmin > {percentile}th percentile
+    title: Percentage of days when Tmin > {per}th percentile
   tngtTT:
     attrs:
     - cell_methods: 'time: sum over days'
@@ -1539,10 +1539,10 @@ indicators:
     references: ET-SCI
     title: Number of weak Frost Days (Tmin < +2C)
   tnltPRCp:
-    attrs:
-    - long_name: Percentage of days when Tmin < {percentile}th percentile
+    cf_attrs:
+    - long_name: Percentage of days when Tmin < {per}th percentile
       units: '%'
-      var_name: tnlt{percentile}p
+      var_name: tnlt{per}p
     compute: clix.count_percentile_occurrences
     input:
       data: tasmin
@@ -1554,7 +1554,7 @@ indicators:
       - '1961'
       - '1990'
     references: CLIPC
-    title: Percentage of days when Tmin < {percentile}th percentile
+    title: Percentage of days when Tmin < {per}th percentile
   tnltTT:
     attrs:
     - cell_methods: 'time: sum over days'
@@ -1748,7 +1748,7 @@ indicators:
       condition: <
       freq:
         default: YS
-      percentile: 10
+      per: 10
       reference_period:
       - '1961'
       - '1990'
@@ -1766,7 +1766,7 @@ indicators:
       condition: '>'
       freq:
         default: YS
-      percentile: 90
+      per: 90
       reference_period:
       - '1961'
       - '1990'
@@ -1851,7 +1851,7 @@ indicators:
       condition: '>'
       freq:
         default: YS
-      percentile: 50
+      per: 50
       reference_period:
       - '1961'
       - '1990'

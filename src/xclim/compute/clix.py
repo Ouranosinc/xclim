@@ -133,7 +133,7 @@ def count_occurrences(
 
 def count_percentile_occurrences(
     data: xr.DataArray,
-    percentile: float,
+    per: float,
     condition: Condition,
     reference_period: TimeRange,
     freq: Freq,
@@ -151,7 +151,7 @@ def count_percentile_occurrences(
     ----------
     data : xr.DataArray
         An array.
-    percentile : float
+    per : float
         The percentile to compute on the reference period, between 0 and 100.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         Logical comparison operator.
@@ -164,12 +164,12 @@ def count_percentile_occurrences(
     Returns
     -------
     xr.DataArray, [dimensionless]
-        Number of times data {condition} the {percentile}th percentile for the same day of year
+        Number of times data {condition} the {per}th percentile for the same day of year
         (computed using a 5-day window).
     """
     return generic.count_percentile_occurrences(
         data=data,
-        percentile=percentile,
+        per=per,
         condition=condition,
         reference_period=reference_period,
         freq=freq,
@@ -186,8 +186,8 @@ def count_thresholded_percentile_occurrences(
     data: xr.DataArray,
     data_threshold: Quantified,
     data_condition: Condition,
-    percentile: float,
-    percentile_condition: Condition,
+    per: float,
+    per_condition: Condition,
     reference_period: TimeRange,
     freq: Freq,
 ) -> xr.DataArray:
@@ -197,7 +197,7 @@ def count_thresholded_percentile_occurrences(
     First the ``data_threshold`` is transformed to the same standard name and units as the
     input data. Then the given ``percentile`` value is used to calculate the climatological percentile-based threshold
     for the specified reference period.  This constant percentile level is then used when applying the
-    ``percentile_condition``, i.e. if the percentile condition is <, the comparison is done as
+    ``per_condition``, i.e. if the percentile condition is <, the comparison is done as
     ``data < percentile_level``, and finally the number of times when the percentile condition is fulfilled is counted.
 
     Parameters
@@ -208,9 +208,9 @@ def count_thresholded_percentile_occurrences(
         Threshold.
     data_condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         Logical comparison operator to filter the data.
-    percentile : float
+    per : float
         The percentile to compute on the reference period, between 0 and 100.
-    percentile_condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
+    per_condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         Logical comparison operator to find percentile occurrences on filtered data.
     reference_period : tuple of two dates
         Start and end of the period used to compute the percentiles. Dates are given as YYYY-MM-DD.
@@ -221,15 +221,15 @@ def count_thresholded_percentile_occurrences(
     Returns
     -------
     xr.DataArray, [dimensionless]
-        Number of times data is {percentile_condition} the {percentile}th percentile of
+        Number of times data is {per_condition} the {per}th percentile of
         {data} {data_condition} {data_threshold}.
     """
     return generic.count_thresholded_percentile_occurrences(
         data=data,
         thresh=data_threshold,
         data_condition=data_condition,
-        percentile=percentile,
-        condition=percentile_condition,
+        per=per,
+        condition=per_condition,
         reference_period=reference_period,
         freq=freq,
         bootstrap=False,
@@ -412,7 +412,7 @@ def last_occurrence(
     )
 
 
-def percentile(data: xr.DataArray, percentiles: float, freq: Freq):
+def percentile(data: xr.DataArray, per: float, freq: Freq):
     """
     Calculate a percentile statistic over the data in the specified time period.
 
@@ -420,7 +420,7 @@ def percentile(data: xr.DataArray, percentiles: float, freq: Freq):
     ----------
     data : xr.DataArray
         An array.
-    percentiles : float
+    per : float
         A percentile (0, 100).
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
@@ -430,7 +430,7 @@ def percentile(data: xr.DataArray, percentiles: float, freq: Freq):
     xr.DataArray, [same as data]
         {percentiles}th percentile of the data.
     """
-    return generic.percentile(data, percentile=percentiles, freq=freq)
+    return generic.percentile(data, per=per, freq=freq)
 
 
 def running_statistics(
@@ -569,7 +569,7 @@ def thresholded_percentile(
     data: xr.DataArray,
     threshold: Quantified,
     condition: Condition,
-    percentile: float,
+    per: float,
     freq: Freq,
 ) -> xr.DataArray:
     """
@@ -587,7 +587,7 @@ def thresholded_percentile(
         Threshold.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         Logical comparison operator.
-    percentile : float
+    per : float
         A percentile (0, 100).
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
@@ -595,9 +595,9 @@ def thresholded_percentile(
     Returns
     -------
     xr.DataArray
-        {percentile}th percentile of data where it is {condition} {threshold}.
+        {per}th percentile of data where it is {condition} {threshold}.
     """
-    return generic.thresholded_percentile(data, thresh=threshold, condition=condition, percentile=percentile, freq=freq)
+    return generic.thresholded_percentile(data, thresh=threshold, condition=condition, per=per, freq=freq)
 
 
 @declare_relative_units(threshold="<data>")
