@@ -11,7 +11,7 @@ import datetime as pydt
 import warnings
 from collections.abc import Sequence
 from importlib.util import find_spec
-from typing import Any, Literal, cast
+from typing import Any, Literal
 
 import cftime
 import numpy as np
@@ -21,7 +21,7 @@ from packaging.version import Version
 from xarray import CFTimeIndex
 from xarray.coding import cftime_offsets
 
-from xclim.core._types import DataType, DayOfYearStr, Freq
+from xclim.core import DataType, DayOfYearStr, Freq
 from xclim.core.formatting import update_xclim_history
 from xclim.core.utils import uses_dask
 
@@ -1395,7 +1395,7 @@ def select_time(
         raise ValueError(f"Only one method of indexing may be given, got {N}.")
 
     if N == 0:
-        return cast(DataType, da)
+        return da
 
     if isinstance(include_bounds, bool):
         include_bounds = (include_bounds, include_bounds)
@@ -1454,7 +1454,7 @@ def select_time(
     else:
         raise ValueError("Must provide either `season`, `month`, `doy_bounds` or `date_bounds`.")
 
-    return cast(DataType, da.where(mask, drop=drop))
+    return da.where(mask, drop=drop)
 
 
 def _month_is_first_period_month(time, freq):
@@ -1849,7 +1849,7 @@ def add_season_coord(ds: DataType, freq: Freq) -> DataType:
         seasons = dict(zip(_MONTH_NUMBERS.values(), _MONTH_NUMBERS.keys(), strict=False))
         season_coords = [seasons[m] for m in ds.time.dt.month.values]
     season_length = len(season_coords[0]) if base != "M" else 1
-    attrs = dict(mult=mult, base=base, isstart=isstart, anchor=anchor or "JAN", season_length=season_length)
+    attrs = {"mult": mult, "base": base, "isstart": isstart, "anchor": anchor or "JAN", "season_length": season_length}
     return ds.assign_coords(season=("time", season_coords, attrs))
 
 

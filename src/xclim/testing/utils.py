@@ -43,7 +43,7 @@ if HAS_PYTEST_SOCKET:
 else:
 
     class SocketBlockedError(Exception):
-        pass
+        """Stand-in exception for when pytest_socket is not available."""
 
 
 logger = logging.getLogger("xclim")
@@ -166,8 +166,8 @@ def list_input_variables(submodules: Sequence[str] | None = None, realms: Sequen
     from collections import defaultdict  # pylint: disable=import-outside-toplevel
 
     from xclim import indicators  # pylint: disable=import-outside-toplevel
+    from xclim.core import InputKind  # pylint: disable=import-outside-toplevel
     from xclim.core.indicator import registry  # pylint: disable=import-outside-toplevel
-    from xclim.core.utils import InputKind  # pylint: disable=import-outside-toplevel
 
     submodules = submodules or [sub for sub in dir(indicators) if not sub.startswith("__")]
     realms = realms or ["atmos", "ocean", "land", "seaIce"]
@@ -362,7 +362,7 @@ def run_doctests():
             "You can install them with `pip install --group test` or `conda env create -f environment-dev.yml`."
         )
 
-    import pytest
+    import pytest  # pylint: disable=import-outside-toplevel
 
     cmd = [
         f"--rootdir={Path(__file__).absolute().parent}",
@@ -508,7 +508,7 @@ def nimbus(
             "The `pooch` package is required to fetch the xclim testing data. "
             "You can install it with `pip install pooch` or `pip install xclim[dev]`."
         )
-    import pooch
+    import pooch  # pylint: disable=import-outside-toplevel
 
     if cache_dir is None:
         cache_dir = Path().cwd()

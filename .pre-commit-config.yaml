@@ -11,23 +11,26 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-        exclude: '.ipynb|.github/publish-mastodon-template.md'
-      - id: fix-byte-order-marker
-      - id: name-tests-test
-        args: [ '--pytest-test-first' ]
-      - id: no-commit-to-branch
-        args: [ '--branch', 'main' ]
-      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: check-case-conflict
       - id: check-json
+      - id: check-merge-conflict
       - id: check-toml
       - id: check-yaml
         args: [ '--allow-multiple-documents' ]
       - id: debug-statements
+      - id: end-of-file-fixer
+        exclude: '.ipynb|.github/publish-mastodon-template.md'
+      - id: fix-byte-order-marker
+      - id: mixed-line-ending
+      - id: name-tests-test
+        args: [ '--pytest-test-first' ]
+      - id: no-commit-to-branch
+        args: [ '--branch', 'main' ]
       - id: pretty-format-json
         args: [ '--autofix', '--no-ensure-ascii', '--no-sort-keys' ]
         exclude: '.ipynb'
+      - id: trailing-whitespace
   - repo: https://github.com/pappasam/toml-sort
     rev: v0.24.4
     hooks:
@@ -39,14 +42,14 @@ repos:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.20
+    rev: v0.16.5
     hooks:
       - id: ruff-format
         exclude: '(src/xclim/compute/__init__.py|docs/installation.rst)'
       - id: ruff-check
         args: [ '--fix', '--show-fixes' ]
   - repo: https://github.com/pylint-dev/pylint
-    rev: v4.0.6
+    rev: v4.0.8
     hooks:
       - id: pylint
         args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=E0015,E0401' ]
@@ -84,7 +87,7 @@ repos:
       - id: mdformat
         exclude: '.github/\w+.md|.github/publish-mastodon-template.md|docs/paper/paper.md'
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.2
+    rev: v2.4.3
     hooks:
       - id: codespell
         additional_dependencies: [ 'tomli' ]
@@ -96,7 +99,7 @@ repos:
         # Exclude the missing submodule from the xclim.core, see:
         exclude: ^docs/|^tests/|^src/xclim/core/missing.py
   - repo: https://github.com/rstcheck/rstcheck
-    rev: v6.2.5
+    rev: v6.3.0
     hooks:
       - id: rstcheck
         additional_dependencies: [ 'rstcheck[sphinx,toml]' ]
@@ -106,16 +109,16 @@ repos:
       - id: bibtex-tidy
         args: [ '--v2', '--modify', '--wrap' ]
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.30.0
+    rev: v8.30.1
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.4
+    rev: 0.38.0
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.26.1
+    rev: v1.30.0
     hooks:
       - id: zizmor
         args: [ '--config=.zizmor.yml' ]

@@ -10,13 +10,17 @@ Indicators
 
    api_indicators
 
+.. automodule:: xclim.core.collection
+   :members:
+   :noindex:
+
 Compute functions
 =================
 
 .. note::
 
-    Index-like compute functions (formerly "Indices") serve as the scientific logic behind `Indicators`. End user should usually
-    not have to use these functions directly. Contributors and developers will use them when designing a virtual module
+    Index-like compute functions (formerly "Indices") serve as the scientific logic behind `Indicators`. End users should usually
+    not have to use these functions directly, unless creating a new :py:class:`~xclim.core.collection.IndicatorCollection`.
     (see: :ref:`notebooks/extendxclim:Defining new indicators`).
 
     Otherwise, we suggest using the :ref:`indicators:Climate Indicators`.
@@ -256,14 +260,47 @@ Other Utilities
 Modules for xclim Developers
 ============================
 
-Indicator Tools
----------------
-
 .. automodule:: xclim.core.indicator
+   :noindex:
+
+.. autoclass:: xclim.core.indicator.Parameter
+   :members: injected, json, update
+   :noindex:
+
+.. autoclass:: xclim.core.indicator.Output
    :members:
-   :member-order: bysource
    :show-inheritance:
    :noindex:
+
+.. autoclass:: xclim.core.indicator.Indicator
+   :members:
+   :inherited-members:
+   :noindex:
+
+.. autoclass:: ReducingIndicator
+   :members:
+   :noindex:
+
+.. autoclass:: IndexingIndicator
+   :members:
+   :noindex:
+
+.. autoclass:: ResamplingIndicator
+   :members:
+   :noindex:
+
+.. autoclass:: ResamplingIndicatorWithIndexing
+   :members:
+   :noindex:
+
+.. autoclass:: Hourly
+   :members:
+   :noindex:
+
+.. autoclass:: Daily
+   :members:
+   :noindex:
+
 
 Bootstrapping Algorithms for Indicators Submodule
 -------------------------------------------------

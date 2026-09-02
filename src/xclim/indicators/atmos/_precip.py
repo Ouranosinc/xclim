@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from xarray import DataArray
-
 from xclim import compute
-from xclim.core import cfchecks
+from xclim.compute import generic
+from xclim.core import InputKind
 from xclim.core.indicator import (
     Daily,
     Hourly,
@@ -14,7 +13,6 @@ from xclim.core.indicator import (
     StandardizedIndexes,
 )
 from xclim.core.units import rate2amount
-from xclim.core.utils import InputKind
 
 __all__ = [
     "antecedent_precipitation_index",
@@ -78,33 +76,34 @@ class FireWeather(Indicator):
 
     src_freq = "D"
     context = "hydro"
-    keywords = "fire"
+    keywords = ["fire"]
 
 
 class Precip(Daily):
     """Indicator involving daily pr series."""
 
     context = "hydro"
-    keywords = "precipitation"
+    keywords = ["precipitation"]
 
 
 class PrecipAmount(Precip):
     """
-    Class that converts all flux and rates inputs to amount or thicknesses before computation.
+    Class that converts 'pr' to an amount before computation.
 
-    Only works on the variable named "pr".
+    Only works on "generic" compute functions that are made specific with the "input" argument,
+    and only works on the variable named "pr".
     """
 
     @classmethod
-    def _parse_var_mapping(cls, variable_mapping, parameters):
-        new_units = super()._parse_var_mapping(variable_mapping, parameters)
-        pr_arg_name = [k for k, v in variable_mapping.items() if v == "pr"][0]
+    def _update_parameters(cls, parameters, new_params, var_mapping):
+        parameters, new_units = super()._update_parameters(parameters, new_params, var_mapping)
+        pr_arg_name = [k for k, v in var_mapping.items() if v == "pr"][0]
         if pr_arg_name in new_units:
             new_units[pr_arg_name] = "[mass]/[area]"
-        return new_units
+        return parameters, new_units
 
-    def _preprocess_and_checks(self, das, params):
-        return (das | {"pr": rate2amount(das["pr"])}, params)
+    def _preprocess_and_checks(self, das, params, meta):
+        return das | {"pr": rate2amount(das["pr"])}, params, meta
 
 
 class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
@@ -112,7 +111,7 @@ class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
 
     src_freq = "D"
     context = "hydro"
-    keywords = "precipitation"
+    keywords = ["precipitation"]
 
 
 class PrecipTempWithIndexing(ResamplingIndicatorWithIndexing):
@@ -120,48 +119,18 @@ class PrecipTempWithIndexing(ResamplingIndicatorWithIndexing):
 
     src_freq = "D"
     context = "hydro"
-    keywords = "precipitation"
-
-    @staticmethod
-    def cfcheck(pr: DataArray, tas: DataArray):
-        r"""
-        Verify the CF-compliance of the input data.
-
-        Parameters
-        ----------
-        pr : xarray.DataArray
-            Precipitation data.
-        tas : xarray.DataArray
-            Temperature data.
-        """
-        cfchecks.cfcheck_from_name("pr", pr)
-        cfchecks.check_valid(tas, "standard_name", "air_temperature")
+    keywords = ["precipitation"]
 
 
 class PrecipTemp(Precip):
     """Indicator involving pr and one of tas, tasmin or tasmax, allowing indexing."""
-
-    @staticmethod
-    def cfcheck(pr: DataArray, tas: DataArray):
-        r"""
-        Verify the CF-compliance of the input data.
-
-        Parameters
-        ----------
-        pr : xarray.DataArray
-            Precipitation data.
-        tas : xarray.DataArray
-            Temperature data.
-        """
-        cfchecks.cfcheck_from_name("pr", pr)
-        cfchecks.check_valid(tas, "standard_name", "air_temperature")
 
 
 class HrPrecip(Hourly):
     """Indicator involving hourly pr series."""
 
     context = "hydro"
-    keywords = "precipitation"
+    keywords = ["precipitation"]
 
 
 class DailyPrecipNoResample(Indicator):
@@ -169,7 +138,7 @@ class DailyPrecipNoResample(Indicator):
 
     src_freq = "D"
     context = "hydro"
-    keywords = "precipitation"
+    keywords = ["precipitation"]
 
 
 rain_on_frozen_ground_days = PrecipTempWithIndexing(
@@ -195,7 +164,7 @@ max_1day_precipitation_amount = Precip(
     description="{freq} maximum 1-day total precipitation",
     abstract="Maximum total daily precipitation for a given period.",
     cell_methods="time: maximum over days",
-    compute=compute.generic.statistics,
+    compute=generic.statistics,
     input={"data": "pr"},
     parameters={"out_units": None, "statistic": "max", "freq": {"default": "YS"}},
 )
@@ -210,7 +179,7 @@ max_n_day_precipitation_amount = Precip(
     description="{freq} maximum {window}-day total precipitation amount.",
     abstract="Maximum of the moving sum of daily precipitation for a given period.",
     cell_methods="time: maximum over days",
-    compute=compute.generic.running_statistics,
+    compute=generic.running_statistics,
     input={"data": "pr"},
     parameters={
         "window_statistic": "integral",
@@ -230,7 +199,7 @@ wetdays = Precip(
     description="{freq} number of days with daily precipitation at or above {thresh}.",
     abstract="The number of days with daily precipitation at or above a given threshold.",
     cell_methods="time: sum over days",
-    compute=compute.generic.count_occurrences,
+    compute=generic.count_occurrences,
     input={"data": "pr"},
     parameters={
         "thresh": {"default": "1 mm/d"},
@@ -260,7 +229,7 @@ dry_days = Precip(
     description="{freq} number of days with daily precipitation under {thresh}.",
     abstract="The number of days with daily precipitation under a given threshold.",
     cell_methods="time: sum over days",
-    compute=compute.generic.count_occurrences,
+    compute=generic.count_occurrences,
     input={"data": "pr"},
     parameters={
         "thresh": {"default": "0.2 mm/d"},
@@ -296,7 +265,7 @@ maximum_consecutive_wet_days = Precip(
     abstract="The longest number of consecutive days where daily precipitation is at or above a given threshold.",
     cell_methods="time: sum over days",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "thresh": {"default": "1 mm/day"},
         "window": 1,
@@ -319,7 +288,7 @@ maximum_consecutive_dry_days = Precip(
     abstract="The longest number of consecutive days where daily precipitation below a given threshold.",
     cell_methods="time: sum over days",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "thresh": {"default": "1 mm/day"},
         "window": 1,
@@ -343,7 +312,7 @@ daily_pr_intensity = Precip(
     "{freq} average precipitation for days with daily precipitation over {thresh}.",
     abstract="Average precipitation for days with daily precipitation above a given threshold.",
     cell_methods="",
-    compute=compute.generic.thresholded_statistics,
+    compute=generic.thresholded_statistics,
     input={"data": "pr"},
     parameters={
         "condition": {"default": ">="},
@@ -364,7 +333,7 @@ max_pr_intensity = HrPrecip(
     description="{freq} maximum precipitation intensity over rolling {window}h time window.",
     abstract="Maximum precipitation intensity over a given rolling time window.",
     cell_methods="time: max",
-    compute=compute.generic.running_statistics,
+    compute=generic.running_statistics,
     input={"data": "pr"},
     parameters={
         "window": {"default": 1},
@@ -375,7 +344,7 @@ max_pr_intensity = HrPrecip(
         "freq": {"default": "YS"},
     },
     duration="{window}",
-    keywords="IDF curves",
+    keywords=["IDF curves"],
 )
 
 precip_accumulation = Precip(
@@ -415,7 +384,7 @@ wet_precip_accumulation = Precip(
     abstract="Total accumulated precipitation on days with precipitation. "
     "A day is considered to have precipitation if the precipitation is greater than or equal to a given threshold.",
     cell_methods="time: sum over days",
-    compute=compute.generic.thresholded_statistics,
+    compute=generic.thresholded_statistics,
     input={"data": "pr"},
     parameters={
         "thresh": {"default": "1 mm/day"},
@@ -495,7 +464,7 @@ standardized_precipitation_index = StandardizedIndexes(
     abstract="Precipitation over a moving window, normalized such that SPI averages to 0 for the calibration data. "
     "The window unit `X` is the minimal time period defined by the resampling frequency.",
     cell_methods="",
-    keywords="precipitation",
+    keywords=["precipitation"],
     compute=compute.standardized_precipitation_index,
 )
 
@@ -513,7 +482,7 @@ standardized_precipitation_evapotranspiration_index = StandardizedIndexes(
     "SPEI averages to 0 for the calibration data. The window unit `X` is the minimal time period defined by the "
     "resampling frequency.",
     cell_methods="",
-    keywords="precipitation",
+    keywords=["precipitation"],
     compute=compute.standardized_precipitation_evapotranspiration_index,
 )
 
@@ -614,7 +583,7 @@ last_snowfall = Precip(
     abstract="The last day where snowfall exceeded a given threshold during a time period (the threshold can be "
     "given as a snowfall flux or a liquid water equivalent snowfall rate).",
     units="",
-    compute=compute.generic.day_threshold_reached,
+    compute=generic.day_threshold_reached,
     input={"data": "prsn"},
     parameters={
         "thresh": {"default": "1 mm/d"},
@@ -636,7 +605,7 @@ first_snowfall = Precip(
     abstract="The first day where snowfall exceeded a given threshold during a time period (the threshold can be "
     "given as a snowfall flux or a liquid water equivalent snowfall rate).",
     units="",
-    compute=compute.generic.day_threshold_reached,
+    compute=generic.day_threshold_reached,
     input={"data": "prsn"},
     parameters={
         "thresh": {"default": "1 mm/d"},
@@ -656,7 +625,7 @@ days_with_snow = Precip(
     description="{freq} number of days with snowfall larger than {low} and smaller or equal to {high}.",
     abstract="Number of days with snow between a lower and upper limit.",
     units="days",
-    compute=compute.generic.count_domain_occurrences,
+    compute=generic.count_domain_occurrences,
     input={"data": "prsn"},
     parameters={
         "low_bound": {"default": "0 kg m-2 s-1", "name": "low"},
@@ -686,7 +655,7 @@ snowfall_intensity = Precip(
     abstract="Mean daily liquid water equivalent snowfall rate above threshold (either a "
     "snowfall flux or a liquid water equivalent snowfall rate)",
     units="mm/day",
-    compute=compute.generic.thresholded_statistics,
+    compute=generic.thresholded_statistics,
     input={"data": "prsn"},
     parameters={
         "thresh": {"default": "1 mm/d"},
@@ -736,7 +705,7 @@ high_precip_low_temp = PrecipTemp(
     abstract="Number of days with precipitation above a given threshold and temperature below a given threshold.",
     units="days",
     cell_methods="time: sum over days",
-    compute=compute.generic.bivariate_count_occurrences,
+    compute=generic.bivariate_count_occurrences,
     input={"data1": "pr", "data2": "tas"},
     parameters={
         "thresh1": {"default": "0.4 mm/d", "name": "pr_thresh"},
@@ -801,7 +770,7 @@ dry_spell_frequency = PrecipAmount(
     units="",
     cell_methods="",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
@@ -826,7 +795,7 @@ dry_spell_total_length = PrecipAmount(
     units="days",
     cell_methods="",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
@@ -850,7 +819,7 @@ dry_spell_max_length = PrecipAmount(
     units="days",
     cell_methods="",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
@@ -874,7 +843,7 @@ wet_spell_frequency = PrecipAmount(
     units="",
     cell_methods="",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
@@ -899,7 +868,7 @@ wet_spell_total_length = PrecipAmount(
     units="days",
     cell_methods="",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
@@ -924,7 +893,7 @@ wet_spell_max_length = PrecipAmount(
     units="days",
     cell_methods="",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
@@ -1022,7 +991,7 @@ rain_season = Precip(
         "The start of the season is on the last day of the first sequence i) and must be between {date_min_start} and "
         "{date_max_start}.",
         "Last day in a dry sequence after the start of the season, i.e. a sequence of {window_dry_end} days "
-        "with at least {thresh_dry_end} {method_dry_end}. It must be between {date_min_end} and {date_max_end}. ",
+        "with at least {thresh_dry_end} {method_dry_end}. It must be between {date_min_end} and {date_max_end}.",
         "Number of steps of the original series in the season, between 'start' and 'end'.",
     ],
     units=["", "", "days"],

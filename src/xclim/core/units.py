@@ -25,14 +25,12 @@ from boltons.funcutils import wraps
 from xarray.coding import cftime_offsets
 from yaml import safe_load
 
-from xclim.core._exceptions import ValidationError
-from xclim.core._types import Freq, Quantified, Reducer
+from xclim.core import Freq, InputKind, Quantified, Reducer, ValidationError, infer_kind_from_parameter
 from xclim.core.calendar import get_calendar, parse_offset
 from xclim.core.options import datacheck
-from xclim.core.utils import InputKind, infer_kind_from_parameter
 
 try:
-    from xarray import DataTree
+    from xarray import DataTree  # pylint: disable=ungrouped-imports
 except ImportError:
     DataTree = False
 

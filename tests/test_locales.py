@@ -16,7 +16,7 @@ esperanto = (
     "eo",
     {
         "attrs_mapping": {"modifiers": ["adj"], "YS-*": ["jara"], "MS": ["monata"]},
-        "TG_MEAN": {
+        "tg_mean": {
             "long_name": "Meza ciutaga averaga temperaturo",
             "title": "Meza ciutaga averaga temperaturo",
         },
@@ -64,29 +64,9 @@ def test_local_dict(tmp_path):
     assert dic["TG_MEAN"]["long_name"] == "Moyenne de la température moyenne quotidienne"
 
 
-def test_local_attrs_sing():
-    attrs = xloc.get_local_attrs(atmos.tg_mean.__class__.__name__, esperanto, append_locale_name=False)
+def test_local_attrs():
+    attrs = xloc.get_local_attrs(atmos.tg_mean.identifier, esperanto, append_locale_name=False)
     assert "description" not in attrs
-
-    with pytest.raises(ValueError):
-        xloc.get_local_attrs(atmos.tg_mean, "fr", esperanto, append_locale_name=False)
-
-
-def test_local_attrs_multi(tmp_path):
-    with (tmp_path / "ru.json").open("w", encoding="utf-8") as f:
-        json.dump(russian[1], f, ensure_ascii=False)
-
-    attrs = xloc.get_local_attrs(
-        atmos.tg_mean.__class__.__name__,
-        "fr",
-        esperanto,
-        ("ru", tmp_path / "ru.json"),
-        append_locale_name=True,
-    )
-    for key in ["description_fr", "description_ru"]:
-        assert key in attrs
-    for key in ["description_eo"]:
-        assert key not in attrs
 
 
 def test_local_formatter():
@@ -106,12 +86,12 @@ def test_indicator_output(tas_series):
 
 
 def test_indicator_integration():
-    eo_attrs = atmos.tg_mean.translate_attrs(esperanto, fill_missing=True)
+    eo_attrs = atmos.tg_mean.translate(esperanto, fill_missing=True)
     assert "title" in eo_attrs
-    assert "long_name" in eo_attrs["cf_attrs"][0]
+    assert "long_name" in eo_attrs["attrs"][0]
 
-    eo_attrs = atmos.tg_mean.translate_attrs(esperanto, fill_missing=False)
-    assert "description" not in eo_attrs["cf_attrs"][0]
+    eo_attrs = atmos.tg_mean.translate(esperanto, fill_missing=False)
+    assert "description" not in eo_attrs["attrs"][0]
 
 
 @pytest.mark.parametrize("locale", xloc.list_locales())
@@ -126,15 +106,15 @@ def test_xclim_translations(locale, official_indicators):
 
     untranslated = []
     incomplete = []
-    for indname, indcls in official_indicators.items():
+    for indname, ind in official_indicators.items():
         is_complete = True
-        trans = indcls.translate_attrs(locale, fill_missing=False)
-        if set(trans) == {"cf_attrs"}:
+        trans = ind.translate(locale, fill_missing=False)
+        if set(trans) == {"attrs"}:
             untranslated.append(indname)
             continue
         # Both global attrs are present
         is_complete = {"title", "abstract"}.issubset(set(trans))
-        for _attrs, transattrs in zip(indcls.cf_attrs, trans["cf_attrs"], strict=False):
+        for _attrs, transattrs in zip(ind.attrs, trans["attrs"], strict=False):
             if {"long_name", "description"} - set(transattrs.keys()):
                 is_complete = False
 
@@ -153,11 +133,11 @@ def test_xclim_translations(locale, official_indicators):
     "initeng,expected",
     [
         (False, ""),
-        (True, atmos.tg_mean.cf_attrs[0]["long_name"]),
+        (True, atmos.tg_mean.attrs[0]["long_name"]),
     ],
 )
 def test_local_dict_generation(initeng, expected):
     dic = generate_local_dict("tlh", init_english=initeng)
     assert "attrs_mapping" in dic
     assert "modifiers" in dic["attrs_mapping"]
-    assert dic["TG_MEAN"]["long_name"] == expected
+    assert dic["tg_mean"]["long_name"] == expected
