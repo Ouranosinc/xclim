@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from xclim import atmos, set_options
+from xclim.compute.generic import statistics
 from xclim.compute.helpers import make_hourly_temperature
 
 K2C = 273.16
@@ -125,3 +126,26 @@ class TestAridityIndex:
 
         assert out.attrs["units"] == "1"
         np.testing.assert_allclose(out.values, expected)
+
+
+class TestCanadianHardinessZones:
+    def test_simple(self, atmosds):
+        ds = atmosds
+
+        tasmin = ds.tasmin
+        tasmax = ds.tasmax
+        pr = ds.pr
+        snd = ds.snd
+        wsgmax10m = statistics(ds.sfcWind, statistic="max", freq="MS")
+
+        # Should be caulculated over 30 years, but only four years of data available
+        chz = atmos.canadian_hardiness_zones(
+            tasmin=tasmin,
+            tasmax=tasmax,
+            pr=pr,
+            snd=snd,
+            wsgmax10m=wsgmax10m,
+            freq="4YS",
+        )
+
+        np.testing.assert_allclose(chz, np.array([[58.1458], [74.6359], [-4.0576], [27.4931], [96.5160]]), rtol=1e-4)
