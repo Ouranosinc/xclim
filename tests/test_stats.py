@@ -304,8 +304,8 @@ class TestPWMFit:
 
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
-def test_frequency_analysis(ndq_series, use_dask):
-    q = ndq_series.copy()
+def test_frequency_analysis(ndrivo_series, use_dask):
+    q = ndrivo_series.copy()
     q[:, 0, 0] = np.nan
     if use_dask:
         q = q.chunk()
@@ -325,9 +325,9 @@ def test_frequency_analysis(ndq_series, use_dask):
 
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
-def test_frequency_analysis_lmoments(ndq_series, use_dask):
+def test_frequency_analysis_lmoments(ndrivo_series, use_dask):
     lmom = pytest.importorskip("lmoments3.distr")
-    q = ndq_series.copy()
+    q = ndrivo_series.copy()
     q[:, 0, 0] = np.nan
     if use_dask:
         q = q.chunk()

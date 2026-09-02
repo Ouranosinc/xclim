@@ -55,6 +55,7 @@ Breaking changes
 * ``mask_between_doys`` has been renamed to ``select_between_doys``. (:pull:`2374`):
     * The function now returns the selected values instead of a boolean mask.
     * For array-like ``doy_bounds`` without ``time`` dimension, the start and end bounds must now be consecutive according to the frequency (default: ``freq="YS"``). Otherwise, the indexing is invalid and no data are selected.
+* `q` has been changed to `rivo` in hydrological indicators (``xclim.indicators.land``). ``xclim.land.doy_q{min|max}`` are renamed to ``xclim.land.rivo_{min|max}_doy``.  (:issue:`2407`, :pull:`2408`).
 * Translation: ``xclim.core.locales.get_local_attrs`` has been rewritten and only accepts a single "locale" now. Locale dictionaries are now case-insensitive. (:pull:`2397`).
 
 Internal changes
@@ -68,7 +69,6 @@ Internal changes
 * The LaTeX formulas and tables of many indice docstrings were failing to render in ReadTheDocs due to small syntax typos. These have been addressed. (:pull:`2355`).
 * A page has been added to the documentation (`governance.rst`) that describes the method through which decisions concerning `xclim` are made as well as the responsibilities of maintainers. (:pull:`2391`).
 * The security policy now details a brief security assurance that discusses the measures taken to ensure source code and package integrity. (:pull:`2391`).
-* Removed ``swe_series`` unused fixture.
 * Updated `pylint` to use v4.0+ standards and addressed several small linting issues. (:pull:`2409`).
 * Project metadata now compatible with `flit >=4.0` standards. (:pull:`2412`).
 
