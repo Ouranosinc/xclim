@@ -1594,7 +1594,9 @@ def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: Freq =
     return cu.resample(time=freq).sum().assign_attrs(units="")
 
 
-# TODO: declare_units()
+@declare_units(
+    tasmin="[temperature]", tasmax="[temperature]", pr="[precipitation]", snd="[length]", wsgmax10m="[speed]"
+)
 def canadian_hardiness_zones(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
@@ -1619,7 +1621,7 @@ def canadian_hardiness_zones(
     wsgmax10m : xarray.DataArray
         Maximum wind gust.
     freq : str
-        Resampling frequency for the input data, by default "YS" (yearly start).
+        Resampling frequency for the climatology. Default is ``"30YS"`` (30-years).
 
     Returns
     -------
@@ -1685,7 +1687,7 @@ def canadian_hardiness_zones(
     # Maximum wind gust in experienced in a 30-year period
     x7 = _wsgmax10m.resample(time=freq).max()
 
-    suitability_index = (
+    canadian_hardiness_index = (
         -67.62
         + (1.734 * x1)
         + (0.1868 * x2)
@@ -1695,10 +1697,9 @@ def canadian_hardiness_zones(
         + (22.37 * x6)
         - (0.01832 * x7)
     )
-    suitability_index.attrs["long_name"] = "Canadian hardiness zones."
-    suitability_index.attrs["units"] = ""
 
-    return suitability_index
+    canadian_hardiness_index = canadian_hardiness_index.assign_attrs(units="")
+    return canadian_hardiness_index
 
 
 @declare_units(tas="[precipitation]")
