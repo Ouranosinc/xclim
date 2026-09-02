@@ -19,12 +19,14 @@ canadian_hardiness_zones = MultivariateIndicator(
     standard_name="",
     units="",
     long_name="Canadian hardiness zones",
-    description="A climate indice based on a {freq} climatology of the annual average of maximum and minimum monthly "
-    "temperatures, seasonal precipitation, average annual maximum snow depth, and maximum wind gust experienced over "
-    "the entire period. Developed specifically to aid in determining plant suitability of Canadian geographic regions.",
-    abstract="A climate indice based on a multi-year climatology of the annual average of maximum and minimum monthly "
-    "temperatures, seasonal precipitation, average annual maximum snow depth, and maximum wind gust experienced over "
-    "the entire period. Developed specifically to aid in determining plant suitability of Canadian geographic regions.",
+    description="A climate index based on a {freq} climatology of the annual average of maximum and minimum "
+    "monthly temperatures, seasonal precipitation, average annual maximum snow depth, and maximum wind gust "
+    "experienced over the entire period. Developed specifically to aid in determining plant suitability of Canadian "
+    "geographic regions.",
+    abstract="A climate index based on a multi-year climatology of the annual average of maximum and minimum "
+    "monthly temperatures, seasonal precipitation, average annual maximum snow depth, and maximum wind gust "
+    "experienced over the entire period. Developed specifically to aid in determining plant suitability of Canadian "
+    "geographic regions.",
     cell_methods="",
     var_name="chz",
     compute=compute.canadian_hardiness_zones,
