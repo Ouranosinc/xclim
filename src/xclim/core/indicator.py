@@ -374,7 +374,7 @@ class Indicator(IndicatorRegistrar):
         A long description of what is in the computed outputs.
         Parsed from `compute` docstring if None (second paragraph).
     keywords : str
-        Comma separated list of keywords.
+        Space-separated list of keywords.
         Parsed from `compute` docstring if None (from a "Keywords" section).
     references : str
         Published or web-based references that describe the data or methods used to produce it.
@@ -438,7 +438,7 @@ class Indicator(IndicatorRegistrar):
 
     # Note: typing and class types in this call signature will cause errors with sphinx-autodoc-typehints
     # See: https://github.com/tox-dev/sphinx-autodoc-typehints/issues/186#issuecomment-1450739378
-    cf_attrs: list[dict[str, str]] = None
+    cf_attrs: list[dict[str, str]] = [{}]
     """A list of metadata information for each output of the indicator.
 
     It minimally contains a "var_name" entry, and may contain : "standard_name", "long_name",

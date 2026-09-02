@@ -192,6 +192,7 @@ class AttrFormatter(string.Formatter):
 # Tag mappings between keyword arguments and long-form text.
 default_formatter = AttrFormatter(
     {
+        # TODO: Can we support intervals with scalars? e.g. 10/20/30YS?
         # Arguments to "freq"
         "D": ["daily", "days"],
         "YS": ["annual", "years"],
@@ -199,6 +200,7 @@ default_formatter = AttrFormatter(
         "MS": ["monthly", "months"],
         "QS-*": ["seasonal", "seasons"],
         # Arguments to "indexer"
+        # TODO: These seasons are only true for Northern Hemisphere
         "DJF": ["winter"],
         "MAM": ["spring"],
         "JJA": ["summer"],
@@ -236,7 +238,7 @@ default_formatter = AttrFormatter(
 )
 
 
-def parse_doc(doc: str) -> dict:
+def parse_doc(doc: str | None) -> dict:
     """
     Crude regex parsing reading a function docstring and extracting information needed in indicator construction.
 
