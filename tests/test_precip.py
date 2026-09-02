@@ -544,7 +544,7 @@ def test_days_over_precip_doy_thresh(open_dataset):
     out2 = atmos.days_over_precip_doy_thresh(pr, per, thresh="2 mm/d")
     np.testing.assert_array_equal(out2[1, :, 0], np.array([80, 59, 66, 78]))
 
-    assert "only days with at least 2 mm/d are counted." in out2.description
+    assert "Only days with at least 2 mm/d are counted." in out2.description
     assert "[80]th percentile" in out2.attrs["description"]
     assert "['1990-01-01', '1993-12-31'] period" in out2.attrs["description"]
     assert "5 day(s)" in out2.attrs["description"]
@@ -582,7 +582,7 @@ def test_fraction_over_precip_doy_thresh(open_dataset):
     out = atmos.fraction_over_precip_doy_thresh(pr, per, thresh="0.002 m/d")
     np.testing.assert_allclose(out[1, :, 0], np.array([0.822, 0.780, 0.771, 0.829]), atol=0.001)
 
-    assert "only days with at least 0.002 m/d are included" in out.description
+    assert "Only days with at least 0.002 m/d are included" in out.description
     assert "[80]th percentile" in out.attrs["description"]
     assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
     assert "5 day(s)" in out.attrs["description"]
@@ -611,7 +611,7 @@ def test_liquid_precip_ratio(open_dataset):
         # Test if tasmax is allowed
         out = atmos.liquid_precip_ratio(pr=ds.pr, tas=ds.tasmax, thresh="33 degF", freq="YS")
         np.testing.assert_allclose(out[:, 0], np.array([0.975, 0.921, 0.547, 0.794, 0.999]), atol=1e3)
-        assert "where temperature is above 33 degf." in out.description
+        assert "where temperature is above 33 degF." in out.description
 
 
 def test_dry_spell(atmosds):
@@ -635,7 +635,7 @@ def test_dry_spell(atmosds):
 
     assert (
         "The annual number of dry periods of at least 7 days. "
-        "a period is dry if its total precipitation on a window of 7 days is below 3 mm."
+        "A period is dry if its total precipitation on a window of 7 days is below 3 mm."
     ) in events.description
     assert "The annual number of days in dry periods of at least 7 days" in total_d_sum.description
     assert "The annual number of days in dry periods of at least 7 days" in total_d_max.description
@@ -685,12 +685,12 @@ def test_dry_spell_frequency_op(open_dataset):
     np.testing.assert_allclose(test_sum[0, :14], [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0], rtol=1e-1)
     np.testing.assert_allclose(test_max[0, :14], [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 2, 1], rtol=1e-1)
     assert (
-        "The monthly number of dry periods of at least 7 days. a period is dry if its "
+        "The monthly number of dry periods of at least 7 days. A period is dry if its "
         "total precipitation on a window of 7 days is below 3 mm."
     ) in test_sum.description
     assert (
         "The monthly number of dry periods of at least 7 days. "
-        "a period is dry if its maximal precipitation on a window of 7 days is below 3 mm."
+        "A period is dry if its maximal precipitation on a window of 7 days is below 3 mm."
     ) in test_max.description
 
 
@@ -758,9 +758,21 @@ class TestSnowfallMeteoSwiss:
         )
 
 
+def test_precipitation_concentration_index(pr_series):
+    a = np.zeros(360)
+    a[0:30] = 1 / 30
+    a[30:60] = 2 / 30
+    pr = pr_series(a, start="2000-01-01", calendar="360_day")
+    expected = 100 * (1 + 2**2) / ((1 + 2) ** 2)
+    pci = atmos.precipitation_concentration_index(pr)
+
+    np.testing.assert_array_equal(pci, expected)
+
+
 def test_aridity_index(pr_series, evspsblpot_series):
     pr = pr_series([2] * (365 * 10 + 2), start="1900-01-01", units="mm/d")
     pet = evspsblpot_series([1] * (365 * 10 + 2), start="1900-01-01", units="mm/d")
     ai = atmos.aridity_index(pr, pet, freq="YS")
+
     assert ai.attrs["units"] == "1"
     np.testing.assert_allclose(ai.values, [2.0] * 10)

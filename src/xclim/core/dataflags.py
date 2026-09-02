@@ -17,12 +17,17 @@ import xarray
 
 from xclim.compute.helpers import BINARY_OPS
 from xclim.compute.run_length import suspicious_run
-from xclim.core._exceptions import MissingVariableError, raise_warn_or_log
-from xclim.core._types import VARIABLES, Quantified
+from xclim.core import (
+    VARIABLES,
+    InputKind,
+    MissingVariableError,
+    Quantified,
+    infer_kind_from_parameter,
+    raise_warn_or_log,
+)
 from xclim.core.calendar import climatological_mean_doy, within_bnds_doy
 from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to, declare_units, infer_context, str2pint
-from xclim.core.utils import InputKind, infer_kind_from_parameter
 
 _REGISTRY = {}
 

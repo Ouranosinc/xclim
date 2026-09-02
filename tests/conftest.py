@@ -383,9 +383,9 @@ def open_dataset(threadsafe_data_dir, worker_id):
 def official_indicators():
     # Remove unofficial indicators (as those created during the tests, and those from YAML-built modules)
     registry_cp = indicator.registry.copy()
-    for cls in indicator.registry.values():
-        if cls.identifier.upper() != cls._registry_id:
-            registry_cp.pop(cls._registry_id)
+    for ind in indicator.registry.values():
+        if "." in ind.identifier:
+            registry_cp.pop(ind.identifier)
     return registry_cp
 
 

@@ -19,6 +19,11 @@ Major changes
 * Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures. (:pull:`2258`):
     * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
     * A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
+* Refactor of the ``xclim.core.indicator.Indicator`` class itself  (:pull:`2397`). Most breaking changes are:
+    * Output attributes are stored in ``Indicator.attrs`` (renamed from ``cf_attrs``), which is a list of ``xclim.core.indicator.Output`` objects (not dictionaries).
+    * Removal of ``Indicator.from_dict``. Renamed ``Indicator.translate_attrs`` to ``Indicator.translate``.
+    * The ``xclim.core.indicator.registry`` now holds ``Indicator`` _instances_ (not classes) and is case-insensitive.
+    * "Virtual submodules" were transformed into ``xclim.core.collection.IndicatorCollection`` instances (and not actual python modules). Indicators created this way automatically have the collection's name prepended to their identifier.
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -47,10 +52,11 @@ Breaking changes
 * `pre-commit` has been replaced by `prek`. `prek` is a `pre-commit-config.yml` compatible reimplementation built in Rust. (:pull:`2355`).
 * Approximate method `APP` not allowed anymore when using the `genextreme` distribution for standardized indices (e.g. ``xclim.indicators.atmos.standardized_precipitation_index`` and similar indicators).
 * The output of ``xclim.compute.stats.parametric_cdf`` has a dimension `v` instead `cdf` (`cdf` more appropriately describes the output variable).
-* `mask_between_doys` has been renamed to `select_between_doys`. (:pull:`2374`):
+* ``mask_between_doys`` has been renamed to ``select_between_doys``. (:pull:`2374`):
     * The function now returns the selected values instead of a boolean mask.
-    * For array-like ``doy_bounds`` without ``time`` dimension, the start and end bounds must now be consecutive according to the frequency (default ``freq="YS"``). Otherwise, the indexing is invalid and no data are selected.
+    * For array-like ``doy_bounds`` without ``time`` dimension, the start and end bounds must now be consecutive according to the frequency (default: ``freq="YS"``). Otherwise, the indexing is invalid and no data are selected.
 * `q` has been changed to `rivo` in hydrological indicators (``xclim.indicators.land``). ``xclim.land.doy_q{min|max}`` are renamed to ``xclim.land.rivo_{min|max}_doy``.  (:issue:`2407`, :pull:`2408`).
+* Translation: ``xclim.core.locales.get_local_attrs`` has been rewritten and only accepts a single "locale" now. Locale dictionaries are now case-insensitive. (:pull:`2397`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -63,10 +69,12 @@ Internal changes
 * The LaTeX formulas and tables of many indice docstrings were failing to render in ReadTheDocs due to small syntax typos. These have been addressed. (:pull:`2355`).
 * A page has been added to the documentation (`governance.rst`) that describes the method through which decisions concerning `xclim` are made as well as the responsibilities of maintainers. (:pull:`2391`).
 * The security policy now details a brief security assurance that discusses the measures taken to ensure source code and package integrity. (:pull:`2391`).
+* Updated `pylint` to use v4.0+ standards and addressed several small linting issues. (:pull:`2409`).
+* Project metadata now compatible with `flit >=4.0` standards. (:pull:`2412`).
 
 v0.62.0 (2026-08-17)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sascha Hofmann (:user:`saschahofmann`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -78,6 +86,7 @@ New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.indices.helpers.make_hourly_temperature`` now accepts `infill_polar_days`. If set to `True`, this means that polar days and nights are set to 24 and 0 hours duration, respectively. The default behaviour is unchanged (`infill_polar_days=False`) and fills these cases with NaNs. (:issue:`2381`, :pull:`2382`).
 * Run length indices now support a quantile reducer. (:pull:`2369`).
+* Implemented two new indicators: ``xclim.atmos.day_to_day_temperature_variability`` and ``xclim.atmos.precipitation_concentration_index``. (:issue:`2356`, :pull:`2363`.)
 * ``xclim.ensembles.robustness_fractions`` now accepts `strict_sign` which can be set to false to include zero-change in both positive and negative fractions. Default behaviour (True) is unchanged. (:pull:`2387`).
 
 Breaking changes

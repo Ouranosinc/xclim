@@ -25,14 +25,12 @@ from boltons.funcutils import wraps
 from xarray.coding import cftime_offsets
 from yaml import safe_load
 
-from xclim.core._exceptions import ValidationError
-from xclim.core._types import Freq, Quantified, Reducer
+from xclim.core import Freq, InputKind, Quantified, Reducer, ValidationError, infer_kind_from_parameter
 from xclim.core.calendar import get_calendar, parse_offset
 from xclim.core.options import datacheck
-from xclim.core.utils import InputKind, infer_kind_from_parameter
 
 try:
-    from xarray import DataTree
+    from xarray import DataTree  # pylint: disable=ungrouped-imports
 except ImportError:
     DataTree = False
 
@@ -698,13 +696,15 @@ def to_agg_units(
     if not isinstance(statistic, str):
         statistic = statistic.__name__
 
-    is_difference = True if statistic in ["std", "var"] else None
+    is_difference = (
+        True if statistic in ["std", "var"] or "difference" in orig.attrs.get("units_metadata", "") else None
+    )
 
     if statistic in ["min", "max", "mean", "sum", "std"]:
-        out.attrs["units"] = orig.attrs["units"]
+        out.attrs.update(pint2cfattrs(str2pint(orig.units), is_difference))
 
     elif statistic in ["var"]:
-        out.attrs["units"] = pint2cfunits(str2pint(orig.units) ** 2)
+        out.attrs.update(pint2cfattrs(str2pint(orig.units) ** 2, is_difference))
 
     elif statistic in ["doymin", "doymax"]:
         out.attrs.update(units="1", is_dayofyear=np.int32(1), calendar=get_calendar(orig))

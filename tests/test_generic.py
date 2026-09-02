@@ -237,7 +237,7 @@ class TestStatisticsBetweenDates:
     def test_day_of_year_strings(self):
         # generate test DataArray
         time_data = xr.date_range("1990-08-01", "1995-06-01", freq="D", calendar="standard")
-        data = xr.DataArray(np.ones(time_data.size), dims="time", coords={"time": time_data}, attrs={"units": "btu"})
+        data = xr.DataArray(np.ones(time_data.size), dims="time", coords={"time": time_data}, attrs={"units": "m"})
         # set start and end dates
         start = "02-01"
         end = "10-31"
@@ -1086,6 +1086,14 @@ def test_season_length_from_boundaries(tas_series):
     # this gives a single season length
     length2 = run_length.season_length(tas, window=1)
     np.testing.assert_array_equal(length, length2)
+
+
+def test_day_to_day_variability(tas_series):
+    a = np.zeros(360)
+    a[0:15] = 24
+    tas = tas_series(a, calendar="360_day", start="2000-01-01")
+    dtdt = generic.day_to_day_variability(tas)
+    np.testing.assert_array_equal(dtdt, [1.0])
 
 
 class TestSeason:

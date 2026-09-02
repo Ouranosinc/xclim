@@ -14,7 +14,7 @@ variables:
 indicators:
   RX1day_summer:
     base: rx1day
-    cf_attrs:
+    attrs:
       long_name: Highest 1-day precipitation amount
     parameters:
       indexer:
@@ -22,7 +22,7 @@ indicators:
     context: hydro
   RX5day_canopy:
     base: max_n_day_precipitation_amount
-    cf_attrs:
+    attrs:
       long_name: Highest 5-day precipitation amount on the canopy
     input:
       pr: prveg
@@ -41,7 +41,7 @@ indicators:
     compute: generic.day_threshold_reached
     input:
       data: tasmin
-    cf_attrs:
+    attrs:
       long_name: First Frost Day (Tmin < 0°C)
       description: First day of the period where the minimum daily temperature goes under 0°C.
       units: ""
@@ -57,7 +57,7 @@ indicators:
         default: YS-JUL
   R95p:
     compute: extreme_precip_accumulation_and_days
-    cf_attrs:
+    attrs:
       - cell_methods: 'time: sum within days time: sum over days'
         long_name: Annual total PRCP when RR > {perc}th percentile
         units: m
@@ -71,7 +71,7 @@ indicators:
     context: hydro
   R99p:
     base: .R95p
-    cf_attrs:
+    attrs:
       - var_name: R99p
       - var_name: R99p_days
     parameters:

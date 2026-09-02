@@ -7,21 +7,16 @@ from __future__ import annotations
 
 import datetime as dt
 import itertools
-import logging
 import re
 import string
-import textwrap
 import warnings
-from ast import literal_eval
 from collections.abc import Callable, Sequence
 from fnmatch import fnmatch
-from inspect import _empty, signature
+from inspect import signature
 from typing import Any
 
 import xarray as xr
 from boltons.funcutils import wraps
-
-from xclim.core.utils import InputKind
 
 DEFAULT_FORMAT_PARAMS = {
     "tasmin_per_thresh": "{unknown}",
@@ -234,110 +229,6 @@ default_formatter = AttrFormatter(
     },
     ["adj", "noun"],
 )
-
-
-def parse_doc(doc: str) -> dict:
-    """
-    Crude regex parsing reading a function docstring and extracting information needed in indicator construction.
-
-    The appropriate docstring syntax is detailed in
-    :ref:`notebooks/extendxclim:Defining new index-like compute functions`.
-
-    Parameters
-    ----------
-    doc : str
-        The docstring of an index-like compute function.
-
-    Returns
-    -------
-    dict
-        A dictionary with all parsed sections.
-    """
-    if doc is None:
-        return {}
-
-    # Retrocompatilbity as python 3.13 does this by default
-    doc = textwrap.dedent(doc)
-    out = {}
-
-    sections = re.split(r"(\w+\s?\w+)\n-{3,50}", doc)  # obj.__doc__.split('\n\n')
-    intro = sections.pop(0)
-    if intro:
-        intro_content = list(map(str.strip, intro.strip().split("\n\n")))
-        if len(intro_content) == 1:
-            out["title"] = intro_content[0]
-        elif len(intro_content) >= 2:
-            out["title"], abstract = intro_content[:2]
-            out["abstract"] = " ".join(map(str.strip, abstract.splitlines()))
-
-    for i in range(0, len(sections), 2):
-        header, content = sections[i : i + 2]
-
-        if header in ["Notes", "References"]:
-            out[header.lower()] = content.replace("\n    ", "\n").strip()
-        elif header == "Parameters":
-            out["parameters"] = _parse_parameters(content)
-        elif header == "Returns":
-            rets = _parse_returns(content)
-            if rets:
-                meta = list(rets.values())[0]
-                if "long_name" in meta:
-                    out["long_name"] = meta["long_name"]
-    return out
-
-
-def _parse_parameters(section):
-    """
-    Parse the 'parameters' section of a docstring into a dictionary.
-
-    Works by mapping the parameter name to its description and, potentially, to its set of choices.
-    The type annotation are not parsed, except for fixed sets of values (listed as "{'a', 'b', 'c'}").
-    The annotation parsing only accepts strings, numbers, `None` and `nan` (to represent `numpy.nan`).
-    """
-    curr_key = None
-    params = {}
-
-    for line in section.split("\n"):
-        if line.startswith(" "):  # description
-            s = " " if params[curr_key]["description"] else ""
-            params[curr_key]["description"] += s + line.strip()
-        elif not line.startswith(" ") and ":" in line:  # param title
-            name, annot = line.split(":", maxsplit=1)
-            curr_key = name.strip()
-            params[curr_key] = {"description": ""}
-            match = re.search(r".*(\{.*}).*", annot)
-            if match:
-                try:
-                    choices = literal_eval(match.groups()[0])
-                    params[curr_key]["choices"] = choices
-                except ValueError as err:
-                    msg = f"Choice not found. Ignoring: {err}"
-                    logging.info(msg)
-                    # If the literal_eval fails, we just ignore the choices.
-                    pass
-    return params
-
-
-def _parse_returns(section):
-    """Parse the returns section of a docstring into a dictionary mapping the parameter name to its description."""
-    curr_key = None
-    params = {}
-    for line in section.split("\n"):
-        if line.strip():
-            if line.startswith(" "):  # long_name
-                s = " " if params[curr_key]["long_name"] else ""
-                params[curr_key]["long_name"] += s + line.strip()
-            elif not line.startswith(" "):  # param title
-                annot, *name = reversed(line.split(":", maxsplit=1))
-                if name:
-                    curr_key = name[0].strip()
-                else:
-                    curr_key = None
-                params[curr_key] = {"long_name": ""}
-                annot, *unit = annot.split(",", maxsplit=1)
-                if unit:
-                    params[curr_key]["units"] = unit[0].strip()
-    return params
 
 
 def merge_attributes(
@@ -598,149 +489,6 @@ def unprefix_attrs(source: dict, keys: Sequence, prefix: str) -> dict:
     return out
 
 
-KIND_ANNOTATION = {
-    InputKind.VARIABLE: "str or DataArray",
-    InputKind.OPTIONAL_VARIABLE: "str or DataArray, optional",
-    InputKind.QUANTIFIED: "quantity (string or DataArray, with units)",
-    InputKind.MASK: "DataArray or scalar",
-    InputKind.FREQ_STR: "offset alias (string)",
-    InputKind.NUMBER: "number",
-    InputKind.NUMBER_SEQUENCE: "number or sequence of numbers",
-    InputKind.STRING: "str",
-    InputKind.DAY_OF_YEAR: "date (string, MM-DD)",
-    InputKind.DATE: "date (string, YYYY-MM-DD)",
-    InputKind.BOOL: "boolean",
-    InputKind.DICT: "dict",
-    InputKind.DATASET: "Dataset, optional",
-    InputKind.KWARGS: "",
-    InputKind.OTHER_PARAMETER: "Any",
-}
-
-
-def _gen_parameters_section(parameters: dict[str, dict[str, Any]], allowed_periods: list[str] | None = None) -> str:
-    """
-    Generate the "parameters" section of the indicator docstring.
-
-    Parameters
-    ----------
-    parameters : dict
-        Parameters dictionary (`Ind.parameters`).
-    allowed_periods : list of str, optional
-        Restrict parameters to specific periods. Default: None.
-
-    Returns
-    -------
-    str
-        The formatted section.
-    """
-    section = "Parameters\n----------\n"
-    for name, param in parameters.items():
-        desc_str = param.description
-        if param.kind == InputKind.FREQ_STR:
-            desc_str += (
-                " See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset"
-                "-aliases for available options."
-            )
-            if allowed_periods is not None:
-                desc_str += f" Restricted to frequencies equivalent to one of {allowed_periods}"
-        if param.kind == InputKind.VARIABLE:
-            defstr = f"Default : `ds.{param.default}`. "
-        elif param.kind == InputKind.OPTIONAL_VARIABLE:
-            defstr = ""
-        elif param.default is not _empty:
-            defstr = f"Default : {param.default}. "
-        else:
-            defstr = "Required. "
-        if "choices" in param:
-            annotstr = str(param.choices)
-        else:
-            annotstr = KIND_ANNOTATION[param.kind]
-        if "units" in param and param.units is not None:
-            unitstr = f"[Required units : {param.units}]"
-        else:
-            unitstr = ""
-        section += f"{name} {': ' if annotstr else ''}{annotstr}\n    {desc_str}\n    {defstr}{unitstr}\n"
-    return section
-
-
-def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]) -> str:
-    """
-    Generate the "Returns" section of an indicator's docstring.
-
-    Parameters
-    ----------
-    cf_attrs : Sequence[Dict[str, Any]]
-        The list of attributes, usually Indicator.cf_attrs.
-
-    Returns
-    -------
-    str
-        The formatted section.
-    """
-    section = "Returns\n-------\n"
-    for attrs in cf_attrs:
-        if not section.endswith("\n"):
-            section += "\n"
-        section += f"{attrs['var_name']} : DataArray\n"
-        section += f"    {attrs.get('long_name', '')}"
-        if "standard_name" in attrs:
-            section += f" ({attrs['standard_name']})"
-        if "units" in attrs:
-            section += f" [{attrs['units']}]"
-        added_section = ""
-        for key, attr in attrs.items():
-            if key not in ["long_name", "standard_name", "units", "var_name"]:
-                if callable(attr):
-                    attr = "<Dynamically generated string>"
-                added_section += f" **{key}**: {attr};"
-        if added_section:
-            section = f"{section}, with additional attributes:{added_section[:-1]}"
-    section += "\n"
-    return section
-
-
-def generate_indicator_docstring(ind) -> str:
-    """
-    Generate an indicator's docstring from keywords.
-
-    Parameters
-    ----------
-    ind : Indicator
-        An Indicator instance.
-
-    Returns
-    -------
-    str
-        The docstring.
-    """
-    header = f"{ind.title} (realm: {ind.realm})\n\n{ind.abstract}\n"
-
-    special = ""
-
-    if hasattr(ind, "missing"):  # Only ResamplingIndicators
-        special += f'This indicator will check for missing values according to the method "{ind.missing}".\n'
-    if hasattr(ind.compute, "__module__"):
-        special += f"Based on function :py:func:`~{ind.compute.__module__}.{ind.compute.__name__}`.\n"
-        if ind.injected_parameters:
-            special += "With injected parameters: "
-            special += ", ".join([f"{k}={v}" for k, v in ind.injected_parameters.items()])
-            special += ".\n"
-    if ind.keywords:
-        special += f"Keywords : {ind.keywords}.\n"
-
-    parameters = _gen_parameters_section(ind.parameters, getattr(ind, "allowed_periods", None))
-
-    returns = _gen_returns_section(ind.cf_attrs)
-
-    extras = ""
-    for section in ["notes", "references"]:
-        if getattr(ind, section):
-            extras += f"{section.capitalize()}\n{'-' * len(section)}\n{getattr(ind, section)}\n\n"
-
-    doc = f"{header}\n{special}\n{parameters}\n{returns}\n{extras}"
-    return doc
-
-
 def get_percentile_metadata(data: xr.DataArray, prefix: str) -> dict[str, str]:
     """
     Get the metadata related to percentiles from the given DataArray as a dictionary.
@@ -773,3 +521,29 @@ def get_percentile_metadata(data: xr.DataArray, prefix: str) -> dict[str, str]:
         f"{prefix}_window": data.attrs.get("window", "<unknown window>"),
         f"{prefix}_period": clim_bounds,
     }
+
+
+def capitalize_free_text(text, sep=". "):
+    """
+    Ensure each sentence of the text begins with an uppercase letter.
+
+    Parameters
+    ----------
+    text : str
+        A string.
+    sep : str
+        The separator indicating the end and the beginning of sentences,
+        in addition to the first letter of the text.
+
+    Returns
+    -------
+    str
+        The capitalized text. In opposition to :py:func:`str.capitalize()`,
+        case of letters not at the beginning of a sentence is preserved.
+    """
+
+    def _capitalize(m):
+        return (m.groups()[0] or "") + m.groups()[-1].upper()
+
+    patt = re.compile(f"(?:({re.escape(sep)})|(^))([a-z])")
+    return re.sub(patt, _capitalize, text)

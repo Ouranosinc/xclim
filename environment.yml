@@ -10,6 +10,7 @@ dependencies:
   - cftime >=1.4.1
   - click >=8.1
   - dask >=2024.8.1
+  - docstring_parser
   - filelock >=3.14.0
   - numba >=0.60.0
   - numpy >=2.0
@@ -34,17 +35,17 @@ dependencies:
   - flake8 >=7.3.0
   - flake8-rst-docstrings >=0.4.0
   - numpydoc >=1.10.0
-  - pylint >=3.3.1
+  - pylint >=4.0
   - ruff >=0.13.3
   - ty >=0.0.35
   - vulture >=2.14
   - yamllint >=1.35.1
   # Testing and development dependencies
-  - bump-my-version >=1.2.3
+  - bump-my-version >=1.5.1
   - cairosvg >=2.6.0
   - coverage >=7.5.0
   - distributed >=2.0
-  - flit >=3.11.0,<4.0
+  - flit >=4.0,<5.0
   - furo >=2023.9.10
   - h5netcdf >=1.5.0
   - h5py >=3.12.1
@@ -60,7 +61,7 @@ dependencies:
   - pandas-stubs >=2.2
   - pip >=26.1
   - pooch >=1.8.0
-  - prek >=0.3
+  - prek >=0.5.0
   - pybtex >=0.24.0
   - pytest >=9.0.0
   - pytest-cov >=5.0.0
@@ -72,7 +73,7 @@ dependencies:
   - sphinx-autodoc-typehints >=3.5.0,!=3.10
   - sphinx-codeautolink >=0.16.2
   - sphinx-copybutton >=0.5.2
-  - sphinx-mdinclude
+  - sphinx-mdinclude >=0.6.2
   - sphinxcontrib-bibtex >=2.7.0
   - sphinxcontrib-svg2pdfconverter
   - tokenize-rt >=5.2.0
