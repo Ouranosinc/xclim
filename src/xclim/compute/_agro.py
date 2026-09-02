@@ -1600,7 +1600,7 @@ def canadian_hardiness_zones(
     tasmax: xarray.DataArray,
     pr: xarray.DataArray,
     snd: xarray.DataArray,
-    sfcWindmax: xarray.DataArray,
+    wsgmax10m: xarray.DataArray,
     freq: str = "30YS",
 ) -> xarray.DataArray:
     """
@@ -1616,8 +1616,8 @@ def canadian_hardiness_zones(
         Precipitation.
     snd : xarray.DataArray
         Snow depth.
-    sfcWindmax : xarray.DataArray
-        Maximum surface wind speed.
+    wsgmax10m : xarray.DataArray
+        Maximum wind gust.
     freq : str
         Resampling frequency for the input data, by default "YS" (yearly start).
 
@@ -1641,7 +1641,7 @@ def canadian_hardiness_zones(
     _tasmax = convert_units_to(tasmax, "degC")
     _pr = convert_units_to(pr, "mm")
     _snd = convert_units_to(snd, "mm")
-    _sfcWindmax = convert_units_to(sfcWindmax, "km h-1")
+    _wsgmax10m = convert_units_to(wsgmax10m, "km h-1")
 
     # Monthly mean of minimum temperatures of the coldest month
     x1 = statistics(_tasmin, statistic="mean", freq="MS").resample(time="YS").min().resample(time=freq).mean()
@@ -1683,7 +1683,7 @@ def canadian_hardiness_zones(
     x6 = snd_above_0 / (snd_above_0 + 25.4)
 
     # Maximum wind gust in experienced in a 30-year period
-    x7 = _sfcWindmax.resample(time=freq).max()
+    x7 = _wsgmax10m.resample(time=freq).max()
 
     suitability_index = (
         -67.62
