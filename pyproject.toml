@@ -181,6 +181,37 @@ serialize = [
 ]
 
 [[tool.bumpversion.files]]
+filename = "CHANGELOG.rst"
+include_bumps = ["release"]
+search = """\
+`Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
+--------------------------------------------------------------
+"""
+replace = """\
+..
+    `Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
+    --------------------------------------------------------------
+    Contributors to this version:
+
+    New indicators and features
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    * N/A
+
+    Breaking changes
+    ^^^^^^^^^^^^^^^^
+    * N/A
+
+    Internal changes
+    ^^^^^^^^^^^^^^^^
+    * N/A
+
+.. _changes_{new_version}:
+
+`v{new_version} <https://github.com/Ouranosinc/xclim/tree/v{new_version}>`_ ({now:%Y-%m-%d})
+--------------------------------------------------------------------------
+"""
+
+[[tool.bumpversion.files]]
 filename = "src/xclim/__init__.py"
 search = "__version__ = \"{current_version}\""
 replace = "__version__ = \"{new_version}\""
