@@ -2,8 +2,8 @@
 Changelog
 =========
 
-v1.0.0 (unreleased)
--------------------
+`Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
+------------------------------------------------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`).
 
 Announcements

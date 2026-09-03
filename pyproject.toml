@@ -185,12 +185,12 @@ filename = "CHANGELOG.rst"
 include_bumps = ["release"]
 search = """\
 `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
---------------------------------------------------------------
+------------------------------------------------------------
 """
 replace = """\
 ..
-    `Unreleased <https://github.com/Ouranosinc/miranda>`_ (latest)
-    --------------------------------------------------------------
+    `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
+    ------------------------------------------------------------
     Contributors to this version:
 
     New indicators and features
