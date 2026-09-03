@@ -71,6 +71,8 @@ Internal changes
 * Removed ``swe_series`` unused fixture.
 * Updated `pylint` to use v4.0+ standards and addressed several small linting issues. (:pull:`2409`).
 * Project metadata now compatible with `flit >=4.0` standards. (:pull:`2412`).
+* On `bump release`, the `CHANGELOG.rst` file is now automatically updated to set the version title and release date. (:pull:`2413`).
+* `AUTHORS.rst` is now bundled in the `license-files` of packaged wheels. (:pull:`2413`).
 
 v0.62.0 (2026-08-17)
 --------------------
