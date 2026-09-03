@@ -1704,7 +1704,7 @@ def canadian_hardiness_zones(
         zone_max="100",
         zone_step="5",
         exclude_boundary_zones=False,
-        close_last_zone_right_boundary=False
+        close_last_zone_right_boundary=False,
     ).clip(min=0)
 
     flag_vals = ", ".join([str(n) for n in range(20)])
