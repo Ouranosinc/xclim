@@ -1698,8 +1698,19 @@ def canadian_hardiness_zones(
         - (0.01832 * x7)
     )
     canadian_hardiness_index = canadian_hardiness_index.assign_attrs(units="")
+    zones = get_zones(
+        canadian_hardiness_index,
+        zone_min="0",
+        zone_max="100",
+        zone_step="5",
+        exclude_boundary_zones=False,
+        close_last_zone_right_boundary=False
+    ).clip(min=0)
 
-    zones = get_zones(canadian_hardiness_index, zone_min="0", zone_max="99", zone_step="5")
+    flag_vals = ", ".join([str(n) for n in range(20)])
+    flag_means = ", ".join([f"{n // 2}{'a' if n % 2 == 0 else 'b'}" for n in range(20)])
+    zones = zones.assign_attrs(flag_values=flag_vals, flag_meanings=flag_means)
+
     return zones
 
 

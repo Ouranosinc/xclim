@@ -147,5 +147,4 @@ class TestCanadianHardinessZones:
             wsgmax10m=wsgmax10m,
             freq="4YS",
         )
-
-        np.testing.assert_array_equal(chz, np.array([[11.0], [14.0], [np.nan], [5.0], [19.0]]))
+        np.testing.assert_array_equal(chz.values.ravel(), [11, 14, 0, 5, 19])

@@ -2763,8 +2763,13 @@ class TestHardinessZones:
             wsgmax10m=wsgmax10m,
             freq="4YS",
         )
-
-        np.testing.assert_array_equal(chz, np.array([[11.0], [14.0], [np.nan], [5.0], [19.0]]))
+        np.testing.assert_array_equal(chz.values.ravel(), [11, 14, 0, 5, 19])
+        assert chz.attrs["flag_values"] == (
+            "0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19"
+        )
+        assert chz.attrs["flag_meanings"] == (
+            "0a, 0b, 1a, 1b, 2a, 2b, 3a, 3b, 4a, 4b, 5a, 5b, 6a, 6b, 7a, 7b, 8a, 8b, 9a, 9b"
+        )
 
 
 class TestWindProfile:
