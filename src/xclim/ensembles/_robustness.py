@@ -829,8 +829,8 @@ def _signal_to_noise(fut, ref, confidence=0.9):
     # Ensure annual
     refy = ref.resample(time="YS").mean()
     futy = fut.resample(time="YS").mean()
-    nref = len(refy.time)
-    nfut = len(futy.time)
+    nref = len(refy.time) * len(ref.member) if "member" in refy.dims else len(refy.time)
+    nfut = len(futy.time) * len(fut.member) if "member" in refy.dims else len(refy.time)
 
     ref_detrended = detrend(refy, dim="time", deg=1)
     fut_detrended = detrend(futy, dim="time", deg=1)
