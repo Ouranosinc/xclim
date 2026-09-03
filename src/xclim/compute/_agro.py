@@ -1420,17 +1420,17 @@ def hardiness_zones(  # numpydoc ignore=SS05
     """
     if method.lower() == "usda":
         zone_min, zone_max, zone_step = "-60 degF", "70 degF", "5 degF"
-
     elif method.lower() == "anbg":
         zone_min, zone_max, zone_step = "-15 degC", "20 degC", "5 degC"
-
     else:
         raise NotImplementedError(f"Method {method} not supported. Must be either `usda` or `anbg`.")
 
-    tn_min_rolling = statistics(tasmin, statistic="min", freq=freq).rolling(time=window).mean()
-    zones: xarray.DataArray = get_zones(tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step)
+    flag_vals = ", ".join([str(n) for n in range(28)])
+    flag_means = ", ".join([f"{(n // 2) + 1}{'a' if n % 2 == 0 else 'b'}" for n in range(0, 28)])
 
-    zones = zones.assign_attrs(units="")
+    tn_min_rolling = statistics(tasmin, statistic="min", freq=freq).rolling(time=window).mean()
+    zones: xarray.DataArray = get_zones(tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step).clip(min=0)
+    zones = zones.assign_attrs(units="", flag_values=flag_vals, flag_meanings=flag_means)
     return zones
 
 
