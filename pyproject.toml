@@ -251,8 +251,6 @@ exclude = [
   ".*",
   "AGENTS.md",
   "AI_POLICY.md",
-  "CI/requirements_ci.in",
-  "CI/requirements_ci.txt",
   "docs/_*",
   "docs/modules.rst",
   "docs/paper/*",
