@@ -15,7 +15,7 @@ readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.11.0"
 keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
 license = "Apache-2.0"
-license-files = ["LICENSE"]
+license-files = ["AUTHORS.rst", "LICENSE"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
