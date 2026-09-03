@@ -627,7 +627,7 @@ def robust_data(random):
         ),
         (
             "ipcc-ar6-c",
-            [0.25, 1, 1, 1],
+            [0.5, 1.0, 1.0, 1.0],
             [0.25, 0.5, 1, 1],
             None,
             {},
@@ -767,3 +767,34 @@ def test_robustness_coefficient():
 
     R = ensembles.robustness_coefficient(fut.to_dataset(), ref.to_dataset())
     np.testing.assert_almost_equal(R.tas, 0.83743842)
+
+
+def test_multimember_robustness(robust_data):
+    ref, fut = robust_data
+    ref["realization"] = [
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CCCma_CanESM5_ssp370_r1i1p1f1_NAM",
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CCCma_CanESM5_ssp370_r2i1p1f1_NAM",
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CSIRO-ARCCSS_ACCESS-CM2_ssp370_r1i1p1f1_NAM",
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CSIRO-ARCCSS_ACCESS-CM2_ssp370_r3i1p1f1_NAM",
+    ]
+    fut["realization"] = [
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CCCma_CanESM5_ssp370_r1i1p1f1_NAM",
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CCCma_CanESM5_ssp370_r2i1p1f1_NAM",
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CSIRO-ARCCSS_ACCESS-CM2_ssp370_r1i1p1f1_NAM",
+        "ESPO_CaSR_CMIP6_ScenarioMIP_CSIRO-ARCCSS_ACCESS-CM2_ssp370_r3i1p1f1_NAM",
+    ]
+    ref = ensembles.unstack_ensemble_member(ref)
+    fut = ensembles.unstack_ensemble_member(fut)
+
+    assert ref.realization.size == 2
+    assert fut.member.size == 2
+
+    fracs = ensembles.robustness_fractions(fut, ref, test="signal-to-noise")
+
+    assert fracs.changed.attrs["test"] == "signal-to-noise"
+
+    np.testing.assert_array_almost_equal(fracs.positive, [1.0, 0.5, 1.0, 1.0])
+    np.testing.assert_array_almost_equal(fracs.agree, [1.0, 0.5, 1.0, 1.0])
+    np.testing.assert_array_almost_equal(fracs.valid, [1.0, 1.0, 1.0, 0.5])
+    np.testing.assert_array_almost_equal(fracs.changed, [0.5, 1.0, 1.0, 1.0])
+    np.testing.assert_array_almost_equal(fracs.changed_positive, [0.5, 0.5, 1.0, 1.0])

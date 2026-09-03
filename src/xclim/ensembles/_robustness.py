@@ -9,13 +9,16 @@ more specifically :cite:p:`collins_long-term_2013` (AR5) and :cite:cts:`ipccatla
 
 from __future__ import annotations
 
+import re
 import sys
 import textwrap
+from collections import defaultdict
 from collections.abc import Callable
 from inspect import Parameter, signature
 from typing import cast
 
 import numpy as np
+import pandas as pd
 import scipy.stats as spstats
 import xarray as xr
 
@@ -68,6 +71,71 @@ def significance_test(func: Callable) -> Callable:
     return func
 
 
+def unstack_ensemble_member(ens: xr.DataArray):
+    """
+    Split the "realization" dimension into "realization" and "member" dimensions.
+
+    Each realization label is expected to contain an ensemble-member identifier
+    of the form ``rXiYpZfW`` (e.g. "r1i1p1f1"). This identifier is stripped out
+    to form a new "sub_id" (the rest of the label), which becomes the new
+    "realization" coordinate.
+
+    The actual label text is discarded and replaced with a "member" index: for each
+    sub_id, its occurrences are numbered 0, 1, 2, ... in order of appearance,
+    regardless of what the original rXiYpZfW values were.
+
+    Parameters
+    ----------
+    ens : xr.DataArray
+        An array with a "realization" dimension whose coordinate values are
+        strings, each containing exactly one ``_rXiYpZfW_`` pattern.
+
+    Returns
+    -------
+    xr.DataArray
+        The input array with the "realization" dimension replaced by two
+        dimensions: "realization" (the sub_id, i.e. the original label with the
+        rXiYpZfW pattern removed) and "member" (an integer position, starting at 0,
+        counting occurrences of each sub_id).
+
+    Examples
+    --------
+    Given realization labels::
+
+        ["MIROC6_r1i1p1f1_hist", "MIROC6_r2i1p1f1_hist", "CanESM5_r1i1p2f1_hist"]
+
+    the result has realization coordinates ``["MIROC6_hist", "CanESM5_hist"]`` and
+    member coordinates ``[0, 1]``.
+    """
+    if "realization" not in ens.dims:
+        raise ValueError("Input array must have a 'realization' dimension.")
+
+    pattern = re.compile(r"_(r\d+i\d+p\d+(?:f\d+)?)_?")  # rXiYpZ or rXiYpZfW, optional trailing underscore
+
+    sub_ids = []
+    for r in ens["realization"].values.astype(str):
+        m = pattern.search(r)
+        if not m:
+            raise ValueError(f"No _rXiYpZfW_ pattern found in '{r}'")
+        sub_id = r[: m.start()] + "_" + r[m.end() :]  # everything except the matched block
+        sub_ids.append(sub_id)
+
+    # count occurrences of each sub_id, in order of appearance
+    counters = defaultdict(int)
+    numbers = []
+    for s in sub_ids:
+        numbers.append(counters[s])
+        counters[s] += 1
+
+    midx = pd.MultiIndex.from_arrays([sub_ids, numbers], names=["sub_id", "member"])
+    ens = ens.assign_coords({"realization": midx}).unstack("realization")
+    ens = ens.rename({"sub_id": "realization"})
+    n_members = [counters[s] for s in ens["realization"].values]
+    ens = ens.assign_coords(n_members=("realization", n_members))
+    ens["n_members"].attrs["long_name"] = "Number of members for each realization"
+    return ens
+
+
 # This function's docstring is modified to include the registered test names and docs.
 # See end of this file.
 @update_xclim_history
@@ -83,15 +151,17 @@ def robustness_fractions(
     r"""
     Calculate robustness statistics.
 
-    The metric for qualifying how members of an ensemble agree on the existence of change and on its sign.
+    The metric for qualifying how realizations of an ensemble agree on the existence of change and on its sign.
 
     Parameters
     ----------
     fut : xr.DataArray
-        Future period values along 'realization' and 'time' (..., nr, nt1)
-        or if `ref` is None, Delta values along `realization` (..., nr).
+        Future period values along 'realization' (and, optionally, `member`) and 'time' (..., nr, nt1)
+        or if `ref` is None, Delta values along `realization` (..., nr) (and, optionally, `member`).
+        When the `member` dimension is present, the delta for each realization will be
+        the average delta across its members.
     ref : xr.DataArray, optional
-        Reference period values along realization' and 'time'  (..., nr, nt2).
+        Reference period values along realization' (and, optionally, `member`) and 'time'  (..., nr, nt2).
         The size of the 'time' axis does not need to match the one of `fut`.
         But their 'realization' axes must be identical and the other coordinates should be the same.
         If `None` (default), values of `fut` are assumed to be deltas instead of
@@ -104,6 +174,7 @@ def robustness_fractions(
         A Missing class from :py:mod:`xclim.core.missing` to use to flag points what are invalid.
         Invalid points are not included in the fractions. Default is MissingAny, which means any
         nan along the "time" dimension means the timeseries is invalid.
+        For multimember ensemble, if any member of a realization is missing data, the realization is invalid.
         Not used if only deltas are passed as `fut`.
     strict_sign : bool
         Whether to include zeros When determining the sign of change. True (default) does not include
@@ -116,35 +187,38 @@ def robustness_fractions(
     Returns
     -------
     xr.Dataset
-        Same coordinates as `fut` and  `ref`, but no `time` and no `realization`.
-        Values are zero if all members were invalid. Variables returned are:
+        Same coordinates as `fut` and  `ref`, but no `time`, no `realization` and no `member`.
+        Values are zero if all realizations were invalid. Variables returned are:
 
         - changed
-            - The weighted fraction of valid members showing significant change.
+            - The weighted fraction of valid realizations showing significant change.
               Passing `test=None` yields change_frac = 1 everywhere. Same type as `fut`.
 
         - positive
-            - The weighted fraction of valid members showing positive change, no matter if it is significant or not.
+            - The weighted fraction of valid realizations showing positive change,
+              no matter if it is significant or not.
               If `strict_sign=True`, only strictly positive change is included.
 
         - changed_positive
-            - The weighted fraction of valid members showing significant and positive change.
+            - The weighted fraction of valid realizations showing significant and positive change.
 
         - negative
-            - The weighted fraction of valid members showing negative change, no matter if it is significant or not.
+            - The weighted fraction of valid realizations showing negative change,
+              no matter if it is significant or not.
               If `strict_sign=True`, only strictly negative change is included.
 
         - changed_negative
-            - The weighted fraction of valid members showing significant and negative change.
+            - The weighted fraction of valid realizations showing significant and negative change.
 
         - agree
-            - The weighted fraction of valid members agreeing on the sign of change.
+            - The weighted fraction of valid realizations agreeing on the sign of change.
               If `strict_sign=True`, it is the maximum between positive, negative and the zero change.
               Otherwise, it is the maximum between positive and negative (both including zero change).
 
         - valid
-            - The weighted fraction of valid members.
-              By default, a member is valid if there are no NaNs along the time axes of `fut` and `ref`.
+            - The weighted fraction of valid realizations.
+              By default, a realization is valid if there are no NaNs along the time axes
+              of `fut` and `ref` for all existing members of this realization.
 
         - pvals
             - The p-values estimated by the significance tests.
@@ -152,9 +226,9 @@ def robustness_fractions(
 
     Notes
     -----
-    The table below shows the coefficient needed to retrieve the number of members
+    The table below shows the coefficient needed to retrieve the number of realizations
     that have the indicated characteristics, by multiplying it by the total
-    number of members (`fut.realization.size`) and by `valid_frac`, assuming uniform weights.
+    number of realizations (`fut.realization.size`) and by `valid_frac`, assuming uniform weights.
     For compactness, we rename the outputs cf, pf, cpf, nf and cnf.
 
     +-----------------+--------------------+------------------------+------------+
@@ -167,7 +241,7 @@ def robustness_fractions(
     | Negative change | cnf                | nf - cnf               | nf         |
     +-----------------+--------------------+------------------------+------------+
 
-    And members showing absolutely no change are ``1 - nf - pf``.
+    And realizations showing absolutely no change are ``1 - nf - pf``.
 
     Available statistical tests are:{tests_doc}
 
@@ -193,6 +267,8 @@ def robustness_fractions(
     >>> fut = tgmean.sel(time=slice("2020", "2050"))
     >>> ref = tgmean.sel(time=slice("1990", "2020"))
     >>> fractions = ensembles.robustness_fractions(fut, ref, test="ttest")
+
+    See notebook :ref:`notebooks/ensembles:Ensembles` for more a multimember example.
     """
     # Realization dimension name
     realization = "realization"
@@ -207,6 +283,8 @@ def robustness_fractions(
 
     # Get dummy weights to simplify code
     if weights is not None:
+        if "member" in weights.dims:
+            raise ValueError("Weights cannot have a 'member' dimension, only a 'realization' dimension.")
         w = weights
     else:
         w = xr.DataArray(
@@ -218,13 +296,26 @@ def robustness_fractions(
     if ref is None:
         delta = fut
         valid = delta.notnull()
+        if "member" in delta.dims:
+            delta = delta.mean("member")
+            valid = valid.sum("member") == fut.n_members
         if test not in [None, "threshold"]:
             raise ValueError("When deltas are given (ref=None), 'test' must be None or 'threshold'.")
     else:
         if invalid is None:
             invalid = MissingAny()
         delta = fut.mean("time") - ref.mean("time")
-        valid = ~invalid(fut) & ~invalid(ref)
+
+        if "member" in delta.dims:
+            delta = delta.mean("member")
+            # valid if number of valid members same as the num of member for this real
+            validf = ~invalid(fut)
+            validf = validf.sum("member") == fut.n_members
+            validr = ~invalid(ref)
+            validr = validr.sum("member") == ref.n_members
+            valid = validf & validr
+        else:
+            valid = ~invalid(fut) & ~invalid(ref)
 
     if test is None:
         test_params = {}
@@ -237,7 +328,11 @@ def robustness_fractions(
             changed = abs(delta) > abs_thresh
             test_params = {"abs_thresh": abs_thresh}
         elif rel_thresh is not None and abs_thresh is None:
-            changed = abs(delta / ref.mean("time")) > rel_thresh
+            if "member" in ref:
+                delta = (fut.mean("time") - ref.mean("time")) / ref.mean("time")
+                changed = abs(delta.mean("member")) > rel_thresh
+            else:
+                changed = abs(delta / ref.mean("time")) > rel_thresh
             test_params = {"rel_thresh": rel_thresh}
         else:
             raise ValueError("One and only one of abs_thresh or rel_thresh must be given if test='threshold'.")
@@ -253,6 +348,8 @@ def robustness_fractions(
         changed, pvals = test_func(fut, ref, **test_params)
     else:
         raise ValueError(f"Statistical test {test} must be one of {', '.join(SIGNIFICANCE_TESTS.keys())}.")
+
+    # at this point all member dimension should have been collapsed, so we can compute the fractions along realization
 
     valid_frac = valid.weighted(w).sum(realization) / fut[realization].size
     n_valid = valid.weighted(w).sum(realization)
@@ -278,34 +375,36 @@ def robustness_fractions(
     out = xr.Dataset(
         {
             "changed": change_frac.assign_attrs(
-                description=f"Fraction of valid members showing significant change. {test_str}",
+                description=f"Fraction of valid realizations showing significant change. {test_str}",
                 units="",
                 test=str(test),
             ),
             "positive": pos_frac.assign_attrs(
-                description=f"Fraction of valid members showing {strict} positive change.",
+                description=f"Fraction of valid realizations showing {strict} positive change.",
                 units="",
             ),
             "changed_positive": change_pos_frac.assign_attrs(
-                description=f"Fraction of valid members showing significant and {strict} positive change. {test_str}",
+                description=f"Fraction of valid realizations showing significant and {strict}"
+                f"positive change. {test_str}",
                 units="",
                 test=str(test),
             ),
             "negative": neg_frac.assign_attrs(
-                description=f"Fraction of valid members showing {strict} negative change.",
+                description=f"Fraction of valid realizations showing {strict} negative change.",
                 units="",
             ),
             "changed_negative": change_neg_frac.assign_attrs(
-                description=f"Fraction of valid members showing significant and {strict} negative change. {test_str}",
+                description=f"Fraction of valid realizations showing significant and "
+                f"{strict} negative change. {test_str}",
                 units="",
                 test=str(test),
             ),
             "valid": valid_frac.assign_attrs(
-                description="Fraction of valid members (No missing values along time).",
+                description="Fraction of valid realizations (No missing values along time).",
                 units="",
             ),
             "agree": agree_frac.assign_attrs(
-                description="Fraction of valid members agreeing on the sign of change. "
+                description="Fraction of valid realizations agreeing on the sign of change. "
                 + (
                     "Maximum between the positive, negative and no change fractions."
                     if strict_sign
@@ -356,6 +455,9 @@ def robustness_categories(
     changed_or_fractions : xr.Dataset or xr.DataArray
         Either the fraction of members showing significant change as an array or
         directly the output of :py:func:`robustness_fractions`.
+        If the member dimension is present, the deltas for each realization are averaged
+        over the member dimension before computing the fractions and the realization
+        validity mask is the logical AND of the existing member validity masks.
     agree : xr.DataArray, optional
         The fraction of members agreeing on the sign of change.
         Can also be passed as a variable of the first argument.
@@ -524,7 +626,15 @@ def _ttest(fut, ref, *, p_change=0.05):
 
     Accepts argument p_change (float, default : 0.05) the p-value threshold for rejecting the hypothesis
     of no significant change.
+
+    For the multimember case, the members and years are pooled for the future and averaged for the reference.
     """
+    if "member" in fut.dims:
+        # for multimember ensembles, pool the members and year
+        fut = fut.stack(sample=["time", "member"])
+        fut = fut.drop_vars(["time", "member"])
+        fut = fut.rename({"sample": "time"})
+        ref = ref.mean("member")
 
     def _ttest_func(f, r):
         # scipy>=1.9: popmean.axis[-1] must equal 1 for both fut and ref
@@ -555,7 +665,16 @@ def _welch_ttest(fut, ref, *, p_change=0.05):
     Two-sided T-test, without assuming equal population variance.
 
     Same significance criterion and argument as 'ttest'.
+
+    For the multimember case, the members and years are pooled for the future and the reference.
     """
+    if "member" in fut.dims:
+        fut = fut.stack(sample=["time", "member"])
+        fut = fut.drop_vars(["time", "member"])
+        fut = fut.rename({"sample": "time"})
+        ref = ref.stack(sample=["time", "member"])
+        ref = ref.drop_vars(["time", "member"])
+        ref = ref.rename({"sample": "time"})
 
     # Test hypothesis of no significant change
     # equal_var=False -> Welch's T-test
@@ -587,7 +706,17 @@ def _mannwhitney_utest(ref, fut, *, p_change=0.05):
     Two-sided Mann-Whiney U-test.
 
     Same significance criterion and argument as 'ttest'.
+
+    For the multimember case, the members and years are pooled for the future and the reference.
+
     """
+    if "member" in fut.dims:
+        fut = fut.stack(sample=["time", "member"])
+        fut = fut.drop_vars(["time", "member"])
+        fut = fut.rename({"sample": "time"})
+        ref = ref.stack(sample=["time", "member"])
+        ref = ref.drop_vars(["time", "member"])
+        ref = ref.rename({"sample": "time"})
 
     def mwu_wrapper(f, r):  # This specific test can't manage an all-NaN slice
         if np.isnan(f).all() or np.isnan(r).all():
@@ -616,7 +745,18 @@ def _brownforsythe_test(fut, ref, *, p_change=0.05):
     Brown-Forsythe test assuming skewed, non-normal distributions.
 
     Same significance criterion and argument as 'ttest'.
+
+    For the multimember case, the members and years are pooled for the future and the reference.
+
     """
+    if "member" in fut.dims:
+        fut = fut.stack(sample=["time", "member"])
+        fut = fut.drop_vars(["time", "member"])
+        fut = fut.rename({"sample": "time"})
+        ref = ref.stack(sample=["time", "member"])
+        ref = ref.drop_vars(["time", "member"])
+        ref = ref.rename({"sample": "time"})
+
     pvals = xr.apply_ufunc(
         lambda f, r: spstats.levene(f, r, center="median")[1],
         fut,
@@ -641,22 +781,72 @@ def _ipcc_ar6_c(fut, ref, *, ref_pi=None):
     Change is considered significant if the delta exceeds a threshold related to the internal variability.
     If pre-industrial data is given in argument `ref_pi`, the threshold is defined as
     :math:`\sqrt{2}*1.645*\sigma_{20yr}`, where :math:`\sigma_{20yr}` is the standard deviation of 20-year
-    means computed from non-overlapping periods after detrending with a quadratic fit.
+    means computed from non-overlapping periods after detrending with a quadratic fit and
+    1.645 is the z-score for the 90% confidence interval of the two-sided test .
     Otherwise, when such pre-industrial control data is not available, the threshold is defined in relation to
-    the historical data (`ref`) as :math:`\sqrt{\frac{2}{20}}*1.645*\sigma_{1yr}, where :math:`\sigma_{1yr}`
-    is the inter-annual standard deviation measured after linearly detrending the data.
+    the historical data (`ref`) as :math:`\sqrt{\frac{2}{n}}*1.645*\sigma_{1yr}, where :math:`\sigma_{1yr}`
+    is the inter-annual standard deviation measured after linearly detrending the data
+    and n is the number of years in the reference period.
+    This test is only for ensembles with a single member per realization (i.e. no "member" dimension).
     See notebook :ref:`notebooks/ensembles:Ensembles` for more details.
     """
+    if "member" in fut.dims:
+        raise ValueError("This test does not support a 'member' dimension.")
     # Ensure annual
     refy = ref.resample(time="YS").mean()
     if ref_pi is None:
         ref_detrended = detrend(refy, dim="time", deg=1)
-        gamma = np.sqrt(2 / 20) * 1.645 * ref_detrended.std("time")
+        gamma = np.sqrt(2 / len(refy.time)) * 1.645 * ref_detrended.std("time")
     else:
         ref_detrended = detrend(refy, dim="time", deg=2)
         gamma = np.sqrt(2) * 1.645 * ref_detrended.resample(time="20YS").mean().std("time")
 
     delta = fut.mean("time") - ref.mean("time")
+    changed = abs(delta) > gamma
+    return changed, None
+
+
+@significance_test
+def _signal_to_noise(fut, ref, confidence=0.9):
+    r"""
+    Robustness test using the signal-to-noise ratio.
+
+
+    Change is considered significant if the delta exceeds a threshold related to the
+    internal variability (noise).
+    The threshold is defined as :math:`z*\sqrt{\frac{\tilde{\sigma}^2_{ref}}{n_{ref}}
+    + \frac{\tilde{\sigma}^2_{fut}}{n_{fut}}}, where :math:`\tilde{\sigma}}`
+    is the pooled interannual variance across members and time measured after linearly
+    detrending the data, n is the number of years in the period and z is the z-score
+    corresponding to the two-sided confidence level.
+    (ex. A 90% confidence level gives a z-score of 1.645.)
+    This is similar to the "ipcc-ar6-c" test, but there is no assumption that the
+    variance will be the same in the past and in the future. Further, this test can handle
+    multimember ensembles, while the "ipcc-ar6-c" test assumes a single member per realization.
+
+    """
+    z = spstats.norm.ppf(confidence / 2 + 0.5)
+    # Ensure annual
+    refy = ref.resample(time="YS").mean()
+    futy = fut.resample(time="YS").mean()
+    nref = len(refy.time) * len(ref.member) if "member" in refy.dims else len(refy.time)
+    nfut = len(futy.time) * len(fut.member) if "member" in refy.dims else len(refy.time)
+
+    ref_detrended = detrend(refy, dim="time", deg=1)
+    fut_detrended = detrend(futy, dim="time", deg=1)
+
+    if "member" in ref_detrended.dims:
+        ref_var = ref_detrended.var(["time", "member"])
+        fut_var = fut_detrended.var(["time", "member"])
+    else:
+        ref_var = ref_detrended.var("time")
+        fut_var = fut_detrended.var("time")
+
+    gamma = z * np.sqrt((ref_var / nref) + (fut_var / nfut))
+
+    delta = fut.mean("time") - ref.mean("time")
+    if "member" in delta.dims:
+        delta = delta.mean("member")
     changed = abs(delta) > gamma
     return changed, None
 
