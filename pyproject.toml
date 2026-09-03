@@ -15,7 +15,7 @@ readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.11.0"
 keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
 license = "Apache-2.0"
-license-files = ["LICENSE"]
+license-files = ["AUTHORS.rst", "LICENSE"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
@@ -181,6 +181,37 @@ serialize = [
 ]
 
 [[tool.bumpversion.files]]
+filename = "CHANGELOG.rst"
+include_bumps = ["release"]
+search = """\
+`Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
+------------------------------------------------------------
+"""
+replace = """\
+..
+    `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
+    ------------------------------------------------------------
+    Contributors to this version:
+
+    New indicators and features
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    * N/A
+
+    Breaking changes
+    ^^^^^^^^^^^^^^^^
+    * N/A
+
+    Internal changes
+    ^^^^^^^^^^^^^^^^
+    * N/A
+
+.. _changes_{new_version}:
+
+`v{new_version} <https://github.com/Ouranosinc/xclim/tree/v{new_version}>`_ ({now:%Y-%m-%d})
+--------------------------------------------------------------------------
+"""
+
+[[tool.bumpversion.files]]
 filename = "src/xclim/__init__.py"
 search = "__version__ = \"{current_version}\""
 replace = "__version__ = \"{new_version}\""
@@ -251,8 +282,6 @@ exclude = [
   ".*",
   "AGENTS.md",
   "AI_POLICY.md",
-  "CI/requirements_ci.in",
-  "CI/requirements_ci.txt",
   "docs/_*",
   "docs/modules.rst",
   "docs/paper/*",
