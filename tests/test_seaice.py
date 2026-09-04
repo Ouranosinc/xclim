@@ -30,7 +30,7 @@ class TestSeaIceExtent:
         area, sic = self.values(areacello)
 
         a = seaIce.sea_ice_extent(sic, area)
-        assert a.units == "m2"
+        assert a.sea_ice_extent.units == "m2"
 
     def test_dimensionless(self, areacello):
         area, sic = self.values(areacello)
@@ -69,7 +69,7 @@ class TestSeaIceArea(TestSeaIceExtent):
         area, sic = self.values(areacello)
 
         a = seaIce.sea_ice_area(sic, area)
-        assert a.units == "m2"
+        assert a.sea_ice_area.units == "m2"
 
     def test_dimensionless(self, areacello):
         area, sic = self.values(areacello)

@@ -84,7 +84,7 @@ def test_custom_indices(open_dataset):
     out1 = ex1.R95p(pr=pr)  # noqa
     out2 = ex2.R95p(pr=pr)  # noqa
 
-    xr.testing.assert_equal(out1[0], out2[0])
+    xr.testing.assert_equal(out1.R95p[0], out2.R95p[0])
 
     # Check that missing was not modified even with injecting `freq`.
     assert ex1.RX5day_canopy.missing == indicators.atmos.max_n_day_precipitation_amount.missing

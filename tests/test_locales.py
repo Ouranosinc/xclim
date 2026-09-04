@@ -79,10 +79,10 @@ def test_indicator_output(tas_series):
     tas = tas_series(np.zeros(365))
 
     with set_options(metadata_locales="fr"):
-        tgmean = atmos.tg_mean(tas, freq="YS")
+        out = atmos.tg_mean(tas, freq="YS")
 
-    assert "long_name_fr" in tgmean.attrs
-    assert tgmean.attrs["description_fr"] == "Moyenne annuelle de la température quotidienne."
+    assert "long_name_fr" in out.tg_mean.attrs
+    assert out.tg_mean.attrs["description_fr"] == "Moyenne annuelle de la température quotidienne."
 
 
 def test_indicator_integration():

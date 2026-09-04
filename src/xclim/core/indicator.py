@@ -1512,7 +1512,8 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
     or a :py:class:`xarray.DataTree` as input, with the added argument `ds` in the call signature.
     All arguments that were indicated by the compute function to be variables (DataArrays) through
     annotations will be promoted to also accept strings that correspond to variable names
-    in the `ds` dataset (or on each DataTree nodes).
+    in the `ds` dataset (or on each DataTree nodes). Also, indicators return Datasets by default,
+    while compute functions return one or multiple DataArrays.
     """
 
     def __init__(

@@ -3,7 +3,7 @@ Climate Indicators API
 
 Indicators are the main tool xclim provides. In contrast
 to the functions defined in `xclim.compute`, Indicators add a layer of health checks
-and metadata handling. Indicator objects are split into submodules according to their
+and metadata handling and return `Dataset` by default. Indicator objects are split into submodules according to their
 "realm" : atmos, land and seaIce, with two additional submodules : generic (for
 indicator that don't apply to a specific variable) and convert (for non-resampling
 indicators that transform between variables).
