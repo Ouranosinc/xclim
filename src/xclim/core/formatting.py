@@ -191,7 +191,10 @@ default_formatter = AttrFormatter(
         "D": ["daily", "days"],
         "YS": ["annual", "years"],
         "YS-*": ["annual", "years"],
+        "YE": ["annual", "years"],
+        "YE-*": ["annual", "years"],
         "MS": ["monthly", "months"],
+        "ME": ["monthly", "months"],
         "QS-*": ["seasonal", "seasons"],
         # Arguments to "indexer"
         "DJF": ["winter"],

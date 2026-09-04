@@ -58,7 +58,7 @@ class TestStandardizedStreamflow:
             method="APP",
             fitkwargs={"floc": 0},
         )
-        np.testing.assert_array_almost_equal(out1, out2, 3)
+        np.testing.assert_array_almost_equal(out1.ssi, out2.ssi, 3)
 
     @pytest.mark.slow
     def test_3d_data_with_nans_value(self, open_dataset):
@@ -75,7 +75,7 @@ class TestStandardizedStreamflow:
             method="APP",
             fitkwargs={"floc": 0},
         )
-        assert np.isnan(out1[{"time": 10}])
+        assert np.isnan(out1.ssi.isel(time=10))
 
 
 class TestSnwMaxDoy:

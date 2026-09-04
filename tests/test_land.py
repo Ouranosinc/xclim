@@ -11,19 +11,16 @@ from xclim import land
 
 def test_base_flow_index(ndq_series):
     out = land.base_flow_index(ndq_series, freq="YS")
-
-    assert out.attrs["units"] == "1"
-    assert isinstance(out, xr.DataArray)
+    assert out.base_flow_index.attrs["units"] == "1"
 
 
 def test_rb_flashiness_index(ndq_series):
     out = land.base_flow_index(ndq_series, freq="YS")
 
-    assert out.attrs["units"] == "1"
-    assert isinstance(out, xr.DataArray)
+    assert out.base_flow_index.attrs["units"] == "1"
 
 
-def test_qdoy_max(ndq_series, q_series):
+def test_qdoy_max(ndq_series, q_series, as_da):
     out = land.doy_qmax(ndq_series, freq="YS", season="JJA")
     assert out.attrs["units"] == "1"
 
@@ -38,7 +35,7 @@ def test_snow_melt_we_max(snw_series):
     a[10] = 5
     snw = snw_series(a)
     out = land.snow_melt_we_max(snw)
-    assert out[0] == 5
+    assert out.annual_snow_melt_we_max[0] == 5
 
 
 def test_blowing_snow(snd_series, sfcWind_series):
@@ -48,7 +45,7 @@ def test_blowing_snow(snd_series, sfcWind_series):
     ws = sfcWind_series(a, start="2001-07-1")
 
     out = land.blowing_snow(snd, ws, snd_thresh="50 cm", sfcWind_thresh="5 km/h")
-    np.testing.assert_array_equal(out, [5, np.nan])
+    np.testing.assert_array_equal(out.annual_blowing_snow, [5, np.nan])
 
 
 def test_snd_storm_days(snd_series):
@@ -57,7 +54,7 @@ def test_snd_storm_days(snd_series):
 
     snd = snd_series(a)
     out = land.snd_storm_days(snd, thresh="50 cm")
-    np.testing.assert_array_equal(out, [9, np.nan])
+    np.testing.assert_array_equal(out.annual_snd_storm_days, [9, np.nan])
 
 
 def test_snw_storm_days(snw_series):
@@ -66,7 +63,7 @@ def test_snw_storm_days(snw_series):
 
     snw = snw_series(a)
     out = land.snw_storm_days(snw, thresh="0.5 kg m-2")
-    np.testing.assert_array_equal(out, [9, np.nan])
+    np.testing.assert_array_equal(out.annual_snw_storm_days, [9, np.nan])
 
 
 def test_flow_index(q_series):
@@ -75,7 +72,7 @@ def test_flow_index(q_series):
     q = q_series(a)
 
     out = land.flow_index(q, p=0.95)
-    np.testing.assert_array_equal(out, 5)
+    np.testing.assert_array_equal(out.q_flow_index, 5)
 
 
 def test_high_flow_frequency(q_series):
@@ -88,7 +85,7 @@ def test_high_flow_frequency(q_series):
         threshold_factor=9,
         freq="YS",
     )
-    np.testing.assert_array_equal(out, [20, 0, np.nan])
+    np.testing.assert_array_equal(out.q_high_flow_frequency, [20, 0, np.nan])
 
 
 def test_low_flow_frequency(q_series):
@@ -97,7 +94,7 @@ def test_low_flow_frequency(q_series):
     a[200:210] = 1
     q = q_series(a)
     out = land.low_flow_frequency(q, threshold_factor=0.2, freq="YS")
-    np.testing.assert_array_equal(out, [20, 0, np.nan])
+    np.testing.assert_array_equal(out.q_low_flow_frequency, [20, 0, np.nan])
 
 
 def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
@@ -114,9 +111,8 @@ def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
     pr = pr_series(pr, units="mm/hr", start="2001-01-01")
 
     out = land.runoff_ratio(q, pr, area=a, freq="YS")
-    assert out.attrs["units"] == "1"
-    assert isinstance(out, xr.DataArray)
-    np.testing.assert_allclose(out.values, 0.0018, rtol=1e-6)
+    assert out.runoff_ratio.attrs["units"] == "1"
+    np.testing.assert_allclose(out.runoff_ratio.values, 0.0018, rtol=1e-6)
 
 
 def test_base_flow_index_seasonal_ratio(q_series):
@@ -151,8 +147,7 @@ def test_lag_snowpack_flow_peaks(snw_series, q_series):
     q = q_series(b)
 
     out = land.lag_snowpack_flow_peaks(snw, q)
-    assert out.attrs["units"] == "days"
-    assert isinstance(out, xr.DataArray)
+    assert out.lag_snowpack_flow_peaks.attrs["units"] == "days"
 
 
 def test_snowamount_conversion(swe_series, q_series):
@@ -176,7 +171,6 @@ def test_sen_slope(q_series):
     q = np.arange(365 * 5 + 1)
     # Create a daily time index
     q = q_series(q, start="2001-01-01")
-    outl = land.sen_slope(q)
-    for o in outl:
-        assert o.attrs["units"] == "1"
-        assert isinstance(o, xr.DataArray)
+    out = land.sen_slope(q)
+    assert out.sen_slope.attrs["units"] == "1"
+    assert out.p_valuee.attrs["units"] == "1"

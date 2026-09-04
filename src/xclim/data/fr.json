@@ -812,7 +812,7 @@
     "title": "Durée totale des périodes chaudes",
     "abstract": "Durée totale des périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
   },
-  "CONSECUTIVE_FROST_FREE_DAYS": {
+  "MAXIMUM_CONSECUTIVE_FROST_FREE_DAYS": {
     "long_name": "Nombre maximal de jours consécutifs ayant une température minimale au-dessus ou égale à {thresh}",
     "description": "Nombre maximal {freq:m} de jours consécutifs où la température minimale quotidienne est au-dessus ou égale à {thresh}.",
     "title": "Nombre maximal de jours consécutifs sans gel",
@@ -1063,7 +1063,7 @@
     "title": "Quantité de neige à la surface",
     "abstract": "Quantité de neige à la surface calculée à partir de son épaisseur et de sa densité."
   },
-  "PRLP": {
+  "PRRA": {
     "long_name": "Précipitation liquide (méthode \"{methode}\" avec une température égale ou inférieure à {thresh})",
     "description": "Précipitation liquide estimée à partir de la précipitation totale et de la température selon la méthode {method} et le seuil de température {thresh}.",
     "title": "Approximation de la pluie",

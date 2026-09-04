@@ -34,7 +34,7 @@ OPTIONS = {
     CHECK_MISSING: "any",
     MISSING_OPTIONS: {},
     RUN_LENGTH_UFUNC: "auto",
-    AS_DATASET: False,
+    AS_DATASET: True,
     MAP_BLOCKS: False,
 }
 
@@ -215,9 +215,9 @@ class set_options:  # numpydoc ignore=PR01,PR02
         Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
         Default is ``"auto"``, which means the latter is used for dask-backed and large arrays.
     as_dataset : bool
-        If True, indicators output datasets. If False, they output DataArrays.
+        If True, indicators output datasets. If False, they output DataArrays or tuple of DataArrays.
         The output dataset inherits attributes from the input dataset (if any) according to xarray's
-        ``keep_attrs`` option, which defaults to preserving attributes. Default :``False``.
+        ``keep_attrs`` option, which defaults to preserving attributes. Default :``True``.
     resample_map_blocks : bool
         If True, some indicators will wrap their resampling operations with `xr.map_blocks`,
         using :py:func:`xclim.compute.helpers.resample_map`.
