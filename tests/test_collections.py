@@ -13,6 +13,7 @@ from yaml import safe_load
 from xclim import indicators
 from xclim.core import VARIABLES, InputKind
 from xclim.core.collection import IndicatorCollection
+from xclim.core.indicator import registry
 from xclim.core.locales import read_locale_file
 from xclim.core.options import set_options
 from xclim.core.utils import load_module, make_clix_meta_yaml
@@ -92,7 +93,10 @@ def test_custom_indices(open_dataset):
     # Error when missing
     with pytest.raises(ValueError, match="extreme_precip_accumulation_and_days"):
         IndicatorCollection.from_yaml(example_path / "example.yml", name="ex3")
-    IndicatorCollection.from_yaml(example_path / "example.yml", name="ex4", mode="ignore")
+    IndicatorCollection.from_yaml(example_path / "example.yml", name="ex4", mode="ignore", register=True)
+
+    assert "ex2.R95p" not in registry
+    assert "ex4.R95p" not in registry
 
     # Check that indexer was added and injected correctly
     assert "indexer" not in ex1.RX1day_summer.parameters

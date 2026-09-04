@@ -1484,9 +1484,10 @@ class _Registrer(_Convenience):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.identifier in registry:
-            warnings.warn(f"Indicator {self.identifier} already exists and will be overwritten.", stacklevel=4)
-        registry[self.identifier] = self
+        if kwargs.get("register", True):
+            if self.identifier in registry:
+                warnings.warn(f"Indicator {self.identifier} already exists and will be overwritten.", stacklevel=4)
+            registry[self.identifier] = self
 
 
 class Indicator(_Registrer):  # numpydoc ignore=PR01
@@ -1517,7 +1518,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
 
     def __init__(
         self,
-        identifier: str,
+        identifier: str = None,
         compute: Callable = None,
         title: str = None,
         abstract: str = None,
@@ -1530,6 +1531,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
         attrs: dict = None,
         context: str = "none",
         src_freq: str | list[str] = None,
+        register: bool = True,
         **attrs_kwargs,
     ):
         """
@@ -1540,7 +1542,9 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
         identifier : str
             Unique ID for this indicator. Single-output indicator will use this as their output variable
             name if no `var_name`is passed to the first element of `attrs`.
-            All indicators are registered to :py:data:`xclim.core.indicator.registry`, which is case-insensitive.
+            Unless ``register`` is False, indicators are registered to :py:data:`xclim.core.indicator.registry`,
+            which is case-insensitive.
+            This field is required and can't be None.
         compute : func
             The function computing the indicators. It should return one or more DataArray.
             Metadata will first be parsed from it as much as possible.
@@ -1578,6 +1582,9 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
             For example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day' for all inputs an outputs.
         src_freq : str or sequence of str, optional
             The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
+        register : bool
+            If True (default), the indicator is registered into the :py:data:`registry` dictionary of indicators
+            using its identifier as key.
         **attrs_kwargs
             For convenience, output attributes can also be passed by name to the constructor.
         """  # numpydoc ignore=PR01,PR02
@@ -1595,6 +1602,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
             attrs=attrs or {},
             context=context,
             src_freq=src_freq,
+            register=register,
             **attrs_kwargs,
         )
 

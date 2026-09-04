@@ -23,6 +23,6 @@ with _resources.as_file(_resources.files("xclim.data")) as _module_data:
         _load_locale(_filename, _filename.stem)
 
     # Virtual modules creation:
-    _indicators.icclim = IndicatorCollection.from_yaml(_module_data / "icclim", mode="raise")
-    _indicators.anuclim = IndicatorCollection.from_yaml(_module_data / "anuclim", mode="raise")
-    _indicators.cf = IndicatorCollection.from_yaml(_module_data / "cf", mode="raise")
+    _indicators.icclim = IndicatorCollection.from_yaml(_module_data / "icclim", mode="raise", register=True)
+    _indicators.anuclim = IndicatorCollection.from_yaml(_module_data / "anuclim", mode="raise", register=True)
+    _indicators.cf = IndicatorCollection.from_yaml(_module_data / "cf", mode="raise", register=True)
