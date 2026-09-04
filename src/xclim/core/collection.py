@@ -140,6 +140,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         mode: Literal["raise", "warn", "ignore"] = "raise",
         encoding: str = "UTF8",
         validate: bool | PathLike = True,
+        register: bool = False,
     ):
         """
         Build an indicator collection from a YAML file.
@@ -174,6 +175,13 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
             If True (default), the yaml module is validated against the `xclim` schema.
             Can also be the path to a YAML schema against which to validate;
             Or False, in which case validation is simply skipped.
+        register : bool
+            If True, the indicators created here are registered in xclim's indicators registry
+            :py:data:`~xclim.core.indicator.registry` upon creation, using the collection's name
+            prepended to their identifier as key, as explained above.
+            Defaults to False, making collections independent from xclim's registry.
+            This does not change the behaviour of registering new variables, which are always added
+            to xclim's central :py:data:`xclim.core.VARIABLES`.
 
         Returns
         -------
@@ -288,7 +296,9 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
                 data["keywords"] = [*defkwargs.get("keywords", []), *data.get("keywords", [])]
                 data.setdefault("realm", defkwargs.get("realm"))
 
-                mapping[identifier] = base(identifier=f"{coll_name}.{identifier}", module=coll_name, **data)
+                mapping[identifier] = base(
+                    identifier=f"{coll_name}.{identifier}", module=coll_name, register=register, **data
+                )
 
             except Exception as err:  # pylint: disable=broad-except
                 raise_warn_or_log(err, mode, msg=f"Constructing {identifier} failed with {err!r}")

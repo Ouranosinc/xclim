@@ -41,8 +41,7 @@ def uniindtemp_compute(
 
 uniIndTemp = Daily(
     realm="atmos",
-    identifier="test.tmin",
-    module="test",
+    identifier="tmin",
     attrs=[
         dict(
             var_name="tmin{thresh}",
@@ -55,6 +54,7 @@ uniIndTemp = Daily(
     ],
     compute=uniindtemp_compute,
     parameters={"method": "injected"},
+    register=False,
 )
 
 
@@ -66,11 +66,11 @@ def uniindpr_compute(da: xr.DataArray, freq: str):
 
 uniIndPr = Daily(
     realm="atmos",
-    identifier="test.prmax",
+    identifier="prmax",
     attrs=[dict(units="mm/s")],
     context="hydro",
-    module="test",
     compute=uniindpr_compute,
+    register=False,
 )
 
 
@@ -83,10 +83,10 @@ def uniclim_compute(da: xr.DataArray, freq="YS", **indexer):
 uniClim = ResamplingIndicator(
     src_freq="D",
     realm="atmos",
-    identifier="test.clim",
+    identifier="clim",
     attrs=[dict(units="K")],
-    module="test",
     compute=uniclim_compute,
+    register=False,
 )
 
 
@@ -100,7 +100,7 @@ def multitemp_compute(tas: xr.DataArray, freq: str):
 
 multiTemp = Daily(
     realm="atmos",
-    identifier="test.minmaxtemp",
+    identifier="minmaxtemp",
     attrs=[
         dict(
             var_name="tmin",
@@ -114,8 +114,8 @@ multiTemp = Daily(
             description="Grouped computation of tmax and tmin",
         ),
     ],
-    module="test",
     compute=multitemp_compute,
+    register=False,
 )
 
 
@@ -134,10 +134,10 @@ def multioptvar_compute(
 multiOptVar = Indicator(
     src_freq="D",
     realm="atmos",
-    identifier="test.multiopt",
+    identifier="multiopt",
     attrs=[dict(units="K")],
-    module="test",
     compute=multioptvar_compute,
+    register=False,
 )
 
 
@@ -252,6 +252,8 @@ def test_opt_vars(tasmin_series, tasmax_series):
 
 
 def test_registering():
+    assert "tmin" not in registry
+    uniIndTemp.__class__(identifier="test.tmin", register=True)
     assert "test.tmin" in registry
 
 
@@ -676,14 +678,14 @@ def test_indicator_errors():
         ),
         compute=func,
         input={"data": "tas"},
+        register=False,
     )
-    ind = Daily(identifier="indi", module="test", **d)
+    ind = Daily(identifier="indi", **d)
 
     with pytest.raises(TypeError, match="Missing argument 'identifier'"):
         Daily(**d)
 
     d["identifier"] = "bad_indi"
-    d["module"] = "test"
 
     func.__doc__ = "\n".join(doc)
     d["parameters"] = {}
@@ -720,9 +722,10 @@ def test_indicator_errors():
         ),
         compute=func,
         input={"data": "tas"},
+        register=False,
     )
     with pytest.raises(ValueError, match="ResamplingIndicator require a 'freq'"):
-        Daily(identifier="indi", module="test", **d)
+        Daily(identifier="indi", **d)
 
 
 def test_indicator_call_errors(tas_series):
@@ -739,11 +742,7 @@ def test_indicator_call_errors(tas_series):
 def test_resamplingIndicator_new_error():
     with pytest.raises(ValueError, match="ResamplingIndicator require a 'freq'"):
         Daily(
-            realm="atmos",
-            identifier="multiopt",
-            attrs=[dict(units="K")],
-            module="test",
-            compute=multioptvar_compute,
+            realm="atmos", identifier="multiopt", attrs=[dict(units="K")], compute=multioptvar_compute, register=False
         )
 
 
