@@ -425,7 +425,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
             except ModuleNotFoundError as err:
                 raise_warn_or_log(err, "log", msg=f"Failed importing {funcname} from {modname}.")
         if func is None:
-            raise ValueError(f"Can't find compute function {name}.")
+            raise ValueError(f"Can't find compute function '{name}'.")
         return func
 
     def __dir__(self):
