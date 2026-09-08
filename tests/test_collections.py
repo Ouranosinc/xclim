@@ -76,6 +76,10 @@ def test_custom_indices(open_dataset):
     # Did this register the new variable?
     assert "prveg" in VARIABLES
 
+    # Bases ?
+    assert "RXXp" in ex1.bases
+    assert "ex1.RXXp" in ex1.R99p.get_parent_ids()
+
     # From mapping
     extreme_inds = {"extreme_precip_accumulation_and_days": example.extreme_precip_accumulation_and_days}
     ex2 = IndicatorCollection.from_yaml(example_path / "example.yml", name="ex2", computes=extreme_inds)

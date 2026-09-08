@@ -11,6 +11,19 @@ variables:
     canonical_units: kg m-2 s-1
     description: Precipitation flux on the outer surface of the forest
     standard_name: precipitation_flux_onto_canopy
+bases:
+  RXXp:
+    compute: extreme_precip_accumulation_and_days
+    attrs:
+      - cell_methods: 'time: sum within days time: sum over days'
+        long_name: Annual total PRCP when RR > {perc}th percentile
+        units: m
+        var_name: RXXp
+      - long_name: Annual number of days when RR > {perc}th percentile
+        units: days
+        var_name: RXXp_days
+    references: climdex
+    context: hydro
 indicators:
   RX1day_summer:
     base: rx1day
@@ -56,24 +69,16 @@ indicators:
       freq:
         default: YS-JUL
   R95p:
-    compute: extreme_precip_accumulation_and_days
+    base: .RXXp
     attrs:
-      - cell_methods: 'time: sum within days time: sum over days'
-        long_name: Annual total PRCP when RR > {perc}th percentile
-        units: m
-        var_name: R95p
-      - long_name: Annual number of days when RR > {perc}th percentile
-        units: days
-        var_name: R95p_days
+      - var_name: R95p
+      - var_name: R95p_days
     parameters:
       perc: 95
-    references: climdex
-    context: hydro
   R99p:
-    base: .R95p
+    base: .RXXp
     attrs:
       - var_name: R99p
       - var_name: R99p_days
     parameters:
       perc: 99
-    context: hydro

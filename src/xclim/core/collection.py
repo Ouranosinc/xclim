@@ -28,12 +28,17 @@ details on each.
         description: <description> # required
         standard_name: <expected standard_name> # optional
         cell_methods: <expected cell_methods> # optional
+    # The `bases` and `indicators` sections have the same syntax. Indicators defined in the `bases` section
+    # will only be created as classes and not instances. They will not be included in the IndicatorCollection's items,
+    # but rather in its `bases` property. This is useful for creating a base from which multiple indicators are declared
+    # in the `indicators`section.
+    bases:
     indicators:
       <identifier>:  # The actual indicator identifier will be prepended by the module name.
         # From which Indicator to inherit
         base: <base indicator class>  # Defaults to module-wide base class
                                       # If the name startswith a '.', the base class is taken from the current module
-                                      # (thus an indicator declared _above_).
+                                      # (in the `bases` section or from another indicator declared _above_)
                                       # Available indicators are listed in `xclim.core.indicator.registry` and
                                       # other base classes in `xclim.core.indicator.base_registry`.
 
@@ -80,7 +85,7 @@ When a module is built from a yaml file, the yaml is first validated against the
 using the YAMALE library (:cite:p:`lopker_yamale_2022`). See the "Extending xclim" notebook for more info.
 
 Inputs
-~~~~~~
+^^^^^^
 As xclim has strict definitions of possible input variables (see :py:data:`xclim.core.VARIABLES`),
 the mapping of `indicators.<identifier>.input` simply links an argument name from the function given in "compute"
 to one of those official variables.
@@ -109,20 +114,29 @@ from xclim.core.utils import load_module
 class IndicatorCollection(dict):  # numpydoc ignore=PR01
     """A collection of indicators."""
 
-    def __init__(self, indicators: dict[str, Indicator], name: str | None = None, doc: str | None = None):
+    def __init__(
+        self,
+        indicators: dict[str, Indicator],
+        name: str | None = None,
+        bases: dict[str, type] = None,
+        doc: str | None = None,
+    ):
         """
         Create an IndicatorCollection.
 
         Parameters
         ----------
         indicators : dict of Indicator
-            Indicators to put in the new module.
+            Indicators to put in the new collection.
         name : str, optional
             The name of the module.
+        bases : dict, optional
+            Base indicator classes used in definitions of this collection.
         doc : str, optional
             Documentation of the collection. Defaults to a simple header.
         """
         self.name = name
+        self.bases = bases or {}
         self.__doc__ = doc or f"{name.capitalize()} indicators\n" + "=" * (len(name) + 11)
         super().__init__(**indicators)
 
@@ -219,14 +233,11 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
             yml = safe_load(f)
 
         if validate is not False:
-            # Read schema
-            if validate is not True:
-                schema = yamale.make_schema(validate)
-            else:
-                schema = yamale.make_schema(Path(__file__).parent.parent / "data" / "schema.yml")
-
-            # Validate - a YamaleError will be raised if the module does not comply with the schema.
-            yamale.validate(schema, yamale.make_data(content=yml_path.read_text(encoding=encoding)))
+            cls._validate_yaml(
+                validate if validate is not True else (Path(__file__).parent.parent / "data" / "schema.yml"),
+                yml_path,
+                encoding,
+            )
 
         # Load values from top-level in yml.
         # Priority of arguments differ.
@@ -279,31 +290,41 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
 
         # Parse the indicators:
         mapping = {}
-        for identifier, data in yml["indicators"].items():
-            try:
-                # Get base class
-                base = default_base
-                if (basename := data.pop("base", None)) is not None:
-                    base = cls._find_base_class(basename, mapping)
+        bases = {}
+        # This because we enforce indicators being required and bases being optional
+        for section, sectiondata in [("bases", yml.get("bases", {})), ("indicators", yml["indicators"])]:
+            for identifier, data in sectiondata.items():
+                try:
+                    # Get base class
+                    base = default_base
+                    if (basename := data.pop("base", None)) is not None:
+                        base = cls._find_base_class(basename, mapping, bases)
 
-                if (funcname := data.pop("compute", None)) is not None:
-                    data["compute"] = cls._find_compute_function(funcname, computes)
+                    if (funcname := data.pop("compute", None)) is not None:
+                        data["compute"] = cls._find_compute_function(funcname, computes)
 
-                if data.get("references") and defkwargs.get("references"):
-                    data["references"] = f"{data['references']}\n{defkwargs['references']}"
-                elif defkwargs.get("references"):
-                    data["references"] = defkwargs["references"]
-                data["keywords"] = [*defkwargs.get("keywords", []), *data.get("keywords", [])]
-                data.setdefault("realm", defkwargs.get("realm"))
+                    if data.get("references") and defkwargs.get("references"):
+                        data["references"] = f"{data['references']}\n{defkwargs['references']}"
+                    elif defkwargs.get("references"):
+                        data["references"] = defkwargs["references"]
+                    data["keywords"] = [*defkwargs.get("keywords", []), *data.get("keywords", [])]
+                    data.setdefault("realm", defkwargs.get("realm"))
 
-                mapping[identifier] = base(
-                    identifier=f"{coll_name}.{identifier}", module=coll_name, register=register, **data
-                )
+                    ind = base(
+                        identifier=f"{coll_name}.{identifier}",
+                        module=coll_name,
+                        register=register and (section == "indicators"),
+                        **data,
+                    )
+                    if section == "bases":
+                        bases[identifier] = ind.__class__
+                    else:
+                        mapping[identifier] = ind
 
-            except Exception as err:  # pylint: disable=broad-except
-                raise_warn_or_log(err, mode, msg=f"Constructing {identifier} failed with {err!r}")
+                except Exception as err:  # pylint: disable=broad-except
+                    raise_warn_or_log(err, mode, msg=f"Constructing {identifier} failed with {err!r}")
 
-        coll = cls(mapping, name=coll_name, doc=doc)
+        coll = cls(mapping, name=coll_name, bases=bases, doc=doc)
         # If there are translations, load them
         if _translations:
             for locale, loc_dict in _translations.items():
@@ -311,10 +332,21 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         return coll
 
     @staticmethod
-    def _find_base_class(name, mapping):
+    def _validate_yaml(schema_path, yml_path, encoding):
+        # Read schema
+        schema = yamale.make_schema(schema_path)
+
+        # Validate - a YamaleError will be raised if the module does not comply with the schema.
+        yamale.validate(schema, yamale.make_data(content=yml_path.read_text(encoding=encoding)))
+
+    @staticmethod
+    def _find_base_class(name, mapping, bases):
         if name.startswith("."):
             # A point means the base has been declared above.
-            base = mapping[name[1:]].__class__
+            if name[1:] in bases:
+                base = bases[name[1:]]
+            else:
+                base = mapping[name[1:]].__class__
         elif name in base_registry:
             base = base_registry[name]
         elif name in registry:
