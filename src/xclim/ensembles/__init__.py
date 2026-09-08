@@ -30,5 +30,4 @@ from xclim.ensembles._robustness import (
     robustness_categories,
     robustness_coefficient,
     robustness_fractions,
-    unstack_ensemble_member,
 )
