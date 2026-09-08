@@ -7,5 +7,5 @@ pydantic==2.12.5
 pylint==4.0.8
 tomli==2.4.1
 tox==4.56.0
-tox-gh==1.7.1
+tox-gh==1.8.0
 ty==0.0.77

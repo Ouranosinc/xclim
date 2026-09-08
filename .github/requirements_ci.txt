@@ -533,9 +533,9 @@ tox==4.56.0 \
     # via
     #   -r requirements_ci.in
     #   tox-gh
-tox-gh==1.7.1 \
-    --hash=sha256:4f4871ee4091b41464f2df9ab1fcedb14a48accdecbb60d53297301a9d8984c6 \
-    --hash=sha256:a82285b16a597516f9a24f20326b124ddc7924a8b70cb05a9192e1c53d7f701d
+tox-gh==1.8.0 \
+    --hash=sha256:19c151525e6ed383b2fd23f8f3a35301ee12f3438c19ac7062f81c30958626ad \
+    --hash=sha256:c29a109dc4c1a51bc472b4989bd7063ac9be07bf0c16a2b0fcbe57f16757e397
     # via -r requirements_ci.in
 truststore==0.10.4 \
     --hash=sha256:9d91bd436463ad5e4ee4aba766628dd6cd7010cf3e2461756b3303710eebc301 \
@@ -577,6 +577,7 @@ typing-extensions==4.15.0 \
     #   pydantic
     #   pydantic-core
     #   rich-click
+    #   tox-gh
     #   typing-inspection
 typing-inspection==0.4.2 \
     --hash=sha256:4ed1cacbdc298c220f1bd249ed5287caa16f34d44ef4e9c3d0cbad5b521545e7 \
