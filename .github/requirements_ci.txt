@@ -271,7 +271,6 @@ platformdirs==4.10.0 \
     --hash=sha256:fb516cdb12eb0d857d0cd85a7c57cea4d060bee4578d6cf5a14dfdf8cbf8784a
     # via
     #   pylint
-    #   python-discovery
     #   tox
     #   virtualenv
 pluggy==1.6.0 \
@@ -547,9 +546,9 @@ pyproject-api==1.10.0 \
     --hash=sha256:40c6f2d82eebdc4afee61c773ed208c04c19db4c4a60d97f8d7be3ebc0bbb330 \
     --hash=sha256:8757c41a79c0f4ab71b99abed52b97ecf66bd20b04fa59da43b5840bac105a09
     # via tox
-python-discovery==1.4.2 \
-    --hash=sha256:475803f53b7b2ed6e490e27373f9d8340f7d2eebf9acdaf645d7d714c97bb500 \
-    --hash=sha256:8f3746c4b4968d22afbb97d36e1a0e5b66e6c0f297290f2e95f05b9b8bf18690
+python-discovery==1.6.0 \
+    --hash=sha256:6393b4eae1be8b2182670635e7baff89ac21cb9f8e86fd1ff40c7b1144febb4c \
+    --hash=sha256:d4e244cf17b8b29819ed78003d55fbacf86eda23425b075454fff9271b79377a
     # via
     #   tox
     #   virtualenv
@@ -646,9 +645,9 @@ tomlkit==0.13.0 \
     # via
     #   bump-my-version
     #   pylint
-tox==4.56.0 \
-    --hash=sha256:538c472ccd7e7c7f5a5bcbb7f1268579941986d0eeaf7e644fc4a1004076bc05 \
-    --hash=sha256:9712ed24bae3b9963fe56140db5e3f1a86eed18ddcc35fff11d314038381fd23
+tox==4.61.2 \
+    --hash=sha256:262efa52b735004dcef04ae4c934614ec4e5c61319a14d1e762c18db7fdb82c3 \
+    --hash=sha256:463b6eeaaf0929d60b4f7a87b26f4a7a764fe9832a74bf50b4e9d259b6a8e905
     # via
     #   -r requirements_ci.in
     #   tox-gh
@@ -696,6 +695,7 @@ typing-extensions==4.15.0 \
     #   pydantic
     #   pydantic-core
     #   rich-click
+    #   tox
     #   tox-gh
     #   typing-inspection
 typing-inspection==0.4.2 \
