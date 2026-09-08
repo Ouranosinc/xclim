@@ -32,7 +32,9 @@ New indicators and features
     * Open `date_bounds` and `doy_bounds` are now supported (i.e., `None` as start or end).
     * The `include_doy_bounds_nans` argument has been added to control whether NaN values in the bounds should be filled or not. When set to `True`, missing values in the start or end bounds are replaced by the start and end of the period, respectively.
     * The `bounds_freq` argument has been added to allow users to specify the frequency to use when using open `date_bounds`.
-* `IndicatorCollection` yaml specifications have a new ``bases`` section for defining indicator classes to reuse in defining the ones in the ``indicators`` section (:pull:`2415`).
+* `IndicatorCollection` yaml specifications updates:
+    * New ``bases`` section for defining indicator classes to reuse in defining the ones in the ``indicators`` section (:pull:`2415`).
+    * Fields ``base`` and ``compute`` can now be a "qualified name" of an object to be imported dynamically, or the qualified name of an indicator with its submodule/realm. Ex: ``atmos.precip_accumulation``, which was previously referred by its identifier ``prcptot`` (:pull:`2415`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
