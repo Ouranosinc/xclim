@@ -23,7 +23,7 @@ bracex==2.4 \
 bump-my-version==1.5.1 \
     --hash=sha256:5079e443ab8c9a9903f140b427ff9f6fe8dd54013a55a4cf48b89326f3a71c07 \
     --hash=sha256:df3e2989d0d7fe704718feb24a5880f089b6b6369e427a4445b89c3adebfcff1
-    # via -r .github/requirements_ci.in
+    # via -r requirements_ci.in
 cachetools==7.1.4 \
     --hash=sha256:323dc4127934744db5b54eb4924482d7edafbf9554e820d1531c2e08c0e4ef54 \
     --hash=sha256:437f55a4e0c1b01a4f3077cc470e6991d47430970e36fbcb77e2be0df4fc1cd6
@@ -152,7 +152,7 @@ deptry==0.25.1 \
     --hash=sha256:df88952a2bab7517ef23cb304b979199b28449e5d9db2e9ba9bc27a286ac852b \
     --hash=sha256:e3fa3321078e11cd1ac3f10ce3ff0547731c53f9253b87c757a8749c76fe8fa9 \
     --hash=sha256:e6f7b8fa72932e51e86799b10dcd29381b2132dc799c790dca3b28ab08dffb28
-    # via -r .github/requirements_ci.in
+    # via -r requirements_ci.in
 dill==0.4.1 \
     --hash=sha256:1e1ce33e978ae97fcfcff5638477032b801c46c7c65cf717f95fbc2248f79a9d \
     --hash=sha256:423092df4182177d4d8ba8290c8a5b640c66ab35ec7da59ccfa00f6fa3eea5fa
@@ -168,7 +168,7 @@ docutils==0.21.2 \
 exceptiongroup==1.3.1 \
     --hash=sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219 \
     --hash=sha256:a7a39a3bd276781e98394987d3a5701d0c4edffb633bb7a5144577f82c773598
-    # via -r .github/requirements_ci.in
+    # via -r requirements_ci.in
 filelock==3.29.4 \
     --hash=sha256:10cdb3656fc44541cdf30652a93fb10ec6b05325620eb316bd26893e4201538a \
     --hash=sha256:dac1648087d5115554850d113e7dd8c83ab2d38e3435dde2d4f163847e57b767
@@ -179,7 +179,7 @@ filelock==3.29.4 \
 flit==4.0.2 \
     --hash=sha256:232bc4317279e8952eca9fb3f5e000d8395d693b39c105b99f619ce461e1da85 \
     --hash=sha256:7b0b0038cd91a7f04e2e287d958dc5f25e68ffeed0b93e613bd50aec99a0d9ca
-    # via -r .github/requirements_ci.in
+    # via -r requirements_ci.in
 flit-core==4.0.2 \
     --hash=sha256:8d80717e28d982b41594ed5b14d4e89fbc5bad55473fde27994a3101db18a94e \
     --hash=sha256:b6929defd93884b584d7c87829e0e7b5c26ed6be17b0b873979019314aa841c8
@@ -286,7 +286,7 @@ pydantic==2.12.5 \
     --hash=sha256:4d351024c75c0f085a9febbb665ce8c0c6ec5d30e903bdb6394b7ede26aebb49 \
     --hash=sha256:e561593fccf61e8a20fc46dfc2dfe075b8be7d0188df33f221ad1f0139180f9d
     # via
-    #   -r .github/requirements_ci.in
+    #   -r requirements_ci.in
     #   bump-my-version
     #   pydantic-settings
 pydantic-core==2.41.5 \
@@ -423,7 +423,7 @@ pygments==2.20.0 \
 pylint==4.0.8 \
     --hash=sha256:1c1b2128bde5ff5e966801413080b6384d42a5782718d528c906dbb6beab94ed \
     --hash=sha256:3341c08c0aabaa4adc71516de0969f3ba5c692b56c75af4dcb4d242823fbe363
-    # via -r .github/requirements_ci.in
+    # via -r requirements_ci.in
 pyproject-api==1.10.0 \
     --hash=sha256:40c6f2d82eebdc4afee61c773ed208c04c19db4c4a60d97f8d7be3ebc0bbb330 \
     --hash=sha256:8757c41a79c0f4ab71b99abed52b97ecf66bd20b04fa59da43b5840bac105a09
@@ -513,7 +513,7 @@ tomli==2.4.1 \
     --hash=sha256:ff18e6a727ee0ab0388507b89d1bc6a22b138d1e2fa56d1ad494586d61d2eae9 \
     --hash=sha256:ff2983983d34813c1aeb0fa89091e76c3a22889ee83ab27c5eeb45100560c049
     # via
-    #   -r .github/requirements_ci.in
+    #   -r requirements_ci.in
     #   deptry
 tomli-w==1.2.0 \
     --hash=sha256:188306098d013b691fcadc011abd66727d3c414c571bb01b1a174ba8c983cf90 \
@@ -531,38 +531,38 @@ tox==4.56.0 \
     --hash=sha256:538c472ccd7e7c7f5a5bcbb7f1268579941986d0eeaf7e644fc4a1004076bc05 \
     --hash=sha256:9712ed24bae3b9963fe56140db5e3f1a86eed18ddcc35fff11d314038381fd23
     # via
-    #   -r .github/requirements_ci.in
+    #   -r requirements_ci.in
     #   tox-gh
 tox-gh==1.7.1 \
     --hash=sha256:4f4871ee4091b41464f2df9ab1fcedb14a48accdecbb60d53297301a9d8984c6 \
     --hash=sha256:a82285b16a597516f9a24f20326b124ddc7924a8b70cb05a9192e1c53d7f701d
-    # via -r .github/requirements_ci.in
+    # via -r requirements_ci.in
 truststore==0.10.4 \
     --hash=sha256:9d91bd436463ad5e4ee4aba766628dd6cd7010cf3e2461756b3303710eebc301 \
     --hash=sha256:adaeaecf1cbb5f4de3b1959b42d41f6fab57b2b1666adb59e89cb0b53361d981
     # via
     #   httpcore2
     #   httpx2
-ty==0.0.35 \
-    --hash=sha256:02cae51b53e6ec17d5d827ff1a3a76fd119705b56a92156e04399eda6e911596 \
-    --hash=sha256:0e25d63ec4ab116e7f6757e44d16ca9216bca679d19ecc36d119cf80faada61a \
-    --hash=sha256:11871d730c9400d899ac0b9f3d660ed2e7e433377c8725549f8250a36a7f2620 \
-    --hash=sha256:1ad0a2f0530d0933dcc99ad36ac556c63e384ea72ab9a18d23ad2e2c9fd61c73 \
-    --hash=sha256:2cb0877419ab0c8708b6925cb0c2800b263842bd3c425113f200538772f3a0cc \
-    --hash=sha256:34b219250736c989b2670a03782c61315f523f3a2be37f1f90b1207e2212c188 \
-    --hash=sha256:4466a1470aa4418d49a9aa45d9da7de42033addd0a2837c5b2b0eb71d3c2bcd3 \
-    --hash=sha256:573b1eacda349fc8dba0d767b41631c3a6f66412363127c5bf2b1b40a1d898d2 \
-    --hash=sha256:619c52c0fb2aa21961a848a1995135ad3b6d0a9aa54da0194e60f679cc200e13 \
-    --hash=sha256:6a0a6d259f6f2f8f2f954c6f013d4e0b5eba68af6b353bf19a47d59ec254a3d5 \
-    --hash=sha256:709dbb7af4fcadb1196863c00b8791bbbbcc9dacbe15a0ff17f0af82b35d415b \
-    --hash=sha256:8375c240ab38138a19db07996c9808fb7a92047c1492e1ce587c2ef5112ad3a9 \
-    --hash=sha256:85ae1e59b9fb0b40e9d84fe61b29653c5f2f5e78b487ece371a7a38c20c781cf \
-    --hash=sha256:88e2ac497decc0940ef1a07571dee8a746112a93a09cdc7f8bca0099752e2e05 \
-    --hash=sha256:a7209746158d6393c1040aa64b3ca29622e212ea7d8bae22ba50dbcbb4f96f0a \
-    --hash=sha256:b61498cc3e4178031c079951257fbdb209a891b4feb10ad6c40f615a51846f41 \
-    --hash=sha256:e7afbcfc61904b7e82e7fe1a1db832a40d8f01e69dee1775f6594e552980536c \
-    --hash=sha256:eb44bb742d52c309dcaa6598bcf4d82eb4bf1241b9e4940461e522e30093fe8b
-    # via -r .github/requirements_ci.in
+ty==0.0.77 \
+    --hash=sha256:03f128cb8b204e22a18f4b01ef0194aa445f4edb080cb7d77621cb2ab353885c \
+    --hash=sha256:1293b94f26d1f330424e3b97c20b434f7e2ac1938287b8588466c75ece6c0b10 \
+    --hash=sha256:237a58c389e01d65c4693e0394feb0f0adea3fba0345c3b932d209084372f3d3 \
+    --hash=sha256:33a9ff9be488edf4d6fac46c456198cc848d9641f418f1a83aa123825e93c6ec \
+    --hash=sha256:4b8b04d8c3af8148e963e950094bd53c8cc4d3a11f5f8764ff8d39627bd6e64a \
+    --hash=sha256:581adf1ae1e48e00e89ec162913d559ddf75a7805646a13ffd68943c1b5e8daa \
+    --hash=sha256:603620c063b718ddbe302f83fb0d7c01a13f1941c3b9763512a89c9bbfabba96 \
+    --hash=sha256:61ad5467206e5ea6531c8aebebf1276c6150989a94a1d5974a84d9e0eeed5c38 \
+    --hash=sha256:86f01d4af8b006c9442a2de0ab949cc24462f8f9431bebc0b73f6166fbbca19f \
+    --hash=sha256:8898f3097610f4a772ead6bfad7b204c7d76e8eb3a010c7285b9186278e0fb82 \
+    --hash=sha256:942a3bb2a4786c80bd8ef4503e5024046617cdfcc550b56c1acc4817ce7ac144 \
+    --hash=sha256:97d1600ef69fc8e3b2310de1915cd34ba3b712fdc730cb02b713520956baec0a \
+    --hash=sha256:9bda523b40e06c643feb6d5d5bcbacc56a2bd9eed3d7cae1119452502bcd69b0 \
+    --hash=sha256:b14b002233a954115a04932b3a93d75a387569848276cf7bb0b5dc6b040001c4 \
+    --hash=sha256:bbb8ae7a753b9a6af25725c314d0eca967e5fde5eebb7a35b04b0d763dfb9d7c \
+    --hash=sha256:cb71152bdf56860375c790682cc3efc120aaf8e36f1cd6367773312905e82b50 \
+    --hash=sha256:dced0924a83b6d945fd48a29aa85e131fb98dc574f4c9a0e7c43d03eff373402 \
+    --hash=sha256:ea76012f1ed387b6fc6500894fb8a7654b724c38713e263a23f12756f00e2469
+    # via -r requirements_ci.in
 types-setuptools==75.6.0.20241126 \
     --hash=sha256:7bf25ad4be39740e469f9268b6beddda6e088891fa5a27e985c6ce68bf62ace0 \
     --hash=sha256:aaae310a0e27033c1da8457d4d26ac673b0c8a0de7272d6d4708e263f2ea3b9b
