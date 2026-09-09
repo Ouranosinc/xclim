@@ -992,8 +992,6 @@ def sen_slope_ratio(
     """
     sen_slope_obs, p_value = sen_slope(rivo, freq)
     sen_slope_sim, p_value_sim = sen_slope(rivosim, freq)
-    sen_slope_sim = sen_slope_sim
-    p_value_sim = p_value_sim
     ratio = (sen_slope_obs / sen_slope_sim).assign_attrs({"units": ""})
     return sen_slope_obs, p_value, sen_slope_sim, p_value_sim, ratio
 
