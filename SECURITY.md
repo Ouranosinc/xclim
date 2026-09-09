@@ -2,7 +2,34 @@
 
 ## Supported Versions
 
-`xclim` is in rapid development and receives regular updates every four to six (4-6) weeks. In the event of a security-related bug discovery soon after the release of an `xclim` version, the last supported version will receive a patch release.
+`xclim` is in rapid development and receives regular updates every four to six (4-6) weeks.
+In the event of a security-related bug discovery soon after the release of an `xclim` version, the last supported version will receive a patch release.
+
+## Security Requirements
+
+`xclim` is an Open Source Python library and is designed to be run on both trusted platforms as well as on hosted compute platforms (such as [PAVICS](https://pavics.ouranos.ca)).
+As such, the primary security focus of the `xclim` maintainers are to ensure the integrity of source code and packages as well as to respond to security vulnerabilities as they arise.
+
+### Source Code
+
+- All changes to the project are made through pull requests and are reviewed by at least one maintainer before being merged.
+- While not a requirement for submitting changes to code, contributors are generally encouraged to cryptographically sign commits where practical.
+- Releases are created from tagged revisions in the Git repository to ensure that released source code corresponds to a reviewed state of the project.
+
+### Releases
+
+- Python packages are published to PyPI using Trusted Publishing through GitHub Actions.
+- Release artifacts are built automatically by the release workflow from the tagged source code.
+- Release tags are cryptographically signed, and users may verify the authenticity of the source release using the published signing key and the project's release documentation.
+
+### Dependencies
+
+- Project dependencies are declared explicitly in `pyproject.toml` and `environment.yml`.
+- Core library dependency updates are reviewed by maintainers before being merged.
+- GitHub Actions and Python dependencies used by automated workflows are pinned to immutable commit hashes whenever possible.
+- Automated dependency update tools and vulnerability scanning may be used to identify outdated, redundant, or vulnerable dependencies.
+  - Automated tools such as Dependabot may perform non-significant ("minor"/"patch") unattended updates of GitHub Actions and other CI configurations while significant ("major") updates
+    must be reviewed by maintainers.
 
 ## Reporting a Vulnerability
 

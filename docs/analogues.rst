@@ -7,17 +7,17 @@ specific climate conditions. For example, officials from a city located in a tem
 heatwaves in the future can learn from the experience of another city where heatwaves are a common occurrence,
 leading to more proactive intervention plans to better deal with new climate conditions.
 
-Spatial analogues are estimated by comparing the distribution of climate indices computed at the target location over
+Spatial analogues are estimated by comparing the distribution of climate indicators computed at the target location over
 the future period with the distribution of the same climate indices computed over a reference period for multiple
 candidate regions. A number of methodological choices thus enter the computation:
 
-    - Climate indices of interest,
-    - Metrics measuring the difference between the distributions of indices,
-    - Reference data from which to compute the base indices,
-    - A future climate scenario to compute the target indices.
+    - Climate indicators of interest,
+    - Metrics measuring the difference between the distributions of indicators,
+    - Reference data from which to compute the base indicators,
+    - A future climate scenario to compute the target indicators.
 
-The climate indices chosen to compute the spatial analogues are usually annual values of indices relevant to the
-intended audience of these maps. For example, in the case of the wine grape industry, the climate indices examined could
+The climate indicators chosen to compute the spatial analogues are usually annual values of indices relevant to the
+intended audience of these maps. For example, in the case of the wine grape industry, the climate indicators examined could
 include the length of the frost-free season, growing degree-days, annual winter minimum temperature and annual number of
 very cold days :cite:p:`roy_probabilistic_2017`.
 

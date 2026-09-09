@@ -3,8 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from xclim.core.calendar import percentile_doy
-from xclim.indices import (
+from xclim.compute import (
     cold_spell_duration_index,
     days_over_precip_thresh,
     fraction_over_precip_thresh,
@@ -16,6 +15,7 @@ from xclim.indices import (
     tx90p,
     warm_spell_duration_index,
 )
+from xclim.core.calendar import percentile_doy
 from xclim.testing.helpers import test_timeseries as _test_timeseries
 
 

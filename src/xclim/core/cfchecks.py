@@ -13,8 +13,7 @@ from collections.abc import Sequence
 
 import xarray as xr
 
-from xclim.core._exceptions import ValidationError
-from xclim.core._types import VARIABLES
+from xclim.core import VARIABLES, ValidationError
 from xclim.core.options import cfcheck
 
 
@@ -55,6 +54,8 @@ def cfcheck_from_name(varname: str, vardata: xr.DataArray, attrs: list[str] | No
     """
     Perform cfchecks on a DataArray using specifications from xclim's default variables.
 
+    Only `standard_name` and `cell_methods` are supported, default is to only check `standard_name`.
+
     Parameters
     ----------
     varname : str
@@ -62,7 +63,7 @@ def cfcheck_from_name(varname: str, vardata: xr.DataArray, attrs: list[str] | No
     vardata : xr.DataArray
         The variable to check.
     attrs : list of str, optional
-        Attributes to check. Default is ["cell_methods", "standard_name"].
+        Attributes to check. Default is ["standard_name"].
 
     Raises
     ------
@@ -70,7 +71,7 @@ def cfcheck_from_name(varname: str, vardata: xr.DataArray, attrs: list[str] | No
         If the variable does not meet the expected CF-Convention.
     """
     if attrs is None:
-        attrs = ["cell_methods", "standard_name"]
+        attrs = ["standard_name"]
 
     data = VARIABLES[varname]
     if "cell_methods" in data and "cell_methods" in attrs:

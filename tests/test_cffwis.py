@@ -5,9 +5,7 @@ import pytest
 import xarray as xr
 
 from xclim import atmos
-from xclim.core.options import set_options
-from xclim.core.units import convert_units_to
-from xclim.indices.fire import (
+from xclim.compute.fire import (
     build_up_index,
     fire_season,
     fire_weather_index,
@@ -15,7 +13,7 @@ from xclim.indices.fire import (
     initial_spread_index,
     overwintering_drought_code,
 )
-from xclim.indices.fire._cffwis import (
+from xclim.compute.fire._cffwis import (
     _day_length,
     _day_length_factor,
     _drought_code,
@@ -23,7 +21,9 @@ from xclim.indices.fire._cffwis import (
     _fine_fuel_moisture_code,
     _overwintering_drought_code,
 )
-from xclim.indices.run_length import run_bounds
+from xclim.compute.run_length import run_bounds
+from xclim.core.options import set_options
+from xclim.core.units import convert_units_to
 
 
 class TestCFFWIS:

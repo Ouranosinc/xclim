@@ -7,7 +7,7 @@ import pytest
 import xarray as xr
 from dask import array as dsk
 
-from xclim import indices, set_options
+from xclim import compute, set_options
 from xclim.core import Quantified, ValidationError
 from xclim.core.units import (
     amount2lwethickness,
@@ -76,7 +76,7 @@ class TestConvertUnitsTo:
 
         with pytest.raises(TypeError):
             tas = tas_series(np.arange(365), start="1/1/2001")
-            out = indices.tx_days_above(tas, 30)  # noqa
+            out = compute.tx_days_above(tas, 30)  # noqa
 
     def test_fraction(self):
         out = convert_units_to(xr.DataArray([10], attrs={"units": "%"}), "")
@@ -366,7 +366,7 @@ def test_declare_relative_units():
     "in_u,opfunc,op,exp,exp_u",
     [
         ("m/h", "sum", "integral", 8760, "m"),
-        ("m/h", "sum", "sum", 365, "m/h"),
+        ("m/h", "sum", "sum", 365, "m h-1"),
         ("K", "mean", "mean", 1, "K"),
         ("", "sum", "count", 365, "d"),
         ("kg m-2", "var", "var", 0, "kg2 m-4"),
@@ -404,6 +404,15 @@ def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
         assert out.attrs["units"] in exp_u
     else:
         assert out.attrs["units"] == exp_u
+
+
+def test_nested_to_agg_units():
+    out = xr.DataArray(1)
+    var = xr.DataArray(2)
+    da = xr.DataArray(3, attrs={"units": "°C"})
+    out = to_agg_units(out, to_agg_units(var, da, "std"), "mean")
+    assert out.units == "°C"
+    assert out.units_metadata == "temperature: difference"
 
 
 def test_pint2cfattrs():

@@ -3,9 +3,9 @@ from __future__ import annotations
 import pytest
 import xarray as xr
 
+from xclim.compute import helpers
 from xclim.core.options import set_options
 from xclim.core.utils import uses_dask
-from xclim.indices import helpers
 from xclim.testing.helpers import assert_lazy
 
 

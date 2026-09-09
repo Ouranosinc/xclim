@@ -4,25 +4,25 @@ from __future__ import annotations
 
 import importlib.resources as _resources
 
-from xclim import indices
-from xclim.core import units  # noqa
-from xclim.core.indicator import build_indicator_module_from_yaml
-from xclim.core.locales import load_locale
-from xclim.core.options import set_options  # noqa
-from xclim.indicators import atmos, convert, generic, land, seaIce  # noqa
+from xclim import compute, ensembles
+from xclim import indicators as _indicators
+from xclim.core import calendar, units
+from xclim.core.collection import IndicatorCollection
+from xclim.core.locales import load_locale as _load_locale
+from xclim.core.options import set_options
+from xclim.indicators import atmos, convert, generic, land, seaIce
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.61.2-dev.6"
-
+__version__ = "0.99.0-dev.26"
 
 with _resources.as_file(_resources.files("xclim.data")) as _module_data:
     # Load official locales
-    for filename in _module_data.glob("??.json"):
+    for _filename in _module_data.glob("??.json"):
         # Only select <locale>.json and not <module>.<locale>.json
-        load_locale(filename, filename.stem)
+        _load_locale(_filename, _filename.stem)
 
     # Virtual modules creation:
-    build_indicator_module_from_yaml(_module_data / "icclim", mode="raise")
-    build_indicator_module_from_yaml(_module_data / "anuclim", mode="raise")
-    build_indicator_module_from_yaml(_module_data / "cf", mode="raise")
+    _indicators.icclim = IndicatorCollection.from_yaml(_module_data / "icclim", mode="raise")
+    _indicators.anuclim = IndicatorCollection.from_yaml(_module_data / "anuclim", mode="raise")
+    _indicators.cf = IndicatorCollection.from_yaml(_module_data / "cf", mode="raise")

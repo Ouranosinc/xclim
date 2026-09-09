@@ -154,23 +154,23 @@ def pr_ndseries():
 
 
 @pytest.fixture
-def q_series():
+def rivo_series():
     """Return flow rate series time series."""
 
-    def _q_series(values, start="1/1/2000", units="m3 s-1"):
+    def _rivo_series(values, start="1/1/2000", units="m3 s-1"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
             dims="time",
-            name="q",
+            name="rivo",
             attrs={
                 "standard_name": "water_volume_transport_in_river_channel",
                 "units": units,
             },
         )
 
-    return _q_series
+    return _rivo_series
 
 
 @pytest.fixture
@@ -181,7 +181,7 @@ def qspec_series():
 
 
 @pytest.fixture
-def ndq_series(random):
+def ndrivo_series(random):
     nx, ny, nt = 2, 3, 5000
     x = np.arange(0, nx)
     y = np.arange(0, ny)
@@ -328,8 +328,6 @@ def rlus_series():
     return _rlus_series
 
 
-# FIXME: xclim-v1 — Remove this? We use `snw`
-# We could also leave this in.
 @pytest.fixture
 def swe_series():
     def _swe_series(values, start="1/1/2000", units="mm"):
@@ -385,9 +383,9 @@ def open_dataset(threadsafe_data_dir, worker_id):
 def official_indicators():
     # Remove unofficial indicators (as those created during the tests, and those from YAML-built modules)
     registry_cp = indicator.registry.copy()
-    for cls in indicator.registry.values():
-        if cls.identifier.upper() != cls._registry_id:
-            registry_cp.pop(cls._registry_id)
+    for ind in indicator.registry.values():
+        if "." in ind.identifier:
+            registry_cp.pop(ind.identifier)
     return registry_cp
 
 

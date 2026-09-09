@@ -11,7 +11,7 @@ import datetime as pydt
 import warnings
 from collections.abc import Sequence
 from importlib.util import find_spec
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal
 
 import cftime
 import numpy as np
@@ -19,8 +19,9 @@ import pandas as pd
 import xarray as xr
 from packaging.version import Version
 from xarray import CFTimeIndex
+from xarray.coding import cftime_offsets
 
-from xclim.core._types import DayOfYearStr
+from xclim.core import DataType, DayOfYearStr, Freq
 from xclim.core.formatting import update_xclim_history
 from xclim.core.utils import uses_dask
 
@@ -106,9 +107,6 @@ datetime_classes = cftime._cftime.DATE_TYPES
 
 # Names of calendars that have the same number of days for all years
 uniform_calendars = ("noleap", "all_leap", "365_day", "366_day", "360_day")
-
-# Type hint for xarray DataArray and Dataset
-DataType = TypeVar("DataType", xr.DataArray, xr.Dataset)
 
 
 def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
@@ -257,18 +255,18 @@ def _is_leap_year(years, calendar):
 def _days_in_year(years, calendar):
     """The number of days in the year according to given calendar."""
     if calendar == "360_day":
-        return xr.full_like(years, 360)
+        return np.full_like(years, 360)
     return _is_leap_year(years, calendar).astype(int) + 365
 
 
 def convert_doy(
-    source: xr.DataArray | xr.Dataset,
+    source: DataType,
     target_cal: str,
     source_cal: str | None = None,
     align_on: Literal["date", "year"] = "year",
     missing: Any = np.nan,
     dim: str = "time",
-) -> xr.DataArray | xr.Dataset:
+) -> DataType:
     """
     Convert the calendar of day of year (doy) data.
 
@@ -327,8 +325,8 @@ def convert_doy(
             max_doy_src = xr.apply_ufunc(
                 _days_in_year,
                 year_of_the_doy,
-                vectorize=True,
                 dask="parallelized",
+                output_dtypes=[int],
                 kwargs={"calendar": source_cal},
             )
         if target_cal in ["noleap", "all_leap", "360_day"]:
@@ -337,8 +335,8 @@ def convert_doy(
             max_doy_tgt = xr.apply_ufunc(
                 _days_in_year,
                 year_of_the_doy,
-                vectorize=True,
                 dask="parallelized",
+                output_dtypes=[int],
                 kwargs={"calendar": target_cal},
             )
         new_doy = source.copy(data=source * max_doy_tgt / max_doy_src)
@@ -538,7 +536,7 @@ def compare_offsets(
     bool
         The result of `freqA` `op` `freqB`.
     """
-    from ..indices.generic import get_op  # pylint: disable=import-outside-toplevel
+    from ..compute.helpers import get_binary_op  # pylint: disable=import-outside-toplevel
 
     # Get multiplier and base frequency
     t_a, b_a, _, _ = parse_offset(freqA)
@@ -552,10 +550,10 @@ def compare_offsets(
         t_b = (t[1] - t[0]).total_seconds()
     # else Same base freq, compare multiplier only.
 
-    return get_op(op)(t_a, t_b)
+    return get_binary_op(op)(t_a, t_b)
 
 
-def parse_offset(freq: str) -> tuple[int, str, bool, str | None]:
+def parse_offset(freq: Freq) -> tuple[int, str, bool, str | None]:
     """
     Parse an offset string.
 
@@ -687,7 +685,7 @@ def is_offset_divisor(divisor: str, offset: str):
     return all(offAs.is_on_offset(d) for d in tB)
 
 
-def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int, doy_min: int = 1) -> xr.DataArray:
+def _interpolate_doy_calendar(source: DataType, doy_max: int, doy_min: int = 1) -> DataType:
     """
     Interpolate from one set of dayofyear range to another.
 
@@ -696,7 +694,7 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int, doy_min: int =
 
     Parameters
     ----------
-    source : xr.DataArray
+    source : xr.DataArray or xr.Dataset
         Array with `dayofyear` coordinates.
     doy_max : int
         The largest day of the year allowed by calendar.
@@ -707,7 +705,7 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int, doy_min: int =
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray or xr.Dataset
         Interpolated source array over coordinates spanning the target `dayofyear` range.
     """
     if "dayofyear" not in source.coords.keys():
@@ -726,7 +724,7 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int, doy_min: int =
     return filled_na.interp(dayofyear=range(doy_min, doy_max + 1))
 
 
-def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray | xr.Dataset) -> xr.DataArray:
+def adjust_doy_calendar(source: DataType, target: DataType) -> DataType:
     """
     Interpolate from one set of dayofyear range to another calendar.
 
@@ -734,14 +732,14 @@ def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray | xr.Dataset)
 
     Parameters
     ----------
-    source : xr.DataArray
+    source : xr.DataArray or xr.Dataset
         Array with `dayofyear` coordinate.
     target : xr.DataArray or xr.Dataset
         Array with `time` coordinate.
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray or xr.Dataset
         Interpolated source array over coordinates spanning the target `dayofyear` range.
     """
     max_target_doy = int(target.time.dt.dayofyear.max())
@@ -760,20 +758,20 @@ def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray | xr.Dataset)
     return _interpolate_doy_calendar(source, max_target_doy, min_target_doy)
 
 
-def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataArray:
+def resample_doy(doy: DataType, arr: DataType) -> DataType:
     """
     Create a temporal DataArray where each day takes the value defined by the day-of-year.
 
     Parameters
     ----------
-    doy : xr.DataArray
+    doy : xr.DataArray or xr.Dataset
         Array with `dayofyear` coordinate.
     arr : xr.DataArray or xr.Dataset
         Array with `time` coordinate.
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray or xr.Dataset
         An array with the same dimensions as `doy`, except for `dayofyear`, which is
         replaced by the `time` dimension of `arr`. Values are filled according to the
         day of year value in `doy`.
@@ -792,7 +790,7 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataAr
 
 def time_bnds(
     time: (xr.DataArray | xr.Dataset | CFTimeIndex | pd.DatetimeIndex),
-    freq: str | None = None,
+    freq: Freq | None = None,
 ):
     """
     Find the time bounds for a datetime index by assuming an uniform sampling frequency.
@@ -833,7 +831,7 @@ def time_bnds(
         time = time.indexes[time.name]
     # elif isinstance(time, DataArrayResample | DatasetResample):
     elif hasattr(time, "groupers"):
-        for grouper in time.groupers:
+        for grouper in time.groupers:  # ty: ignore[not-iterable]
             if "time" in grouper.codes.dims:
                 datetime = grouper.unique_coord.data
                 freq = freq or grouper.grouper.freq
@@ -874,7 +872,7 @@ def time_bnds(
         floor.pop("nanosecond")
 
     if isinstance(time, xr.CFTimeIndex):
-        period = xr.coding.cftime_offsets.to_offset(freq)
+        period = cftime_offsets.to_offset(freq)
         is_on_offset = period.onOffset
         day = pd.Timedelta("1D").to_pytimedelta()
         floor.pop("nanosecond")  # unsupported by cftime
@@ -982,7 +980,8 @@ def _doy_days_since_doys(
     doy_max = xr.apply_ufunc(
         _days_in_year,
         base.dt.year,
-        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[int],
         kwargs={"calendar": calendar},
     )
 
@@ -1163,41 +1162,79 @@ def _get_doys(start: int, end: int, inclusive: tuple[bool, bool]):
     return doys
 
 
-def mask_between_doys(
-    da: xr.DataArray,
-    doy_bounds: tuple[int | xr.DataArray, int | xr.DataArray],
-    include_bounds: tuple[bool, bool] = (True, True),
-) -> xr.DataArray | xr.Dataset:
+def select_between_doys(
+    da: DataType,
+    doy_bounds: tuple[int | xr.DataArray | None, int | xr.DataArray | None],
+    include_bounds: bool | tuple[bool, bool] = True,
+    include_nans: bool = True,
+    bounds_freq: str | None = None,
+    drop: bool = False,
+) -> DataType:
     """
-    Mask the data outside the day of year bounds.
+    Select data between day of year bounds.
 
     Parameters
     ----------
     da : xr.DataArray or xr.Dataset
         Input data. It must have a time coordinate.
-    doy_bounds : 2-tuple of integers or DataArray
+    doy_bounds : 2-tuple of optional integers or DataArray
         The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
         1 (January 1st) to 365 or 366 (December 31st).
-        If DataArrays are passed, they must have the same coordinates on the dimensions they share.
-        They may have a time dimension, in which case the masking is done independently for each period
-        defined by the coordinate, which means the time coordinate must have an inferable frequency
-        (see :py:func:`xr.infer_freq`). Timesteps of the input not appearing in the time coordinate of the
-        bounds are masked as "outside the bounds". Missing values (nan) in the start and end bounds default
-        to 1 and 366 respectively in the non-temporal case and to open bounds (the start and end of the period)
-        in the temporal case.
-    include_bounds : 2-tuple of booleans
-        Whether the bounds of `doy_bounds` should be inclusive or not.
+        If DataArrays are passed, they must have the same coordinates on the dimensions they share. They may
+        have a time dimension, in which case the selection is done independently for each period defined by the
+        coordinate, which means the time coordinate must have an inferable frequency (see :py:func:`xr.infer_freq`)
+        or the frequency must be passed explicitly with the `bounds_freq` argument.
+        If None is passed as a bound, it is replaced by the start or end of the year (1 or 366) if the other
+        bound is an integer, or by the start or end of the period defined by the inferred or passed frequency
+        of DataArrays.
+        Timesteps of the input not appearing in the time coordinate of the bounds are considered as "outside the
+        bounds".
+    include_bounds : bool or 2-tuple of booleans, optional
+        Whether the bounds of `doy_bounds` should be inclusive or not. Default is True (inclusive).
+    include_nans : bool, optional
+        Whether to include values associated with NaN in `doy_bounds`. If True (default), missing values (NaN) in
+        the start and end bounds are replaced by the start and end of the period, respectively.
+    bounds_freq : str, optional
+        The yearly frequency (e.g. "YS", "YS-JUL") used to determine the open bounds (start and end of the period)
+        with array-like `doy_bounds` without a `time` dimension (Default "YS"). If `doy_bounds` have a `time`
+        dimension, the frequency is first tried to be inferred from the time coordinate of the bounds; if it cannot
+        be inferred, the frequency must be passed explicitly.
+    drop : bool
+        Whether to drop elements outside the period of interest (True) or to simply mask them (False, default).
+        This option is incompatible with passing array-like `doy_bounds`.
 
     Returns
     -------
-    xr.DataArray
-        Boolean array with the same time coordinate as `da` and any other dimension present on the bounds.
-        True value inside the period of interest and False outside.
+    xr.DataArray or xr.Dataset
+        Selected input values. If `drop=False`, this has the same length as `da` (along dimension 'time'),
+        but with masked (NaN) values outside the period of interest.
     """
-    if isinstance(doy_bounds[0], int) and isinstance(doy_bounds[1], int):  # Simple case
+    if isinstance(include_bounds, bool):
+        include_bounds = (include_bounds, include_bounds)
+
+    if (isinstance(doy_bounds[0], int) or (doy_bounds[0] is None)) and (
+        isinstance(doy_bounds[1], int) or (doy_bounds[1] is None)
+    ):  # Simple case
+        if doy_bounds[0] is None:
+            doy_bounds = (1, doy_bounds[1])
+        if doy_bounds[1] is None:
+            doy_bounds = (doy_bounds[0], 366)
         mask = da.time.dt.dayofyear.isin(_get_doys(*doy_bounds, include_bounds))
     else:
+        if drop:
+            # At least one of the bounds is an array, drop won't work
+            raise ValueError("Passing array-like `doy_bounds` is incompatible with `drop=True`.")
+
         start, end = doy_bounds
+        # store whether the bounds are None for later evaluation
+        _is_start_none = start is None
+        _is_end_none = end is None
+
+        # Convert None to DataArrays with nans
+        if start is None:
+            start = xr.full_like(end, np.nan, dtype="float64")
+        if end is None:
+            end = xr.full_like(start, np.nan, dtype="float64")
         # convert ints to DataArrays
         if isinstance(start, int):
             start = xr.full_like(end, start)
@@ -1212,58 +1249,73 @@ def mask_between_doys(
         if not include_bounds[1]:
             end -= 1
 
-        if "time" in start.dims:
-            freq = xr.infer_freq(start.time)
-            # Convert the doy bounds to a duration since the beginning of each period defined
-            # in the bound's time coordinate.
-            # Also ensures the bounds share the same time calendar as the input.
-            # Any missing value is replaced with the min/max of possible values.
-            calkws = {"calendar": da.time.dt.calendar, "use_cftime": (da.time.dtype == "O")}
-            start = doy_to_days_since(start.convert_calendar(**calkws)).fillna(0)
-            end = doy_to_days_since(end.convert_calendar(**calkws)).fillna(366)
+        # add time dimension if not present, with bounds given by freq
+        if "time" not in start.dims:
+            bounds_freq = bounds_freq or "YS"
+            bnds = time_bnds(da.resample(time=bounds_freq))
+            start = start.expand_dims(time=bnds.time)
+            end = end.expand_dims(time=bnds.time)
+        else:
+            # 3 cases:
+            # freq is inferred: use inferred freq
+            # freq cannot be inferred and not passed: raise an error
+            # freq cannot be inferred but is passed: use passed freq
+            try:
+                infer_freq = xr.infer_freq(start.time)
+                bounds_freq = bounds_freq or infer_freq
+            except ValueError:
+                if bounds_freq is None:
+                    raise ValueError(
+                        "The frequency of `doy_bounds` could not be inferred. Consider passing it explicitly "
+                        "with the `bounds_freq` argument."
+                    )
 
-            out = []
-            # For each period, mask the days since between start and end
-            for base_time, indexes in da.resample(time=freq).groups.items():
-                group = da.isel(time=indexes)
+        # Convert the doy bounds to a duration since the beginning of each period defined
+        # in the bound's time coordinate.
+        # Also ensures the bounds share the same time calendar as the input.
+        calkws = {"calendar": da.time.dt.calendar, "use_cftime": (da.time.dtype == "O")}
+        start = doy_to_days_since(start.convert_calendar(**calkws))
+        end = doy_to_days_since(end.convert_calendar(**calkws))
 
-                if base_time in start.time:
-                    start_d = start.sel(time=base_time)
-                    end_d = end.sel(time=base_time)
-
-                    # select days between start and end for group
-                    days = (group.time - base_time).dt.days
-                    days = days.where(days >= 0)
-                    mask = (days >= start_d) & (days <= end_d)
-                else:  # This group has no defined bounds : put False in the mask
-                    # Array with the same shape as the "mask" in the other case : broadcast of time and bounds dims
-                    template = xr.broadcast(group.time.dt.day, start.isel(time=0, drop=True))[0]
-                    mask = xr.full_like(template, False, dtype="bool")
-                out.append(mask)
-            mask = xr.concat(out, dim="time")
-        else:  # Only "Spatial" dims, we can't constrain as in days since, so there are two cases
-            doys = da.time.dt.dayofyear  # for readability
-            # Any missing value is replaced with the min/max of possible values
-            start = start.fillna(1)
+        # Fill missing values in start and end bounds
+        if include_nans or _is_start_none:
+            start = start.fillna(0)
+        if include_nans or _is_end_none:
             end = end.fillna(366)
-            mask = xr.where(
-                start <= end,
-                # case 1 : start <= end, ROI is within a calendar year
-                (doys >= start) & (doys <= end),
-                # case 2 : start >  end, ROI crosses the new year
-                ~((doys > end) & (doys < start)),
-            )
-    return mask
+
+        out = []
+        # For each period, mask the days since between start and end
+        for base_time, indexes in da.resample(time=bounds_freq).groups.items():
+            group = da.isel(time=indexes)
+
+            if base_time in start.time:
+                start_d = start.sel(time=base_time)
+                end_d = end.sel(time=base_time)
+
+                # select days between start and end for group
+                days = (group.time - base_time).dt.days
+                days = days.where(days >= 0)
+                mask = (days >= start_d) & (days <= end_d)
+            else:  # This group has no defined bounds : put False in the mask
+                # Array with the same shape as the "mask" in the other case : broadcast of time and bounds dims
+                template = xr.broadcast(group.time.dt.day, start.isel(time=0, drop=True))[0]
+                mask = xr.full_like(template, False, dtype="bool")
+            out.append(mask)
+        mask = xr.concat(out, dim="time")
+
+    return da.where(mask, drop=drop)
 
 
 def select_time(
-    da: xr.DataArray | xr.Dataset,
+    da: DataType,
     drop: bool = False,
     season: str | Sequence[str] | None = None,
     month: int | Sequence[int] | None = None,
-    doy_bounds: tuple[int | xr.DataArray, int | xr.DataArray] | None = None,
-    date_bounds: tuple[str, str] | None = None,
+    doy_bounds: tuple[int | xr.DataArray | None, int | xr.DataArray | None] | None = None,
+    date_bounds: tuple[str | None, str | None] | None = None,
     include_bounds: bool | tuple[bool, bool] = True,
+    include_doy_bounds_nans: bool = True,
+    bounds_freq: str | None = None,
 ) -> DataType:
     """
     Select entries according to a time period.
@@ -1278,21 +1330,38 @@ def select_time(
         Input data.
     drop : bool
         Whether to drop elements outside the period of interest (True) or to simply mask them (False, default).
-        This option is incompatible with passing array-like doy_bounds.
+        This option is incompatible with passing `date_bounds` or array-like `doy_bounds`.
     season : str or sequence of str, optional
         One or more of 'DJF', 'MAM', 'JJA' and 'SON'.
     month : int or sequence of int, optional
         Sequence of month numbers (January = 1 ... December = 12).
-    doy_bounds : 2-tuple of int or xr.DataArray, optional
+    doy_bounds : 2-tuple of optional integers or DataArray, optional
         The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
-        1 (January 1st) to 365 or 366 (December 31st). If a combination of int and xr.DataArray is given,
-        the int day-of-year corresponds to the year of the xr.DataArray.
-        If calendar awareness is needed, consider using ``date_bounds`` instead.
-    date_bounds : 2-tuple of str, optional
+        1 (January 1st) to 365 or 366 (December 31st).
+        If DataArrays are passed, they must have the same coordinates on the dimensions they share. They may
+        have a time dimension, in which case the selection is done independently for each period defined by the
+        coordinate, which means the time coordinate must have an inferable frequency (see :py:func:`xr.infer_freq`)
+        or the frequency must be passed explicitly with the `bounds_freq` argument.
+        If None is passed as a bound, it is replaced by the start or end of the year (1 or 366) if the other
+        bound is an integer, or by the start or end of the period defined by the inferred or passed frequency
+        of DataArrays.
+        Timesteps of the input not appearing in the time coordinate of the bounds are considered as "outside the
+        bounds".
+    date_bounds : 2-tuple of optional strings, optional
         The bounds as (start, end) of the period of interest expressed as dates in the month-day (%m-%d) format.
-    include_bounds : bool or 2-tuple of bool
+        If None is passed as a bounds, it is replaced by the start or end of the period defined by the
+        `bounds_freq` argument, corresponding to 1st January or 31st December for default "YS" bounds frequency.
+    include_bounds : bool or 2-tuple of bool, optional
         Whether the bounds of `doy_bounds` or `date_bounds` should be inclusive or not.
         Either one value for both or a tuple. Default is True, meaning bounds are inclusive.
+    include_doy_bounds_nans : bool, optional
+        Whether to include values associated with NaN in `doy_bounds`. If True (default), missing values (NaN) in
+        the start and end bounds are replaced by the start and end of the period, respectively.
+    bounds_freq : str, optional
+        Needed with array-like `doy_bounds` without a `time` dimension or `date_bounds`, and corresponding to the
+        frequency used to determine the start and end of the period (default "YS"). If `doy_bounds` have a `time`
+        dimension, the frequency is first tried to be inferred from the time coordinate of the bounds; if it cannot
+        be inferred, the frequency must be passed explicitly.
 
     Returns
     -------
@@ -1341,13 +1410,9 @@ def select_time(
             month = [month]
         mask = da.time.dt.month.isin(month)
 
-    elif doy_bounds is not None:
-        if not (isinstance(doy_bounds[0], int) and isinstance(doy_bounds[1], int)) and drop:
-            # At least one of those is an array, this drop won't work
-            raise ValueError("Passing array-like doy bounds is incompatible with drop=True.")
-        mask = mask_between_doys(da, doy_bounds, include_bounds)
-
-    elif date_bounds is not None:
+    elif (date_bounds is not None) and not any(b is None for b in date_bounds):
+        # Keep old behaviour for date_bounds without None values
+        # to ensure backward compatibility for 360_day calendars.
         # This one is a bit trickier.
         start, end = date_bounds
         time = da.time
@@ -1370,6 +1435,22 @@ def select_time(
         # Needed if we converted calendar, this puts back the correct coord
         mask["time"] = da.time
 
+    elif (date_bounds is not None) or (doy_bounds is not None):
+        if date_bounds is not None:
+
+            def _doys_from_string(date_str, time, cal):
+                """Convert MM-DD string to day of year, for each year in time."""
+                doys = [doy_from_string(date_str, year, cal) for year in time.dt.year]
+                return xr.DataArray(doys, coords={"time": time}, dims="time", name="dayofyear")
+
+            bnds = time_bnds(da.time.resample(time=bounds_freq or "YS"))
+            cal = da.time.dt.calendar
+            start = _doys_from_string(date_bounds[0], bnds.time, cal) if date_bounds[0] is not None else None
+            end = _doys_from_string(date_bounds[1], bnds.time, cal) if date_bounds[1] is not None else None
+            doy_bounds = (start, end)
+
+        return select_between_doys(da, doy_bounds, include_bounds, include_doy_bounds_nans, bounds_freq, drop=drop)
+
     else:
         raise ValueError("Must provide either `season`, `month`, `doy_bounds` or `date_bounds`.")
 
@@ -1379,8 +1460,8 @@ def select_time(
 def _month_is_first_period_month(time, freq):
     """Returns True if the given time is from the first month of freq."""
     if isinstance(time, cftime.datetime):
-        frq_monthly = xr.coding.cftime_offsets.to_offset("MS")
-        frq = xr.coding.cftime_offsets.to_offset(freq)
+        frq_monthly = cftime_offsets.to_offset("MS")
+        frq = cftime_offsets.to_offset(freq)
         if frq_monthly.onOffset(time):
             return frq.onOffset(time)
         return frq.onOffset(frq_monthly.rollback(time))
@@ -1394,16 +1475,16 @@ def _month_is_first_period_month(time, freq):
 
 
 def stack_periods(
-    da: xr.Dataset | xr.DataArray,
+    da: DataType,
     window: int = 30,
     stride: int | None = None,
     min_length: int | None = None,
-    freq: str = "YS",
+    freq: Freq = "YS",
     dim: str = "period",
     start: str = "1970-01-01",
     align_days: bool = True,
     pad_value="<NA>",
-):
+) -> DataType:
     """
     Construct a multi-period array.
 
@@ -1595,7 +1676,7 @@ def stack_periods(
     return out
 
 
-def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period") -> xr.DataArray | xr.Dataset:
+def unstack_periods(da: DataType, dim: str = "period") -> DataType:
     """
     Unstack an array constructed with :py:func:`stack_periods`.
 
@@ -1729,7 +1810,7 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period") -> xr.Da
     return xr.concat(periods, "time")
 
 
-def add_season_coord(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray | xr.Dataset:
+def add_season_coord(ds: DataType, freq: Freq) -> DataType:
     """
     Add a season coordinates on a resampled dataset.
 
@@ -1768,11 +1849,11 @@ def add_season_coord(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray |
         seasons = dict(zip(_MONTH_NUMBERS.values(), _MONTH_NUMBERS.keys(), strict=False))
         season_coords = [seasons[m] for m in ds.time.dt.month.values]
     season_length = len(season_coords[0]) if base != "M" else 1
-    attrs = dict(mult=mult, base=base, isstart=isstart, anchor=anchor or "JAN", season_length=season_length)
+    attrs = {"mult": mult, "base": base, "isstart": isstart, "anchor": anchor or "JAN", "season_length": season_length}
     return ds.assign_coords(season=("time", season_coords, attrs))
 
 
-def split_time_to_season_year(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray | xr.Dataset:
+def split_time_to_season_year(ds: DataType, freq: Freq) -> DataType:
     """
     Split a resampled dataset into a yearly time and a season coordinate.
 

@@ -1,13 +1,14 @@
-"""Simple indice definitions."""
+"""Simple index functions definitions."""
 
 from __future__ import annotations
 
 import xarray
 
-from xclim.core import Quantified
+from xclim.compute.generic import count_occurrences, statistics
+from xclim.core import Freq, Quantified
 from xclim.core.calendar import select_time
-from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
-from xclim.indices.generic import select_resample_op, threshold_count
+from xclim.core.units import declare_units, rate2amount
+from xclim.core.utils import deprecated
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -42,8 +43,9 @@ __all__ = [
 ]
 
 
+@deprecated("1.0", "atmos.tg_max")
 @declare_units(tas="[temperature]")
-def tg_max(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tg_max(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Highest mean temperature.
 
@@ -70,11 +72,12 @@ def tg_max(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TNx_j = max(TN_{ij})
     """
-    return tas.resample(time=freq).max(dim="time").assign_attrs(units=tas.units)
+    return statistics(tas, statistic="max", freq=freq)
 
 
+@deprecated("1.0", "atmos.tg_mean")
 @declare_units(tas="[temperature]")
-def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tg_mean(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Mean of daily average temperature.
 
@@ -106,15 +109,16 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     The following would compute for each grid cell of file `tas.day.nc` the mean temperature
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import tg_mean
+    >>> from xclim.compute import tg_mean
     >>> t = xr.open_dataset(path_to_tas_file).tas
     >>> tg = tg_mean(t, freq="QS-DEC")
     """
-    return select_resample_op(tas, op="mean", freq=freq)
+    return statistics(tas, statistic="mean", freq=freq)
 
 
+@deprecated("1.0", "atmos.tg_min")
 @declare_units(tas="[temperature]")
-def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tg_min(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Lowest mean temperature.
 
@@ -141,11 +145,12 @@ def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TGn_j = min(TG_{ij})
     """
-    return select_resample_op(tas, op="min", freq=freq)
+    return statistics(tas, statistic="min", freq=freq)
 
 
+@deprecated("1.0", "atmos.tn_max")
 @declare_units(tasmin="[temperature]")
-def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tn_max(tasmin: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Highest minimum temperature.
 
@@ -172,11 +177,12 @@ def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TNx_j = max(TN_{ij})
     """
-    return select_resample_op(tasmin, op="max", freq=freq)
+    return statistics(tasmin, statistic="max", freq=freq)
 
 
+@deprecated("1.0", "atmos.tn_mean")
 @declare_units(tasmin="[temperature]")
-def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tn_mean(tasmin: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Mean minimum temperature.
 
@@ -203,11 +209,12 @@ def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TN_{ij} = \frac{ \sum_{i=1}^{I} TN_{ij} }{I}
     """
-    return select_resample_op(tasmin, op="mean", freq=freq)
+    return statistics(tasmin, statistic="mean", freq=freq)
 
 
+@deprecated("1.0", "atmos.tn_min")
 @declare_units(tasmin="[temperature]")
-def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tn_min(tasmin: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Lowest minimum temperature.
 
@@ -234,11 +241,12 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TNn_j = min(TN_{ij})
     """
-    return select_resample_op(tasmin, op="min", freq=freq)
+    return statistics(tasmin, statistic="min", freq=freq)
 
 
+@deprecated("1.0", "atmos.tx_max")
 @declare_units(tasmax="[temperature]")
-def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tx_max(tasmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Highest max temperature.
 
@@ -265,11 +273,12 @@ def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TXx_j = max(TX_{ij})
     """
-    return select_resample_op(tasmax, op="max", freq=freq)
+    return statistics(tasmax, statistic="max", freq=freq)
 
 
+@deprecated("1.0", "atmos.tx_mean")
 @declare_units(tasmax="[temperature]")
-def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tx_mean(tasmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Mean max temperature.
 
@@ -296,11 +305,12 @@ def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TX_{ij} = \frac{ \sum_{i=1}^{I} TX_{ij} }{I}
     """
-    return select_resample_op(tasmax, op="mean", freq=freq)
+    return statistics(tasmax, statistic="mean", freq=freq)
 
 
+@deprecated("1.0", "atmos.tx_min")
 @declare_units(tasmax="[temperature]")
-def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tx_min(tasmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Lowest max temperature.
 
@@ -327,14 +337,15 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TXn_j = min(TX_{ij})
     """
-    return select_resample_op(tasmax, op="min", freq=freq)
+    return statistics(tasmax, statistic="min", freq=freq)
 
 
+@deprecated("1.0", "atmos.hot_days")
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def hot_days(
     tasmax: xarray.DataArray,
     thresh: Quantified = "25 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Hot days index.
@@ -364,16 +375,15 @@ def hot_days(
 
        TX_{ij} > TT
     """
-    thresh = convert_units_to(thresh, tasmax)
-    out = threshold_count(tasmax, ">", thresh, freq)
-    return to_agg_units(out, tasmax, "count", deffreq="D")
+    return count_occurrences(tasmax, condition=">", thresh=thresh, freq=freq)
 
 
+@deprecated("1.0", "atmos.frost_days")
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def frost_days(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Frost days index.
@@ -403,13 +413,12 @@ def frost_days(
 
        TN_{ij} < TT
     """
-    frz = convert_units_to(thresh, tasmin)
-    out = threshold_count(tasmin, "<", frz, freq)
-    return to_agg_units(out, tasmin, "count", deffreq="D")
+    return count_occurrences(tasmin, condition="<", thresh=thresh, freq=freq)
 
 
+@deprecated("1.0", "atmos.ice_days")
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
-def ice_days(tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS") -> xarray.DataArray:
+def ice_days(tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Number of ice/freezing days.
 
@@ -438,13 +447,12 @@ def ice_days(tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str 
 
        TX_{ij} < TT
     """
-    frz = convert_units_to(thresh, tasmax)
-    out = threshold_count(tasmax, "<", frz, freq)
-    return to_agg_units(out, tasmax, "count", deffreq="D")
+    return count_occurrences(tasmax, condition="<", thresh=thresh, freq=freq)
 
 
+@deprecated("1.0", "atmos.max_1day_precipitation_amount")
 @declare_units(pr="[precipitation]")
-def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def max_1day_precipitation_amount(pr: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Highest 1-day precipitation amount for a period (frequency).
 
@@ -474,16 +482,17 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS") -> xar
     --------
     The following would compute for each grid cell the highest 1-day total at an annual frequency:
 
-    >>> from xclim.indices import max_1day_precipitation_amount
+    >>> from xclim.compute import max_1day_precipitation_amount
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
     """
-    return select_resample_op(pr, op="max", freq=freq)
+    return statistics(pr, statistic="max", freq=freq)
 
 
+@deprecated("1.0", "atmos.max_n_day_precipitation_amount")
 @declare_units(pr="[precipitation]")
 def max_n_day_precipitation_amount(
-    pr: xarray.DataArray, window: int = 1, freq: str = "YS", **indexer
+    pr: xarray.DataArray, window: int = 1, freq: Freq = "YS", **indexer
 ) -> xarray.DataArray:
     r"""
     Highest precipitation amount cumulated over a n-day moving window.
@@ -503,7 +512,7 @@ def max_n_day_precipitation_amount(
         Indexing parameters to compute the indicator on a temporal subset of the data.
         The subset is taken after the N-day sum, thus including data from up to ``window -1``
         days before the selected period (and none after).
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -514,7 +523,7 @@ def max_n_day_precipitation_amount(
     --------
     The following would compute for each grid cell the highest 5-day total precipitation at an annual frequency:
 
-    >>> from xclim.indices import max_n_day_precipitation_amount
+    >>> from xclim.compute import max_n_day_precipitation_amount
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> out = max_n_day_precipitation_amount(pr, window=5, freq="YS")
     """
@@ -525,8 +534,9 @@ def max_n_day_precipitation_amount(
     return arr.resample(time=freq).max(dim="time").assign_attrs(units=pram.units)
 
 
+@deprecated("1.0", "atmos.max_pr_intensity")
 @declare_units(pr="[precipitation]")
-def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS", **indexer) -> xarray.DataArray:
+def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: Freq = "YS", **indexer) -> xarray.DataArray:
     r"""
     Highest precipitation intensity over a n-hour moving window.
 
@@ -545,7 +555,7 @@ def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS", **
         Indexing parameters to compute the indicator on a temporal subset of the data.
         The subset is taken after the N-hour average, thus including data from up to ``window - 1``
         hours before the selected period, and none after.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -556,7 +566,7 @@ def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS", **
     --------
     The following would compute the maximum 6-hour precipitation intensity at an annual frequency:
 
-    >>> from xclim.indices import max_pr_intensity
+    >>> from xclim.compute import max_pr_intensity
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> out = max_pr_intensity(pr, window=5, freq="YS")
     """
@@ -569,10 +579,11 @@ def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS", **
     return out
 
 
+@deprecated("1.0", "land.snow_depth")
 @declare_units(snd="[length]")
 def snow_depth(
     snd: xarray.DataArray,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     """
     Mean of daily average snow depth.
@@ -594,8 +605,9 @@ def snow_depth(
     return snd.resample(time=freq).mean(dim="time").assign_attrs(units=snd.units)
 
 
+@deprecated("1.0", "atmos.sfcWind_max")
 @declare_units(sfcWind="[speed]")
-def sfcWind_max(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
+def sfcWind_max(sfcWind: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Highest daily mean wind speed.
 
@@ -627,15 +639,16 @@ def sfcWind_max(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray
     The following would compute for each grid cell the maximum wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import sfcWind_max
+    >>> from xclim.compute import sfcWind_max
     >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
     >>> fg_max = sfcWind_max(fg, freq="QS-DEC")
     """
     return sfcWind.resample(time=freq).max(dim="time").assign_attrs(units=sfcWind.units)
 
 
+@deprecated("1.0", "atmos.sfcWind_mean")
 @declare_units(sfcWind="[speed]")
-def sfcWind_mean(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
+def sfcWind_mean(sfcWind: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Mean of daily mean wind speed.
 
@@ -667,15 +680,16 @@ def sfcWind_mean(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArra
     The following would compute for each grid cell the mean wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import sfcWind_mean
+    >>> from xclim.compute import sfcWind_mean
     >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
     >>> fg_mean = sfcWind_mean(fg, freq="QS-DEC")
     """
     return sfcWind.resample(time=freq).mean(dim="time").assign_attrs(units=sfcWind.units)
 
 
+@deprecated("1.0", "atmos.sfcWind_min")
 @declare_units(sfcWind="[speed]")
-def sfcWind_min(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
+def sfcWind_min(sfcWind: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Lowest daily mean wind speed.
 
@@ -707,15 +721,16 @@ def sfcWind_min(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray
     The following would compute for each grid cell the minimum wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import sfcWind_min
+    >>> from xclim.compute import sfcWind_min
     >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
     >>> fg_min = sfcWind_min(fg, freq="QS-DEC")
     """
     return sfcWind.resample(time=freq).min(dim="time").assign_attrs(units=sfcWind.units)
 
 
+@deprecated("1.0", "atmos.sfcWindmax_max")
 @declare_units(sfcWindmax="[speed]")
-def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
+def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Highest maximum wind speed.
 
@@ -747,14 +762,15 @@ def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Dat
     The following would compute for each grid cell of the dataset the extreme maximum wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import sfcWindmax_max
+    >>> from xclim.compute import sfcWindmax_max
     >>> max_sfcWindmax = sfcWindmax_max(sfcWindmax_dataset, freq="QS-DEC")
     """
     return sfcWindmax.resample(time=freq).max(dim="time").assign_attrs(units=sfcWindmax.units)
 
 
+@deprecated("1.0", "atmos.sfcWindmax_mean")
 @declare_units(sfcWindmax="[speed]")
-def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
+def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Mean of daily maximum wind speed.
 
@@ -786,14 +802,15 @@ def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Da
     The following would compute for each grid cell of the dataset the mean of maximum wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import sfcWindmax_mean
+    >>> from xclim.compute import sfcWindmax_mean
     >>> mean_sfcWindmax = sfcWindmax_mean(sfcWindmax_dataset, freq="QS-DEC")
     """
     return sfcWindmax.resample(time=freq).mean(dim="time").assign_attrs(units=sfcWindmax.units)
 
 
+@deprecated("1.0", "atmos.sfcWindmax_min")
 @declare_units(sfcWindmax="[speed]")
-def sfcWindmax_min(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
+def sfcWindmax_min(sfcWindmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Lowest daily maximum wind speed.
 
@@ -825,7 +842,7 @@ def sfcWindmax_min(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Dat
     The following would compute for each grid cell of the dataset the minimum of maximum wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import sfcWindmax_min
+    >>> from xclim.compute import sfcWindmax_min
     >>> min_sfcWindmax = sfcWindmax_min(sfcWindmax_dataset, freq="QS-DEC")
     """
     return sfcWindmax.resample(time=freq).min(dim="time").assign_attrs(units=sfcWindmax.units)

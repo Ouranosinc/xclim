@@ -54,6 +54,7 @@ from copy import deepcopy
 from pathlib import Path
 
 from xclim.core.formatting import AttrFormatter, default_formatter
+from xclim.core.utils import CaseInsensitiveDict
 
 TRANSLATABLE_ATTRS = [
     "long_name",
@@ -61,7 +62,6 @@ TRANSLATABLE_ATTRS = [
     "comment",
     "title",
     "abstract",
-    "keywords",
 ]
 """
 List of attributes to consider translatable when generating locale dictionaries.
@@ -132,7 +132,7 @@ def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str,
         return locale, deepcopy(_LOCALES[locale])
 
     if isinstance(locale[1], dict):
-        trans = locale[1]
+        trans = CaseInsensitiveDict(locale[1])
     else:
         # Thus, a string pointing to a json file
         trans = read_locale_file(locale[1])
@@ -147,22 +147,25 @@ def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str,
 
 def get_local_attrs(
     indicator: str | Sequence[str],
-    *locales,  # : str | Sequence[str] | tuple[str, dict],
+    locale: str,
+    var_name: str = None,
     names: Sequence[str] | None = None,
     append_locale_name: bool = True,
 ) -> dict:
     r"""
-    Get all attributes of an indicator in the requested locales.
+    Get all attributes of an indicator in the requested locale.
 
     Parameters
     ----------
     indicator : str or sequence of strings
-        Indicator's class name, usually the same as in `xc.core.indicator.registry`.
+        Indicator's identifier, usually the same as in `xc.core.indicator.registry`.
         If multiple names are passed, the attrs from each indicator are merged,
         with the highest priority set to the first name.
-    *locales : str or tuple of str
+    locale : str
         IETF language tag or a tuple of the language tag and a translation dict, or a tuple of the language tag
         and a path to a json file defining translation of attributes.
+    var_name : str, optional
+        For multi-output indicator, this is the name of the variable for which we request attributes.
     names : sequence of str, optional
         If given, only returns translations of attributes in this list.
     append_locale_name : bool
@@ -171,7 +174,7 @@ def get_local_attrs(
     Returns
     -------
     dict
-        All CF attributes available for given indicator and locales.
+        All attributes available for given indicator and locales.
         Warns and returns an empty dict if none were available.
 
     Raises
@@ -182,25 +185,24 @@ def get_local_attrs(
     if isinstance(indicator, str):
         indicator = [indicator]
 
-    if not append_locale_name and len(locales) > 1:
-        raise ValueError("`append_locale_name` cannot be False if multiple locales are requested.")
+    loc_name, loc_dict = get_local_dict(locale)
+    loc_name = f"_{loc_name}" if append_locale_name else ""
+
+    local_attrs = {}
+    for ind in reversed(indicator):
+        local_attrs = local_attrs | loc_dict.get(ind.lower(), {})
+        if var_name:
+            local_attrs = local_attrs | loc_dict.get(f"{ind}.{var_name}".lower(), {})
 
     attrs = {}
-    for locale in locales:
-        loc_name, loc_dict = get_local_dict(locale)
-        loc_name = f"_{loc_name}" if append_locale_name else ""
-        local_attrs = loc_dict.get(indicator[-1], {})
-        for other_ind in indicator[-2::-1]:
-            local_attrs.update(loc_dict.get(other_ind, {}))
-        if not local_attrs:
-            warnings.warn(
-                f"Attributes of indicator {', '.join(indicator)} in language {locale} "
-                "were requested, but none were found."
-            )
-        else:
-            for name in TRANSLATABLE_ATTRS:
-                if (names is None or name in names) and name in local_attrs:
-                    attrs[f"{name}{loc_name}"] = local_attrs[name]
+    if not local_attrs:
+        warnings.warn(
+            f"Attributes of indicator {', '.join(indicator)} in language {locale} were requested, but none were found."
+        )
+    else:
+        for name in TRANSLATABLE_ATTRS:
+            if (names is None or name in names) and name in local_attrs:
+                attrs[f"{name}{loc_name}"] = local_attrs[name]
     return attrs
 
 
@@ -221,13 +223,13 @@ def get_local_formatter(
     AttrFormatter
         A locale-based formatter object instance.
     """
-    _, loc_dict = get_local_dict(locale)
+    loc_name, loc_dict = get_local_dict(locale)
     if "attrs_mapping" in loc_dict:
         attrs_mapping = loc_dict["attrs_mapping"].copy()
         mods = attrs_mapping.pop("modifiers")
         return AttrFormatter(attrs_mapping, mods)
 
-    warnings.warn("No `attrs_mapping` entry found for locale {loc_name}, using default (english) formatter.")
+    warnings.warn(f"No `attrs_mapping` entry found for locale {loc_name}, using default (English) formatter.")
     return default_formatter
 
 
@@ -265,14 +267,13 @@ def read_locale_file(filename, module: str | None = None, encoding: str = "UTF8"
     Returns
     -------
     dict
-        The locale dictionary.
+        The locale dictionary. All entries are lowercase.
     """
-    locdict: dict[str, dict]
     with open(filename, encoding=encoding) as f:
-        locdict = json.load(f)
+        data = json.load(f)
 
-    if module is not None:
-        locdict = {(k if k == "attrs_mapping" else f"{module}.{k}"): v for k, v in locdict.items()}
+    modstr = f"{module}." if module is not None else ""
+    locdict = CaseInsensitiveDict({(k if k == "attrs_mapping" else f"{modstr}{k}"): v for k, v in data.items()})
     return locdict
 
 
@@ -297,7 +298,7 @@ def load_locale(locdata: str | Path | dict[str, dict], locale: str) -> None:
         _LOCALES[locale] = locdata
 
 
-def generate_local_dict(locale: str, init_english: bool = False) -> dict:
+def generate_local_dict(locale: str, init_english: bool = False) -> CaseInsensitiveDict:
     """
     Generate a dictionary with keys for each indicator and translatable attributes.
 
@@ -321,32 +322,35 @@ def generate_local_dict(locale: str, init_english: bool = False) -> dict:
             if ind_name != "attrs_mapping" and ind_name not in registry:
                 attrs.pop(ind_name)
     else:
-        attrs = {}
+        attrs = CaseInsensitiveDict()
 
     attrs_mapping = attrs.setdefault("attrs_mapping", {})
     attrs_mapping.setdefault("modifiers", [""])
     for key, value in default_formatter.mapping.items():
         attrs_mapping.setdefault(key, [value[0]])
 
-    eng_attr = ""
     for ind_name, indicator in registry.items():
         ind_attrs = attrs.setdefault(ind_name, {})
-        for translatable_attr in set(TRANSLATABLE_ATTRS).difference(set(indicator._cf_names)):
+        for prop in indicator._translatable_props:
             if init_english:
-                eng_attr = getattr(indicator, translatable_attr)
-                if not isinstance(eng_attr, str):
-                    eng_attr = ""
-            ind_attrs.setdefault(f"{translatable_attr}", eng_attr)
+                eng = getattr(indicator, prop)
+                if not isinstance(eng, str):
+                    eng = ""
+            else:
+                eng = ""
+            ind_attrs.setdefault(prop, eng)
 
-        for cf_attrs in indicator.cf_attrs:
+        for atts in indicator.attrs:
             # In the case of single output, put var attrs in main dict
-            if len(indicator.cf_attrs) > 1:
-                ind_attrs = attrs.setdefault(f"{ind_name}.{cf_attrs['var_name']}", {})
+            if len(indicator.attrs) > 1:
+                ind_attrs = attrs.setdefault(f"{ind_name}.{atts.var_name}", {})
 
-            for translatable_attr in set(TRANSLATABLE_ATTRS).intersection(set(indicator._cf_names)):
+            for attr in indicator._translatable_attrs:
                 if init_english:
-                    eng_attr = cf_attrs.get(translatable_attr)
-                    if not isinstance(eng_attr, str):
-                        eng_attr = ""
-                ind_attrs.setdefault(f"{translatable_attr}", eng_attr)
+                    eng = atts.get(attr)
+                    if not isinstance(eng, str):
+                        eng = ""
+                else:
+                    eng = ""
+                ind_attrs.setdefault(attr, eng)
     return attrs

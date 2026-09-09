@@ -22,6 +22,7 @@ from xclim.core.calendar import (
     max_doy,
     parse_offset,
     percentile_doy,
+    resample_doy,
     stack_periods,
     time_bnds,
     unstack_periods,
@@ -137,6 +138,26 @@ def test_percentile_doy_invalid():
 )
 def test_compare_offsets(freqA, op, freqB, exp):
     assert compare_offsets(freqA, op, freqB) is exp
+
+
+@pytest.mark.parametrize("src_ds", [True, False])
+@pytest.mark.parametrize("tgt_ds", [True, False])
+def test_resample_doy(src_ds, tgt_ds):
+    source = xr.DataArray(np.arange(365), coords=[np.arange(1, 366)], dims="dayofyear")
+    if src_ds:
+        source = source.rename("data").to_dataset()
+
+    time = xr.date_range("2000-01-01", "2001-12-31", freq="D", calendar="noleap")
+    target = xr.DataArray(np.arange(len(time)), coords=[time], dims="time")
+    if tgt_ds:
+        target = target.rename("data").to_dataset()
+
+    out = resample_doy(source, target)
+
+    if src_ds:
+        assert out.data.sel(time="2001-01-02") == 1
+    else:
+        assert out.sel(time="2001-01-02") == 1
 
 
 def test_adjust_doy_360_to_366():

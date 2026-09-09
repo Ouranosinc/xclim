@@ -5,7 +5,7 @@ import pytest
 import xarray as xr
 
 from xclim import atmos
-from xclim.indices.fire import (
+from xclim.compute.fire import (
     griffiths_drought_factor,
     keetch_byram_drought_index,
     mcarthur_forest_fire_danger_index,

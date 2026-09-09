@@ -270,7 +270,7 @@ def kmeans_reduce_ensemble(
 
         import xclim
         from xclim.ensembles import create_ensemble, kmeans_reduce_ensemble
-        from xclim.indices import hot_spell_frequency
+        from xclim.compute import hot_spell_frequency
 
         # Start with ensemble datasets for temperature:
 
@@ -472,8 +472,7 @@ def plot_rsqprofile(fig_data: dict) -> None:
     """
     if not MPL_INSTALLED:
         raise ModuleNotFoundError("Matplotlib is not installed. No plotting functions are supported.")
-    else:
-        import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # pylint: disable=import-outside-toplevel
 
     rsq = fig_data["rsq"]
     n_sim = fig_data["realizations"]

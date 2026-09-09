@@ -1,34 +1,33 @@
 from __future__ import annotations
 
+import importlib.util as _util
+
 import numpy as np
 import pytest
 import xarray as xr
 
-from xclim import indices as xci
+import xclim.compute as xcc
 from xclim import land
 from xclim.core.units import convert_units_to
 
-try:
-    import pymannkendall
-except ModuleNotFoundError:
-    pymannkendall = None
+HAS_PYMANNKENDALL = _util.find_spec("pymannkendall")
 
 
 class TestBaseFlowIndex:
-    def test_simple(self, q_series):
+    def test_simple(self, rivo_series):
         a = np.zeros(365) + 10
         a[10:17] = 1
-        q = q_series(a)
-        out = xci.base_flow_index(q)
+        q = rivo_series(a)
+        out = xcc.base_flow_index(q)
         np.testing.assert_array_equal(out, 1.0 / a.mean())
 
 
 class TestRBIndex:
-    def test_simple(self, q_series):
+    def test_simple(self, rivo_series):
         a = np.zeros(365)
         a[10] = 10
-        q = q_series(a)
-        out = xci.rb_flashiness_index(q)
+        q = rivo_series(a)
+        out = xcc.rb_flashiness_index(q)
         np.testing.assert_array_equal(out, 2)
 
 
@@ -47,7 +46,7 @@ class TestStandardizedStreamflow:
             q,
             freq="MS",
             window=1,
-            dist="genextreme",
+            dist="fisk",
             method="APP",
             fitkwargs={"floc": 0},
         )
@@ -55,7 +54,7 @@ class TestStandardizedStreamflow:
             qMM,
             freq="MS",
             window=1,
-            dist="genextreme",
+            dist="fisk",
             method="APP",
             fitkwargs={"floc": 0},
         )
@@ -72,21 +71,11 @@ class TestStandardizedStreamflow:
             q,
             freq=None,
             window=1,
-            dist="genextreme",
+            dist="fisk",
             method="APP",
             fitkwargs={"floc": 0},
         )
         assert np.isnan(out1[{"time": 10}])
-
-
-class TestSnwMax:
-    def test_simple(self, snw_series):
-        a = np.zeros(366)
-        a[10:20] = np.arange(0, 10)
-        snw = snw_series(a, start="1999-01-01")
-        out = xci.snw_max(snw, freq="YS")
-        np.testing.assert_array_equal(out, [9, 0])
-        assert out.units == "kg m-2"
 
 
 class TestSnwMaxDoy:
@@ -94,7 +83,7 @@ class TestSnwMaxDoy:
         a = np.zeros(366)
         a[10] = 10
         snw = snw_series(a, start="1999-01-01")
-        out = xci.snw_max_doy(snw, freq="YS")
+        out = xcc.snw_max_doy(snw, freq="YS")
         np.testing.assert_array_equal(out, [11, np.nan])
         assert out.attrs["units"] == "1"
 
@@ -105,7 +94,7 @@ class TestSnowMeltWEMax:
         a[10:20] = np.arange(0, 10)
         a[20:25] = np.arange(10, 0, -2)
         snw = snw_series(a, start="1999-07-01")
-        out = xci.snow_melt_we_max(snw)
+        out = xcc.snow_melt_we_max(snw)
         np.testing.assert_array_equal(out, 6)
         assert out.units == "kg m-2"
 
@@ -123,37 +112,37 @@ class TestMeltandPrecipMax:
         b[11] = 1.0 / 60**2 / 24
         pr = pr_series(b, start="1999-07-01")
 
-        out = xci.melt_and_precip_max(snw, pr)
+        out = xcc.melt_and_precip_max(snw, pr)
         np.testing.assert_array_equal(out, 2)
         assert out.units == "kg m-2"
 
 
 class TestFlowindex:
-    def test_simple(self, q_series):
+    def test_simple(self, rivo_series):
         a = np.ones(365 * 2) * 10
         a[10:50] = 50
-        q = q_series(a)
-        out = xci.flow_index(q, 0.95)
+        q = rivo_series(a)
+        out = xcc.flow_index(q, 0.95)
         np.testing.assert_array_equal(out, 5)
 
 
 class TestHighflowfrequency:
-    def test_simple(self, q_series):
+    def test_simple(self, rivo_series):
         a = np.zeros(365 * 2)
         a[50:60] = 10
         a[200:210] = 20
-        q = q_series(a)
-        out = xci.high_flow_frequency(q, 9, freq="YS")
+        q = rivo_series(a)
+        out = xcc.high_flow_frequency(q, 9, freq="YS")
         np.testing.assert_array_equal(out, [20, 0])
 
 
 class TestLowflowfrequency:
-    def test_simple(self, q_series):
+    def test_simple(self, rivo_series):
         a = np.ones(365 * 2) * 10
         a[50:60] = 1
         a[200:210] = 1
-        q = q_series(a)
-        out = xci.low_flow_frequency(q, 0.2, freq="YS")
+        q = rivo_series(a)
+        out = xcc.low_flow_frequency(q, 0.2, freq="YS")
 
         np.testing.assert_array_equal(out, [20, 0])
 
@@ -164,7 +153,7 @@ class TestAntecedentPrecipitationIndex:
         a[15:20] = 20
         a[35:40] = 0
         pr = pr_series(a, units="mm d-1")
-        out = xci.antecedent_precipitation_index(pr)
+        out = xcc.antecedent_precipitation_index(pr)
         np.testing.assert_allclose(out.max(), [101.65], atol=1e-2)
         np.testing.assert_allclose(out.min(), [13.83], atol=1e-2)
 
@@ -173,14 +162,14 @@ class TestAntecedentPrecipitationIndex:
         a[25] = np.nan
         pr = pr_series(a, units="mm d-1")
         window = 7
-        out = xci.antecedent_precipitation_index(pr, window=window, p_exp=0.935)
+        out = xcc.antecedent_precipitation_index(pr, window=window, p_exp=0.935)
         np.testing.assert_array_equal(out[25], [np.nan])
 
     def test_nan_start_window(self, pr_series):
         a = np.ones(50) * 10
         pr = pr_series(a, units="mm d-1")
         window = 7
-        out = xci.antecedent_precipitation_index(pr, window=window, p_exp=0.935)
+        out = xcc.antecedent_precipitation_index(pr, window=window, p_exp=0.935)
         np.testing.assert_array_equal(out[: window - 1], np.nan)
 
     def test_manual_calc(self, pr_series):
@@ -188,7 +177,7 @@ class TestAntecedentPrecipitationIndex:
         pr = pr_series(a, units="mm d-1")
         window = 7
         p_exp = 0.935
-        out = xci.antecedent_precipitation_index(pr, window=window, p_exp=p_exp)
+        out = xcc.antecedent_precipitation_index(pr, window=window, p_exp=p_exp)
 
         out_manual = np.zeros(out.shape) * np.nan
         for idx in range(pr.shape[0] - window + 1):
@@ -200,7 +189,7 @@ class TestAntecedentPrecipitationIndex:
 
 
 class TestRunoffRatio:
-    def test_simple(self, q_series, area_series, pr_series):
+    def test_simple(self, rivo_series, area_series, pr_series):
         # 1 years of daily data
         q = np.ones(365, dtype=float) * 10
         pr = np.ones(365, dtype=float) * 20
@@ -210,9 +199,9 @@ class TestRunoffRatio:
         pr[270:300] = 10
         a = 1000
         a = area_series(a)
-        q = q_series(q, start="2000-01-01")
+        q = rivo_series(q, start="2000-01-01")
         pr = pr_series(pr, units="mm/hr", start="2000-01-01")
-        out = xci.runoff_ratio(q, pr, area=a, freq="YS")
+        out = xcc.runoff_ratio(q, pr, area=a, freq="YS")
         np.testing.assert_allclose(out.values, 0.0018, atol=1e-15)
 
 
@@ -229,12 +218,12 @@ class TestAnnualAridityIndex:
         pr = pr_series(pr, start="2001-01-01")
         pet = evspsblpot_series(pet, start="2001-01-01")
 
-        out = xci.aridity_index(pr, pet)
+        out = xcc.aridity_index(pr, pet)
         np.testing.assert_allclose(out, [2.0, 1.25], rtol=1e-3, atol=0)
 
 
 class TestLagSnowpackFlowPeaks:
-    def test_simple(self, snw_series, q_series):
+    def test_simple(self, snw_series, rivo_series):
         # 1 years of daily data (2 values due to freq resampling to water year "YS-OCT")
         a = np.zeros(365)
 
@@ -243,7 +232,7 @@ class TestLagSnowpackFlowPeaks:
         # Year 2: 1 day of snw = 5 kg m-2
         a[300:301] = 5
 
-        # Create a daily time index --- important to start the snw series synchronized with the q_series
+        # Create a daily time index --- important to start the snw series synchronized with the rivo_series
         snw = snw_series(a, start="2000-01-01")
 
         b = np.zeros(365)
@@ -253,12 +242,12 @@ class TestLagSnowpackFlowPeaks:
         b[310:345] = 5
 
         # Create a daily time index
-        q = q_series(b)
+        q = rivo_series(b)
 
-        out = xci.lag_snowpack_flow_peaks(snw, q)
+        out = xcc.lag_snowpack_flow_peaks(snw, q)
         np.testing.assert_allclose(out, [17.0, 27.0], atol=1e-14)
 
-    def test_no_snow(self, snw_series, q_series):
+    def test_no_snow(self, snw_series, rivo_series):
         # 1 years of daily data (2 values due to freq resampling to water year "YS-OCT")
         a = np.zeros(365)
 
@@ -272,23 +261,23 @@ class TestLagSnowpackFlowPeaks:
         b[310:345] = 5
 
         # Create a daily time index
-        q = q_series(b)
+        q = rivo_series(b)
 
-        out = xci.lag_snowpack_flow_peaks(snw, q)
+        out = xcc.lag_snowpack_flow_peaks(snw, q)
         np.testing.assert_allclose(out, [np.nan, np.nan], atol=1e-14)
         # no longer the days between the start of the water year and the mean of high flows
 
 
 class TestSenSlope:
-    @pytest.mark.skipif(pymannkendall is None, reason="This requires pymankendall")
-    def test_simple(self, q_series):
+    @pytest.mark.skipif(not HAS_PYMANNKENDALL, reason="This requires the 'pymannkendall' library.")
+    def test_simple(self, rivo_series):
         # 5 years of increasing data with slope of 1
         q = np.arange(365 * 5)
         # Create a daily time index
-        q = q_series(q, start="2000-01-01")
+        q = rivo_series(q, start="2000-01-01")
         var_name = ["sen_slope", "p_value"]
-        out_sea = xr.Dataset(dict(zip(var_name, xci.sen_slope(q, freq="QS-DEC"), strict=False)))
-        out_year = xr.Dataset(dict(zip(var_name, xci.sen_slope(q, freq="YS-DEC"), strict=False)))
+        out_sea = xr.Dataset(dict(zip(var_name, xcc.sen_slope(q, freq="QS-DEC"), strict=False)))
+        out_year = xr.Dataset(dict(zip(var_name, xcc.sen_slope(q, freq="YS-DEC"), strict=False)))
         out = xr.concat([out_sea, out_year], dim="season")
         # verify Sen_slopes
         np.testing.assert_allclose(out.sen_slope.values, [360.0, 365.0, 365.0, 365.0, 360.0], atol=1e-15)
@@ -299,8 +288,8 @@ class TestSenSlope:
 
 
 class TestSenSlopeRatio:
-    @pytest.mark.skipif(pymannkendall is None, reason="This requires pymankendall")
-    def test_simple(self, q_series):
+    @pytest.mark.skipif(not HAS_PYMANNKENDALL, reason="This requires the 'pymannkendall' library.")
+    def test_simple(self, rivo_series):
         # 5 years of increasing data with slope of 1
         q = np.arange(365 * 5)
 
@@ -308,11 +297,11 @@ class TestSenSlopeRatio:
         qsim = np.arange(365 * 5) * 2
 
         # Create a daily time index
-        q = q_series(q, start="2000-01-01")
-        qsim = q_series(qsim, start="2000-01-01")
+        q = rivo_series(q, start="2000-01-01")
+        qsim = rivo_series(qsim, start="2000-01-01")
         var_name = ["sen_slope", "p_value", "sen_slope_sim", "p_value_sim", "ratio"]
-        out_sea = xr.Dataset(dict(zip(var_name, xci.sen_slope_ratio(q, qsim, freq="QS-DEC"), strict=False)))
-        out_year = xr.Dataset(dict(zip(var_name, xci.sen_slope_ratio(q, qsim, freq="YS-DEC"), strict=False)))
+        out_sea = xr.Dataset(dict(zip(var_name, xcc.sen_slope_ratio(q, qsim, freq="QS-DEC"), strict=False)))
+        out_year = xr.Dataset(dict(zip(var_name, xcc.sen_slope_ratio(q, qsim, freq="YS-DEC"), strict=False)))
         out = xr.concat([out_sea, out_year], dim="season")
         # verify Sen_slopes
         np.testing.assert_allclose(out.sen_slope.values, [360.0, 365.0, 365.0, 365.0, 360.0], atol=1e-15)
@@ -328,12 +317,12 @@ class TestSenSlopeRatio:
 
 
 class TestBFI_seasonal_and_winter_to_summer_ratio:
-    def test_simple(self, q_series):
+    def test_simple(self, rivo_series):
         # 5 years of increasing data with slope of 1
         a = np.ones(365)
-        q = q_series(a, start="2000-12-01")
+        q = rivo_series(a, start="2000-12-01")
         q = q.where(q.time.dt.season != "DJF", 20)
         q = q.where(q.time.dt.season != "JJA", 5)
 
-        bfi, bfi_ratio = xci.base_flow_index_seasonal_ratio(q)
+        bfi, bfi_ratio = xcc.base_flow_index_seasonal_ratio(q)
         np.testing.assert_allclose(bfi_ratio, 0.902174, atol=1e-6)

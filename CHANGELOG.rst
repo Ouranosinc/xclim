@@ -2,19 +2,99 @@
 Changelog
 =========
 
-v0.61.2 (unreleased)
+`Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
+------------------------------------------------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`).
+
+Announcements
+^^^^^^^^^^^^^
+This release constitutes a major breaking change from the previous stable release (`v0.x`) and introduces several new features, enhancements, and API changes.
+Users are strongly encouraged to review the breaking changes section below to ensure compatibility with their existing codebases.
+Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version.
+The `xclim` library is now considered to be production-level stable.
+
+Major changes
+^^^^^^^^^^^^^
+* Module ``xclim.indices``  has been renamed to ``xclim.compute``. The functions made to build indicators are now called "[index-like] compute functions" and the word "indices" is now avoided as much as possible. (:issue:`2320`, :pull:`2330`).
+* Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures. (:pull:`2258`):
+    * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
+    * A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
+* Refactor of the ``xclim.core.indicator.Indicator`` class itself  (:pull:`2397`). Most breaking changes are:
+    * Output attributes are stored in ``Indicator.attrs`` (renamed from ``cf_attrs``), which is a list of ``xclim.core.indicator.Output`` objects (not dictionaries).
+    * Removal of ``Indicator.from_dict``. Renamed ``Indicator.translate_attrs`` to ``Indicator.translate``.
+    * The ``xclim.core.indicator.registry`` now holds ``Indicator`` _instances_ (not classes) and is case-insensitive.
+    * "Virtual submodules" were transformed into ``xclim.core.collection.IndicatorCollection`` instances (and not actual python modules). Indicators created this way automatically have the collection's name prepended to their identifier.
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* The `xclim` command-line tool now accepts both ``-h`` and ``--help`` to show the help summary. (:pull:`2316`).
+* The `select_time` function has been improved. (:issue:`2365`, :issue:`2393`, :pull:`2374`):
+    * Open `date_bounds` and `doy_bounds` are now supported (i.e., `None` as start or end).
+    * The `include_doy_bounds_nans` argument has been added to control whether NaN values in the bounds should be filled or not. When set to `True`, missing values in the start or end bounds are replaced by the start and end of the period, respectively.
+    * The `bounds_freq` argument has been added to allow users to specify the frequency to use when using open `date_bounds`.
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `xclim` has fully dropped Python 3.10 and `numpy` below v2.0. Python 3.11+ coding conventions are now accepted. (:pull:`2355`).
+* Legacy imports, links, and documentation for `xsdba` have been removed. (:pull:`2342`).
+* Installation recipes have been significantly modified to mimic conventions employed by `xarray`. (:pull:`2316`). Most development-related recipes are now installed via ``dependency-groups`` (`PEP-735 <https://peps.python.org/pep-0735/>`_) and ``optional-dependencies`` are as follows:
+    * ``dependency-groups``: ``lint`` (linting tools), ``notebooks`` (minimum for interactive notebooks), ``test`` (minimum for running tests), ``docs`` (minimum for building docs), ``test-notebooks`` (minimum for running notebook tests), ``dev`` (full suite for local development).
+    * ``optional-dependencies``: ``bias-adjustment`` (`xsdba` and others), ``performance`` (speedups), ``plot`` (plotting), ``types`` (static typing support).
+* The ``complete`` recipe has been removed due to design issues. (:pull:`2355`).
+* For PEP-735 support, `xclim` now requires modern `pip` (>=25.2) and `tox` (>=4.34). (:pull:`2316`).
+* `mypy` has been replaced with `ty` as the type checking/inferencing tool and is now run on GitHub Workflows alongside `pylint`.
+  While most checks are currently disabled, these will be progressively enforced in subsequent updates. (:pull:`2355`).
+* Previously deprecated indicators have been removed:
+    * ``xclim.indicators.land.snd_to_snow`` -> ``xclim.indicators.convert.snd_to_snow``
+    * ``xclim.indicators.land.snow_to_snd`` -> ``xclim.indicators.convert.snow_to_snd``
+    * ``xclim.indicators.convert.tg`` -> ``xclim.indicators.convert.mean_temperature_from_max_and_min``
+* The required versions for many core dependencies have been updated: `numba` (>=0.60.0), `numpy` (>=2.0), `pip` (>=26.1), `scikit-learn` (>=1.5.0), `xarray` (>=2024.6.0,!=2024.10.0). (:pull:`2355`).
+* `pre-commit` has been replaced by `prek`. `prek` is a `pre-commit-config.yml` compatible reimplementation built in Rust. (:pull:`2355`).
+* Approximate method `APP` not allowed anymore when using the `genextreme` distribution for standardized indices (e.g. ``xclim.indicators.atmos.standardized_precipitation_index`` and similar indicators).
+* The output of ``xclim.compute.stats.parametric_cdf`` has a dimension `v` instead `cdf` (`cdf` more appropriately describes the output variable).
+* ``mask_between_doys`` has been renamed to ``select_between_doys``. (:pull:`2374`):
+    * The function now returns the selected values instead of a boolean mask.
+    * For array-like ``doy_bounds`` without ``time`` dimension, the start and end bounds must now be consecutive according to the frequency (default: ``freq="YS"``). Otherwise, the indexing is invalid and no data are selected.
+* Variable `q` has been renamed to `rivo` in hydrological indicators (``xclim.indicators.land``) to follow modern naming conventions. ``xclim.land.doy_q{min|max}`` are renamed to ``xclim.land.rivo_{min|max}_doy``. (:issue:`2407`, :pull:`2408`).
+* Translation: ``xclim.core.locales.get_local_attrs`` has been rewritten and only accepts a single "locale" now. Locale dictionaries are now case-insensitive. (:pull:`2397`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* The `Makefile` has been adjusted to install libraries in advance (via ``python -m pip install --silent --group ...``) when attempting to run commands reliant on specific Python tools. (:pull:`2316`).
+* `tox.toml` has been updated to use ``dependency-groups`` to determine necessary libraries needed for environments, and relies entirely on the `Makefile` for running checks. (:pull:`2316`).
+* Documentation has been adjusted to reflect changes to environment setup required by developers/contributors. (:pull:`2316`).
+* The `Makefile` now defines typing-relevant checks (``make typing``; dependent on ``make install-typing``) that are enforced in GitHub Workflows. (:pull:`2355`).
+* Call signature typing for many indices have been better identified. The ``cast`` function (used to force expected variable types of internal objects) is now less prevalent within the code base. (:pull:`2355`).
+* `tox.toml` now uses the build-composition API, requiring `tox >=4.52.0`. (:pull:`2355`).
+* The LaTeX formulas and tables of many indice docstrings were failing to render in ReadTheDocs due to small syntax typos. These have been addressed. (:pull:`2355`).
+* A page has been added to the documentation (`governance.rst`) that describes the method through which decisions concerning `xclim` are made as well as the responsibilities of maintainers. (:pull:`2391`).
+* The security policy now details a brief security assurance that discusses the measures taken to ensure source code and package integrity. (:pull:`2391`).
+* Updated `pylint` to use v4.0+ standards and addressed several small linting issues. (:pull:`2409`).
+* Project metadata now compatible with `flit >=4.0` standards. (:pull:`2412`).
+* On `bump release`, the `CHANGELOG.rst` file is now automatically updated to set the version title and release date. (:pull:`2413`).
+* `AUTHORS.rst` is now bundled in the `license-files` of packaged wheels. (:pull:`2413`).
+
+v0.62.0 (2026-08-17)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sascha Hofmann (:user:`saschahofmann`).
+
+Announcements
+^^^^^^^^^^^^^
+**This is the last planned "minor" release for version 0.x of `xclim`**.
+All further development of `xclim` will proceed on the `v1` candidate branch (`dev-v099`) until the release of `v1.0.0`.
+No new features will be accepted for `v0.x` and existing Pull Requests currently targeting `main` will be rebased/merged.
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.indices.helpers.make_hourly_temperature`` now accepts `infill_polar_days`. If set to `True`, this means that polar days and nights are set to 24 and 0 hours duration, respectively. The default behaviour is unchanged (`infill_polar_days=False`) and fills these cases with NaNs. (:issue:`2381`, :pull:`2382`).
 * Run length indices now support a quantile reducer. (:pull:`2369`).
+* Implemented two new indicators: ``xclim.atmos.day_to_day_temperature_variability`` and ``xclim.atmos.precipitation_concentration_index``. (:issue:`2356`, :pull:`2363`.)
+* ``xclim.ensembles.robustness_fractions`` now accepts `strict_sign` which can be set to false to include zero-change in both positive and negative fractions. Default behaviour (True) is unchanged. (:pull:`2387`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Fix ``maximum_consecutive_*`` indicators to harmonize them with their docstring, add ``op`` argument to control comparison and fix some non-existing standard names. (:issue:`2368`, :pull:`2370`).
-* `xdoctest` is no longer required to run the doctests and has been removed from the development dependencies. (:pull:`2383`)
+* `xdoctest` is no longer required to run the doctests and has been removed from the development dependencies. (:pull:`2383`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -22,7 +102,7 @@ Internal changes
     * Adjusted the token creation permissions to prevent creating tokens with unnecessary access privileges.
     * ReadTheDocs OS version updated to ``ubuntu-26.04``.
     * ``workflow-warning.yml`` now simply uses GitHub API calls.
-* Due to a regression, `pytest` is now pinned below v9.1 when running doctests with `tox`. (:pull:`2380`)
+* Due to a regression, `pytest` is now pinned below v9.1 when running doctests with `tox`. (:pull:`2380`).
 
 v0.61.1 (2026-05-25)
 --------------------

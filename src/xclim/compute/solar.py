@@ -9,11 +9,11 @@ import cftime
 import numba as nb
 import numpy as np
 import xarray as xr
+from packaging.version import Version
 from xarray import CFTimeIndex
+from xarray import __version__ as __xr_version__
 
-try:
-    from xarray.coding.calendar_ops import _datetime_to_decimal_year
-except ImportError:
+if Version(__xr_version__) >= Version("24.9.0"):
     XR2409 = True
 else:
     XR2409 = False
@@ -30,17 +30,17 @@ import warnings
 
 import pandas as pd
 
-from xclim.core import DayOfYearStr, Quantified
-from xclim.core.calendar import ensure_cftime_array, get_calendar, parse_offset, select_time
-from xclim.core.formatting import update_history
-from xclim.core.units import convert_units_to, to_agg_units
-from xclim.core.utils import _chunk_like
-from xclim.indices.helpers import (
+from xclim.compute.helpers import (
     _add_one_day,
     _wrap_radians,
     accumulate_between_times,
     interpolate_to_time,
 )
+from xclim.core import DayOfYearStr, Quantified
+from xclim.core.calendar import ensure_cftime_array, get_calendar, parse_offset, select_time
+from xclim.core.formatting import update_history
+from xclim.core.units import convert_units_to, to_agg_units
+from xclim.core.utils import _chunk_like
 
 __all__ = [
     "cosine_of_solar_zenith_angle",
@@ -372,6 +372,10 @@ def day_angle(time: xr.DataArray) -> xr.DataArray:
     if XR2409:
         decimal_year = time.dt.decimal_year
     else:
+        from xarray.coding.calendar_ops import (  # pylint: disable=import-outside-toplevel
+            _datetime_to_decimal_year,  # ty: ignore[unresolved-import]
+        )
+
         decimal_year = _datetime_to_decimal_year(times=time, calendar=time.dt.calendar)
     return ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
 
@@ -540,7 +544,7 @@ def cosine_of_solar_zenith_angle(
     sunlit : bool
         If True, only the sunlit part of the interval is considered in the integral or average.
         Does nothing if stat is "instant".
-    chunks : dictionary
+    chunks : dict
         When `time`,  `lat` and `lon` originate from coordinates of a large chunked dataset, this dataset's chunking
         can be passed here to ensure the computation is also chunked.
 
@@ -567,7 +571,7 @@ def cosine_of_solar_zenith_angle(
     S_IN_D = 24 * 3600
 
     if len(time) < 3 or xr.infer_freq(time) == "D":
-        h_s = -np.pi if stat != "instant" else 0
+        h_s = -np.pi if stat != "instant" else 0.0
         h_e = np.pi - 1e-9  # just below pi
     else:
         if time.dtype == "O":  # cftime
@@ -581,6 +585,8 @@ def cosine_of_solar_zenith_angle(
         h_e = h_s + 2 * np.pi * interval_as_s / S_IN_D
 
     if stat == "instant":
+        if time_correction is None:
+            raise NotImplementedError("Argument time_correction must not be 'None' if stat is 'instant'.")
         h_s = h_s + time_correction
 
         return cast(
@@ -728,7 +734,7 @@ def day_lengths(
         Latitude coordinate. Expects units of "degree_north".
     method : {'spencer', 'simple'}
         Which approximation to use when computing the solar declination angle.
-        See :py:func:`xclim.indices.helpers.solar_declination`.
+        See :py:func:`xclim.compute.solar.solar_declination`.
     infill_polar_days : bool
         Whether to use a mask of 24 hours for polar days and 0 hours for polar nights.
         If False, polar days and nights will be NaN.
@@ -793,8 +799,8 @@ def huglin_day_length_latitude_coefficient(
     r"""
     Simple coefficient for the day-length and high latitudes.
 
-    This latitude coefficient is used for determining the latitude effect on the day length specific to climate indices
-    that concern viticulture, such as :py:func:`xclim.indices.huglin_index` (cite:p:`huglin_nouveau_1978`).
+    This latitude coefficient is used for determining the latitude effect on the day length specific to climate
+    indicators that concern viticulture, such as :py:func:`xclim.compute.huglin_index` (cite:p:`huglin_nouveau_1978`).
     This function is an empirical approximation of the day-length multiplication factor, :math:`k`, based on latitude.
 
     Parameters
@@ -849,7 +855,7 @@ def huglin_day_length_latitude_coefficient(
     """
     if isinstance(lat, str):
         _lat_value = convert_units_to(lat, "deg")
-        _lat = xr.DataArray(lat, attrs={"units": "degree_north"})
+        _lat = xr.DataArray(_lat_value, attrs={"units": "degree_north"})
     else:
         _lat = lat
 
@@ -858,7 +864,7 @@ def huglin_day_length_latitude_coefficient(
     else:
         raise TypeError("Argument 'cap_value' must be a float (or numpy.nan).")
 
-    lat_abs = abs(lat)
+    lat_abs = abs(_lat)
     if method == "huglin":
         k_f_bounds = [(0, -np.inf, 40), (0.02, 40, 42), (0.03, 42, 44), (0.04, 44, 46), (0.05, 46, 48), (0.06, 48, 50)]
         k = xr.full_like(lat_abs, _cap_value + 1)

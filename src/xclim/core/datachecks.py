@@ -11,13 +11,13 @@ from collections.abc import Sequence
 
 import xarray as xr
 
-from xclim.core._exceptions import ValidationError
+from xclim.core import Freq, ValidationError
 from xclim.core.calendar import compare_offsets, parse_offset
 from xclim.core.options import datacheck
 
 
 @datacheck
-def check_freq(var: xr.DataArray, freq: str | Sequence[str], strict: bool = True) -> None:
+def check_freq(var: xr.DataArray, freq: Freq | Sequence[Freq], strict: bool = True) -> None:
     """
     Raise an error if not series has not the expected temporal frequency or is not monotonically increasing.
 

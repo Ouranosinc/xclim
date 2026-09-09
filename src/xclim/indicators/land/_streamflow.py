@@ -2,14 +2,7 @@
 
 from __future__ import annotations
 
-from xclim.core.indicator import (
-    Indicator,
-    ReducingIndicator,
-    ResamplingIndicator,
-    StandardizedIndexes,
-)
-from xclim.core.units import declare_units
-from xclim.indices import (
+from xclim.compute import (
     base_flow_index,
     base_flow_index_seasonal_ratio,
     flow_index,
@@ -23,17 +16,23 @@ from xclim.indices import (
     standardized_groundwater_index,
     standardized_streamflow_index,
 )
+from xclim.core.indicator import (
+    Indicator,
+    ReducingIndicator,
+    ResamplingIndicator,
+    StandardizedIndexes,
+)
 
 __all__ = [
     "base_flow_index",
     "base_flow_index_seasonal_ratio",
-    "doy_qmax",
-    "doy_qmin",
     "flow_index",
     "high_flow_frequency",
     "lag_snowpack_flow_peaks",
     "low_flow_frequency",
     "rb_flashiness_index",
+    "rivo_max_doy",
+    "rivo_min_doy",
     "runoff_ratio",
     "sen_slope",
     "standardized_groundwater_index",
@@ -45,7 +44,7 @@ class StreamflowNoResampling(Indicator):
     """Indicators involving streamflow without resampling."""
 
     context = "hydro"
-    keywords = "streamflow hydrology"
+    keywords = ["streamflow", "hydrology"]
 
 
 class Streamflow(ResamplingIndicator):
@@ -53,7 +52,7 @@ class Streamflow(ResamplingIndicator):
 
     context = "hydro"
     src_freq = "D"
-    keywords = "streamflow snow hydrology"
+    keywords = ["streamflow", "snow", "hydrology"]
 
 
 base_flow_index = Streamflow(
@@ -80,27 +79,29 @@ rb_flashiness_index = Streamflow(
 )
 
 
-doy_qmax = Streamflow(
+rivo_max_doy = Streamflow(
     title="Day of year of the maximum streamflow",
-    identifier="doy_qmax",
-    var_name="q{indexer}_doy_qmax",
+    identifier="rivo_max_doy",
+    var_name="rivo_max_doy",
     long_name="Day of the year of the maximum streamflow over {indexer}",
     description="Day of the year of the maximum streamflow over {indexer}.",
     units="",
-    compute=declare_units(da="[discharge]")(generic.select_resample_op),
-    parameters={"op": generic.doymax, "out_units": None},
+    input={"data": "discharge"},
+    compute=generic.statistics,
+    parameters={"statistic": "doymax", "out_units": None, "freq": {"default": "YS"}},
 )
 
 
-doy_qmin = Streamflow(
+rivo_min_doy = Streamflow(
     title="Day of year of the minimum streamflow",
-    identifier="doy_qmin",
-    var_name="q{indexer}_doy_qmin",
+    identifier="rivo_min_doy",
+    var_name="rivo_min_doy",
     long_name="Day of the year of the minimum streamflow over {indexer}",
     description="Day of the year of the minimum streamflow over {indexer}.",
     units="",
-    compute=declare_units(da="[discharge]")(generic.select_resample_op),
-    parameters={"op": generic.doymin, "out_units": None},
+    input={"data": "discharge"},
+    compute=generic.statistics,
+    parameters={"statistic": "doymin", "out_units": None, "freq": {"default": "YS"}},
 )
 
 
@@ -109,9 +110,9 @@ flow_index = ReducingIndicator(
     context="hydro",
     title="Flow index",
     identifier="flow_index",
-    var_name="q_flow_index",
+    var_name="rivo_flow_index",
     long_name="Flow index",
-    description="{p}th percentile normalized by the median flow.",
+    description="{q}th quantile normalized by the median flow.",
     units="1",
     compute=flow_index,
 )
@@ -120,7 +121,7 @@ flow_index = ReducingIndicator(
 high_flow_frequency = Streamflow(
     title="High flow frequency",
     identifier="high_flow_frequency",
-    var_name="q_high_flow_frequency",
+    var_name="rivo_high_flow_frequency",
     long_name="High flow frequency",
     description="{freq} frequency of flows greater than {threshold_factor} times the median flow.",
     units="days",
@@ -131,7 +132,7 @@ high_flow_frequency = Streamflow(
 low_flow_frequency = Streamflow(
     title="Low flow frequency",
     identifier="low_flow_frequency",
-    var_name="q_low_flow_frequency",
+    var_name="rivo_low_flow_frequency",
     long_name="Low flow frequency",
     description="{freq} frequency of flows smaller than a fraction ({threshold_factor}) of the mean flow.",
     units="days",
@@ -150,7 +151,7 @@ standardized_streamflow_index = StandardizedIndexes(
     abstract="Streamflow over a moving window, normalized such that SSI averages to 0 for the calibration data. "
     "The window unit `X` is the minimal time period defined by the resampling frequency.",
     cell_methods="",
-    keywords="streamflow",
+    keywords=["streamflow"],
     compute=standardized_streamflow_index,
 )
 
@@ -166,7 +167,7 @@ standardized_groundwater_index = StandardizedIndexes(
     abstract="Groundwater over a moving window, normalized such that SGI averages to 0 for the calibration data. "
     "The window unit `X` is the minimal time period defined by the resampling frequency.",
     cell_methods="",
-    keywords="groundwater",
+    keywords=["groundwater"],
     compute=standardized_groundwater_index,
 )
 
@@ -188,7 +189,7 @@ base_flow_index_seasonal_ratio = Streamflow(
     abstract="Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
     "as well as yearly  {numerator} to {denominator} bfi ratio.",
     cell_methods="",
-    keywords="streamflow, seasonal",
+    keywords=["seasonal"],
     compute=base_flow_index_seasonal_ratio,
     missing="skip",
 )
@@ -200,10 +201,9 @@ lag_snowpack_flow_peaks = Streamflow(
     units="days",
     long_name="Time lag between maximum snowpack and river high flows",
     description="Number of days between the annual maximum snowpack, measured by the snow water"
-    "equivalent, and the mean date when river flow exceeds a percentile threshold"
+    "equivalent, and the mean date when river flow exceeds a quantile threshold"
     "during a given year.",
     cell_methods="",
-    keywords="streamflow, snw",
     compute=lag_snowpack_flow_peaks,
 )
 
@@ -216,7 +216,6 @@ runoff_ratio = Streamflow(
     "Temporal analysis: Yearly values computed from seasonal daily data and yearly data, "
     "depending on chosen frequency.",
     cell_methods="",
-    keywords="streamflow",
     compute=runoff_ratio,
 )
 
@@ -236,6 +235,5 @@ sen_slope = StreamflowNoResampling(
         "Statistical analysis value.",
     ],
     cell_methods="",
-    keywords="streamflow",
     compute=sen_slope,
 )

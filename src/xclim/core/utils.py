@@ -1,8 +1,8 @@
 """
-Miscellaneous Indices Utilities
-===============================
+Miscellaneous Utilities
+=======================
 
-Helper functions for the indices computations, indicator construction and other things.
+Helper functions for the computations, indicator construction and other things.
 """
 
 from __future__ import annotations
@@ -12,12 +12,10 @@ import importlib.util
 import logging
 import os
 import warnings
-from collections.abc import Callable, Sequence
-from enum import IntEnum
-from inspect import _empty
-from io import StringIO
+from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 import numpy as np
 import xarray as xr
@@ -25,6 +23,77 @@ from dask import array as dsk
 from yaml import safe_dump, safe_load
 
 logger = logging.getLogger("xclim")
+
+
+class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
+    """A basic dictionary but keys are strings and case-insensitive, stored all lowercase."""
+
+    # ruff: disable[D102, D105]
+
+    def __init__(self, data: Mapping = None):
+        self._data = {}
+        if data:
+            self.update(data)
+
+    @staticmethod
+    def _casefold(key: str) -> str:
+        if isinstance(key, str):
+            return key.lower()
+        if key is None:  # special case for convenience
+            return key
+        raise TypeError(f"Keys of a CaseInsensitiveDict must be strings. Got {type(key)}")
+
+    def __getitem__(self, key: str) -> Any:
+        return self._data[self._casefold(key)]
+
+    def __setitem__(self, key: str, value: Any):
+        self._data[self._casefold(key)] = value
+
+    def get(self, key: str, default: Any = None) -> Any:  # numpydoc ignore=GL08
+        return self._data.get(self._casefold(key), default)
+
+    def setdefault(self, key: str, default: Any = None) -> Any:  # numpydoc ignore=GL08
+        return self._data.setdefault(self._casefold(key), default)
+
+    def __contains__(self, key: str) -> bool:
+        return self._casefold(key) in self._data
+
+    def __delitem__(self, key: str):
+        del self._data[self._casefold(key)]
+
+    def update(self, other: Mapping, **kwargs):  # numpydoc ignore=GL08
+        if hasattr(other, "keys"):
+            for k in other.keys():
+                self[k] = other[k]
+        else:
+            for k, v in other:
+                self[k] = v
+        for k, v in kwargs.items():
+            self[k] = v
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._data)
+
+    def items(self) -> Iterator[tuple[str, Any]]:  # numpydoc ignore=GL08
+        return self._data.items()
+
+    def keys(self) -> Iterator[str]:  # numpydoc ignore=GL08
+        return self._data.keys()
+
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def __repr__(self) -> str:
+        return repr(self._data)
+
+    def pop(self, key: str) -> Any:  # numpydoc ignore=GL08
+        return self._data.pop(self._casefold(key))
+
+    def popitem(self) -> tuple[str, Any]:  # numpydoc ignore=GL08
+        return self._data.popitem()
+
+    def copy(self) -> CaseInsensitiveDict:  # numpydoc ignore=GL08
+        return CaseInsensitiveDict(self._data.copy())
 
 
 # Input cell methods for clix-meta
@@ -109,7 +178,7 @@ def load_module(path: os.PathLike, name: str | None = None) -> ModuleType:
     .. code-block:: python
 
         os.chdir(path.parent)
-        import example as mod1  # noqa
+        import example as mod1
 
         os.chdir(previous_working_dir)
         mod2 = load_module(path)
@@ -352,7 +421,7 @@ def calc_perc(
 
     Parameters
     ----------
-    arr : array-like
+    arr : array_like
         The input array.
     percentiles : sequence of float, optional
         The percentiles to compute. If None, only the median is computed.
@@ -400,7 +469,7 @@ def nan_calc_percentiles(
 
     Parameters
     ----------
-    arr : array-like
+    arr : array_like
         The input array.
     percentiles : sequence of float, optional
         The percentiles to compute. If None, only the median is computed.
@@ -439,7 +508,7 @@ def _compute_virtual_index(n: np.ndarray, quantiles: np.ndarray, alpha: float, b
 
     Parameters
     ----------
-    n : array-like
+    n : array_like
         The sample sizes.
     quantiles : array_like
         The quantiles values.
@@ -465,9 +534,9 @@ def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
 
     Parameters
     ----------
-    virtual_indexes : array-like
+    virtual_indexes : array_like
         The indexes where the percentile is supposed to be found in the sorted sample.
-    previous_indexes : array-like
+    previous_indexes : array_like
         The floor values of virtual_indexes.
 
     Notes
@@ -486,16 +555,16 @@ def _get_indexes(
 
     Parameters
     ----------
-    arr : array-like
+    arr : array_like
         The input array.
-    virtual_indexes : array-like
+    virtual_indexes : array_like
         The indexes where the percentile is supposed to be found in the sorted sample.
-    valid_values_count : array-like
+    valid_values_count : array_like
         The number of valid values in the sorted array.
 
     Returns
     -------
-    array-like, array-like
+    array_like, array_like
         A tuple of virtual_indexes neighbouring indexes (previous and next).
 
     Notes
@@ -535,16 +604,16 @@ def _linear_interpolation(
 
     Parameters
     ----------
-    left : array-like
+    left : array_like
         Left bound.
-    right : array-like
+    right : array_like
         Right bound.
-    gamma : array-like
+    gamma : array_like
         The interpolation weight.
 
     Returns
     -------
-    array-like
+    array_like
         The linearly interpolated array.
     """
     diff_b_a = np.subtract(right, left)
@@ -621,288 +690,98 @@ def _nan_quantile(
     return result
 
 
-class InputKind(IntEnum):
+def make_clix_meta_yaml(  # noqa: C901
+    raw: os.PathLike, adapted: os.PathLike
+) -> None:
     """
-    Constants for input parameter kinds.
-
-    For use by external parses to determine what kind of data the indicator expects.
-    On the creation of an indicator, the appropriate constant is stored in
-    :py:attr:`xclim.core.indicator.Indicator.parameters`. The integer value is what gets stored in the output
-    of :py:meth:`xclim.core.indicator.Indicator.json`.
-
-    For developers : for each constant, the docstring specifies the annotation a parameter of an indice function
-    should use in order to be picked up by the indicator constructor. Notice that we are using the annotation format
-    as described in `PEP 604 <https://peps.python.org/pep-0604/>`_, i.e. with '|' indicating a union and without import
-    objects from `typing`.
-    """
-
-    VARIABLE = 0
-    """A data variable (DataArray or variable name).
-
-       Annotation : ``xr.DataArray``. May not include anything else, may not be optional.
-    """
-    OPTIONAL_VARIABLE = 1
-    """An optional data variable (DataArray or variable name).
-
-       Annotation : ``xr.DataArray | None``. The default should be None.
-    """
-    QUANTIFIED = 2
-    """A quantity with units, either as a string (scalar), a pint.Quantity (scalar) or a DataArray (with units set).
-
-       Annotation : ``xclim.core.utils.Quantified`` and an entry in the :py:func:`xclim.core.units.declare_units`
-       decorator. "Quantified" translates to ``str | xr.DataArray | pint.util.Quantity``.
-    """
-    FREQ_STR = 3
-    """A string representing an "offset alias", as defined by pandas.
-
-       See the Pandas documentation on :ref:`timeseries.offset_aliases` for a list of valid aliases.
-
-       Annotation : ``str`` + ``freq`` as the parameter name.
-    """
-    NUMBER = 4
-    """A number.
-
-       Annotation : ``int``, ``float`` and unions thereof, potentially optional.
-    """
-    STRING = 5
-    """A simple string.
-
-       Annotation : ``str`` or ``str | None``. In most cases, this kind of parameter makes sense
-       with choices indicated in the docstring's version of the annotation with curly braces.
-       See :ref:`notebooks/extendxclim:Defining new indices`.
-    """
-    DAY_OF_YEAR = 6
-    """A date, but without a year, in the MM-DD format.
-
-       Annotation : :py:obj:`xclim.core.utils.DayOfYearStr` (may be optional).
-    """
-    DATE = 7
-    """A date in the YYYY-MM-DD format, may include a time.
-
-       Annotation : :py:obj:`xclim.core.utils.DateStr` (may be optional).
-    """
-    NUMBER_SEQUENCE = 8
-    """A sequence of numbers
-
-       Annotation : ``Sequence[int]``, ``Sequence[float]`` and unions thereof, may include single ``int`` and ``float``,
-       may be optional.
-    """
-    BOOL = 9
-    """A boolean flag.
-
-       Annotation : ``bool``, may be optional.
-    """
-    DICT = 10
-    """A dictionary.
-
-       Annotation : ``dict`` or ``dict | None``, may be optional.
-    """
-    MASK = 11
-    """A mask or flag or scalar. Any value without units that might be passed as a non-temporal DataArray.
-       Can be a DataArray, a single bool or a single float.
-
-        Annotation : ``xr.DataArray | bool`` or ``xr.DataArray | float``, may be optional.
-    """
-    KWARGS = 50
-    """A mapping from argument name to value.
-
-       Developers : maps the ``**kwargs``. Please use as little as possible.
-    """
-    DATASET = 70
-    """An xarray dataset.
-
-       Developers : as indices only accept DataArrays, this should only be added on the indicator's constructor.
-    """
-    OTHER_PARAMETER = 99
-    """An object that fits None of the previous kinds.
-
-       Developers : This is the fallback kind, it will raise an error in xclim's unit tests if used.
-    """
-
-
-def infer_kind_from_parameter(param) -> InputKind:
-    """
-    Return the appropriate InputKind constant from an ``inspect.Parameter`` object.
-
-    Parameters
-    ----------
-    param : Parameter
-        An inspect.Parameter instance.
-
-    Returns
-    -------
-    InputKind
-        The appropriate InputKind constant.
-
-    Notes
-    -----
-    The correspondence between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
-    """
-    if param.annotation is not _empty:
-        annot = set(param.annotation.replace("xarray.", "").replace("xr.", "").split(" | "))
-    else:
-        annot = {"no_annotation"}
-
-    if annot == {"DataArray"} and param.default is not None:
-        return InputKind.VARIABLE
-
-    annot = annot - {"None"}
-
-    if annot == {"DataArray", "bool"} or annot == {"DataArray", "float"} or annot == {"DataArray", "int"}:
-        return InputKind.MASK
-
-    # Not a mask and not a required variable
-    if "DataArray" in annot:
-        return InputKind.OPTIONAL_VARIABLE
-
-    if param.name == "freq":
-        return InputKind.FREQ_STR
-
-    if param.kind == param.VAR_KEYWORD:
-        return InputKind.KWARGS
-
-    if annot == {"Quantified"}:
-        return InputKind.QUANTIFIED
-
-    if "DayOfYearStr" in annot:
-        return InputKind.DAY_OF_YEAR
-
-    if annot.issubset({"int", "float"}):
-        return InputKind.NUMBER
-
-    if annot.issubset({"int", "float", "Sequence[int]", "Sequence[float]"}):
-        return InputKind.NUMBER_SEQUENCE
-
-    if (
-        annot.issuperset({"str"})
-        or any(a.startswith("Literal['") for a in annot)
-        or annot.issuperset({"REDUCTION_OPERATORS"})
-    ):
-        return InputKind.STRING
-
-    if annot == {"DateStr"}:
-        return InputKind.DATE
-
-    if annot == {"bool"}:
-        return InputKind.BOOL
-
-    if annot == {"dict"}:
-        return InputKind.DICT
-
-    if annot == {"Dataset"}:
-        return InputKind.DATASET
-
-    return InputKind.OTHER_PARAMETER
-
-
-def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike) -> None:  # noqa: C901
-    """
-    Read in a clix-meta yaml representation and refactor it to fit xclim YAML specifications.
+    Read in the clix-meta "index_definitions.yml" file and adapt it to a xclim virtual module yaml.
 
     Parameters
     ----------
     raw : os.PathLike or StringIO or str
-        The path to the clix-meta yaml file or the string representation of the yaml.
+        The path to the clix-meta "index_definitions.yml" file or the string representation of the yaml.
     adapted : os.PathLike
-        The path to the adapted yaml file.
+        The path where to write the adapted yaml.
     """
-    from ..indices import generic  # pylint: disable=import-outside-toplevel
+    from ..compute import clix  # pylint: disable=import-outside-toplevel
 
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
 
-    if isinstance(raw, os.PathLike):
-        with open(raw, encoding="utf-8") as f:
-            yml = safe_load(f)
-    else:
-        yml = safe_load(raw)
+    with Path(raw).open(encoding="utf-8") as f:
+        src = safe_load(f)
 
+    yml = {}
     yml["realm"] = "atmos"
-    yml["doc"] = """  ===================
+    yml["doc"] = """
+  ===================
   CF Standard indices
   ===================
 
   Indicators found here are defined by the `clix-meta project`_. Adapted documentation from that repository follows:
 
-  The repository aims to provide a platform for thinking about, and developing,
-  a unified view of metadata elements required to describe climate indices (aka climate indicators).
+      This repository aims to provide a platform for thinking about, and developing, a unified view of metadata
+      elements required to describe climate indices (aka climate indicators).
 
-  To facilitate data exchange and dissemination the metadata should, as far as possible,
-  follow the Climate and Forecasting (CF) Conventions. Considering the very rich and diverse flora of
-  climate indices this is however not always possible. By collecting a wide range of different indices
-  it is easier to discover any common patterns and features that are currently not well covered by the
-  CF Conventions. Currently identified issues frequently relate to standard_name or/and cell_methods
-  which both are controlled vocabularies of the CF Conventions.
+  All indicators defined here use generic functions defined in :py:mod:`xclim.indices.clix`. This module tries to
+  follow the clix-meta definitions closely, which means it can have meaningful differences with the rest of xclim.
+
+  For example, indicators where a number of occurrences (usually days) is counted will use units "1", instead of
+  having temporal dimensions (i.e. "days") like xclim does elsewhere.
+
+  However, indicators calculating a date will have no units in this module. "clix-meta" suggests "day", but that
+  already means something else.
 
   .. _clix-meta project: https://github.com/clix-meta/clix-meta
 """
     yml["references"] = "clix-meta https://github.com/clix-meta/clix-meta"
 
-    remove_ids = []
-    rename_ids = {}
-    for cmid, data in yml["indices"].items():
-        if "reference" in data:
-            data["references"] = data.pop("reference")
+    indicators = {}
+    for cmid, info in src["indices"].items():
+        data = {}
+        if "reference" in info:
+            data["references"] = info["reference"]
 
-        index_function = data.pop("index_function")
-
-        data["compute"] = index_function["name"]
-        if getattr(generic, data["compute"], None) is None:
-            remove_ids.append(cmid)
-            warnings.warn(f"Indicator {cmid} uses non-implemented function {data['compute']}, removing.")
+        index_function = info["index_function"]
+        if not hasattr(clix, index_function["name"]):
+            warnings.warn(f"Indicator {cmid} uses non-implemented function {index_function['name']}, skipping.")
             continue
 
-        if (data["output"].get("standard_name") or "").startswith("number_of_days") or cmid == "nzero":
-            remove_ids.append(cmid)
-            warnings.warn(
-                f"Indicator {cmid} has a 'number_of_days' standard name"
-                " and xclim disagrees with the CF conventions on the correct output units, removing."
-            )
-            continue
+        data["compute"] = f"clix.{index_function['name']}"
+        data["input"] = info["input"]
+        if "pr" in info["input"].values():
+            data["context"] = "hydro"
 
-        if (data["output"].get("standard_name") or "").endswith("precipitation_amount"):
-            remove_ids.append(cmid)
-            warnings.warn(
-                f"Indicator {cmid} has a 'precipitation_amount' standard name"
-                " and clix-meta has incoherent output units, removing."
-            )
-            continue
-
-        rename_params = {}
+        name_replacements = {}
+        data["parameters"] = {}
         if index_function["parameters"]:
-            data["parameters"] = index_function["parameters"]
-            for name, param in data["parameters"].copy().items():
-                if param["kind"] in ["operator", "reducer"]:
-                    # Compatibility with xclim `op` notation for comparison symbols
-                    if name == "condition":
-                        data["parameters"]["op"] = param[param["kind"]]
-                        del data["parameters"][name]
-                    else:
-                        data["parameters"][name] = param[param["kind"]]
-                else:  # kind = quantified
-                    if param.get("proposed_standard_name") == "temporal_window_size":
-                        # Window, nothing to do.
-                        del data["parameters"][name]
-                    elif isinstance(param["data"], dict):
-                        # No value
-                        data["parameters"][name] = {
-                            "description": param.get(
-                                "long_name",
-                                param.get("proposed_standard_name", param.get("standard_name")).replace("_", " "),
-                            ),
-                            "units": param["units"],
-                        }
-                        rename_params[f"{{{name}}}"] = f"{{{list(param['data'].keys())[0]}}}"
-                    else:
-                        # Value
-                        data["parameters"][name] = f"{param['data']} {param['units']}"
+            for name, param in index_function["parameters"].items():
+                match param["kind"]:
+                    case "operator":
+                        data["parameters"][name] = param["operator"]
+                    case "reducer":
+                        data["parameters"][name] = param["reducer"]
+                    case "time_range":
+                        data["parameters"][name] = list(param["data"].split("/"))
+                    case "quantity":
+                        if isinstance(param["data"], str) and param["data"].startswith("{"):
+                            name_replacements[param["data"][1:-1]] = name
+                        else:
+                            if name in ["window_size", "percentile"]:
+                                data["parameters"][name] = param["data"]
+                            else:
+                                data["parameters"][name] = f"{param['data']} {param['units']}"
 
-        period = data.pop("default_period")
-        # data["allowed_periods"] = [freq_names[per] for per in period["allowed"].keys()]
-        data.setdefault("parameters", {})["freq"] = {"default": freq_defs[period]}
+        period = info["default_period"]
+        if cmid == "lsf":
+            period = "annual"
+            data["parameters"]["before_date"] = "07-01"
+        elif cmid == "faf":
+            period = "annual"
+            data["parameters"]["after_date"] = "07-01"
+        data["parameters"]["freq"] = {"default": freq_defs[period]}
 
         attrs = {}
-        output = data.pop("output")
-        for attr, val in output.items():
+        for attr, val in info["output"].items():
             if val is None:
                 continue
             if attr == "cell_methods":
@@ -913,7 +792,7 @@ def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike
 
                     # If cell_method seems to be describing input data, and not the operation, skip.
                     if i == 0:
-                        if cm in [ICM.get(v) for v in data["input"].values()]:
+                        if cm in [ICM.get(v) for v in info["input"].values()]:
                             continue
 
                     methods.append(cm)
@@ -921,50 +800,22 @@ def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike
                 val = " ".join(methods)
 
             elif attr in ["var_name", "long_name"]:
-                for new, old in rename_params.items():
+                for old, new in name_replacements.items():
                     val = val.replace(old, new)
+                if attr == "long_name":
+                    data["title"] = val
+            elif attr == "units" and val == "day":
+                # clix-meta assigns "day" for day of year. Not CF.
+                continue
             attrs[attr] = val
-        data["cf_attrs"] = [attrs]
+        data["attrs"] = [attrs]
 
-        del data["ET"]
+        indicators[cmid.replace("{", "").replace("}", "")] = data
 
-        if "{" in cmid:
-            rename_ids[cmid] = cmid.replace("{", "").replace("}", "")
+    yml["indicators"] = indicators
 
-    for old, new in rename_ids.items():
-        yml["indices"][new] = yml["indices"].pop(old)
-
-    for cmid in remove_ids:
-        del yml["indices"][cmid]
-
-    yml["indicators"] = yml.pop("indices")
-
-    with open(adapted, "w", encoding="utf-8") as f:
+    with Path(adapted).open("w", encoding="utf-8") as f:
         safe_dump(yml, f)
-
-
-def is_percentile_dataarray(source: xr.DataArray) -> bool:
-    """
-    Evaluate whether a DataArray is a Percentile.
-
-    A percentile DataArray must have 'climatology_bounds' attributes and either a
-    quantile or percentiles coordinate, the window is not mandatory.
-
-    Parameters
-    ----------
-    source : xr.DataArray
-        The DataArray to evaluate.
-
-    Returns
-    -------
-    bool
-        True if the DataArray is a percentile.
-    """
-    return (
-        isinstance(source, xr.DataArray)
-        and source.attrs.get("climatology_bounds", None) is not None
-        and ("quantile" in source.coords or "percentiles" in source.coords)
-    )
 
 
 def _chunk_like(*inputs, chunks: dict[str, int] | None):  # *inputs : xr.DataArray | xr.Dataset
@@ -989,7 +840,7 @@ def _chunk_like(*inputs, chunks: dict[str, int] | None):  # *inputs : xr.DataArr
 
 def split_auxiliary_coordinates(
     obj: xr.DataArray | xr.Dataset,
-) -> tuple[xr.DataArray | xr.Dataset, xr.Dataset]:
+) -> tuple[xr.DataArray | xr.Dataset, xr.DataArray]:
     """
     Split auxiliary coords from the dataset.
 

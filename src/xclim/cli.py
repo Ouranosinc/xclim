@@ -14,9 +14,8 @@ import xarray as xr
 from dask.diagnostics.progress import ProgressBar
 
 import xclim as xc
-from xclim.core import MissingVariableError
+from xclim.core import InputKind, MissingVariableError, indicator
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
-from xclim.core.utils import InputKind
 from xclim.testing.utils import (
     TESTDATA_BRANCH,
     TESTDATA_CACHE_DIR,
@@ -29,6 +28,8 @@ from xclim.testing.utils import (
     show_versions,
 )
 
+CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
+
 # Distributed is not a dependency of xclim
 distributed = False
 try:
@@ -40,13 +41,8 @@ except ImportError:
 
 
 def _get_indicator(indicator_name):
-    if "." in indicator_name:
-        mod, name = indicator_name.split(".")
-        indid = f"{mod}.{name.upper()}"
-    else:
-        indid = indicator_name.upper()
     try:
-        return xc.core.indicator.registry[indid].get_instance()
+        return indicator.registry[indicator_name]
     except KeyError as e:
         raise click.BadArgumentUsage(f"Indicator '{indicator_name}' not found in xclim.") from e
 
@@ -310,18 +306,18 @@ def dataflags(ctx, variables, raise_flags, append, dims, freq):  # numpydoc igno
 
 @click.command(short_help="List indicators.")
 @click.option("-i", "--info", is_flag=True, help="Prints more details for each indicator.")
-def indices(info):  # numpydoc ignore=PR01
+def indicators(info):  # numpydoc ignore=PR01
     """List all indicators."""
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
     rows = []
-    for name, indcls in xc.core.indicator.registry.items():
+    for name, ind in indicator.registry.items():
         left = click.style(name.lower(), fg="yellow")
-        right = ", ".join([var.get("long_name", var["var_name"]) for var in indcls.cf_attrs])
-        if indcls.cf_attrs[0]["var_name"] != name.lower():
-            right += " (" + ", ".join([var["var_name"] for var in indcls.cf_attrs]) + ")"
+        right = ", ".join([var.get("long_name", var.var_name) for var in ind.attrs])
+        if ind.attrs[0].var_name.lower() != name:
+            right += " (" + ", ".join([var.var_name for var in ind.attrs]) + ")"
         if info:
-            right += "\n" + indcls.abstract
+            right += "\n" + ind.abstract
         rows.append((left, right))
     rows.sort(key=lambda row: row[0])
     formatter.write_dl(rows)
@@ -363,10 +359,10 @@ def _format_dict(data, formatter, key_fg="blue", spaces=2):
 class XclimCli(click.Group):
     """Main cli class."""
 
-    def list_commands(self, ctx) -> list[str, str, str, str, str, str]:  # numpydoc ignore=PR01,RT01
+    def list_commands(self, ctx) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=PR01,RT01
         """Return the available commands (other than the indicators)."""
         return (
-            "indices",
+            "list",
             "info",
             "dataflags",
             "prefetch_testing_data",
@@ -378,7 +374,7 @@ class XclimCli(click.Group):
         """Return the requested command."""
         command = {
             "dataflags": dataflags,
-            "indices": indices,
+            "list": indicators,
             "info": info,
             "prefetch_testing_data": prefetch_testing_data,
             "release_notes": release_notes,
@@ -392,7 +388,8 @@ class XclimCli(click.Group):
 @click.command(
     cls=XclimCli,
     chain=True,
-    help="Command line tool to compute indices on netCDF datasets. Indicators are referred to by their "
+    context_settings=CONTEXT_SETTINGS,
+    help="Command line tool to compute indicators on netCDF datasets. Indicators are referred to by their "
     "(case-insensitive) identifier, as in xclim.core.indicator.registry.",
     invoke_without_command=True,
     subcommand_metavar="INDICATOR1 [OPTIONS] ... [INDICATOR2 [OPTIONS] ... ] ...",

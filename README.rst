@@ -9,10 +9,14 @@ xclim: Climate services library |logo| |logo-dark| |logo-light|
 +----------------------------+-----------------------------------------------------+
 | Open Source                | |license| |ossf-score| |zenodo| |pyOpenSci| |joss|  |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |ruff| |pre-commit-ci| |ossf-bp| |fossa|            |
+| Coding Standards           | |ruff| |prek| |pre-commit-ci| |ossf-bp| |fossa|     |
 +----------------------------+-----------------------------------------------------+
-| Development Status         | |status| |build| |coveralls|                        |
+| Development Status         | |status| |build| |coveralls| |zizmor|               |
 +----------------------------+-----------------------------------------------------+
+
+.. warning::
+    This branch of `xclim` is under active development and contains many breaking changes compared to v0.61+.
+    For the latest stable release, please refer to the `main` branch or the PyPI/Conda package.
 
 `xclim` is an operational Python library for climate services, providing numerous climate-related indicator tools
 with an extensible framework for constructing custom climate indicators, statistical downscaling and bias
@@ -20,7 +24,7 @@ adjustment of climate model simulations, as well as climate model ensemble analy
 
 `xclim` is built using `xarray`_ and can seamlessly benefit from the parallelization handling provided by `dask`_.
 Its objective is to make it as simple as possible for users to perform typical climate services data treatment workflows.
-Leveraging `xarray` and `dask`, users can easily bias-adjust climate simulations over large spatial domains or compute indices from large climate datasets.
+Leveraging `xarray` and `dask`, users can easily compute many different climate indicators from large climate datasets.
 
 For example, the following would compute monthly mean temperature from daily mean temperature:
 
@@ -34,9 +38,9 @@ For example, the following would compute monthly mean temperature from daily mea
 
 For applications where metadata and missing values are important to get right, `xclim` provides a class for each index
 that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output.
-This also provides a mechanism for users to customize the indices to their own specifications and preferences.
-`xclim` currently provides over 150 indices related to mean, minimum and maximum daily temperature, daily precipitation,
-streamflow and sea ice concentration, numerous bias-adjustment algorithms, as well as a dedicated module for ensemble analysis.
+This also provides a mechanism for users to customize these indicators to their own specifications and preferences.
+`xclim` currently provides over 150 climate indicators related to mean, minimum and maximum daily temperature, daily precipitation,
+streamflow and sea ice concentration, as well as a dedicated module for ensemble analysis and a data validation/health-check module.
 
 .. _xarray: https://docs.xarray.dev/
 .. _dask: https://docs.dask.org/
@@ -66,15 +70,19 @@ How to make the most of xclim: `Basic Usage Examples`_ and `In-Depth Examples`_.
 
 Conventions
 -----------
-In order to provide a coherent interface, `xclim` tries to follow different sets of conventions. In particular, input data should follow the `CF conventions`_ whenever possible for variable attributes. Variable names are usually the ones used in `CMIP6`_, when they exist.
+In order to provide a coherent interface, `xclim` tries to follow different sets of conventions.
+In particular, input data should follow the `CF conventions`_ whenever possible for variable attributes.
+Variable names are usually the ones used in `CMIP6`_, when they exist.
 
-However, `xclim` will *always* assume the temporal coordinate is named "time". If your data uses another name (for example: "T"), you can rename the variable with:
+However, `xclim` will *always* assume the temporal coordinate is named "time".
+If your data uses another name (for example: "T"), you can rename the variable with:
 
 .. code-block:: python
 
     ds = ds.rename(T="time")
 
-`xclim` employs a `black`_-compatible code formatting style (via a modified `ruff`_ configuration) and (mostly) adheres to the `NumPy docstring`_ style. For more information on coding and development conventions, see the `Contributing Guidelines`_.
+`xclim` employs a `black`_-compatible code formatting style (via a modified `ruff`_ configuration) and (mostly) adheres to the `NumPy docstring`_ style.
+For more information on coding and development conventions, see the `Contributing Guidelines`_.
 
 .. _black: https://black.readthedocs.io/en/stable/
 .. _ruff: https://docs.astral.sh/ruff/
@@ -105,7 +113,8 @@ To cite a specific version of `xclim`, the bibliographical reference information
 
 License
 -------
-This is free software: you can redistribute it and/or modify it under the terms of the `Apache License 2.0`_. A copy of this license is provided in the code repository (`LICENSE`_).
+This is free software: you can redistribute it and/or modify it under the terms of the `Apache License 2.0`_.
+A copy of this license is provided in the code repository (`LICENSE`_).
 
 .. _Apache License 2.0: https://opensource.org/license/apache-2-0/
 .. _LICENSE: https://github.com/Ouranosinc/xclim/blob/main/LICENSE
@@ -217,6 +226,10 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/main
         :alt: pre-commit.ci status
 
+.. |prek| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/j178/prek/master/docs/assets/badge-v0.json
+        :target: https://github.com/j178/prek
+        :alt: prek
+
 .. |ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
         :target: https://github.com/astral-sh/ruff
         :alt: Ruff
@@ -228,6 +241,10 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |versions| image:: https://img.shields.io/pypi/pyversions/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
         :alt: Supported Python Versions
+
+.. |zizmor| image:: https://img.shields.io/badge/%F0%9F%8C%88-zizmor-white?labelColor=white
+        :target: https://zizmor.sh/
+        :alt: zizmor
 
 .. Ouranos Logos
 

@@ -728,6 +728,12 @@
     "title": "Valeur de retour",
     "abstract": "Analyse fréquentielle selon un mode et une distribution."
   },
+  "STATISTICS": {
+    "long_name": "{statistic:nom} de la variable.",
+    "description": "{statistic:nom} {freq:f} da la variable ({indexer}).",
+    "title": "Calcul de statistiques sur des sous-périodes.",
+    "abstract": ""
+  },
   "STATS": {
     "long_name": "{op:nom} de la variable.",
     "description": "{op:nom} {freq:f} da la variable ({indexer}).",
@@ -740,13 +746,13 @@
     "title": "Calcul les paramètres d'une distribution univariée pour un ensemble de données",
     "abstract": ""
   },
-  "DOY_QMAX": {
+  "RIVO_MAX_DOY": {
     "long_name": "Jour de l'année du maximum du débit en {indexer:nom}",
     "description": "Jour de l'année du maximum du débit en {indexer:nom}.",
     "title": "Jour de l'année du maximum du débit",
     "abstract": ""
   },
-  "DOY_QMIN": {
+  "RIVO_MIN_DOY": {
     "long_name": "Jour de l'année du minimum du débit en {indexer:nom}",
     "description": "Jour de l'année du minimum du débit en {indexer:nom}.",
     "title": "Jour de l'année du minimum du débit",
@@ -1460,9 +1466,9 @@
   },
   "FLOW_INDEX": {
     "long_name": "Indice de débit",
-    "description": "Le {p}e percentile du débit normalisé par le débit médian.",
+    "description": "Le {q}e quantile du débit normalisé par le débit médian.",
     "title": "Indice de débit",
-    "abstract": "Indice de débit, calculé comme le rapport entre un percentile donné du débit et la médiane."
+    "abstract": "Indice de débit, calculé comme le rapport entre un quantile donné du débit et la médiane."
   },
   "HIGH_FLOW_FREQUENCY": {
     "long_name": "Fréquence des débits élevés",
@@ -1499,6 +1505,18 @@
     "long_name": "Indice de précipitation antérieure",
     "description": "Somme pondérée des précipitations quotidiennes, sur une fenêtre de {window} jours et le base exponentielle {p_exp}.",
     "abstract": "Calcul de la somme pondérée des précipitations quotidiennes sur la base d'une fenêtre et d'une base exponentielle."
+  },
+  "PCI": {
+    "title": "Indice de Concentration de Précipitation",
+    "long_name": "Indice de Concentration de Précipitation",
+    "description": "Une mesure de l'irrégularité de la distribution {freq:f} des précipitations. Calculée en tant que rapport entre la somme des carrés des précipitations {subfreq:fpl} totales et la somme des carrés des précipitations {subfreq:fpl} totales, multiplié par 100.",
+    "abstract": "Une mesure de l'irrégularité de la distribution des précipitations pour une fréquence. Calculée en tant que rapport entre la somme d'une sous-fréquence des carrés des totaux et le carré de la somme des totaux d'une sous-fréquence, multiplié par 100."
+  },
+  "DTDT": {
+    "title": "Variabilité de la température d'un jour à l'autre",
+    "long_name": "Variabilité de la température d'un jour à l'autre",
+    "description": "Moyenne {freq:f} de la variabilité d'un jour à l'autre calculée comme l'écart-type {subfreq:m}.",
+    "abstract": "Moyenne d'une fréquence de la variabilité d'un jour à l'autre calculée comme l'écart-type d'une sous-fréquence."
   },
   "ARIDITY_INDEX": {
     "title": "Indice d'aridité",

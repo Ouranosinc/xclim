@@ -1,26 +1,26 @@
-"""Hydrological indice definitions."""
+"""Hydrological index function definitions."""
 
 from __future__ import annotations
+
+import importlib.util as _util
+from typing import Literal
 
 import numpy as np
 import xarray
 from scipy.stats import rv_continuous
 from xarray import DataArray
 
-from xclim.core._types import DateStr, Quantified
+from xclim.compute import generic
+from xclim.compute.helpers import resample_map
+from xclim.compute.stats import standardized_index
+from xclim.core import DateStr, Freq, Quantified
 from xclim.core.calendar import get_calendar, split_time_to_season_year
 from xclim.core.missing import at_least_n_valid
-from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
-from xclim.indices.generic import threshold_count
-from xclim.indices.helpers import resample_map
-from xclim.indices.stats import standardized_index
+from xclim.core.units import convert_units_to, declare_units, rate2amount
+from xclim.core.utils import deprecated
 
-from . import generic
+HAS_PYMANNKENDALL = _util.find_spec("pymannkendall")
 
-try:
-    import pymannkendall as mk
-except ImportError:
-    mk = None
 
 __all__ = [
     "antecedent_precipitation_index",
@@ -46,8 +46,8 @@ __all__ = [
 ]
 
 
-@declare_units(q="[discharge]")
-def base_flow_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+@declare_units(rivo="[discharge]")
+def base_flow_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Base flow index.
 
@@ -55,7 +55,7 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Rate of river discharge.
     freq : str
         Resampling frequency.
@@ -80,9 +80,8 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
     """
-    # TODO: Could be refactored with generic.select_rolling_resample_op, but `skipa=False` cannot be passed right now.
-    m7 = q.rolling(time=7, center=True).mean(skipna=False).resample(time=freq)
-    mq = q.resample(time=freq)
+    m7 = rivo.rolling(time=7, center=True).mean(skipna=False).resample(time=freq)
+    mq = rivo.resample(time=freq)
 
     m7m = m7.min(dim="time")
     out = m7m / mq.mean(dim="time")
@@ -90,8 +89,8 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     return out
 
 
-@declare_units(q="[discharge]")
-def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+@declare_units(rivo="[discharge]")
+def rb_flashiness_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Richards-Baker flashiness index.
 
@@ -100,7 +99,7 @@ def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Rate of river discharge.
     freq : str
         Resampling frequency.
@@ -122,23 +121,23 @@ def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
     ----------
     :cite:cts:`baker_new_2004`
     """
-    d = np.abs(q.diff(dim="time")).resample(time=freq)
-    mq = q.resample(time=freq)
+    d = np.abs(rivo.diff(dim="time")).resample(time=freq)
+    mq = rivo.resample(time=freq)
     out = d.sum(dim="time") / mq.sum(dim="time")
     out.attrs["units"] = ""
     return out
 
 
 @declare_units(
-    q="[discharge]",
+    rivo="[discharge]",
     params="[]",
 )
 def standardized_streamflow_index(
-    q: xarray.DataArray,
-    freq: str | None = "MS",
+    rivo: xarray.DataArray,
+    freq: Freq | None = "MS",
     window: int = 1,
-    dist: str | rv_continuous = "genextreme",
-    method: str = "ML",
+    dist: Literal["genextreme", "fisk"] | rv_continuous = "genextreme",
+    method: Literal["ML", "APP", "PWM"] = "ML",
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
@@ -150,7 +149,7 @@ def standardized_streamflow_index(
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Rate of river discharge.
     freq : str, optional
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes
@@ -165,7 +164,7 @@ def standardized_streamflow_index(
         uses a deterministic function that does not involve any optimization.
         `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
-        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
+        Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -174,11 +173,11 @@ def standardized_streamflow_index(
         Default option `None` means that the calibration period finishes at the end of the input dataset.
     params : xarray.DataArray, optional
         Fit parameters.
-        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The `params` can be computed using ``xclim.compute.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
     **indexer : Indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -187,9 +186,9 @@ def standardized_streamflow_index(
 
     See Also
     --------
-    xclim.indices._agro.standardized_precipitation_index : Standardized Precipitation Index.
-    xclim.indices.stats.standardized_index : Standardized Index.
-    xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
+    xclim.compute._agro.standardized_precipitation_index : Standardized Precipitation Index.
+    xclim.compute.stats.standardized_index : Standardized Index.
+    xclim.compute.stats.standardized_index_fit_params : Standardized Index Fit Params.
 
     Notes
     -----
@@ -208,12 +207,12 @@ def standardized_streamflow_index(
     Examples
     --------
     >>> from datetime import datetime
-    >>> from xclim.indices import standardized_streamflow_index
+    >>> from xclim.compute import standardized_streamflow_index
     >>> ds = xr.open_dataset(path_to_q_file)
-    >>> q = ds.q_sim
+    >>> rivo = ds.q_sim
     >>> cal_start, cal_end = "2006-05-01", "2008-06-01"
     >>> ssi_3 = standardized_streamflow_index(
-    ...     q,
+    ...     rivo,
     ...     freq="MS",
     ...     window=3,
     ...     dist="genextreme",
@@ -222,20 +221,19 @@ def standardized_streamflow_index(
     ...     cal_end=cal_end,
     ... )  # Computing SSI-3 months using a GEV distribution for the fit
     >>> # Fitting parameters can also be obtained first, then reused as input.
-    >>> from xclim.indices.stats import standardized_index_fit_params
+    >>> from xclim.compute.stats import standardized_index_fit_params
     >>> params = standardized_index_fit_params(
-    ...     q.sel(time=slice(cal_start, cal_end)),
+    ...     rivo.sel(time=slice(cal_start, cal_end)),
     ...     freq="MS",
     ...     window=3,
     ...     dist="genextreme",
     ...     method="ML",
     ... )  # First getting params
-    >>> ssi_3 = standardized_streamflow_index(q, params=params)
+    >>> ssi_3 = standardized_streamflow_index(rivo, params=params)
     """
     fitkwargs = fitkwargs or {}
     dist_methods = {
-        # FIXME: xclim-v1 — remove "APP"
-        "genextreme": ["ML", "APP"],
+        "genextreme": ["ML"],
         "fisk": ["ML", "APP"],
     }
     if isinstance(dist, str):
@@ -247,7 +245,7 @@ def standardized_streamflow_index(
 
     zero_inflated = False
     ssi = standardized_index(
-        q,
+        rivo,
         freq=freq,
         window=window,
         dist=dist,
@@ -263,8 +261,9 @@ def standardized_streamflow_index(
     return ssi
 
 
+@deprecated("1.0", "land.snd_max")
 @declare_units(snd="[length]")
-def snd_max(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snd_max(snd: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Maximum snow depth.
 
@@ -282,11 +281,11 @@ def snd_max(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     xarray.DataArray
         The maximum snow depth over a given number of days for each period. [length].
     """
-    return generic.select_resample_op(snd, op="max", freq=freq)
+    return generic.statistics(snd, statistic="max", freq=freq)
 
 
 @declare_units(snd="[length]")
-def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snd_max_doy(snd: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Day of year of maximum snow depth.
 
@@ -308,15 +307,16 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
-    out = generic.select_resample_op(snd.where(snd > 0, 0), op=generic.doymax, freq=freq)
+    out = generic.statistics(snd.where(snd > 0, 0), statistic="doymax", freq=freq)
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
 
     # Mask arrays that miss at least one non-null snd.
     return out.where(~valid)
 
 
+@deprecated("1.0", "land.snw_max")
 @declare_units(snw="[snowamount]")
-def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snw_max(snw: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Maximum snow amount.
 
@@ -334,11 +334,11 @@ def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     xarray.DataArray
         The maximum snow amount over a given number of days for each period. [mass/area].
     """
-    return generic.select_resample_op(snw, op="max", freq=freq)
+    return generic.statistics(snw, statistic="max", freq=freq)
 
 
 @declare_units(snw="[snowamount]")
-def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snw_max_doy(snw: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Day of year of maximum snow amount.
 
@@ -360,15 +360,14 @@ def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
-    out = generic.select_resample_op(snw.where(snw > 0, 0), op=generic.doymax, freq=freq)
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
+    out = generic.statistics(snw.where(snw > 0, 0), statistic="doymax", freq=freq)
 
     # Mask arrays that miss at least one non-null snd.
     return out.where(~valid)
 
 
 @declare_units(snw="[snowamount]")
-def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: str = "YS-JUL") -> xarray.DataArray:
+def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Maximum snow melt.
 
@@ -402,7 +401,7 @@ def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: str = "YS-JUL
 
 @declare_units(snw="[snowamount]", pr="[precipitation]")
 def melt_and_precip_max(
-    snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: str = "YS-JUL"
+    snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: Freq = "YS-JUL"
 ) -> xarray.DataArray:
     """
     Maximum snow melt and precipitation.
@@ -446,10 +445,10 @@ def melt_and_precip_max(
 )
 def standardized_groundwater_index(
     gwl: xarray.DataArray,
-    freq: str | None = "MS",
+    freq: Freq | None = "MS",
     window: int = 1,
-    dist: str | rv_continuous = "genextreme",
-    method: str = "ML",
+    dist: Literal["gamma", "genextreme", "lognorm"] | rv_continuous = "genextreme",
+    method: Literal["ML", "APP", "PWM"] = "ML",
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
@@ -476,7 +475,7 @@ def standardized_groundwater_index(
         The approximate method uses a deterministic function that does not involve any optimization.
         `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
-        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
+        Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -485,11 +484,11 @@ def standardized_groundwater_index(
         Default option `None` means that the calibration period finishes at the end of the input dataset.
     params : xarray.DataArray, optional
         Fit parameters.
-        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The `params` can be computed using ``xclim.compute.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
     **indexer : Indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -498,9 +497,9 @@ def standardized_groundwater_index(
 
     See Also
     --------
-    xclim.indices._agro.standardized_precipitation_index : Standardized Precipitation Index.
-    xclim.indices.stats.standardized_index : Standardized Index.
-    xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
+    xclim.compute._agro.standardized_precipitation_index : Standardized Precipitation Index.
+    xclim.compute.stats.standardized_index : Standardized Index.
+    xclim.compute.stats.standardized_index_fit_params : Standardized Index Fit Params.
 
     Notes
     -----
@@ -516,7 +515,7 @@ def standardized_groundwater_index(
     Examples
     --------
     >>> from datetime import datetime
-    >>> from xclim.indices import standardized_groundwater_index
+    >>> from xclim.compute import standardized_groundwater_index
     >>> ds = xr.open_dataset(path_to_gwl_file)
     >>> gwl = ds.gwl
     >>> cal_start, cal_end = "1980-05-01", "1982-06-01"
@@ -530,7 +529,7 @@ def standardized_groundwater_index(
     ...     cal_end=cal_end,
     ... )  # Computing SGI-3 months using a Gamma distribution for the fit
     >>> # Fitting parameters can also be obtained first, then reused as input.
-    >>> from xclim.indices.stats import standardized_index_fit_params
+    >>> from xclim.compute.stats import standardized_index_fit_params
     >>> params = standardized_index_fit_params(
     ...     gwl.sel(time=slice(cal_start, cal_end)),
     ...     freq="MS",
@@ -544,8 +543,7 @@ def standardized_groundwater_index(
 
     dist_methods = {
         "gamma": ["ML", "APP"],
-        # FIXME: xclim-v1 — remove "APP"
-        "genextreme": ["ML", "APP"],
+        "genextreme": ["ML"],
         "lognorm": ["ML", "APP"],
     }
     if isinstance(dist, str):
@@ -573,38 +571,38 @@ def standardized_groundwater_index(
     return sgi
 
 
-@declare_units(q="[discharge]")
-def flow_index(q: xarray.DataArray, p: float = 0.95) -> xarray.DataArray:
+@declare_units(rivo="[discharge]")
+def flow_index(rivo: xarray.DataArray, q: float = 0.95) -> xarray.DataArray:
     """
     Flow index.
 
-    Calculate the pth percentile of daily streamflow normalized by the median flow.
+    Calculate the qth quantile of daily streamflow normalized by the median flow.
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Daily streamflow data.
-    p : float
-        Percentile for calculating the flow index, between 0 and 1. Default of 0.95 is for high flows.
+    q : float
+        Quantile for calculating the flow index, between 0 and 1. Default of 0.95 is for high flows.
 
     Returns
     -------
     xarray.DataArray
-        Normalized Qp, which is the p th percentile of daily streamflow normalized by the median flow.
+        Normalized rivoq, which is the qth quantile of daily streamflow normalized by the median flow.
 
     References
     ----------
     :cite:cts:`Clausen2000`
     """
-    qp = q.quantile(p, dim="time")
-    q_median = q.median(dim="time")
+    qp = rivo.quantile(q, dim="time")
+    q_median = rivo.median(dim="time")
     out = qp / q_median
     out.attrs["units"] = "1"
     return out
 
 
-@declare_units(q="[discharge]")
-def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: str = "YS-OCT") -> xarray.DataArray:
+@declare_units(rivo="[discharge]")
+def high_flow_frequency(rivo: xarray.DataArray, threshold_factor: int = 9, freq: Freq = "YS-OCT") -> xarray.DataArray:
     """
     High flow frequency.
 
@@ -614,7 +612,7 @@ def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: st
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Daily streamflow data.
     threshold_factor : int
         Factor by which the median flow is multiplied to set the high flow threshold, default is 9.
@@ -630,14 +628,15 @@ def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: st
     ----------
     :cite:cts:`addor2018,Clausen2000`
     """
-    median_flow = q.median(dim="time")
-    threshold = threshold_factor * median_flow
-    out = threshold_count(q, ">", threshold, freq=freq)
-    return to_agg_units(out, q, "count", deffreq="D")
+    median_flow = rivo.median(dim="time")
+    thresh = (threshold_factor * median_flow).assign_attrs(units=rivo.attrs["units"])
+    return generic.count_occurrences(rivo, condition=">", thresh=thresh, freq=freq)
 
 
-@declare_units(q="[discharge]")
-def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq: str = "YS-OCT") -> xarray.DataArray:
+@declare_units(rivo="[discharge]")
+def low_flow_frequency(
+    rivo: xarray.DataArray, threshold_factor: float = 0.2, freq: Freq = "YS-OCT"
+) -> xarray.DataArray:
     """
     Low flow frequency.
 
@@ -647,7 +646,7 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Daily streamflow data.
     threshold_factor : float
         Factor by which the mean flow is multiplied to set the low flow threshold, default is 0.2.
@@ -663,10 +662,9 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
     ----------
     :cite:cts:`Olden2003`
     """
-    mean_flow = q.mean(dim="time")
-    threshold = threshold_factor * mean_flow
-    out = threshold_count(q, "<", threshold, freq=freq)
-    return to_agg_units(out, q, "count", deffreq="D")
+    mean_flow = rivo.mean(dim="time")
+    thresh = (threshold_factor * mean_flow).assign_attrs(units=rivo.attrs["units"])
+    return generic.count_occurrences(rivo, condition="<", thresh=thresh, freq=freq)
 
 
 @declare_units(pr="[precipitation]")
@@ -707,12 +705,12 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
 
 
 # TODO: change a to `area`?
-@declare_units(q="[discharge]", pr="[precipitation]", area="[area]")
+@declare_units(rivo="[discharge]", pr="[precipitation]", area="[area]")
 def runoff_ratio(
-    q: xarray.DataArray,
+    rivo: xarray.DataArray,
     pr: xarray.DataArray,
     area: Quantified,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     """
     Runoff ratio.
@@ -721,12 +719,12 @@ def runoff_ratio(
 
     Parameters
     ----------
-    q : xarray.DataArray
-        Streamflow in discharge units.
+    rivo : xarray.DataArray
+        Daily streamflow data.
     pr : xarray.DataArray
-        Mean daily precipitation in precipitation units.
+        Mean daily precipitation.
     area : Quantified
-        Watershed area in area units.
+        Watershed area.
     freq : str
         Resampling frequency.
 
@@ -756,7 +754,7 @@ def runoff_ratio(
     ----------
     :cite:cts:'knoben_2024'
     """
-    q = convert_units_to(q, "mm3/hr")
+    q = convert_units_to(rivo, "mm3/hr")
     area = convert_units_to(area, "mm2")
     pr = convert_units_to(pr, "mm/hr")
 
@@ -769,7 +767,7 @@ def runoff_ratio(
 
 
 @declare_units(pr="[precipitation]", evspsblpot="[precipitation]")
-def aridity_index(pr: xarray.DataArray, evspsblpot: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def aridity_index(pr: xarray.DataArray, evspsblpot: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     """
     Aridity index.
 
@@ -822,18 +820,18 @@ def _timemax(da):
 
 
 # TODO: Change the indicator name? That seems a bit off
-@declare_units(snw="[snowamount]", q="[discharge]")
+@declare_units(snw="[snowamount]", rivo="[discharge]")
 def lag_snowpack_flow_peaks(
     snw: xarray.DataArray,
-    q: xarray.DataArray,
-    freq: str = "YS-OCT",
-    p: float = 0.9,
+    rivo: xarray.DataArray,
+    freq: Freq = "YS-OCT",
+    q: float = 0.9,
 ) -> xarray.DataArray:
     """
     Time lag between maximum snowpack and river high flows.
 
     Number of days between the annual maximum snowpack, measured by the surface snow
-    amount, and the mean date when river flow exceeds a percentile threshold
+    amount, and the mean date when river flow exceeds a quantile threshold
     during a given year.
     If the time lag between maximum snowpack and river high flows is ≤ 50 days,
     the watershed is likely in a nival regime.
@@ -842,12 +840,12 @@ def lag_snowpack_flow_peaks(
     ----------
     snw : xarray.DataArray
         Surface snow amount.
-    q : xarray.DataArray
-        Streamflow.
+    rivo : xarray.DataArray
+        Daily streamflow data.
     freq : str
         Resampling frequency. Defaults to the water year starting on the 1st of October.
-    p : float
-        Percentile for calculating the flow index, between 0 and 1. Default of 0.9 is for high flows.
+    q : float
+        Quantile for calculating the flow index, between 0 and 1. Default of 0.9 is for high flows.
 
     Returns
     -------
@@ -856,7 +854,7 @@ def lag_snowpack_flow_peaks(
 
     See Also
     --------
-    xclim.indices.rb_flashiness_index: Richards-Baker flashiness index.
+    xclim.compute.rb_flashiness_index: Richards-Baker flashiness index.
 
     Notes
     -----
@@ -878,20 +876,20 @@ def lag_snowpack_flow_peaks(
     # Convert to float, and ensure a NaT gets converted to a nan
     dt_snw_max = xarray.where(dt_snw_max.isnull(), np.nan, dt_snw_max.astype("timedelta64[s]").astype(float))
 
-    def _mean_timedelta_over_perc(q, p, t0):
-        dt_q = (q.time - t0).astype("timedelta64[s]").astype(float)
-        thresh = q.quantile(q=p, dim="time")
-        return dt_q.where(q >= thresh).mean(dim="time")
+    def _mean_timedelta_over_perc(rivo, q, t0):
+        dt_q = (rivo.time - t0).astype("timedelta64[s]").astype(float)
+        thresh = rivo.quantile(q=q, dim="time")
+        return dt_q.where(rivo >= thresh).mean(dim="time")
 
-    dt_high_q = resample_map(q, "time", freq, _mean_timedelta_over_perc, map_kwargs={"p": p, "t0": t0})
+    dt_high_q = resample_map(rivo, "time", freq, _mean_timedelta_over_perc, map_kwargs={"q": q, "t0": t0})
 
     lag = (dt_high_q - dt_snw_max) / (86400)
     lag.attrs["units"] = "days"
     return lag
 
 
-@declare_units(q="[discharge]")
-def sen_slope(q: xarray.DataArray, freq: str = "YS") -> tuple[xarray.DataArray, xarray.DataArray]:
+@declare_units(rivo="[discharge]")
+def sen_slope(rivo: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArray, xarray.DataArray]:
     """
     Temporal robustness analysis of streamflow.
 
@@ -899,17 +897,17 @@ def sen_slope(q: xarray.DataArray, freq: str = "YS") -> tuple[xarray.DataArray, 
 
     Parameters
     ----------
-    q : xarray.DataArray
-        Observed streamflow vector.
+    rivo : xarray.DataArray
+        Daily streamflow data.
     freq : str
         Resampling frequency.
 
     Returns
     -------
-    tuple[xarray.DataArray, xarray.DataArray]
-        Returns Sen slope and p-value of in the input
-        ``sen_slope`` : Sen's slope estimates.
-        ``p_value`` : Mann-Kendall metric indicating slope tendency.
+    sen_slope : xarray.DataArray, [dimensionless]
+        Sen's slope estimates.
+    p_value : xarray.DataArray, [dimensionless]
+        Mann-Kendall metric indicating slope tendency.
 
     Notes
     -----
@@ -922,6 +920,11 @@ def sen_slope(q: xarray.DataArray, freq: str = "YS") -> tuple[xarray.DataArray, 
     ----------
     :cite:cts:`sauquet_2025`
     """
+    if not HAS_PYMANNKENDALL:
+        msg = "`sen_slope` requires access to the `pymannkendall` library."
+        raise ModuleNotFoundError(msg)
+
+    import pymannkendall as mk  # pylint: disable=import-outside-toplevel
 
     def _mann_kendall(q, freq):
         qr = q.resample(time=freq).mean()
@@ -938,16 +941,15 @@ def sen_slope(q: xarray.DataArray, freq: str = "YS") -> tuple[xarray.DataArray, 
         p_vals = out.isel(var=1)
         return sen_slope, p_vals
 
-    sen_slope, p_value = _mann_kendall(q, freq)
+    sen_slope, p_value = _mann_kendall(rivo, freq)
     sen_slope.attrs["units"] = ""
     p_value.attrs["units"] = ""
     return sen_slope, p_value
 
 
-# FIXME: xclim-v1 — Remove this function. Its only utility is to compute a ratio.
-@declare_units(q="[discharge]", qsim="[discharge]")
+@declare_units(rivo="[discharge]", rivosim="[discharge]")
 def sen_slope_ratio(
-    q: xarray.Dataset, qsim: xarray.DataArray, freq: str = "YS"
+    rivo: xarray.Dataset, rivosim: xarray.DataArray, freq: Freq = "YS"
 ) -> tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray, xarray.DataArray, xarray.DataArray]:
     """
     Temporal robustness analysis of streamflow.
@@ -957,22 +959,25 @@ def sen_slope_ratio(
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Observed streamflow vector.
-    qsim : xarray.DataArray, optional
+    rivosim : xarray.DataArray, optional
         Simulated streamflow vector.
     freq : str
         Resampling frequency.
 
     Returns
     -------
-    tuple[xarray.DataArray, xarray.DataArray]
-        Returns Sen slope and p-value of both inputs and the ratio of slopes
-        ``sen_slope`` : Sen's slope estimates.
-        ``p_value`` : Mann-Kendall metric indicating slope tendency.
-        ``sen_slope_sim`` : Sen's slope estimates of the simulation dataset.
-        ``p_value_sim`` : Mann-Kendall metric indicating slope tendency of the simulation dataset.
-        ``ratio`` : Ratio of the slopes.
+    sen_slope : xarray.DataArray, [dimensionless]
+        Sen's slope estimates.
+    p_value: xarray.DataArray, [dimensionless]
+        Mann-Kendall metric indicating slope tendency.
+    sen_slope_sim: xarray.DataArray, [dimensionless]
+        Sen's slope estimates of the simulation dataset.
+    p_value_sim: xarray.DataArray, [dimensionless]
+        Mann-Kendall metric indicating slope tendency of the simulation dataset.
+    ratio: xarray.DataArray, [dimensionless]
+        Ratio of the slopes.
 
     Notes
     -----
@@ -985,17 +990,15 @@ def sen_slope_ratio(
     ----------
     :cite:cts:`sauquet_2025`
     """
-    sen_slope_obs, p_value = sen_slope(q, freq)
-    sen_slope_sim, p_value_sim = sen_slope(qsim, freq)
-    sen_slope_sim = sen_slope_sim
-    p_value_sim = p_value_sim
+    sen_slope_obs, p_value = sen_slope(rivo, freq)
+    sen_slope_sim, p_value_sim = sen_slope(rivosim, freq)
     ratio = (sen_slope_obs / sen_slope_sim).assign_attrs({"units": ""})
     return sen_slope_obs, p_value, sen_slope_sim, p_value_sim, ratio
 
 
-@declare_units(q="[discharge]")
+@declare_units(rivo="[discharge]")
 def base_flow_index_seasonal_ratio(
-    q: xarray.DataArray, freq: str = "QS-DEC", numerator: str = "DJF", denominator: str = "JJA"
+    rivo: xarray.DataArray, freq: Freq = "QS-DEC", numerator: str = "DJF", denominator: str = "JJA"
 ) -> tuple[DataArray, DataArray, DataArray, DataArray, DataArray]:
     """
     Seasonal Base flow index (bfi) and ratio of winter to summer base flow index.
@@ -1005,7 +1008,7 @@ def base_flow_index_seasonal_ratio(
 
     Parameters
     ----------
-    q : xarray.DataArray
+    rivo : xarray.DataArray
         Rate of river discharge.
     freq : str
         Resampling frequency.
@@ -1031,7 +1034,7 @@ def base_flow_index_seasonal_ratio(
     :cite:cts:`singh_2019`
     :cite:cts:`jaffres_2021`
     """
-    bfi = split_time_to_season_year(base_flow_index(q, freq), freq)
+    bfi = split_time_to_season_year(base_flow_index(rivo, freq), freq)
     den = bfi.sel(season=denominator)
     ratio = bfi.sel(season=numerator) / den.where(den > 0)
     ratio = ratio.assign_attrs({"units": "", "denominator": denominator, "numerator": numerator})

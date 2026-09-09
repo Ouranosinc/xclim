@@ -7,8 +7,6 @@ This module implements methods and tools meant to partition climate projection u
 
 from __future__ import annotations
 
-from typing import cast
-
 import numpy as np
 import xarray as xr
 
@@ -416,7 +414,7 @@ def fractional_uncertainty(u: xr.DataArray) -> xr.DataArray:
         Fractional, or relative uncertainty with respect to the total uncertainty.
     """
     with xr.set_options(keep_attrs=True):
-        uncertainty = cast(xr.DataArray, u / u.sel(uncertainty="total") * 100)
+        uncertainty = u / u.sel(uncertainty="total") * 100
         uncertainty.attrs.update(u.attrs)
         uncertainty.attrs["long_name"] = "Fraction of total variance"
         uncertainty.attrs["units"] = "%"

@@ -10,7 +10,7 @@ import xarray as xr
 from scipy.optimize import differential_evolution
 from scipy.stats import lognorm, norm
 
-from xclim.indices import stats
+from xclim.compute import stats
 
 
 @pytest.fixture(params=[True, False])
@@ -304,8 +304,8 @@ class TestPWMFit:
 
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
-def test_frequency_analysis(ndq_series, use_dask):
-    q = ndq_series.copy()
+def test_frequency_analysis(ndrivo_series, use_dask):
+    q = ndrivo_series.copy()
     q[:, 0, 0] = np.nan
     if use_dask:
         q = q.chunk()
@@ -325,9 +325,9 @@ def test_frequency_analysis(ndq_series, use_dask):
 
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
-def test_frequency_analysis_lmoments(ndq_series, use_dask):
+def test_frequency_analysis_lmoments(ndrivo_series, use_dask):
     lmom = pytest.importorskip("lmoments3.distr")
-    q = ndq_series.copy()
+    q = ndrivo_series.copy()
     q[:, 0, 0] = np.nan
     if use_dask:
         q = q.chunk()
@@ -384,8 +384,8 @@ def test_parametric_cdf(use_dask, random):
     out = stats.parametric_cdf(p=p, v=v)
 
     np.testing.assert_array_almost_equal(out, expected, 1)
-    assert "cdf" in out.coords
-    assert out.attrs["cell_methods"] == "dparams: cdf"
+    assert "v" in out.coords
+    assert out.attrs["cell_methods"] == "dparams: v"
 
 
 @pytest.mark.parametrize("use_dask,use_dataarray", [[True, False], [False, True], [True, True], [False, False]])
