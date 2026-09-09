@@ -115,13 +115,8 @@ def statistics(
         statistic = XCLIM_OPS.get(statistic, statistic)
     if statistic == "sum" and is_temporal_rate(data):
         statistic = "integral"
-    if isinstance(statistic, str):
-        out: xr.DataArray = getattr(
-            data if freq is None else data.resample(time=freq), statistic.replace("integral", "sum")
-        )(dim="time", keep_attrs=True)
-    else:
-        with xr.set_options(keep_attrs=True):
-            out: xr.DataArray = resample_map(data, "time", freq, statistic)
+    with xr.set_options(keep_attrs=True):
+        out: xr.DataArray = resample_map(data, "time", freq, statistic.replace("integral", "sum"))
 
     if out_units is not None:
         return out.assign_attrs(units=out_units)
