@@ -387,6 +387,12 @@ def test_multiindicator(tas_series):
         _tmin, _tmax = ind(tas, freq="YS")
 
 
+def test_deriving_multiindicator():
+    new = multiTemp.__class__(identifier="minmaxtemp2")
+
+    assert new.attrs[0].var_name == "tmin"
+
+
 def test_missing(tas_series):
     a = tas_series(np.ones(365, float), start="1/1/2000")
 

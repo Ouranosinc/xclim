@@ -291,8 +291,9 @@ class Output(dict):  # numpydoc ignore=PR01
         else:
             other_meta = {k: v for k, v in other.items() if k in meta}
             other_attrs = {k: v for k, v in other.items() if k not in meta}
-        merged = (meta | other_meta) | (dict(self) | other_attrs)
-        return self.__class__(**merged)
+        merged_meta = {k: v if other_meta.get(k) is None else other_meta[k] for k, v in self.meta.items()}
+        merged = dict(self) | other_attrs
+        return self.__class__(**merged_meta, **merged)
 
     def __repr__(self):
         """Readable representation."""
