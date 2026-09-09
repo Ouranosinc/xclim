@@ -12,7 +12,7 @@ from xclim import land
 def test_base_flow_index(ndrivo_series):
     out = land.base_flow_index(ndrivo_series, freq="YS")
     assert out.base_flow_index.attrs["units"] == "1"
-    
+
 
 def test_rb_flashiness_index(ndrivo_series):
     out = land.base_flow_index(ndrivo_series, freq="YS")
