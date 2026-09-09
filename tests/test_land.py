@@ -85,7 +85,7 @@ def test_high_flow_frequency(rivo_series):
         threshold_factor=9,
         freq="YS",
     )
-    np.testing.assert_array_equal(out.q_high_flow_frequency, [20, 0, np.nan])
+    np.testing.assert_array_equal(out.rivo_high_flow_frequency, [20, 0, np.nan])
 
 
 def test_low_flow_frequency(rivo_series):
@@ -94,7 +94,7 @@ def test_low_flow_frequency(rivo_series):
     a[200:210] = 1
     q = rivo_series(a)
     out = land.low_flow_frequency(q, threshold_factor=0.2, freq="YS")
-    np.testing.assert_array_equal(out.q_low_flow_frequency, [20, 0, np.nan])
+    np.testing.assert_array_equal(out.rivo_low_flow_frequency, [20, 0, np.nan])
 
 
 def test_runoff_ratio(rivo_series, area_series, pr_series, freq="YS"):
