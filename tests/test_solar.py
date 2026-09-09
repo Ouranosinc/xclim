@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.core.units import convert_units_to
 from xclim.compute import solar
+from xclim.core.units import convert_units_to
 
 
 @pytest.mark.parametrize(["method", "tol"], [("astral", 5), ("pvlib", 5), ("internal", 180)])
