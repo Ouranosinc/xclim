@@ -258,6 +258,7 @@ jobs:
             github.com:443
             ip-api.com:80
             ipapi.co:443
+            pkg-containers.githubusercontent.com:443
             proxy.golang.org:443
             pypi.org:443
             raw.githubusercontent.com:443
