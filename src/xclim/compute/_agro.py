@@ -11,7 +11,7 @@ from scipy.stats import rv_continuous
 
 import xclim.compute.run_length as rl
 from xclim.compute.classify import get_zones
-from xclim.compute.generic import day_threshold_reached, statistics, statistics_between_dates
+from xclim.compute.generic import day_threshold_reached, season, statistics, statistics_between_dates
 from xclim.compute.helpers import (
     _gather_lat,
     gladstones_day_length_latitude_coefficient,
@@ -39,6 +39,7 @@ from xclim.core.utils import uses_dask
 
 __all__ = [
     "biologically_effective_degree_days",
+    "canadian_hardiness_zones",
     "chill_portions",
     "chill_units",
     "cool_night_index",
@@ -1419,17 +1420,19 @@ def hardiness_zones(  # numpydoc ignore=SS05
     """
     if method.lower() == "usda":
         zone_min, zone_max, zone_step = "-60 degF", "70 degF", "5 degF"
-
     elif method.lower() == "anbg":
         zone_min, zone_max, zone_step = "-15 degC", "20 degC", "5 degC"
-
     else:
         raise NotImplementedError(f"Method {method} not supported. Must be either `usda` or `anbg`.")
 
-    tn_min_rolling = statistics(tasmin, statistic="min", freq=freq).rolling(time=window).mean()
-    zones: xarray.DataArray = get_zones(tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step)
+    flag_vals = ", ".join([str(n) for n in range(28)])
+    flag_means = ", ".join([f"{(n // 2) + 1}{'a' if n % 2 == 0 else 'b'}" for n in range(0, 28)])
 
-    zones = zones.assign_attrs(units="")
+    tn_min_rolling = statistics(tasmin, statistic="min", freq=freq).rolling(time=window).mean()
+    zones: xarray.DataArray = get_zones(tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step).clip(
+        min=0
+    )
+    zones = zones.assign_attrs(units="", flag_values=flag_vals, flag_meanings=flag_means)
     return zones
 
 
@@ -1591,6 +1594,126 @@ def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: Freq =
         daily = cu.resample(time="1D").sum()
         cu = daily.where(daily > 0)
     return cu.resample(time=freq).sum().assign_attrs(units="")
+
+
+@declare_units(
+    tasmin="[temperature]", tasmax="[temperature]", pr="[precipitation]", snd="[length]", wsgmax10m="[speed]"
+)
+def canadian_hardiness_zones(
+    tasmin: xarray.DataArray,
+    tasmax: xarray.DataArray,
+    pr: xarray.DataArray,
+    snd: xarray.DataArray,
+    wsgmax10m: xarray.DataArray,
+    freq: str = "30YS",
+) -> xarray.DataArray:
+    """
+    Canadian hardiness zones.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+        Minimum daily temperature.
+    tasmax : xarray.DataArray
+        Maximum daily temperature.
+    pr : xarray.DataArray
+        Precipitation.
+    snd : xarray.DataArray
+        Snow depth.
+    wsgmax10m : xarray.DataArray
+        Maximum wind gust.
+    freq : str
+        Resampling frequency for the climatology. Default is ``"30YS"`` (30-years).
+
+    Returns
+    -------
+    xarray.DataArray
+        Canadian hardiness zones.
+
+    Notes
+    -----
+    This index is based on the Canadian hardiness zones, which are used to classify regions based on their climate
+    suitability for growing plants. The index is calculated using a combination of temperature, precipitation,
+    snow depth, and wind speed data. The formula is adapted from the Canadian hardiness zones index as described in
+    :cite:t:`ouellet_hardiness_1967b` and :cite:t:`ouellet_hardiness_1967c`.
+
+    References
+    ----------
+    :cite:cts:`ouellet_hardiness_1967b,ouellet_hardiness_1967c,mckenney_updated_2025`
+    """
+    _tasmin = convert_units_to(tasmin, "degC")
+    _tasmax = convert_units_to(tasmax, "degC")
+    _pr = convert_units_to(pr, "mm")
+    _snd = convert_units_to(snd, "mm")
+    _wsgmax10m = convert_units_to(wsgmax10m, "km h-1")
+
+    # Monthly mean of minimum temperatures of the coldest month
+    x1 = statistics(_tasmin, statistic="mean", freq="MS").resample(time="YS").min().resample(time=freq).mean()
+
+    # Length of the frost free period (FFP)
+    x2 = (
+        season(
+            _tasmin,
+            thresh="0.0 degC",
+            window=5,
+            condition=">",
+            aspect="length",
+            freq="YS",
+            mid_date=None,
+        )
+        .resample(time=freq)
+        .mean()
+    )
+
+    # Precipitation in the period from June to November, inclusive
+    _pr_constrained = (
+        select_time(_pr, date_bounds=("06-01", "12-01"), include_bounds=(True, False))
+        .resample(time="YS")
+        .sum()
+        .resample(time=freq)
+        .mean()
+    )
+    # Empirical adjustment for millimeters of precipitation
+    x3 = _pr_constrained / (_pr_constrained + 25.4)
+
+    # Monthly mean of maximum temperatures of the warmest month
+    x4 = statistics(_tasmax, statistic="mean", freq="MS").resample(time="YS").max().resample(time=freq).mean()
+
+    # Winter factor
+    x5 = (0 - x1) * select_time(_pr, month=1).resample(time="YS").sum().resample(time=freq).mean()
+
+    # Mean maximum snow depth
+    snd_above_0 = _snd.resample(time="YS").max().resample(time=freq).mean()
+    x6 = snd_above_0 / (snd_above_0 + 25.4)
+
+    # Maximum wind gust in experienced in a 30-year period
+    x7 = _wsgmax10m.resample(time=freq).max()
+
+    canadian_hardiness_index = (
+        -67.62
+        + (1.734 * x1)
+        + (0.1868 * x2)
+        + (69.77 * x3)
+        + (1.256 * x4)
+        + (0.006119 * x5)
+        + (22.37 * x6)
+        - (0.01832 * x7)
+    )
+    canadian_hardiness_index = canadian_hardiness_index.assign_attrs(units="")
+    zones = get_zones(
+        canadian_hardiness_index,
+        zone_min="0",
+        zone_max="100",
+        zone_step="5",
+        exclude_boundary_zones=False,
+        close_last_zone_right_boundary=False,
+    ).clip(min=0)
+
+    flag_vals = ", ".join([str(n) for n in range(20)])
+    flag_means = ", ".join([f"{n // 2}{'a' if n % 2 == 0 else 'b'}" for n in range(20)])
+    zones = zones.assign_attrs(flag_values=flag_vals, flag_meanings=flag_means)
+
+    return zones
 
 
 @declare_units(tas="[precipitation]")

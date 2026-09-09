@@ -76,7 +76,8 @@ class TestConvertUnitsTo:
 
         with pytest.raises(TypeError):
             tas = tas_series(np.arange(365), start="1/1/2001")
-            out = compute.tx_days_above(tas, 30)  # noqa
+            with pytest.warns(DeprecationWarning):
+                compute.tx_days_above(tas, 30)  # noqa
 
     def test_fraction(self):
         out = convert_units_to(xr.DataArray([10], attrs={"units": "%"}), "")

@@ -390,6 +390,21 @@ variables:
           op: gt
           thresh: 4.0 m s-1
           n: 5
+  wsgmax10m:
+    cmip6: True
+    canonical_units: m s-1
+    cell_methods: "time: maximum"
+    description: Maximum wind speed of gust at 10m above surface.
+    dimensions: "[speed]"
+    standard_name: wind_speed_of_gust
+    data_flags:
+      - wind_values_outside_of_bounds:
+          upper: 76.0 m s-1
+          lower: 0 m s-1
+      - values_op_thresh_repeating_for_n_or_more_days:
+          op: gt
+          thresh: 4.0 m s-1
+          n: 5
 conversions:
   amount2rate:  # Standard names allowed in automatic `amount2rate` and `rate2amount` conversions.
     dimensionality:  # amount.dimensionality / flux.dimensionality
