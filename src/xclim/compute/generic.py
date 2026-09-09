@@ -84,7 +84,12 @@ __all__ = [
 
 
 def statistics(
-    data: xr.DataArray, statistic: Reducer, freq: Freq | str | None, out_units: str | None = None, **indexer
+    data: xr.DataArray,
+    statistic: Reducer,
+    freq: Freq | str | None,
+    dim: str = "time",
+    out_units: str | None = None,
+    **indexer,
 ) -> xr.DataArray:
     r"""
     Calculate a statistic over the data for each requested period.
@@ -97,7 +102,9 @@ def statistics(
         Reducing operation. It can either be a DataArray method or a function that can be applied to a DataArray.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        If None, the time dimension is completely reduced.
+        If None, the dimension provided is completely reduced.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     out_units : str, optional
         Output units to assign (no unit conversion is performed).
         Only necessary if `statistic` is function not supported by :py:func:`xclim.core.units.to_agg_units`.
@@ -114,7 +121,7 @@ def statistics(
         # Get function for xclim-implemented statistics
         statistic = XCLIM_OPS.get(statistic, statistic)
     with xr.set_options(keep_attrs=True):
-        out: xr.DataArray = resample_map(data, "time", freq, statistic)
+        out: xr.DataArray = resample_map(data, dim, freq, statistic)
     if out_units is not None:
         return out.assign_attrs(units=out_units)
     statistic = "integral" if (statistic == "sum" and is_temporal_rate(data)) else statistic
