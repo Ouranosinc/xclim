@@ -1177,6 +1177,7 @@ def resample_map(
         # Get function for xclim-implemented statistics
         func = XCLIM_OPS.get(func, func)
         func = func if not isinstance(func, str) else getattr(type(obj), func)
+        map_kwargs["dim"] = dim
 
     if freq is None:
         # necessary for using resample_before_rl
