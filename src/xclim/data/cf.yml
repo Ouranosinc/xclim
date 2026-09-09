@@ -1170,7 +1170,7 @@ indicators:
     references: CLIPC
     title: Number of days with Tmean >= {threshold}C
   tmgtPRCp:
-    cf_attrs:
+    attrs:
     - long_name: Percentage of days when Tmean > {per}th percentile
       units: '%'
       var_name: tmgt{per}p
@@ -1257,7 +1257,7 @@ indicators:
     references: ET-SCI
     title: Number of days with Tmean < 5C
   tmltPRCp:
-    cf_attrs:
+    attrs:
     - long_name: Percentage of days when Tmean < {per}th percentile
       units: '%'
       var_name: tmlt{per}p
@@ -1470,7 +1470,7 @@ indicators:
     references: CLIPC
     title: Number of days with Tmin >= {threshold}C
   tngtPRCp:
-    cf_attrs:
+    attrs:
     - long_name: Percentage of days when Tmin > {per}th percentile
       units: '%'
       var_name: tngt{per}p
@@ -1539,7 +1539,7 @@ indicators:
     references: ET-SCI
     title: Number of weak Frost Days (Tmin < +2C)
   tnltPRCp:
-    cf_attrs:
+    attrs:
     - long_name: Percentage of days when Tmin < {per}th percentile
       units: '%'
       var_name: tnlt{per}p

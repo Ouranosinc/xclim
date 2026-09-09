@@ -97,7 +97,7 @@ def statistics(
         Reducing operation. It can either be a DataArray method or a function that can be applied to a DataArray.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        If None, no resampling is applied.
+        If None, the time dimension is completely reduced.
     out_units : str, optional
         Output units to assign (no unit conversion is performed).
         Only necessary if `statistic` is function not supported by :py:func:`xclim.core.units.to_agg_units`.
@@ -204,7 +204,7 @@ def thresholded_statistics(
         Reducing operation. Can either be a DataArray method or a function that can be applied to a DataArray.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        If None, no resampling is applied.
+        If None, the time dimension is completely reduced.
     constrain : sequence of str, optional
         Allowed conditions, to be used when creating a more specific indicator from this function.
     out_units : str, optional
@@ -315,7 +315,7 @@ def count_occurrences(
         Threshold value. Should have the same dimensionality as data.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        If None, no resampling is applied.
+        If None, the time dimension is completely reduced.
     constrain : sequence of str, optional
         Allowed conditions, to be used when creating a more specific indicator from this function.
     **indexer : {dim: indexer, }, optional
@@ -358,7 +358,7 @@ def count_domain_occurrences(
         Maximum value.
     freq : str, optional
         Resampling frequency defining the periods defined in :ref:`timeseries.resampling`.
-        If None, no resampling is applied.
+        If None, the time dimension is completely reduced.
     low_condition : {'>', '>=', 'gt', 'ge'}
         The comparison operator to use on the lower bound. Default is ">" which means
         equality does not fulfill the condition.
@@ -422,7 +422,7 @@ def bivariate_count_occurrences(
         If None, ``thresh1`` is used.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        If None, no resampling is applied.
+        If None, the time dimension is completely reduced.
     var_reducer : {"all", "any"}
         The condition must either be fulfilled on *all* or *any* variables
         for the timestep to be considered an occurrence.
@@ -1012,7 +1012,7 @@ def difference_statistics(
         The statistic to compute over the difference between the two variables.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        If None, no resampling is applied.
+        If None, the time dimension is completely reduced.
     absolute : bool
         If True, the statistic is computed over the absolute difference.
     **indexer : {dim: indexer, }, optional
@@ -1049,7 +1049,7 @@ def extreme_range(data1: xr.DataArray, data2: xr.DataArray, freq: Freq, **indexe
         The highest data.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        If None, no resampling is applied.
+        If None, the time dimension is completely reduced.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
@@ -1093,7 +1093,7 @@ def interday_difference_statistics(
         Resampling statistic.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        If None, no resampling is applied.
+        If None, the time dimension is completely reduced.
     absolute : bool
         If True, the statistic is computed over the absolute value of the differentiated difference.
     **indexer : {dim: indexer, }, optional
@@ -1124,7 +1124,7 @@ def percentile(data: xr.DataArray, per: float, freq: Freq | None, **indexer):
         A percentile (0, 100).
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        If None, no resampling is applied.
+        If None, the time dimension is completely reduced.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
@@ -1165,7 +1165,7 @@ def thresholded_percentile(
         A percentile (0, 100).
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        If None, no resampling is applied.
+        If None, the time dimension is completely reduced.
     constrain : sequence of str, optional
         Optionally allowed conditions. Default: None.
     **indexer : {dim: indexer, }, optional
@@ -1319,7 +1319,7 @@ def integrated_difference(
         The value threshold.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        If None, no resampling is applied.
+        If None, the time dimension is completely reduced.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
@@ -1369,7 +1369,7 @@ def day_threshold_reached(
         Threshold.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        If None, no resampling is applied.
+        If None, the time dimension is completely reduced.
     date : str or None
         Date of the year after which to look for the first event, or before which to look for the last event.
         Should have the format '%m-%d'. None means there is no limit.
