@@ -9,24 +9,24 @@ import xarray as xr
 from xclim import land
 
 
-def test_base_flow_index(ndq_series):
-    out = land.base_flow_index(ndq_series, freq="YS")
+def test_base_flow_index(ndrivo_series):
+    out = land.base_flow_index(ndrivo_series, freq="YS")
+    assert out.base_flow_index.attrs["units"] == "1"
+    
+
+def test_rb_flashiness_index(ndrivo_series):
+    out = land.base_flow_index(ndrivo_series, freq="YS")
+
     assert out.base_flow_index.attrs["units"] == "1"
 
 
-def test_rb_flashiness_index(ndq_series):
-    out = land.base_flow_index(ndq_series, freq="YS")
-
-    assert out.base_flow_index.attrs["units"] == "1"
-
-
-def test_qdoy_max(ndq_series, q_series, as_da):
-    out = land.doy_qmax(ndq_series, freq="YS", season="JJA")
+def test_rivo_max_doy(ndrivo_series, rivo_series, as_da):
+    out = land.rivo_max_doy(ndrivo_series, freq="YS", season="JJA")
     assert out.attrs["units"] == "1"
 
     a = np.ones(450)
     a[100] = 2
-    out = land.doy_qmax(q_series(a), freq="YS")
+    out = land.rivo_max_doy(rivo_series(a), freq="YS")
     assert out[0] == 101
 
 
@@ -66,20 +66,20 @@ def test_snw_storm_days(snw_series):
     np.testing.assert_array_equal(out.annual_snw_storm_days, [9, np.nan])
 
 
-def test_flow_index(q_series):
+def test_flow_index(rivo_series):
     a = np.ones(365 * 2) * 10
     a[10:50] = 50
-    q = q_series(a)
+    rivo = rivo_series(a)
 
-    out = land.flow_index(q, p=0.95)
-    np.testing.assert_array_equal(out.q_flow_index, 5)
+    out = land.flow_index(rivo, q=0.95)
+    np.testing.assert_array_equal(out.rivo_flow_index, 5)
 
 
-def test_high_flow_frequency(q_series):
+def test_high_flow_frequency(rivo_series):
     a = np.zeros(366 * 2) * 10
     a[50:60] = 10
     a[200:210] = 20
-    q = q_series(a)
+    q = rivo_series(a)
     out = land.high_flow_frequency(
         q,
         threshold_factor=9,
@@ -88,16 +88,16 @@ def test_high_flow_frequency(q_series):
     np.testing.assert_array_equal(out.q_high_flow_frequency, [20, 0, np.nan])
 
 
-def test_low_flow_frequency(q_series):
+def test_low_flow_frequency(rivo_series):
     a = np.ones(366 * 2) * 10
     a[50:60] = 1
     a[200:210] = 1
-    q = q_series(a)
+    q = rivo_series(a)
     out = land.low_flow_frequency(q, threshold_factor=0.2, freq="YS")
     np.testing.assert_array_equal(out.q_low_flow_frequency, [20, 0, np.nan])
 
 
-def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
+def test_runoff_ratio(rivo_series, area_series, pr_series, freq="YS"):
     # 1 years of daily data
     q = np.ones(365, dtype=float) * 10
     pr = np.ones(365, dtype=float) * 20
@@ -107,7 +107,7 @@ def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
     pr[270:300] = 10
     a = 1000
     a = area_series(a)
-    q = q_series(q, start="2001-01-01")
+    q = rivo_series(q, start="2001-01-01")
     pr = pr_series(pr, units="mm/hr", start="2001-01-01")
 
     out = land.runoff_ratio(q, pr, area=a, freq="YS")
@@ -115,9 +115,9 @@ def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
     np.testing.assert_allclose(out.runoff_ratio.values, 0.0018, rtol=1e-6)
 
 
-def test_base_flow_index_seasonal_ratio(q_series):
+def test_base_flow_index_seasonal_ratio(rivo_series):
     a = np.ones(365)
-    q = q_series(a)
+    q = rivo_series(a)
     out = land.base_flow_index_seasonal_ratio(q)
     assert out.bfi.attrs["units"] == "1"
     assert out.bfi_ratio.attrs["units"] == "1"
@@ -125,7 +125,7 @@ def test_base_flow_index_seasonal_ratio(q_series):
     assert isinstance(out.bfi_ratio, xr.DataArray)
 
 
-def test_lag_snowpack_flow_peaks(snw_series, q_series):
+def test_lag_snowpack_flow_peaks(snw_series, rivo_series):
     # 1 years of daily data (2 values due to freq resampling to water year "YS-OCT")
     a = np.zeros(365)
 
@@ -134,7 +134,7 @@ def test_lag_snowpack_flow_peaks(snw_series, q_series):
     # Year 2: 1 day of snw = 5 kg m-2
     a[300:301] = 5
 
-    # Create a daily time index --- important to start the snw series synchronized with the q_series
+    # Create a daily time index --- important to start the snw series synchronized with the rivo_series
     snw = snw_series(a, start="2000-01-01")
 
     b = np.zeros(365)
@@ -144,33 +144,33 @@ def test_lag_snowpack_flow_peaks(snw_series, q_series):
     b[310:345] = 5
 
     # Create a daily time index
-    q = q_series(b)
+    q = rivo_series(b)
 
     out = land.lag_snowpack_flow_peaks(snw, q)
     assert out.lag_snowpack_flow_peaks.attrs["units"] == "days"
 
 
-def test_snowamount_conversion(swe_series, q_series):
+def test_snowamount_conversion(swe_series, rivo_series):
     a = np.ones(365)
     swe = swe_series(a)
-    q = q_series(a)
+    q = rivo_series(a)
     land.lag_snowpack_flow_peaks(swe, q)
 
 
 # FIXME: This should give an error. We have the same problem with precipitations
-def test_snowamount_with_snd_conversion(snd_series, q_series):
+def test_snowamount_with_snd_conversion(snd_series, rivo_series):
     a = np.ones(365)
     snd = snd_series(a)
-    q = q_series(a)
+    q = rivo_series(a)
     land.lag_snowpack_flow_peaks(snd, q)
 
 
-def test_sen_slope(q_series):
+def test_sen_slope(rivo_series):
     pytest.importorskip("pymankendall")
     # 5 years of increasing data with slope of 1
     q = np.arange(365 * 5 + 1)
     # Create a daily time index
-    q = q_series(q, start="2001-01-01")
+    q = rivo_series(q, start="2001-01-01")
     out = land.sen_slope(q)
     assert out.sen_slope.attrs["units"] == "1"
     assert out.p_valuee.attrs["units"] == "1"
