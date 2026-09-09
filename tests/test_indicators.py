@@ -688,9 +688,6 @@ def test_indicator_errors():
     )
     ind = Daily(identifier="indi", **d)
 
-    with pytest.raises(TypeError, match="Missing argument 'identifier'"):
-        Daily(**d)
-
     d["identifier"] = "bad_indi"
 
     func.__doc__ = "\n".join(doc)

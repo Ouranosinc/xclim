@@ -134,6 +134,7 @@ from yaml import safe_load
 
 import xclim.compute
 import xclim.compute.generic
+import xclim.indicators
 from xclim.core import VARIABLES, raise_warn_or_log
 from xclim.core.indicator import Daily, Indicator, base_registry, registry
 from xclim.core.locales import load_locale, read_locale_file
@@ -383,16 +384,12 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
                 base = registry[name].__class__
             elif "." in name:
                 # A dot not at the start means a qualified name either relative to xclim.indicators or full
-                if name.count(".") == 1 and name.split(".")[0] in [
-                    "atmos",
-                    "land",
-                    "seaIce",
-                    "convert",
-                    "generic",
-                    "cf",
-                    "anuclim",
-                    "icclim",
-                ]:
+                xclim_mods = [
+                    mod
+                    for mod in dir(xclim.indicators)
+                    if isinstance(getattr(xclim.indicators, mod), (IndicatorCollection, ModuleType))
+                ]
+                if name.count(".") == 1 and name.split(".")[0] in xclim_mods:
                     name = f"xclim.indicators.{name}"
                 modname, indname = name.rsplit(".", 1)
                 base = getattr(import_module(modname), indname)
