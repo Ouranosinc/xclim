@@ -13,7 +13,8 @@ For example, indicators where a number of occurrences (usually days) is counted 
 having temporal dimensions (i.e. "days") like xclim does elsewhere.
 
 However, indicators calculating a date will have no units in this module. "clix-meta" suggests "day", but that
-already means something else.
+already means something else. Also, the argument `percentile` in many functions has been renamed `per` to avoid conflict
+with the function `percentile`.
 
 This version of xclim implements clix-meta v0.6.1 .
 """
