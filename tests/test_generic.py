@@ -30,6 +30,7 @@ class TestStatistics:
         q = q_series(np.arange(1000))
         o = generic.statistics(q, "count", freq=None)
         assert o == 1000
+        assert "time" not in o.dims
 
 
 class TestRunningStatistics:
