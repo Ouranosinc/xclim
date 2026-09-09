@@ -1847,7 +1847,7 @@ New features and enhancements
 * A convenience function (``xclim.core.dataflags.ecad_compliant``) is also offered as a method for asserting that data adheres to all relevant ECAD/ICCLIM checks. For more information on usage, consult the docstring/documentation.
 * A new utility "``dataflags``" is also available for performing fast quality control checks from the command-line (`xclim dataflags --help`). See the CLI documentation page for usage examples.
 * Added missing typed call signatures, expected returns and docstrings for many ``xclim.core.calendar`` functions.
-* Generic functions ``xclim.generic.percentile``, ``xclim.generic.count_occurences`` now accept `freq=None`: This simply skips the resampling part, and performs the reduction on the full time series. This also applies to functions in ``xclim.compute.run_length``.
+* Generic compute functions now accept `freq=None`: This simply performs the reduction on the full time series instead of resampling. This also applies to functions in ``xclim.compute.run_length``.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
