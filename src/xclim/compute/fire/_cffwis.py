@@ -69,7 +69,7 @@ start" for the duff-moisture code. The following example uses reasonable paramet
 ...     pr=xclim.core.units.convert_units_to(ds.pr, "mm/d"),
 ...     sfcWind=xclim.convert.wind_speed_from_vector(ds=ds).sfcWind,
 ... )
->>> ds_season = fire_season(
+>>> season_mask = fire_season(
 ...     tas=ds.tas,
 ...     method="WF93",
 ...     freq="YS",
@@ -84,7 +84,7 @@ start" for the duff-moisture code. The following example uses reasonable paramet
 ...     hurs=ds.hurs,
 ...     sfcWind=ds.sfcWind,
 ...     lat=ds.lat,
-...     season_mask=ds_season.fire_season,
+...     season_mask=season_mask,
 ...     overwintering=True,
 ...     dry_start="CFS",
 ...     prec_thresh="1.5 mm/d",
