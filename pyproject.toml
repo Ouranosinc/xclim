@@ -169,7 +169,7 @@ dev = [
 [tool]
 
 [tool.bumpversion]
-current_version = "0.99.0-dev.25"
+current_version = "0.99.0-dev.26"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false

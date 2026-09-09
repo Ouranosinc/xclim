@@ -26,13 +26,13 @@ from xclim.core.indicator import (
 __all__ = [
     "base_flow_index",
     "base_flow_index_seasonal_ratio",
-    "doy_qmax",
-    "doy_qmin",
     "flow_index",
     "high_flow_frequency",
     "lag_snowpack_flow_peaks",
     "low_flow_frequency",
     "rb_flashiness_index",
+    "rivo_max_doy",
+    "rivo_min_doy",
     "runoff_ratio",
     "sen_slope",
     "standardized_groundwater_index",
@@ -79,10 +79,10 @@ rb_flashiness_index = Streamflow(
 )
 
 
-doy_qmax = Streamflow(
+rivo_max_doy = Streamflow(
     title="Day of year of the maximum streamflow",
-    identifier="doy_qmax",
-    var_name="q{indexer}_doy_qmax",
+    identifier="rivo_max_doy",
+    var_name="rivo_max_doy",
     long_name="Day of the year of the maximum streamflow over {indexer}",
     description="Day of the year of the maximum streamflow over {indexer}.",
     units="",
@@ -92,10 +92,10 @@ doy_qmax = Streamflow(
 )
 
 
-doy_qmin = Streamflow(
+rivo_min_doy = Streamflow(
     title="Day of year of the minimum streamflow",
-    identifier="doy_qmin",
-    var_name="q{indexer}_doy_qmin",
+    identifier="rivo_min_doy",
+    var_name="rivo_min_doy",
     long_name="Day of the year of the minimum streamflow over {indexer}",
     description="Day of the year of the minimum streamflow over {indexer}.",
     units="",
@@ -110,9 +110,9 @@ flow_index = ReducingIndicator(
     context="hydro",
     title="Flow index",
     identifier="flow_index",
-    var_name="q_flow_index",
+    var_name="rivo_flow_index",
     long_name="Flow index",
-    description="{p}th percentile normalized by the median flow.",
+    description="{q}th quantile normalized by the median flow.",
     units="1",
     compute=flow_index,
 )
@@ -121,7 +121,7 @@ flow_index = ReducingIndicator(
 high_flow_frequency = Streamflow(
     title="High flow frequency",
     identifier="high_flow_frequency",
-    var_name="q_high_flow_frequency",
+    var_name="rivo_high_flow_frequency",
     long_name="High flow frequency",
     description="{freq} frequency of flows greater than {threshold_factor} times the median flow.",
     units="days",
@@ -132,7 +132,7 @@ high_flow_frequency = Streamflow(
 low_flow_frequency = Streamflow(
     title="Low flow frequency",
     identifier="low_flow_frequency",
-    var_name="q_low_flow_frequency",
+    var_name="rivo_low_flow_frequency",
     long_name="Low flow frequency",
     description="{freq} frequency of flows smaller than a fraction ({threshold_factor}) of the mean flow.",
     units="days",
@@ -201,7 +201,7 @@ lag_snowpack_flow_peaks = Streamflow(
     units="days",
     long_name="Time lag between maximum snowpack and river high flows",
     description="Number of days between the annual maximum snowpack, measured by the snow water"
-    "equivalent, and the mean date when river flow exceeds a percentile threshold"
+    "equivalent, and the mean date when river flow exceeds a quantile threshold"
     "during a given year.",
     cell_methods="",
     compute=lag_snowpack_flow_peaks,
