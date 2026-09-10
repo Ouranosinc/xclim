@@ -26,8 +26,8 @@ class TestStatistics:
         o = generic.statistics(q, "count", freq="YS-DEC", season="DJF")
         assert o[0] == 31 + 29
 
-    def test_noresampling(self, q_series):
-        q = q_series(np.arange(1000))
+    def test_noresampling(self, rivo_series):
+        q = rivo_series(np.arange(1000))
         o = generic.statistics(q, "count", freq=None)
         assert o == 1000
         assert "time" not in o.dims
@@ -73,8 +73,8 @@ class TestRunningStatistics:
         )
         assert o.attrs["units"] == "m3"
 
-    def test_nofreq(self, q_series):
-        q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
+    def test_nofreq(self, rivo_series):
+        q = rivo_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
         o = generic.running_statistics(
             q, statistic="max", window=3, window_center=True, window_statistic="integral", freq=None
         )
