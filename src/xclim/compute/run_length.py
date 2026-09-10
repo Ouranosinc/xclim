@@ -1743,7 +1743,7 @@ def suspicious_run(
     )
 
 
-def _find_events(da_start, da_stop, data, window_start, window_stop):
+def _find_events(da_start, da_stop, data, window_start, window_stop, dim="time"):
     """
     Actual finding of events for each period.
 
@@ -1759,15 +1759,15 @@ def _find_events(da_start, da_stop, data, window_start, window_stop):
     # Time duration where the precipitation threshold is exceeded during an event
     # (duration of complete run - duration of holes in the run )
     ds["event_effective_length"] = _cumsum_reset_xr(
-        da_start.where(runs == 1), dim="time", index="first", reset_on_zero=False
+        da_start.where(runs == 1), dim=dim, index="first", reset_on_zero=False
     ).astype(np.int16)
 
     if data is not None:
         # Ex: Cumulated precipitation in a given freezing rain event
-        ds["event_sum"] = _cumsum_reset_xr(data.where(runs == 1), dim="time", index="first", reset_on_zero=False)
+        ds["event_sum"] = _cumsum_reset_xr(data.where(runs == 1), dim=dim, index="first", reset_on_zero=False)
 
     # Keep time as a variable, it will be used to keep start of events
-    ds["event_start"] = ds["time"].broadcast_like(ds)  # .astype(int)
+    ds["event_start"] = ds[dim].broadcast_like(ds)  # .astype(int)
     # We convert to an integer for the filtering, time object won't do well in the apply_ufunc/vectorize
     time_min = ds.event_start.min()
     ds["event_start"] = ds.event_start.copy(
@@ -1782,12 +1782,12 @@ def _find_events(da_start, da_stop, data, window_start, window_stop):
         return out
 
     # Dask inputs need to be told their length before computing anything.
-    max_event_number = int(np.ceil(da_start.time.size / (window_start + window_stop)))
+    max_event_number = int(np.ceil(da_start[dim].size / (window_start + window_stop)))
     ds = xr.apply_ufunc(
         _filter_events,
         ds,
         ds.event_length,
-        input_core_dims=[["time"], ["time"]],
+        input_core_dims=[[dim], [dim]],
         output_core_dims=[["event"]],
         kwargs={"max_event_number": max_event_number},
         dask_gufunc_kwargs={"output_sizes": {"event": max_event_number}},
@@ -1836,6 +1836,7 @@ def find_events(
     window_stop: int = 1,
     data: xr.DataArray | None = None,
     freq: Freq | None = None,
+    dim: str = "time",
 ) -> xr.Dataset:
     """
     Find events (runs).
@@ -1863,6 +1864,8 @@ def find_events(
     freq : str, optional
         A frequency to divide the data into periods. If absent, the output has not time dimension.
         If given, the events are searched within in each resample period independently.
+    dim : str
+        The dimension along which the runs are found.
 
     Returns
     -------
@@ -1880,7 +1883,7 @@ def find_events(
     if data is not None:
         ds = ds.assign(data=data)
 
-    def _func(grp, window, window_stop):
+    def _func(grp, window, window_stop, dim):
         return _find_events(grp.da_start, grp.da_stop, grp.get("data", None), window, window_stop)
 
-    return resample_map(ds, "time", freq, _func, map_kwargs={"window": window, "window_stop": window_stop})
+    return resample_map(ds, dim, freq, _func, map_kwargs={"window": window, "window_stop": window_stop, "dim": dim})

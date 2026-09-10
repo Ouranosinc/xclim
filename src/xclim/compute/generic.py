@@ -134,6 +134,7 @@ def running_statistics(
     window_statistic: Reducer,
     statistic: Reducer,
     freq: Freq | None,
+    dim: str = "time",
     window_center: bool = True,
     out_units=None,
     **indexer,
@@ -156,6 +157,8 @@ def running_statistics(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         Resampling is done after the running statistic. If None, no resampling is applied.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     window_center : bool
         If True, the window is centered on the date. If False, the window is right-aligned.
     out_units : str, optional
@@ -177,7 +180,7 @@ def running_statistics(
         window_statistic.replace("integral", "sum"),
     )()
     rolled = to_agg_units(rolled, data, window_statistic)
-    return statistics(rolled, statistic=statistic, freq=freq, out_units=out_units, **indexer)
+    return statistics(rolled, statistic=statistic, freq=freq, out_units=out_units, dim=dim, **indexer)
 
 
 @declare_relative_units(thresh="<data>")
@@ -187,6 +190,7 @@ def thresholded_statistics(
     thresh: Quantified,
     statistic: Reducer,
     freq: Freq | None,
+    dim: str = "time",
     constrain: Sequence[Condition] | None = None,
     out_units=None,
     **indexer,
@@ -209,6 +213,8 @@ def thresholded_statistics(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     constrain : sequence of str, optional
         Allowed conditions, to be used when creating a more specific indicator from this function.
     out_units : str, optional
@@ -225,7 +231,7 @@ def thresholded_statistics(
     thresh = convert_units_to(thresh, data, context="infer")
 
     cond = compare(data, condition, thresh, constrain)
-    return statistics(data.where(cond), statistic, freq, out_units=out_units, **indexer)
+    return statistics(data.where(cond), statistic, freq, dim=dim, out_units=out_units, **indexer)
 
 
 @declare_relative_units(thresh="<data>")
@@ -237,6 +243,7 @@ def thresholded_running_statistics(
     window_statistic: Reducer,
     statistic: Reducer,
     freq: Freq | None,
+    dim: str = "time",
     window_center: bool = True,
     constrain: Sequence[Condition] | None = None,
     out_units: str | None = None,
@@ -264,6 +271,8 @@ def thresholded_running_statistics(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         Resampling is done after the running statistic. If None, no resampling is applied.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     window_center : bool
         If True, the window is centered on the date. If False, the window is right-aligned.
     constrain : sequence of str, optional
@@ -289,6 +298,7 @@ def thresholded_running_statistics(
         window_statistic=window_statistic,
         statistic=statistic,
         freq=freq,
+        dim=dim,
         out_units=out_units,
         **indexer,
     )
@@ -300,6 +310,7 @@ def count_occurrences(
     condition: Condition,
     thresh: Quantified,
     freq: Freq | None,
+    dim: str = "time",
     constrain: Sequence[Condition] | None = None,
     **indexer,
 ) -> xr.DataArray:
@@ -320,6 +331,8 @@ def count_occurrences(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     constrain : sequence of str, optional
         Allowed conditions, to be used when creating a more specific indicator from this function.
     **indexer : {dim: indexer, }, optional
@@ -332,7 +345,7 @@ def count_occurrences(
     """
     thresh = convert_units_to(thresh, data, context="infer")
     cond = compare(select_time(data, **indexer), condition, thresh, constrain)
-    out = resample_map(cond, "time", freq, "sum", map_kwargs={"dim": "time"})
+    out = resample_map(cond, dim, freq, "sum", map_kwargs={"dim": dim})
     return to_agg_units(out, data, "count")
 
 
@@ -342,6 +355,7 @@ def count_domain_occurrences(
     low_bound: Quantified,
     high_bound: Quantified,
     freq: Freq | None,
+    dim: str = "time",
     low_condition: Literal[">", ">=", "gt", "ge"] = ">",
     high_condition: Literal["<", "<=", "lt", "le"] = "<=",
     **indexer,
@@ -363,6 +377,8 @@ def count_domain_occurrences(
     freq : str, optional
         Resampling frequency defining the periods defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     low_condition : {'>', '>=', 'gt', 'ge'}
         The comparison operator to use on the lower bound. Default is ">" which means
         equality does not fulfill the condition.
@@ -384,7 +400,7 @@ def count_domain_occurrences(
         & compare(data, high_condition, high, constrain=("<", "<="))
     ) * 1
     cond = select_time(cond, **indexer)
-    out = resample_map(cond, "time", freq, "sum", map_kwargs={"dim": "time"})
+    out = resample_map(cond, dim, freq, "sum", map_kwargs={"dim": dim})
     return to_agg_units(out, data, "count")
 
 
@@ -397,6 +413,7 @@ def bivariate_count_occurrences(
     thresh1: Quantified,
     thresh2: Quantified | None,
     freq: Freq | None,
+    dim: str = "time",
     var_reducer: Literal["all", "any"] = "all",
     constrain1: Sequence[Condition] | None = None,
     constrain2: Sequence[Condition] | None = None,
@@ -427,6 +444,8 @@ def bivariate_count_occurrences(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     var_reducer : {"all", "any"}
         The condition must either be fulfilled on *all* or *any* variables
         for the timestep to be considered an occurrence.
@@ -465,7 +484,7 @@ def bivariate_count_occurrences(
     else:
         raise ValueError(f"Unsupported value for var_reducer: {var_reducer}")
     cond = select_time(cond, **indexer)
-    out = resample_map(cond, "time", freq, "sum", map_kwargs={"dim": "time"})
+    out = resample_map(cond, dim, freq, "sum", map_kwargs={"dim": dim})
     return to_agg_units(out, data1, "count", dim="time")
 
 
@@ -475,6 +494,7 @@ def count_percentile_occurrences(
     condition: Condition,
     reference_period: TimeRange,
     freq: Freq | None,
+    dim: str = "time",
     window: int = 5,
     bootstrap: bool = False,
     constrain: Sequence[Condition] | None = None,
@@ -501,6 +521,8 @@ def count_percentile_occurrences(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         This function only makes sense with annual frequencies. If None, no resampling is applied.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     window : int
         The number of days on each side of the given day-of-year to include in the climatology.
     bootstrap : bool
@@ -525,13 +547,13 @@ def count_percentile_occurrences(
     data = select_time(data, **indexer)
 
     @percentile_bootstrap
-    def _count_percentile_occurrences(data, per, freq, bootstrap, op):
+    def _count_percentile_occurrences(data, per, freq, bootstrap, condition, dim):
         thresh = resample_doy(clim, data)
-        cond = compare(data, op, thresh, constrain)
-        out = resample_map(cond, "time", freq, "sum", map_kwargs={"dim": "time"})
-        return to_agg_units(out, data, "count", dim="time")
+        cond = compare(data, condition, thresh, constrain)
+        out = resample_map(cond, dim, freq, "sum", map_kwargs={"dim": dim})
+        return to_agg_units(out, data, "count", dim=dim)
 
-    return _count_percentile_occurrences(data, clim, freq, bootstrap, condition)
+    return _count_percentile_occurrences(data, clim, freq, bootstrap, condition, dim)
 
 
 @declare_relative_units(thresh="<data>")
@@ -543,6 +565,7 @@ def count_thresholded_percentile_occurrences(
     condition: Condition,
     reference_period: TimeRange,
     freq: Freq | None,
+    dim: str = "time",
     window: int = 5,
     bootstrap: bool = False,
     constrain: Sequence[Condition] | None = None,
@@ -574,6 +597,8 @@ def count_thresholded_percentile_occurrences(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         This function only makes sense with annual frequencies. If None, no resampling is applied.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     window : int
         The number of days on each side of the given day-of-year to include in the climatology.
     bootstrap : bool
@@ -602,6 +627,7 @@ def count_thresholded_percentile_occurrences(
         per,
         condition=condition,
         freq=freq,
+        dim=dim,
         reference_period=reference_period,
         window=window,
         constrain=constrain,
@@ -618,6 +644,7 @@ def _spell_length_statistics(
     thresh: float | xr.DataArray | Sequence[xr.DataArray] | Sequence[float],
     statistic: Reducer | Sequence[Reducer],
     freq: Freq,
+    dim: str = "time",
     constrain: Sequence[Condition] | None = None,
     min_gap: int = 1,
     resample_before_rl: bool = True,
@@ -640,6 +667,7 @@ def _spell_length_statistics(
             # The code above already ensured only spell of the minimum length are selected
             window=1,
             freq=freq,
+            dim=dim,
         )
 
         if sr == "count":
@@ -664,6 +692,7 @@ def spell_length_statistics(
     thresh: Quantified,
     statistic: Literal["max", "sum", "count"] | Sequence[Literal["max", "sum", "count"]],
     freq: Freq | None,
+    dim: str = "time",
     min_gap: int = 1,
     constrain: Sequence[Condition] | None = None,
     resample_before_rl: bool = True,
@@ -694,6 +723,8 @@ def spell_length_statistics(
         Statistic on the spell lengths. If a list, multiple statistics are computed.
     freq : str, optional
         Resampling frequency. If None, no resampling is applied.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     min_gap : int
         The shortest possible gap between two spells. Spells closer than this are merged by assigning
         the gap steps to the merged spell.
@@ -754,6 +785,7 @@ def spell_length_statistics(
         thresh,
         statistic,
         freq,
+        dim=dim,
         constrain=constrain,
         min_gap=min_gap,
         resample_before_rl=resample_before_rl,
@@ -772,6 +804,7 @@ def bivariate_spell_length_statistics(
     thresh2: Quantified,
     statistic: Literal["max", "sum", "count"] | Sequence[Literal["max", "sum", "count"]],
     freq: Freq | None,
+    dim: str = "time",
     min_gap: int = 1,
     constrain: Sequence[Condition] | None = None,
     resample_before_rl: bool = True,
@@ -806,6 +839,8 @@ def bivariate_spell_length_statistics(
         Statistic on the spell lengths. If a list, multiple statistics are computed.
     freq : str, optional
         Resampling frequency. If None, no resampling is applied.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     min_gap : int
         The shortest possible gap between two spells. Spells closer than this are merged by assigning
         the gap steps to the merged spell.
@@ -839,6 +874,7 @@ def bivariate_spell_length_statistics(
         [thresh1, thresh2],
         statistic,
         freq,
+        dim=dim,
         constrain=constrain,
         min_gap=min_gap,
         resample_before_rl=resample_before_rl,
@@ -854,6 +890,7 @@ def season(
     window: int,
     aspect: Literal["start", "end", "length"] | Sequence[Literal["start", "end", "length"]],
     freq: Freq | None,
+    dim: str = "time",
     mid_date: DayOfYearStr | None = None,
     constrain: Sequence[Condition] | None = None,
     **indexer,
@@ -880,6 +917,8 @@ def season(
         Which season aspect(s) to return. If a list, this function returns a tuple in the same order as this argument.
     freq : str, optional
         Resampling frequency. If None, no resampling is applied.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     mid_date : DayOfYearStr, optional
         An optional middle date. The start must happen before and the end after for the season to be valid.
     constrain : Sequence of strings, optional
@@ -926,11 +965,11 @@ def season(
     cond = compare(data, condition, _thresh, constrain=constrain)
     cond = select_time(cond, **indexer)
     func = {"start": rl.season_start, "end": rl.season_end, "length": rl.season_length}
-    map_kwargs = {"window": window, "mid_date": mid_date}
+    map_kwargs = {"window": window, "mid_date": mid_date, "dim": dim}
 
     if aspect in ["start", "end"]:
         map_kwargs["coord"] = "dayofyear"
-    out: xr.DataArray = resample_map(cond, "time", freq, func[aspect], map_kwargs=map_kwargs)
+    out: xr.DataArray = resample_map(cond, dim, freq, func[aspect], map_kwargs=map_kwargs)
     if aspect == "length":
         return to_agg_units(out, data, "count")
     # else, a date
@@ -998,6 +1037,7 @@ def difference_statistics(
     data2: xr.DataArray,
     statistic: Literal["max", "min", "mean", "sum"],
     freq: Freq | None,
+    dim: str = "time",
     absolute: bool = False,
     **indexer,
 ) -> xr.DataArray:
@@ -1017,6 +1057,8 @@ def difference_statistics(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     absolute : bool
         If True, the statistic is computed over the absolute difference.
     **indexer : {dim: indexer, }, optional
@@ -1035,11 +1077,11 @@ def difference_statistics(
     u = str2pint(data1.units)
     dtr.attrs.update(pint2cfattrs(u, is_difference=True))
 
-    return statistics(dtr, statistic=statistic, freq=freq, **indexer)
+    return statistics(dtr, statistic=statistic, freq=freq, dim=dim, **indexer)
 
 
 @declare_relative_units(data2="<data1>")
-def extreme_range(data1: xr.DataArray, data2: xr.DataArray, freq: Freq, **indexer) -> xr.DataArray:
+def extreme_range(data1: xr.DataArray, data2: xr.DataArray, freq: Freq, dim: str = "time", **indexer) -> xr.DataArray:
     """
     Calculate the range between extreme values.
 
@@ -1054,6 +1096,8 @@ def extreme_range(data1: xr.DataArray, data2: xr.DataArray, freq: Freq, **indexe
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
@@ -1065,8 +1109,8 @@ def extreme_range(data1: xr.DataArray, data2: xr.DataArray, freq: Freq, **indexe
     data2 = convert_units_to(data2, data1, context="infer")
     data2 = select_time(data2, **indexer)
     data1 = select_time(data1, **indexer)
-    out = resample_map(data2, "time", freq, "max", map_kwargs={"dim": "time"}) - resample_map(
-        data1, "time", freq, "min", map_kwargs={"dim": "time"}
+    out = resample_map(data2, dim, freq, "max", map_kwargs={"dim": dim}) - resample_map(
+        data1, dim, freq, "min", map_kwargs={"dim": dim}
     )
     u = str2pint(data1.units)
     out.attrs.update(pint2cfattrs(u, is_difference=True))
@@ -1078,6 +1122,7 @@ def interday_difference_statistics(
     data2: xr.DataArray,
     statistic: Literal["max", "min", "mean", "sum"],
     freq: Freq | None,
+    dim: str = "time",
     absolute: bool = True,
     **indexer,
 ) -> xr.DataArray:
@@ -1098,6 +1143,8 @@ def interday_difference_statistics(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     absolute : bool
         If True, the statistic is computed over the absolute value of the differentiated difference.
     **indexer : {dim: indexer, }, optional
@@ -1113,10 +1160,10 @@ def interday_difference_statistics(
     vdtr = abs((data2 - data1).diff(dim="time"))
     u = str2pint(data1.units)
     vdtr.attrs.update(pint2cfattrs(u, is_difference=True))
-    return statistics(vdtr, statistic=statistic, freq=freq, **indexer)
+    return statistics(vdtr, statistic=statistic, freq=freq, dim=dim, **indexer)
 
 
-def percentile(data: xr.DataArray, per: float, freq: Freq | None, **indexer):
+def percentile(data: xr.DataArray, per: float, freq: Freq | None, dim: str = "time", **indexer):
     """
     Calculate the percentile statistic for each requested period.
 
@@ -1129,6 +1176,8 @@ def percentile(data: xr.DataArray, per: float, freq: Freq | None, **indexer):
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
@@ -1139,7 +1188,7 @@ def percentile(data: xr.DataArray, per: float, freq: Freq | None, **indexer):
     """
     q = per / 100
     data = select_time(data, **indexer)
-    out = resample_map(data, "time", freq, "quantile", map_kwargs={"q": q, "dim": "time"}).drop_vars("quantile")
+    out = resample_map(data, dim, freq, "quantile", map_kwargs={"q": q, "dim": dim}).drop_vars("quantile")
     out.attrs["units"] = data.attrs["units"]
     return out
 
@@ -1151,6 +1200,7 @@ def thresholded_percentile(
     thresh: Quantified,
     per: float,
     freq: Freq | None,
+    dim: str = "time",
     constrain: Sequence[Condition] | None = None,
     **indexer,
 ) -> xr.DataArray:
@@ -1170,6 +1220,8 @@ def thresholded_percentile(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     constrain : sequence of str, optional
         Optionally allowed conditions. Default: None.
     **indexer : {dim: indexer, }, optional
@@ -1183,7 +1235,7 @@ def thresholded_percentile(
     thresh = convert_units_to(thresh, data, context="infer")
     cond = compare(data, condition, thresh, constrain)
     # FIXME: Call signature variable shadows existing function name
-    return percentile(data.where(cond), per, freq, **indexer)  # ty: ignore[call-non-callable]
+    return percentile(data.where(cond), per, freq, dim=dim, **indexer)  # ty: ignore[call-non-callable]
 
 
 def statistics_between_dates(
@@ -1192,6 +1244,7 @@ def statistics_between_dates(
     end: xr.DataArray | DayOfYearStr,
     statistic: Reducer,
     freq: Freq | None = None,
+    dim: str = "time",
 ) -> xr.DataArray:
     """
     Calculate a statistic for each requested period but only considering timesteps with a time-varying range.
@@ -1216,6 +1269,8 @@ def statistics_between_dates(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         Default (None) tries to infer the frequency from ``start`` and ``end``.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
 
     Returns
     -------
@@ -1223,22 +1278,22 @@ def statistics_between_dates(
         {statistic} of data over a time-varying period.
     """
 
-    def _get_days(_bound, _group, _base_time):
+    def _get_days(_bound, _group, _base_time, dim):
         """Get bound in number of days since base_time. Bound can be a days_since array or a DayOfYearStr."""
         if isinstance(_bound, str):
-            b_i = rl.index_of_date(_group.time, _bound, max_idxs=1)
+            b_i = rl.index_of_date(_group[dim], _bound, max_idxs=1)
             if not b_i.size > 0:
                 return None
-            return (_group.time.isel(time=b_i[0]) - _group.time.isel(time=0)).dt.days
+            return (_group[dim].isel({dim: b_i[0]}) - _group[dim].isel({dim: 0})).dt.days
         if _base_time in _bound.time:
-            return _bound.sel(time=_base_time)
+            return _bound.loc[{dim: _base_time}]
         return None
 
     if freq is None:
         frequencies = []
         for bound in [start, end]:
             try:
-                frequencies.append(xr.infer_freq(bound.time))
+                frequencies.append(xr.infer_freq(bound[dim]))
             except AttributeError:
                 frequencies.append(None)
 
@@ -1251,7 +1306,7 @@ def statistics_between_dates(
             )
         freq = ast.literal_eval(good_freq.pop())
 
-    cal = data.time.dt.calendar
+    cal = data[dim].dt.calendar
     if not isinstance(start, str):
         start = start.convert_calendar(cal)
         start.attrs["calendar"] = cal
@@ -1268,43 +1323,43 @@ def statistics_between_dates(
         statistic = "integral"
 
     out = []
-    for base_time, indexes in data.resample(time=freq).groups.items():
+    for base_time, indexes in data.resample({dim: freq}).groups.items():
         # get group slice
-        group = data.isel(time=indexes)
+        group = data.isel({dim: indexes})
 
-        start_d = _get_days(start, group, base_time)
-        end_d = _get_days(end, group, base_time)
+        start_d = _get_days(start, group, base_time, dim)
+        end_d = _get_days(end, group, base_time, dim)
 
         # convert bounds for this group
         if start_d is not None and end_d is not None:
-            days = (group.time - base_time).dt.days
+            days = (group[dim] - base_time).dt.days
             days = days.where(days >= 0)
 
             masked = group.where((days >= start_d) & (days <= end_d - 1))
 
             if isinstance(statistic, str):
-                res = getattr(masked, statistic.replace("integral", "sum"))(dim="time", keep_attrs=True)
+                res = getattr(masked, statistic.replace("integral", "sum"))(dim=dim, keep_attrs=True)
             else:
                 with xr.set_options(keep_attrs=True):
-                    res = statistic(masked, dim="time")
+                    res = statistic(masked, dim=dim)
 
             res = xr.where(((start_d > end_d) | (start_d.isnull()) | (end_d.isnull())), np.nan, res)
             # Re-add the time dimension with the period's base time.
-            res = res.expand_dims(time=[base_time])
+            res = res.expand_dims({dim: [base_time]})
             out.append(res)
         else:
             # Get an array with the good shape, put nans and add the new time.
-            res = (group.isel(time=0) * np.nan).expand_dims(time=[base_time])
+            res = (group.isel({dim: 0}) * np.nan).expand_dims({dim: [base_time]})
             out.append(res)
             continue
 
-    out = xr.concat(out, dim="time")
+    out = xr.concat(out, dim=dim)
     return to_agg_units(out, data, statistic)
 
 
 @declare_relative_units(thresh="<data>")
 def integrated_difference(
-    data: xr.DataArray, condition: Condition, thresh: Quantified, freq: Freq | None, **indexer
+    data: xr.DataArray, condition: Condition, thresh: Quantified, freq: Freq | None, dim: str = "time", **indexer
 ) -> xr.DataArray:
     """
     Integrate difference of data below/above a given value threshold, usually used for "degree days" computations.
@@ -1324,6 +1379,8 @@ def integrated_difference(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
@@ -1342,7 +1399,7 @@ def integrated_difference(
         raise NotImplementedError(f"Condition not supported: '{condition}'.")
 
     diff.attrs.update(pint2cfattrs(units2pint(data.attrs["units"]), is_difference=True))
-    return statistics(diff, statistic="integral", freq=freq, **indexer)
+    return statistics(diff, statistic="integral", freq=freq, dim=dim, **indexer)
 
 
 @declare_relative_units(thresh="<data>")
@@ -1351,6 +1408,7 @@ def day_threshold_reached(
     condition: Condition,
     thresh: Quantified,
     freq: Freq | None,
+    dim: str = "time",
     date: DayOfYearStr | None = None,
     which: Literal["first", "last"] = "first",
     window: int = 1,
@@ -1374,6 +1432,8 @@ def day_threshold_reached(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
     date : str or None
         Date of the year after which to look for the first event, or before which to look for the last event.
         Should have the format '%m-%d'. None means there is no limit.
@@ -1405,10 +1465,10 @@ def day_threshold_reached(
     cond = select_time(cond, **indexer)
     out: xr.DataArray = resample_map(
         cond,
-        "time",
+        dim,
         freq,
         func,
-        map_kwargs={"window": window, "date": date, "dim": "time", "coord": "dayofyear"},
+        map_kwargs={"window": window, "date": date, "dim": dim, "coord": "dayofyear"},
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
     return out
@@ -1424,6 +1484,7 @@ def thresholded_events(
     thresh_stop: Quantified | None = None,
     window_stop: int | None = None,
     freq: Freq | None = None,
+    dim: str = "time",
 ) -> xr.Dataset:
     r"""
     Find thresholded events.
@@ -1456,6 +1517,8 @@ def thresholded_events(
     freq : str, optional
         A frequency to divide the data into periods. If absent, the output has not time dimension.
         If given, the events are searched within in each resample period independently.
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
 
     Returns
     -------
@@ -1482,10 +1545,10 @@ def thresholded_events(
         else:
             da_stop = ~compare(data, condition, _thresh_stop)
 
-    return rl.find_events(da_start, window, da_stop, window_stop or window, data, freq)
+    return rl.find_events(da_start, window, da_stop, window_stop or window, data, freq, dim)
 
 
-def day_to_day_variability(data: xr.DataArray, freq: Freq = "YS", subfreq: Freq = "MS"):
+def day_to_day_variability(data: xr.DataArray, freq: Freq = "YS", subfreq: Freq = "MS", dim: str = "time"):
     """
     Compute the mean of day-to-day variability.
 
@@ -1501,6 +1564,8 @@ def day_to_day_variability(data: xr.DataArray, freq: Freq = "YS", subfreq: Freq 
         Resampling frequency used to average the sub-period standard deviations. Default is ``"YS"`` (yearly).
     subfreq : str
         Resampling frequency used to compute the standard deviation. Default is ``"MS"`` (monthly).
+    dim : str, optional
+        Dimension on which to apply the resampling.  Default: `"time"`.
 
     Returns
     -------
@@ -1513,6 +1578,6 @@ def day_to_day_variability(data: xr.DataArray, freq: Freq = "YS", subfreq: Freq 
     """
     if compare_offsets(freq, "<=", subfreq):
         raise ValueError("Averaging frequency must be larger than the variability frequency.")
-    variability = data.resample(time=subfreq).std(keep_attrs=True)
-    out = variability.resample(time=freq).mean(keep_attrs=True)
+    variability = data.resample({dim: subfreq}).std(dim=dim, keep_attrs=True)
+    out = variability.resample({dim: freq}).mean(dim=dim, keep_attrs=True)
     return to_agg_units(out, to_agg_units(variability, data, "std"), "mean")
