@@ -291,8 +291,9 @@ class Output(dict):  # numpydoc ignore=PR01
         else:
             other_meta = {k: v for k, v in other.items() if k in meta}
             other_attrs = {k: v for k, v in other.items() if k not in meta}
-        merged = (meta | other_meta) | (dict(self) | other_attrs)
-        return self.__class__(**merged)
+        merged_meta = {k: v if other_meta.get(k) is None else other_meta[k] for k, v in self.meta.items()}
+        merged = dict(self) | other_attrs
+        return self.__class__(**merged_meta, **merged)
 
     def __repr__(self):
         """Readable representation."""
@@ -610,9 +611,7 @@ class IndicatorBase(IndexWrapper):
 
     def __new__(cls, **kwds):
         """Create a new indicator but also a new class."""
-        identifier = kwds.get("identifier", cls.identifier)
-        if identifier is None:
-            raise TypeError(f"Missing argument 'identifier' to constructor of {cls.__name__}.")
+        identifier = kwds.get("identifier")
 
         # Need to get this before the IndexWrapper twist
         module = kwds.pop("module", None)
@@ -646,10 +645,10 @@ class IndicatorBase(IndexWrapper):
             compute = declare_units(**new_units)(cls.compute)
             # Update non-variable parameter metadata, assuming previous compute was decorated with
             # `declare_relative_units`, otherwise this does nothing
-            for name, units in compute.in_units.items():
+            for name, _units in compute.in_units.items():
                 if name not in new_units:
                     p = [p for p in parameters.values() if p.compute_name == name][0]
-                    p.units = units
+                    p.units = _units
         else:
             compute = cls.compute
         # Without this, compute becomes a bound method
@@ -673,7 +672,7 @@ class IndicatorBase(IndexWrapper):
         kwds["keywords"] = tuple((*cls.keywords, *kwds.get("keywords", [])))
 
         # Create new class object
-        new = type(identifier.upper(), (cls,), kwds)
+        new = type((identifier or "UnnamedIndicator").upper(), (cls,), kwds)
 
         # Module is normally set to the file in which the class is defined
         # We are creating classes dynamically, so we allow patching the module to get meaningful metadata
@@ -818,7 +817,7 @@ class IndicatorBase(IndexWrapper):
         ----------
         attrs : list of Output
             List of :py:class:`Output` objects.
-        identifier : str
+        identifier : str, optional
             Identifier of the indicator.
 
         Returns
@@ -827,7 +826,7 @@ class IndicatorBase(IndexWrapper):
             Same as `attrs`, potentially modified.
         """
         # For single output, var_name defaults to identifier.
-        if len(attrs) == 1 and attrs[0].var_name is None:
+        if len(attrs) == 1 and attrs[0].var_name is None and identifier is not None:
             attrs[0].var_name = identifier.split(".")[-1]
 
         # check if we have var_names for everybody
@@ -1006,7 +1005,7 @@ class IndicatorBase(IndexWrapper):
             return outs[0]
 
         # Return a NamedTuple for multiple outputs but not as dataset
-        NamedOuts = namedtuple(self.identifier.split(".")[-1], [o.name for o in outs])
+        NamedOuts = namedtuple((self.identifier or ".UnnamedIndicator").split(".")[-1], [o.name for o in outs])
         return NamedOuts(*outs)
 
     @classmethod
@@ -1484,11 +1483,17 @@ class _Convenience(_InputChecker):
 class _Registrer(_Convenience):
     """Register the indicator in the xclim registry."""
 
+    def __new__(cls, **kwargs):
+        if kwargs.get("identifier") is None and kwargs.get("register") is True:
+            raise ValueError("Can't create an indicator without an identifier if register is True.")
+        return super().__new__(cls, **kwargs)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.identifier in registry:
-            warnings.warn(f"Indicator {self.identifier} already exists and will be overwritten.", stacklevel=4)
-        registry[self.identifier] = self
+        if kwargs.get("register", True):
+            if self.identifier in registry:
+                warnings.warn(f"Indicator {self.identifier} already exists and will be overwritten.", stacklevel=4)
+            registry[self.identifier] = self
 
 
 class Indicator(_Registrer):  # numpydoc ignore=PR01
@@ -1519,7 +1524,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
 
     def __init__(
         self,
-        identifier: str,
+        identifier: str = None,
         compute: Callable = None,
         title: str = None,
         abstract: str = None,
@@ -1532,6 +1537,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
         attrs: dict = None,
         context: str = "none",
         src_freq: str | list[str] = None,
+        register: bool = True,
         **attrs_kwargs,
     ):
         """
@@ -1542,7 +1548,9 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
         identifier : str
             Unique ID for this indicator. Single-output indicator will use this as their output variable
             name if no `var_name`is passed to the first element of `attrs`.
-            All indicators are registered to :py:data:`xclim.core.indicator.registry`, which is case-insensitive.
+            Unless ``register`` is False, indicators are registered to :py:data:`xclim.core.indicator.registry`,
+            which is case-insensitive.
+            This field is required and can't be None.
         compute : func
             The function computing the indicators. It should return one or more DataArray.
             Metadata will first be parsed from it as much as possible.
@@ -1580,6 +1588,9 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
             For example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day' for all inputs an outputs.
         src_freq : str or sequence of str, optional
             The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
+        register : bool
+            If True (default), the indicator is registered into the :py:data:`registry` dictionary of indicators
+            using its identifier as key.
         **attrs_kwargs
             For convenience, output attributes can also be passed by name to the constructor.
         """  # numpydoc ignore=PR01,PR02
@@ -1597,6 +1608,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
             attrs=attrs or {},
             context=context,
             src_freq=src_freq,
+            register=register,
             **attrs_kwargs,
         )
 
