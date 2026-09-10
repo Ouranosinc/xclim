@@ -121,7 +121,7 @@ def statistics(
         # Get function for xclim-implemented statistics
         statistic = XCLIM_OPS.get(statistic, statistic)
     with xr.set_options(keep_attrs=True):
-        out: xr.DataArray = resample_map(data, dim, freq, statistic)
+        out: xr.DataArray = resample_map(data, dim, freq, statistic if statistic != "integral" else "sum")
     if out_units is not None:
         return out.assign_attrs(units=out_units)
     statistic = "integral" if (statistic == "sum" and is_temporal_rate(data)) else statistic
