@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+import xarray as xr
 
 from xclim import atmos, convert
+from xclim.compute.helpers import resample_map
 
 
 class TestWindSpeedIndicators:
@@ -31,8 +33,10 @@ class TestSfcWind:
             sfcWind_calculated = getattr(atmos, f"sfcWind_{metric}")(sfcWind)
 
             resample = sfcWind.resample(time="YS")
-            c = getattr(resample, metric)()
-            np.testing.assert_array_equal(sfcWind_calculated, c)
+            # resample.mean() would have float32/64 conversion errors
+            func = getattr(xr.DataArray, metric)
+            c = resample.map(func, dim="time")
+            np.testing.assert_array_almost_equal(sfcWind_calculated, c)
 
 
 class TestSfcWindMax:
@@ -45,8 +49,8 @@ class TestSfcWindMax:
     def test_sfcWindmax(self, open_dataset, metric):
         with open_dataset(self.test_data) as ds:
             sfcWind, _ = convert.wind_speed_from_vector(ds.uas, ds.vas)
-            sfcWindmax_calculated = getattr(atmos, f"sfcWindmax_{metric}")(sfcWind)
-
             resample = sfcWind.resample(time="YS")
-            c = getattr(resample, metric)()
+            func = getattr(xr.DataArray, metric)
+            c = resample.map(func, dim="time")
+            sfcWindmax_calculated = resample_map(sfcWind, "time", "YS", metric)
             np.testing.assert_array_equal(sfcWindmax_calculated, c)

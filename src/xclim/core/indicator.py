@@ -836,6 +836,33 @@ class IndicatorBase(IndexWrapper):
                 raise ValueError(f"Output #{i} of {identifier} is missing a var_name.")
         return attrs
 
+    @classmethod
+    def _preprocess_and_checks(
+        self, das: dict[str, DataArray], params: dict[str, Any], meta: dict[str, Any]
+    ) -> tuple[dict, dict, dict]:
+        """
+        Preprocessing of the input parameters before calling the compute function.
+
+        Parameters
+        ----------
+        das : dict
+            Dictionary of variable (DataArray) inputs.
+        params : dict
+            Dictionary of non-variable inputs.
+        meta : dict
+            Dictionary of other metadata not passed to the compute function.
+
+        Returns
+        -------
+        dict
+            Same as `das`, potentially modified.
+        dict
+            Same as `params`, potentially modified.
+        dict
+            Same as `meta`, potentially modified.
+        """
+        return das, params, meta
+
     def __call__(self, *args, **kwargs):
         """Perform the computation."""
         # Put the variables in `das`, parse them according to the following annotations:
@@ -906,32 +933,6 @@ class IndicatorBase(IndexWrapper):
         meta = {}
         return das, params, meta
 
-    def _preprocess_and_checks(
-        self, das: dict[str, DataArray], params: dict[str, Any], meta: dict[str, Any]
-    ) -> tuple[dict, dict, dict]:
-        """
-        Preprocessing of the input parameters before calling the compute function.
-
-        Parameters
-        ----------
-        das : dict
-            Dictionary of variable (DataArray) inputs.
-        params : dict
-            Dictionary of non-variable inputs.
-        meta : dict
-            Dictionary of other metadata not passed to the compute function.
-
-        Returns
-        -------
-        dict
-            Same as `das`, potentially modified.
-        dict
-            Same as `params`, potentially modified.
-        dict
-            Same as `meta`, potentially modified.
-        """
-        return das, params, meta
-
     def _get_compute_args(self, das, params) -> dict:
         """Rename variables and parameters to match the compute function's names and split VAR_KEYWORD arguments."""
         # Get correct variable names for the compute function
@@ -949,6 +950,7 @@ class IndicatorBase(IndexWrapper):
                         args[param.compute_name] = params[key]
         return args
 
+    @classmethod
     def _postprocess(
         self, outs: list[DataArray], das: dict[str, DataArray], params: dict[str, Any], meta: dict[str, Any]
     ) -> tuple[list[DataArray], dict]:
