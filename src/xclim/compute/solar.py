@@ -1,4 +1,4 @@
-"""The solar module offers functions for interpolating and accumulating variables to solar noon."""
+"""The solar module offers helper functions for astronomical calculations related to the sun, its position in the sky, its revolution and to the length of day."""
 
 from __future__ import annotations
 
