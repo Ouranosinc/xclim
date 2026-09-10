@@ -23,7 +23,7 @@ Major changes
     * Output attributes are stored in ``Indicator.attrs`` (renamed from ``cf_attrs``), which is a list of ``xclim.core.indicator.Output`` objects (not dictionaries).
     * Removal of ``Indicator.from_dict``. Renamed ``Indicator.translate_attrs`` to ``Indicator.translate``.
     * The ``xclim.core.indicator.registry`` now holds ``Indicator`` _instances_ (not classes) and is case-insensitive.
-    * "Virtual submodules" were transformed into ``xclim.core.collection.IndicatorCollection`` instances (and not actual python modules). Indicators created this way automatically have the collection's name prepended to their identifier.
+    * "Virtual submodules" were transformed into ``xclim.core.collection.IndicatorCollection`` instances (and not actual python modules). Indicators created this way automatically have the collection's name prepended to their identifier. Indicators created in the context of a collection are not registered by default. (:pull:`2415`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -33,6 +33,9 @@ New indicators and features
     * The `include_doy_bounds_nans` argument has been added to control whether NaN values in the bounds should be filled or not. When set to `True`, missing values in the start or end bounds are replaced by the start and end of the period, respectively.
     * The `bounds_freq` argument has been added to allow users to specify the frequency to use when using open `date_bounds`.
 * Add multimember support through new argument 'dim' and new test 'signal-to-noise' for ``xclim.ensembles.robustness_fractions`` (:pull:`2411`).
+* `IndicatorCollection` yaml specifications updates:
+    * New ``bases`` section for defining indicator classes to reuse in defining the ones in the ``indicators`` section (:pull:`2415`).
+    * Fields ``base`` and ``compute`` can now be a "qualified name" of an object to be imported dynamically, or the qualified name of an indicator with its submodule/realm. Ex: ``atmos.precip_accumulation``, which was previously referred by its identifier ``prcptot`` (:pull:`2415`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -56,6 +59,7 @@ Breaking changes
 * ``mask_between_doys`` has been renamed to ``select_between_doys``. (:pull:`2374`):
     * The function now returns the selected values instead of a boolean mask.
     * For array-like ``doy_bounds`` without ``time`` dimension, the start and end bounds must now be consecutive according to the frequency (default: ``freq="YS"``). Otherwise, the indexing is invalid and no data are selected.
+* Variable `q` has been renamed to `rivo` in hydrological indicators (``xclim.indicators.land``) to follow modern naming conventions. ``xclim.land.doy_q{min|max}`` are renamed to ``xclim.land.rivo_{min|max}_doy``. (:issue:`2407`, :pull:`2408`).
 * Translation: ``xclim.core.locales.get_local_attrs`` has been rewritten and only accepts a single "locale" now. Locale dictionaries are now case-insensitive. (:pull:`2397`).
 * Replace hard-coded length of period to actually use the length of the input in ``xclim.ensembles.robustness_fractions``. (:pull:`2411`, :issue:`2406`).
 
@@ -70,7 +74,6 @@ Internal changes
 * The LaTeX formulas and tables of many indice docstrings were failing to render in ReadTheDocs due to small syntax typos. These have been addressed. (:pull:`2355`).
 * A page has been added to the documentation (`governance.rst`) that describes the method through which decisions concerning `xclim` are made as well as the responsibilities of maintainers. (:pull:`2391`).
 * The security policy now details a brief security assurance that discusses the measures taken to ensure source code and package integrity. (:pull:`2391`).
-* Removed ``swe_series`` unused fixture.
 * Updated `pylint` to use v4.0+ standards and addressed several small linting issues. (:pull:`2409`).
 * Project metadata now compatible with `flit >=4.0` standards. (:pull:`2412`).
 * On `bump release`, the `CHANGELOG.rst` file is now automatically updated to set the version title and release date. (:pull:`2413`).

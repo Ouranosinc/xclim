@@ -154,23 +154,23 @@ def pr_ndseries():
 
 
 @pytest.fixture
-def q_series():
+def rivo_series():
     """Return flow rate series time series."""
 
-    def _q_series(values, start="1/1/2000", units="m3 s-1"):
+    def _rivo_series(values, start="1/1/2000", units="m3 s-1"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
             dims="time",
-            name="q",
+            name="rivo",
             attrs={
                 "standard_name": "water_volume_transport_in_river_channel",
                 "units": units,
             },
         )
 
-    return _q_series
+    return _rivo_series
 
 
 @pytest.fixture
@@ -181,7 +181,7 @@ def qspec_series():
 
 
 @pytest.fixture
-def ndq_series(random):
+def ndrivo_series(random):
     nx, ny, nt = 2, 3, 5000
     x = np.arange(0, nx)
     y = np.arange(0, ny)
