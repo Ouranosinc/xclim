@@ -18,13 +18,15 @@ from numba import vectorize
 from xclim.compute.helpers import (
     _gather_lat,
     _gather_lon,
+    wind_speed_height_conversion,
+)
+from xclim.compute.solar import (
     cosine_of_solar_zenith_angle,
     day_lengths,
     distance_from_sun,
     extraterrestrial_solar_radiation,
     solar_declination,
     time_correction_for_solar_angle,
-    wind_speed_height_conversion,
 )
 from xclim.core import Quantified
 from xclim.core.units import (

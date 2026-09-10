@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from xclim import atmos, set_options
-from xclim.compute.helpers import make_hourly_temperature
+from xclim.compute.solar import make_hourly_temperature
 
 K2C = 273.16
 

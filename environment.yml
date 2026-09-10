@@ -29,6 +29,9 @@ dependencies:
   - pymannkendall >=1.4.0
   # lmoments3 - Not an official dependency but required for some Jupyter notebooks
   - lmoments3 >=1.0.7
+  # libraries for solar testing:
+  - astral >=3.2
+  - pvlib >=0.15.2
   # Linting dependencies
   - codespell >=2.4.1
   - deptry >=0.25.1

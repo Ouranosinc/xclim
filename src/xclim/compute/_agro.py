@@ -14,10 +14,12 @@ from xclim.compute.classify import get_zones
 from xclim.compute.generic import day_threshold_reached, statistics, statistics_between_dates
 from xclim.compute.helpers import (
     _gather_lat,
+    resample_map,
+)
+from xclim.compute.solar import (
     gladstones_day_length_latitude_coefficient,
     huglin_day_length_latitude_coefficient,
     jones_day_length_latitude_coefficient,
-    resample_map,
 )
 from xclim.compute.stats import standardized_index
 from xclim.core import DateStr, DayOfYearStr, Freq, Quantified
@@ -1524,7 +1526,7 @@ def chill_portions(tas: xarray.DataArray, freq: Freq = "YS", **indexer) -> xarra
     Examples
     --------
     >>> from xclim.compute import chill_portions
-    >>> from xclim.compute.helpers import make_hourly_temperature
+    >>> from xclim.compute.solar import make_hourly_temperature
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax
     >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)
@@ -1565,7 +1567,7 @@ def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: Freq =
     Examples
     --------
     >>> from xclim.compute import chill_units
-    >>> from xclim.compute.helpers import make_hourly_temperature
+    >>> from xclim.compute.solar import make_hourly_temperature
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax
     >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)
