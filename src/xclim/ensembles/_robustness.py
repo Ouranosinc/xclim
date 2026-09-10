@@ -234,7 +234,7 @@ def robustness_fractions(
     """
     # unpack dims
     dim1, dim2 = _unpack_dim(dim)
-    if "member" in fut and dim2 != "member":
+    if "member" in fut.dims and dim2 != "member":
         warnings.warn(
             'We noticed that the "member" dimension is present in fut,'
             ' but not in the second dimension of "dim". Make sure to pass the correct '

@@ -806,11 +806,6 @@ class IndicatorBase(IndexWrapper):
             new_attrs = [new_attrs]
 
         # Merging is implemented on Output objects as OR
-        # TODO: fillvalue kills var_name. I think this doesn't work when we have 2 outputs
-
-        if len(attrs) == 2 and attrs[0].var_name is not None:
-            attrs[0]["var_name"] = attrs[0].var_name
-            attrs[1]["var_name"] = attrs[1].var_name
         return [(oo | nn) for oo, nn in zip_longest(attrs, new_attrs, fillvalue=Output())]
 
     @classmethod
