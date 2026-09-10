@@ -388,7 +388,7 @@ def test_multiindicator(tas_series):
 
 
 def test_deriving_multiindicator():
-    new = multiTemp.__class__(identifier="minmaxtemp2")
+    new = multiTemp.__class__(identifier="minmaxtemp2", register=False)
 
     assert new.attrs[0].var_name == "tmin"
 
