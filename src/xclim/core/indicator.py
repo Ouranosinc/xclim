@@ -882,6 +882,29 @@ class IndicatorBase(IndexWrapper):
 
         return self._finalize(outs, das, params, meta)
 
+    def _parse_arguments(self, kwargs):
+        """Extract variable and optional variables from call arguments."""
+        # Extract variables + inject injected
+        das = {}
+        params = kwargs.copy()
+        for name, param in self._all_parameters.items():
+            if not param.injected:
+                # If a variable pop the arg
+                if is_percentile_dataarray(params[name]):
+                    # duplicate percentiles DA in both das and params
+                    das[name] = params[name]
+                elif param.kind in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]:
+                    data = params.pop(name)
+                    # If a non-optional variable OR not None, store the arg
+                    # Optional variable that are none are simply dropped here
+                    if param.kind == InputKind.VARIABLE or data is not None:
+                        das[name] = data
+            else:
+                params[name] = param.value
+
+        meta = {}
+        return das, params, meta
+
     @classmethod
     def _preprocess_and_checks(
         self, das: dict[str, DataArray], params: dict[str, Any], meta: dict[str, Any]
@@ -907,29 +930,6 @@ class IndicatorBase(IndexWrapper):
         dict
             Same as `meta`, potentially modified.
         """
-        return das, params, meta
-
-    def _parse_arguments(self, kwargs):
-        """Extract variable and optional variables from call arguments."""
-        # Extract variables + inject injected
-        das = {}
-        params = kwargs.copy()
-        for name, param in self._all_parameters.items():
-            if not param.injected:
-                # If a variable pop the arg
-                if is_percentile_dataarray(params[name]):
-                    # duplicate percentiles DA in both das and params
-                    das[name] = params[name]
-                elif param.kind in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]:
-                    data = params.pop(name)
-                    # If a non-optional variable OR not None, store the arg
-                    # Optional variable that are none are simply dropped here
-                    if param.kind == InputKind.VARIABLE or data is not None:
-                        das[name] = data
-            else:
-                params[name] = param.value
-
-        meta = {}
         return das, params, meta
 
     def _get_compute_args(self, das, params) -> dict:
