@@ -18,13 +18,6 @@ if Version(__xr_version__) >= Version("24.9.0"):
 else:
     XR2409 = False
 
-try:
-    from flox.xarray import rechunk_for_blockwise
-
-    flox_err = None
-except ImportError:
-    rechunk_for_blockwise = None
-
 import importlib
 import warnings
 
