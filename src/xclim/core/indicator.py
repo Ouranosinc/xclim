@@ -905,7 +905,6 @@ class IndicatorBase(IndexWrapper):
         meta = {}
         return das, params, meta
 
-    @classmethod
     def _preprocess_and_checks(
         self, das: dict[str, DataArray], params: dict[str, Any], meta: dict[str, Any]
     ) -> tuple[dict, dict, dict]:
