@@ -126,7 +126,7 @@ def test_indicator_module_input_mapping(atmosds):
     prveg = atmosds.pr.rename("prveg").assign_attrs(standard_name="precipitation_flux_onto_canopy")
     with set_options(as_dataset=True):
         out = ex.RX5day_canopy(prveg=prveg)
-    assert "RX5day_canopy(prveg=prveg, dim='time')" in out.attrs["history"]
+    assert "RX5day_canopy(prveg=prveg)" in out.attrs["history"]
 
 
 @pytest.mark.requires_docs
