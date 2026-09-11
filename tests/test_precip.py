@@ -25,7 +25,7 @@ class TestRainOnFrozenGround:
             ds = ds.chunk(chunks)
 
         out = atmos.rain_on_frozen_ground_days(pr, ds.tas, freq="YS")
-        np.testing.assert_array_equal(out.sel(location="Montréal"), [np.nan, 4, 5, 3])
+        np.testing.assert_array_equal(out.rain_frzgr.sel(location="Montréal"), [np.nan, 4, 5, 3])
 
 
 class TestRainSeason:
@@ -35,15 +35,14 @@ class TestRainSeason:
 
         pr = ds.pr.isel(location=0).copy()
         pr[{"time": [0, 10, 100]}] = np.nan
-        out = {}
-        out["start"], out["end"], out["length"] = atmos.rain_season(
+        out = atmos.rain_season(
             pr,
             freq="YS-JAN",
             window_dry_end=5,
             date_min_start="01-01",
             date_min_end="01-01",
         )
-        out_arr = np.array([out[var].values for var in ["start", "end", "length"]])
+        out_arr = out.to_array("variable")
         out_exp = np.array(
             [
                 [np.nan, 12.0, 6.0, 27.0],
@@ -75,18 +74,18 @@ class TestPrecipAccumulation:
         pr.attrs["units"] = "kg m-2 s-1"
         out3 = atmos.precip_accumulation(pr, freq="MS")
 
-        np.testing.assert_allclose(out1, out2, rtol=1e-7, atol=1e-4)
-        np.testing.assert_allclose(out1, out3, rtol=1e-7, atol=1e-4)
+        np.testing.assert_allclose(out1.prcptot, out2.prcptot, rtol=1e-7, atol=1e-4)
+        np.testing.assert_allclose(out1.prcptot, out3.prcptot, rtol=1e-7, atol=1e-4)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
 
         pr_tot = x1.sum()
 
-        np.testing.assert_almost_equal(pr_tot, out1.values[0, 0, 0], 4)
+        np.testing.assert_almost_equal(pr_tot, out1.prcptot.values[0, 0, 0], 4)
 
-        assert np.isnan(out1.values[0, 1, 0])
-        assert np.isnan(out1.values[0, -1, -1])
+        assert np.isnan(out1.prcptot.values[0, 1, 0])
+        assert np.isnan(out1.prcptot.values[0, -1, -1])
 
     def test_with_different_phases(self, open_dataset):
         # test with different phases
@@ -97,17 +96,17 @@ class TestPrecipAccumulation:
         out_sol = atmos.solid_precip_accumulation(pr, tas=tasmin, freq="MS")
         out_liq = atmos.liquid_precip_accumulation(pr, tas=tasmin, freq="MS")
 
-        np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
+        np.testing.assert_array_almost_equal(out_liq.liquidprcptot + out_sol.solidprcptot, out_tot.prcptot, 4)
 
-        assert "solid" in out_sol.description
-        assert "liquid" in out_liq.description
-        assert out_sol.standard_name == "lwe_thickness_of_snowfall_amount"
+        assert "solid" in out_sol.solidprcptot.description
+        assert "liquid" in out_liq.liquidprcptot.description
+        assert out_sol.solidprcptot.standard_name == "lwe_thickness_of_snowfall_amount"
 
         # With a non-default threshold
         out_sol = atmos.solid_precip_accumulation(pr, tas=tasmin, thresh="40 degF", freq="MS")
         out_liq = atmos.liquid_precip_accumulation(pr, tas=tasmin, thresh="40 degF", freq="MS")
 
-        np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
+        np.testing.assert_array_almost_equal(out_liq.liquidprcptot + out_sol.solidprcptot, out_tot.prcptot, 4)
 
 
 class TestPrecipAverage:
@@ -131,19 +130,19 @@ class TestPrecipAverage:
         pr.attrs["units"] = "kg m-2 s-1"
         out3 = atmos.precip_average(pr, freq="MS")
 
-        np.testing.assert_array_almost_equal(out1, out2, 3)
-        np.testing.assert_array_almost_equal(out1, out3, 5)
+        np.testing.assert_array_almost_equal(out1.prcpavg, out2.prcpavg, 3)
+        np.testing.assert_array_almost_equal(out1.prcpavg, out3.prcpavg, 5)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
 
         pr_mean = x1.mean()
 
-        np.testing.assert_almost_equal(pr_mean, out1.values[0, 0, 0], 4)
+        np.testing.assert_almost_equal(pr_mean, out1.prcpavg.values[0, 0, 0], 4)
 
-        assert np.isnan(out1.values[0, 1, 0])
+        assert np.isnan(out1.prcpavg.values[0, 1, 0])
 
-        assert np.isnan(out1.values[0, -1, -1])
+        assert np.isnan(out1.prcpavg.values[0, -1, -1])
 
     def test_with_different_phases(self, open_dataset):
         # test with different phases
@@ -154,17 +153,17 @@ class TestPrecipAverage:
         out_sol = atmos.solid_precip_average(pr, tas=tasmin, freq="MS")
         out_liq = atmos.liquid_precip_average(pr, tas=tasmin, freq="MS")
 
-        np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
+        np.testing.assert_array_almost_equal(out_liq.liquidprcpavg + out_sol.solidprcpavg, out_tot.prcpavg, 4)
 
-        assert "solid" in out_sol.description
-        assert "liquid" in out_liq.description
-        assert out_sol.standard_name == "lwe_average_of_snowfall_amount"
+        assert "solid" in out_sol.solidprcpavg.description
+        assert "liquid" in out_liq.liquidprcpavg.description
+        assert out_sol.solidprcpavg.standard_name == "lwe_average_of_snowfall_amount"
 
         # With a non-default threshold
         out_sol = atmos.solid_precip_average(pr, tas=tasmin, thresh="40 degF", freq="MS")
         out_liq = atmos.liquid_precip_average(pr, tas=tasmin, thresh="40 degF", freq="MS")
 
-        np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
+        np.testing.assert_array_almost_equal(out_liq.liquidprcpavg + out_sol.solidprcpavg, out_tot.prcpavg, 4)
 
 
 class TestStandardizedPrecip:
@@ -186,7 +185,7 @@ class TestStandardizedPrecip:
         out2 = atmos.standardized_precipitation_index(
             prMM, freq="MS", window=1, dist="gamma", method="APP", fitkwargs={"floc": 0}
         )
-        np.testing.assert_array_almost_equal(out1, out2, 3)
+        np.testing.assert_array_almost_equal(out1.spi, out2.spi, 3)
 
         # preparing water_budget for SPEI test
         with xr.set_options(keep_attrs=True):
@@ -213,7 +212,7 @@ class TestStandardizedPrecip:
             fitkwargs={"floc": 0},
         )
 
-        np.testing.assert_array_almost_equal(out3, out4, 3)
+        np.testing.assert_array_almost_equal(out3.spei, out4.spei, 3)
 
 
 class TestWetDays:
@@ -236,20 +235,20 @@ class TestWetDays:
         pr.attrs["units"] = "kg m-2 s-1"
         out3 = atmos.wetdays(pr, thresh=pr_min, freq="MS")
 
-        np.testing.assert_array_equal(out1, out2)
-        np.testing.assert_array_equal(out1, out3)
+        np.testing.assert_array_equal(out1.wetdays, out2.wetdays)
+        np.testing.assert_array_equal(out1.wetdays, out3.wetdays)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
 
         wd1 = (x1 >= int(pr_min.split(" ")[0])).sum()
 
-        assert wd1 == out1.values[0, 0, 0]
+        assert wd1 == out1.wetdays.values[0, 0, 0]
 
-        assert np.isnan(out1.values[0, 1, 0])
+        assert np.isnan(out1.wetdays.values[0, 1, 0])
 
         # make sure that vector with all nans gives nans whatever skipna
-        assert np.isnan(out1.values[0, -1, -1])
+        assert np.isnan(out1.wetdays.values[0, -1, -1])
         # assert (np.isnan(wds.values[0, -1, -1]))
 
 
@@ -266,7 +265,7 @@ class TestWetPrcptot:
         t = core.units.convert_units_to(thresh, pr, context="hydro")
         # this transforms with rate2amount, instead of stat=integral, very slight differences are to be expected
         pa = atmos.precip_accumulation(pr.where(pr >= t, 0))
-        np.testing.assert_array_almost_equal(out, pa, 3)
+        np.testing.assert_array_almost_equal(out.wet_prcptot, pa.prcptot, 3)
 
 
 class TestDailyIntensity:
@@ -294,8 +293,8 @@ class TestDailyIntensity:
         pr.attrs["units"] = "kg m-2 s-1"
         out3 = atmos.daily_pr_intensity(pr, thresh=pr_min, freq="MS")
 
-        np.testing.assert_array_almost_equal(out1, out2, 3)
-        np.testing.assert_array_almost_equal(out1, out3, 3)
+        np.testing.assert_array_almost_equal(out1.sdii, out2.sdii, 3)
+        np.testing.assert_array_almost_equal(out1.sdii, out3.sdii, 3)
 
         x1 = prMM[:31, 0, 0].values
 
@@ -303,11 +302,11 @@ class TestDailyIntensity:
         # buffer = np.ma.masked_invalid(x2)
         # di2 = buffer[buffer >= pr_min].mean()
 
-        assert np.allclose(di1, out1.values[0, 0, 0])
+        assert np.allclose(di1, out1.sdii.values[0, 0, 0])
         # assert (np.allclose(di1, dis.values[0, 0, 0]))
-        assert np.isnan(out1.values[0, 1, 0])
+        assert np.isnan(out1.sdii.values[0, 1, 0])
         # assert (np.allclose(di2, dis.values[0, 1, 0]))
-        assert np.isnan(out1.values[0, -1, -1])
+        assert np.isnan(out1.sdii.values[0, -1, -1])
         # assert (np.isnan(dis.values[0, -1, -1]))
 
 
@@ -319,7 +318,7 @@ class TestMaxPrIntensity:
 
         pr = xr.concat([pr1, pr2], dim="site")
         out = atmos.max_pr_intensity(pr, window=2, freq="YS")
-        np.testing.assert_array_almost_equal(out.isel(time=0), [8.5 * 3600, 3600])
+        np.testing.assert_array_almost_equal(out.max_pr_intensity.isel(time=0), [8.5 * 3600, 3600])
 
     def test_indexing(self, pr_hr_series):
         pr = pr_hr_series(np.zeros(366 * 24))
@@ -327,8 +326,8 @@ class TestMaxPrIntensity:
 
         out1 = atmos.max_pr_intensity(pr, window=2, freq="YS")
         out2 = atmos.max_pr_intensity(pr, window=2, freq="YS", doy_bounds=[200, 1])
-        np.testing.assert_array_almost_equal(out1.isel(time=0), [8.5 * 3600])
-        np.testing.assert_array_almost_equal(out2.isel(time=0), [2.5 * 3600])
+        np.testing.assert_array_almost_equal(out1.max_pr_intensity.isel(time=0), [8.5 * 3600])
+        np.testing.assert_array_almost_equal(out2.max_pr_intensity.isel(time=0), [2.5 * 3600])
 
 
 class TestMax1Day:
@@ -353,15 +352,15 @@ class TestMax1Day:
         pr.attrs["units"] = "kg m-2 s-1"
         out3 = atmos.max_1day_precipitation_amount(pr, freq="MS")
 
-        np.testing.assert_array_almost_equal(out1, out2, 3)
-        np.testing.assert_array_almost_equal(out1, out3, 3)
+        np.testing.assert_array_almost_equal(out1.rx1day, out2.rx1day, 3)
+        np.testing.assert_array_almost_equal(out1.rx1day, out3.rx1day, 3)
 
         x1 = prMM[:31, 0, 0].values
         rx1 = x1.max()
 
-        assert np.allclose(rx1, out1.values[0, 0, 0])
-        assert np.isnan(out1.values[0, 1, 0])
-        assert np.isnan(out1.values[0, -1, -1])
+        assert np.allclose(rx1, out1.rx1day.values[0, 0, 0])
+        assert np.isnan(out1.rx1day.values[0, 1, 0])
+        assert np.isnan(out1.rx1day.values[0, -1, -1])
 
 
 class TestMaxNDay:
@@ -390,23 +389,23 @@ class TestMaxNDay:
         out1 = atmos.max_n_day_precipitation_amount(pr1, window=wind, freq="MS")
         out2 = atmos.max_n_day_precipitation_amount(pr2, window=wind, freq="MS")
 
-        np.testing.assert_array_almost_equal(out1, out2, 3)
+        np.testing.assert_array_almost_equal(out1.rx3day, out2.rx3day, 3)
 
         x1 = pr1[:31, 0, 0].values * 86400
         df = pd.DataFrame({"pr": x1})
         rx3 = df.rolling(wind).sum().max()
 
-        assert np.allclose(rx3, out1.values[0, 0, 0])
-        assert np.isnan(out1.values[0, 1, 0])
-        assert np.isnan(out1.values[0, -1, -1])
+        assert np.allclose(rx3, out1.rx3day.values[0, 0, 0])
+        assert np.isnan(out1.rx3day.values[0, 1, 0])
+        assert np.isnan(out1.rx3day.values[0, -1, -1])
 
     def test_indexing(self, open_dataset):
         pr = open_dataset(self.nc_file).pr
         out1 = atmos.max_n_day_precipitation_amount(pr, window=7, freq="YS")
         out2 = atmos.max_n_day_precipitation_amount(pr, window=7, freq="YS", month=[6, 7, 8])
 
-        np.testing.assert_allclose(out1.values[0, 0, 0], 55.48, atol=1e-2)
-        np.testing.assert_allclose(out2.values[0, 0, 0], 50.57, atol=1e-2)
+        np.testing.assert_allclose(out1.rx7day.values[0, 0, 0], 55.48, atol=1e-2)
+        np.testing.assert_allclose(out2.rx7day.values[0, 0, 0], 50.57, atol=1e-2)
 
 
 class TestWetSpellMaxLength:
@@ -429,8 +428,8 @@ class TestWetSpellMaxLength:
         pr.attrs["units"] = "kg m-2 s-1"
         out3 = atmos.wet_spell_max_length(pr, thresh=pr_min, freq="MS")
 
-        np.testing.assert_array_equal(out1, out2)
-        np.testing.assert_array_equal(out1, out3)
+        np.testing.assert_array_equal(out1.wet_spell_max_length, out2.wet_spell_max_length)
+        np.testing.assert_array_equal(out1.wet_spell_max_length, out3.wet_spell_max_length)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0] * 0.0
@@ -438,12 +437,12 @@ class TestWetSpellMaxLength:
         x1.attrs["units"] = "mm/day"
         cwd1 = atmos.wet_spell_max_length(x1, freq="MS")
 
-        assert cwd1 == 9
+        assert cwd1.wet_spell_max_length == 9
 
-        assert np.isnan(out1.values[0, 1, 0])
+        assert np.isnan(out1.wet_spell_max_length.values[0, 1, 0])
 
         # make sure that vector with all nans gives nans whatever skipna
-        assert np.isnan(out1.values[0, -1, -1])
+        assert np.isnan(out1.wet_spell_max_length.values[0, -1, -1])
 
 
 class TestDrySpellMaxLength:
@@ -466,8 +465,8 @@ class TestDrySpellMaxLength:
         pr.attrs["units"] = "kg m-2 s-1"
         out3 = atmos.dry_spell_max_length(pr, thresh=pr_min, freq="MS")
 
-        np.testing.assert_array_equal(out1, out2)
-        np.testing.assert_array_equal(out1, out3)
+        np.testing.assert_array_equal(out1.dry_spell_max_length, out2.dry_spell_max_length)
+        np.testing.assert_array_equal(out1.dry_spell_max_length, out3.dry_spell_max_length)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0] * 0.0 + 50.0
@@ -475,12 +474,12 @@ class TestDrySpellMaxLength:
         x1.attrs["units"] = "mm/day"
         cdd1 = atmos.dry_spell_max_length(x1, freq="MS")
 
-        assert cdd1 == 5
+        assert cdd1.dry_spell_max_length == 5
 
-        assert np.isnan(out1.values[0, 1, 0])
+        assert np.isnan(out1.dry_spell_max_length.values[0, 1, 0])
 
         # make sure that vector with all nans gives nans whatever skipna
-        assert np.isnan(out1.values[0, -1, -1])
+        assert np.isnan(out1.dry_spell_max_length.values[0, -1, -1])
 
 
 class TestSnowfallDate:
@@ -496,14 +495,14 @@ class TestSnowfallDate:
             ),
             compat="no_conflicts",
         )
-        return convert.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
+        return convert.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary").prsn
 
     def test_first_snowfall(self, nimbus):
         with set_options(check_missing="skip"):
             fs = atmos.first_snowfall(prsn=self.get_snowfall(nimbus), thresh="0.5 mm/day")
 
         np.testing.assert_array_equal(
-            fs[:, [0, 45, 82], [10, 105, 155]],
+            fs.first_snowfall[:, [0, 45, 82], [10, 105, 155]],
             np.array(
                 [
                     [[1, 1, 1], [1, 1, 1], [11, np.nan, np.nan]],
@@ -517,7 +516,7 @@ class TestSnowfallDate:
             ls = atmos.last_snowfall(prsn=self.get_snowfall(nimbus), thresh="0.5 mm/day")
 
         np.testing.assert_array_equal(
-            ls[:, [0, 45, 82], [10, 105, 155]],
+            ls.last_snowfall[:, [0, 45, 82], [10, 105, 155]],
             np.array(
                 [
                     [[155, 151, 129], [127, 157, 110], [106, np.nan, np.nan]],
@@ -531,7 +530,7 @@ class TestDaysWithSnow:
     def test_simple(self, open_dataset, prsn_series):
         prsn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").prsn
         out = atmos.days_with_snow(prsn, low="0 kg m-2 s-1", high="1e6 kg m-2 s-1")
-        np.testing.assert_array_equal(out[1], [np.nan, 162, 159, 126, np.nan])
+        np.testing.assert_array_equal(out.days_with_snow[1], [np.nan, 162, 159, 126, np.nan])
 
 
 def test_days_over_precip_doy_thresh(open_dataset):
@@ -539,15 +538,15 @@ def test_days_over_precip_doy_thresh(open_dataset):
     per = percentile_doy(pr, window=5, per=80)
 
     out1 = atmos.days_over_precip_doy_thresh(pr, per)
-    np.testing.assert_array_equal(out1[1, :, 0], np.array([81, 60, 68, 78]))
+    np.testing.assert_array_equal(out1.days_over_precip_doy_thresh[1, :, 0], np.array([81, 60, 68, 78]))
 
     out2 = atmos.days_over_precip_doy_thresh(pr, per, thresh="2 mm/d")
-    np.testing.assert_array_equal(out2[1, :, 0], np.array([80, 59, 66, 78]))
+    np.testing.assert_array_equal(out2.days_over_precip_doy_thresh[1, :, 0], np.array([80, 59, 66, 78]))
 
-    assert "Only days with at least 2 mm/d are counted." in out2.description
-    assert "[80]th percentile" in out2.attrs["description"]
-    assert "['1990-01-01', '1993-12-31'] period" in out2.attrs["description"]
-    assert "5 day(s)" in out2.attrs["description"]
+    assert "Only days with at least 2 mm/d are counted." in out2.days_over_precip_doy_thresh.description
+    assert "[80]th percentile" in out2.days_over_precip_doy_thresh.attrs["description"]
+    assert "['1990-01-01', '1993-12-31'] period" in out2.days_over_precip_doy_thresh.attrs["description"]
+    assert "5 day(s)" in out2.days_over_precip_doy_thresh.attrs["description"]
 
 
 def test_days_over_precip_thresh(open_dataset):
@@ -557,9 +556,9 @@ def test_days_over_precip_thresh(open_dataset):
 
     out = atmos.days_over_precip_thresh(pr, per)
 
-    np.testing.assert_allclose(out[1, :], np.array([80.0, 64.0, 65.0, 83.0]), atol=0.001)
-    assert "80.0th percentile" in out.attrs["description"]
-    assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
+    np.testing.assert_allclose(out.days_over_precip_thresh[1, :], np.array([80.0, 64.0, 65.0, 83.0]), atol=0.001)
+    assert "80.0th percentile" in out.days_over_precip_thresh.attrs["description"]
+    assert "['1990-01-01', '1993-12-31'] period" in out.days_over_precip_thresh.attrs["description"]
 
 
 def test_days_over_precip_thresh__seasonal_indexer(open_dataset):
@@ -569,7 +568,7 @@ def test_days_over_precip_thresh__seasonal_indexer(open_dataset):
     # WHEN
     out = atmos.days_over_precip_thresh(pr, per, freq="YS", date_bounds=("01-10", "12-31"))
     # THEN
-    np.testing.assert_almost_equal(out[0], np.array([81.0, 66.0, 66.0, 75.0]))
+    np.testing.assert_almost_equal(out.days_over_precip_thresh[0], np.array([81.0, 66.0, 66.0, 75.0]))
 
 
 def test_fraction_over_precip_doy_thresh(open_dataset):
@@ -577,15 +576,19 @@ def test_fraction_over_precip_doy_thresh(open_dataset):
     per = percentile_doy(pr, window=5, per=80)
 
     out = atmos.fraction_over_precip_doy_thresh(pr, per)
-    np.testing.assert_allclose(out[1, :, 0], np.array([0.803, 0.747, 0.745, 0.806]), atol=0.001)
+    np.testing.assert_allclose(
+        out.fraction_over_precip_doy_thresh[1, :, 0], np.array([0.803, 0.747, 0.745, 0.806]), atol=0.001
+    )
 
     out = atmos.fraction_over_precip_doy_thresh(pr, per, thresh="0.002 m/d")
-    np.testing.assert_allclose(out[1, :, 0], np.array([0.822, 0.780, 0.771, 0.829]), atol=0.001)
+    np.testing.assert_allclose(
+        out.fraction_over_precip_doy_thresh[1, :, 0], np.array([0.822, 0.780, 0.771, 0.829]), atol=0.001
+    )
 
-    assert "Only days with at least 0.002 m/d are included" in out.description
-    assert "[80]th percentile" in out.attrs["description"]
-    assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
-    assert "5 day(s)" in out.attrs["description"]
+    assert "Only days with at least 0.002 m/d are included" in out.fraction_over_precip_doy_thresh.description
+    assert "[80]th percentile" in out.fraction_over_precip_doy_thresh.attrs["description"]
+    assert "['1990-01-01', '1993-12-31'] period" in out.fraction_over_precip_doy_thresh.attrs["description"]
+    assert "5 day(s)" in out.fraction_over_precip_doy_thresh.attrs["description"]
 
 
 def test_fraction_over_precip_thresh(open_dataset):
@@ -595,26 +598,30 @@ def test_fraction_over_precip_thresh(open_dataset):
 
     out = atmos.fraction_over_precip_thresh(pr, per)
 
-    np.testing.assert_allclose(out[1, :], np.array([0.839, 0.812, 0.776, 0.864]), atol=0.001)
+    np.testing.assert_allclose(
+        out.fraction_over_precip_thresh[1, :], np.array([0.839, 0.812, 0.776, 0.864]), atol=0.001
+    )
 
-    assert "80.0th percentile" in out.attrs["description"]
-    assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
+    assert "80.0th percentile" in out.fraction_over_precip_thresh.attrs["description"]
+    assert "['1990-01-01', '1993-12-31'] period" in out.fraction_over_precip_thresh.attrs["description"]
 
 
 def test_liquid_precip_ratio(open_dataset):
     ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
     out = atmos.liquid_precip_ratio(pr=ds.pr, tas=ds.tas, thresh="0 degC", freq="YS")
-    np.testing.assert_allclose(out[:, 0], np.array([0.919, 0.805, 0.525, 0.740, 0.993]), atol=1e3)
+    np.testing.assert_allclose(out.liquid_precip_ratio[:, 0], np.array([0.919, 0.805, 0.525, 0.740, 0.993]), atol=1e3)
 
     with set_options(cf_compliance="raise"):
         # Test if tasmax is allowed
         out = atmos.liquid_precip_ratio(pr=ds.pr, tas=ds.tasmax, thresh="33 degF", freq="YS")
-        np.testing.assert_allclose(out[:, 0], np.array([0.975, 0.921, 0.547, 0.794, 0.999]), atol=1e3)
-        assert "where temperature is above 33 degF." in out.description
+        np.testing.assert_allclose(
+            out.liquid_precip_ratio[:, 0], np.array([0.975, 0.921, 0.547, 0.794, 0.999]), atol=1e3
+        )
+        assert "where temperature is above 33 degF." in out.liquid_precip_ratio.description
 
 
-def test_dry_spell(atmosds):
+def test_dry_spell(atmosds, as_da):
     pr = atmosds.pr
 
     events = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
@@ -652,12 +659,12 @@ def test_dry_spell_total_length_indexer(pr_series):
         thresh="3.1 mm",
         freq="MS",
     )
-    np.testing.assert_allclose(out, [np.nan] + [0] * 11)
+    np.testing.assert_allclose(out.dry_spell_total_length, [np.nan] + [0] * 11)
 
     out = atmos.dry_spell_total_length(
         pr, window=7, window_statistic="sum", thresh="3.1 mm", freq="MS", date_bounds=("01-10", "12-31")
     )
-    np.testing.assert_allclose(out, [9] + [0] * 11)
+    np.testing.assert_allclose(out.dry_spell_total_length, [9] + [0] * 11)
 
 
 def test_dry_spell_max_length_indexer(pr_series):
@@ -669,12 +676,12 @@ def test_dry_spell_max_length_indexer(pr_series):
         thresh="3.1 mm",
         freq="MS",
     )
-    np.testing.assert_allclose(out, [np.nan] + [0] * 11)
+    np.testing.assert_allclose(out.dry_spell_max_length, [np.nan] + [0] * 11)
 
     out = atmos.dry_spell_total_length(
         pr, window=7, window_statistic="sum", thresh="3.1 mm", freq="MS", date_bounds=("01-10", "12-31")
     )
-    np.testing.assert_allclose(out, [9] + [0] * 11)
+    np.testing.assert_allclose(out.dry_spell_total_length, [9] + [0] * 11)
 
 
 def test_dry_spell_frequency_op(open_dataset):
@@ -682,16 +689,20 @@ def test_dry_spell_frequency_op(open_dataset):
     test_sum = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="MS", window_statistic="sum")
     test_max = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="MS", window_statistic="max")
 
-    np.testing.assert_allclose(test_sum[0, :14], [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0], rtol=1e-1)
-    np.testing.assert_allclose(test_max[0, :14], [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 2, 1], rtol=1e-1)
+    np.testing.assert_allclose(
+        test_sum.dry_spell_frequency[0, :14], [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0], rtol=1e-1
+    )
+    np.testing.assert_allclose(
+        test_max.dry_spell_frequency[0, :14], [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 2, 1], rtol=1e-1
+    )
     assert (
         "The monthly number of dry periods of at least 7 days. A period is dry if its "
         "total precipitation on a window of 7 days is below 3 mm."
-    ) in test_sum.description
+    ) in test_sum.dry_spell_frequency.description
     assert (
         "The monthly number of dry periods of at least 7 days. "
         "A period is dry if its maximal precipitation on a window of 7 days is below 3 mm."
-    ) in test_max.description
+    ) in test_max.dry_spell_frequency.description
 
 
 class TestSnowfallMeteoSwiss:
@@ -707,7 +718,7 @@ class TestSnowfallMeteoSwiss:
             ),
             compat="no_conflicts",
         )
-        return convert.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
+        return convert.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary").prsn
 
     def test_snowfall_frequency(self, nimbus):
         prsn = self.get_snowfall(nimbus)
@@ -728,7 +739,7 @@ class TestSnowfallMeteoSwiss:
             ]
         )
         np.testing.assert_allclose(
-            sf[:, [0, 45, 82], [10, 105, 155]],
+            sf.snowfall_frequency[:, [0, 45, 82], [10, 105, 155]],
             expected,
             rtol=1e-3,
         )
@@ -752,7 +763,7 @@ class TestSnowfallMeteoSwiss:
             ]
         )
         np.testing.assert_allclose(
-            si[:, [0, 45, 82], [10, 105, 155]],
+            si.snowfall_intensity[:, [0, 45, 82], [10, 105, 155]],
             expected,
             rtol=1e-3,
         )
@@ -764,9 +775,9 @@ def test_precipitation_concentration_index(pr_series):
     a[30:60] = 2 / 30
     pr = pr_series(a, start="2000-01-01", calendar="360_day")
     expected = 100 * (1 + 2**2) / ((1 + 2) ** 2)
-    pci = atmos.precipitation_concentration_index(pr)
+    out = atmos.precipitation_concentration_index(pr)
 
-    np.testing.assert_array_equal(pci, expected)
+    np.testing.assert_array_equal(out.pci, expected)
 
 
 def test_aridity_index(pr_series, evspsblpot_series):
@@ -774,5 +785,5 @@ def test_aridity_index(pr_series, evspsblpot_series):
     pet = evspsblpot_series([1] * (365 * 10 + 2), start="1900-01-01", units="mm/d")
     ai = atmos.aridity_index(pr, pet, freq="YS")
 
-    assert ai.attrs["units"] == "1"
-    np.testing.assert_allclose(ai.values, [2.0] * 10)
+    assert ai.aridity_index.attrs["units"] == "1"
+    np.testing.assert_allclose(ai.aridity_index.values, [2.0] * 10)

@@ -106,10 +106,7 @@ def _process_indicator(indicator, ctx, **params):
     except MissingVariableError as err:
         raise click.BadArgumentUsage(err.args[0]) from err
 
-    if isinstance(out, tuple):
-        dsout = dsout.assign(**{var.name: var for var in out})
-    else:
-        dsout = dsout.assign({out.name: out})
+    dsout = xr.merge([out, dsout], combine_attrs="override")
     ctx.obj["ds_out"] = dsout
 
 

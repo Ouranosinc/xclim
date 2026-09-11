@@ -81,6 +81,7 @@ mean_temperature_from_max_and_min = Converter(
     long_name="Daily mean temperature",
     description="Estimated mean temperature from maximum and minimum temperatures.",
     cell_methods="time: mean within days",
+    var_name="tas",
     abstract="The average daily temperature assuming a symmetrical temperature distribution (Tg = (Tx + Tn) / 2).",
     compute=converters.tas_from_tasmin_tasmax,
 )
@@ -350,7 +351,7 @@ snw_to_snd = Converter(
 
 rain_approximation = Converter(
     title="Rainfall approximation",
-    identifier="prlp",
+    identifier="prra",
     units="kg m-2 s-1",
     standard_name="precipitation_flux",
     long_name='Liquid precipitation ("{method}" method with temperature at or above {thresh})',
@@ -419,6 +420,7 @@ water_budget_from_tas = Converter(
         "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget, "
         "where the potential evapotranspiration is calculated with a given method."
     ),
+    var_name="water_budget",
     compute=converters.water_budget,
     parameters={"evspsblpot": None},
 )
@@ -432,6 +434,7 @@ water_budget = Converter(
         "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget."
     ),
     abstract="Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget.",
+    var_name="water_budget",
     compute=converters.water_budget,
     parameters={
         "method": None,

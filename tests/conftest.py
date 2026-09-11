@@ -13,6 +13,7 @@ import xarray as xr
 
 from xclim.core import indicator
 from xclim.core.calendar import max_doy
+from xclim.core.options import set_options
 from xclim.testing.helpers import (
     add_ensemble_dataset_objects,
     generate_atmos,
@@ -457,4 +458,10 @@ def gather_session_data(request, nimbus, worker_id):
 @pytest.fixture
 def no_numbagg():
     with xr.set_options(use_numbagg=False):
+        yield
+
+
+@pytest.fixture
+def as_da():
+    with set_options(as_dataset=False):
         yield
