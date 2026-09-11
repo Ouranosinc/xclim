@@ -1477,6 +1477,61 @@ class _Convenience(_InputChecker):
             return out
         raise AttributeError(attr)
 
+    @classmethod
+    def copy(cls, **kwargs) -> Indicator:
+        """
+        Create a new indicator by copying and modifying this indicator, similar to subclassing.
+
+        This accepts the same arguments as the indicator constructor, but parameters and attributes
+        will default to this indicator's data.
+
+        This is the same as calling ``obj.__class__(**kwargs)``.
+
+        See Also
+        --------
+        Indicator.__init__
+        """
+        return cls(**kwargs)
+
+    @classmethod
+    def from_dict(cls, data: dict, identifier: str, module: str | None = None) -> Indicator:
+        """
+        Deprecated method to create an indicator, please use :py:meth:`Indicator.copy` directly on
+        the base indicator instead.
+        """
+        warnings.warn(
+            "Method `from_dict` is deprecated, please use the Indicator's constructor or `copy` method instead. "
+            "See xclim's documentation for differences between v0 and v1. This function will soon be removed.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        data = data.copy()
+        if "base" in data:
+            if isinstance(data["base"], str):
+                cls = registry.get(data["base"], base_registry.get(data["base"]))
+                if cls is None:
+                    raise ValueError(
+                        f"Requested base class {data['base']} is neither in the "
+                        "indicators registry nor in base classes registry."
+                    )
+                elif isinstance(cls, Indicator):
+                    cls = cls.copy
+            else:
+                cls = data["base"]
+
+        compute = data.get("compute", None)
+        # data.compute refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
+        # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
+        if isinstance(compute, str):
+            from xclim import compute as _compute
+
+            compute_func = getattr(_compute.generic, compute, getattr(_compute, compute, None))
+            if compute_func is None:
+                raise ImportError(f"Compute function {compute} not found in xclim.compute or xclim.compute.generic.")
+            data["compute"] = compute_func
+
+        return cls(identifier=identifier, module=module, **data)
+
 
 class _Registrer(_Convenience):
     """Register the indicator in the xclim registry."""

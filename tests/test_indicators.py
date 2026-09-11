@@ -251,7 +251,7 @@ def test_opt_vars(tasmin_series, tasmax_series):
 
 def test_registering():
     assert "tmin" not in registry
-    uniIndTemp.__class__(identifier="test.tmin", register=True)
+    uniIndTemp.copy(identifier="test.tmin", register=True)
     assert "test.tmin" in registry
 
 
@@ -281,7 +281,7 @@ def test_temp_diff_unit_conversion(tasmax_series, tasmin_series, as_da):
     txC = convert_units_to(tx, "degC")
     tnC = convert_units_to(tn, "degC")
 
-    ind = xclim.atmos.daily_temperature_range.__class__(
+    ind = xclim.atmos.daily_temperature_range.copy(
         identifier="test.dtr_degC", attrs=[{"units": "degC", "units_metadata": "temperature: difference"}]
     )
     out = ind(tasmax=txC, tasmin=tnC)
@@ -386,7 +386,7 @@ def test_multiindicator(tas_series):
 
 
 def test_deriving_multiindicator():
-    new = multiTemp.__class__(identifier="minmaxtemp2", register=False)
+    new = multiTemp.copy(identifier="minmaxtemp2", register=False)
 
     assert new.attrs[0].var_name == "tmin"
 
@@ -397,7 +397,7 @@ def test_missing(tas_series, as_da):
     # By default, missing is set to "from_context", and the default missing option is "any"
     # Cannot set missing_options with "from_context"
     with pytest.raises(ValueError, match="Cannot set `missing_options`"):
-        uniClim.__class__(missing_options={"tolerance": 0.01})
+        uniClim.copy(missing_options={"tolerance": 0.01})
 
     # Null value
     a[5] = np.nan
@@ -426,7 +426,7 @@ def test_missing_from_context(tas_series, as_da):
     # Null value
     a[5] = np.nan
 
-    ind = uniIndTemp.__class__(identifier="test.uniIndTemp2", missing="from_context")
+    ind = uniIndTemp.copy(identifier="test.uniIndTemp2", missing="from_context")
 
     m = ind(a, freq="MS")
     assert m[0].isnull()
@@ -704,7 +704,7 @@ def test_indicator_errors():
 
     d2 = dict(input={"tas": "sfcWind"})
     with pytest.raises(ValueError, match="When changing the name of a variable by"):
-        ind.__class__(**d2)
+        ind.copy(**d2)
 
     del d["input"]
     # with pytest.raises(ValueError, match="variable data is missing expected units"):
@@ -868,7 +868,7 @@ def test_freq_doc():
 
 def test_no_rewrapping():
     with pytest.raises(TypeError, match="Can't change the compute"):
-        uniIndTemp.__class__(
+        uniIndTemp.copy(
             compute=uniindtemp_compute,
             parameters={"thresh": "0 °C"},
         )

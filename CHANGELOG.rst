@@ -11,6 +11,7 @@ Announcements
 This release constitutes a major breaking change from the previous stable release (`v0.x`) and introduces several new features, enhancements, and API changes.
 Users are strongly encouraged to review the breaking changes section below to ensure compatibility with their existing codebases.
 Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version.
+See :ref:`Differences between v0 and v1` for a summary of the breaking changes and guidance on how to transition to xclim v1.
 The `xclim` library is now considered to be production-level stable.
 
 Major changes
@@ -25,6 +26,7 @@ Major changes
     * Removal of ``Indicator.from_dict``. Renamed ``Indicator.translate_attrs`` to ``Indicator.translate``.
     * The ``xclim.core.indicator.registry`` now holds ``Indicator`` _instances_ (not classes) and is case-insensitive.
     * "Virtual submodules" were transformed into ``xclim.core.collection.IndicatorCollection`` instances (and not actual python modules). Indicators created this way automatically have the collection's name prepended to their identifier. Indicators created in the context of a collection are not registered by default. (:pull:`2415`).
+    * Copying/Subclassing an existing indicator is now done through ``Indicator.copy``, method ``Indicator.from_dict`` is deprecated. (:pull:`2424`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

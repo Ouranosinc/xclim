@@ -28,10 +28,10 @@ These files are expected to be defined as in this example for French:
         # ... and so on for other indicators...
     }
 
-Indicators are named by subclass identifier, the same as in the indicator registry (`xclim.core.indicators.registry`),
-but which can differ from the callable name. In this case, the indicator is called through
+Indicators are named by their identifier, the same as in the indicator registry (`xclim.core.indicators.registry`),
+but which can differ from the callable name. In the example above, the indicator is called through
 `atmos.daily_temperature_range_variability`, but its identifier is `DTRVAR`.
-Use the `ind.__class__.__name__` accessor to get its registry name.
+Use the `ind.identifier` accessor to get its registry name.
 
 Here, the usual parameter passed to the formatting of "description" is "freq" and is usually translated from "YS"
 to "annual". However, in French and in this sentence, the feminine form should be used, so the "f" modifier is added

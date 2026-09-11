@@ -12,6 +12,10 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
 .. _xarray: https://docs.xarray.dev/
 .. _dask: https://docs.dask.org/
 
+.. warning::
+
+   This version of xclim brings major changes compared to the v0.x series. See :ref:`Differences between v0 and v1` for guidance on how to transition to xclim v1.
+
 .. toctree::
    :hidden:
 
