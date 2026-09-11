@@ -1173,53 +1173,52 @@ def resample_map(
     """
     resample_kwargs = resample_kwargs or {}
     map_kwargs = map_kwargs or {}
+    # Get function for xclim-implemented statistics
+    func = func if not isinstance(func, str) else XCLIM_OPS.get(func, func)
     if isinstance(func, str):
-        # Get function for xclim-implemented statistics
-        func = XCLIM_OPS.get(func, func)
-        func = func if not isinstance(func, str) else getattr(type(obj), func)
         map_kwargs["dim"] = dim
-
-    if freq is None:
-        # necessary for using resample_before_rl
-        args = map_kwargs.pop("args", [])
-        return func(obj, *args, **map_kwargs)
-
-    if map_blocks == "from_context":
-        map_blocks = OPTIONS[MAP_BLOCKS]
-
-    if not uses_dask(obj) or not map_blocks:
-        return obj.resample({dim: freq}, **resample_kwargs).map(func, **map_kwargs)
-
-    if rechunk_for_blockwise is None:
-        msg = f"Using {MAP_BLOCKS}=True requires flox."
-        raise ValueError(msg) from flox_err
-
-    # Make labels, a unique integer for each resample group
-    labels = xr.full_like(obj[dim], -1, dtype=np.int32)
-    for lbl, group_slice in enumerate(obj[dim].resample({dim: freq}).groups.values()):
-        labels[group_slice] = lbl
-
-    obj_rechunked = rechunk_for_blockwise(obj, dim, labels)
-
-    def _resample_map(obj_chnk, dm, frq, rs_kws, fun, mp_kws):
-        return obj_chnk.resample({dm: frq}, **rs_kws).map(fun, **mp_kws)
-
-    # Template. We are hoping that this takes a negligible time as it is never loaded.
-    template = obj_rechunked.resample(**{dim: freq}, **resample_kwargs).first()
-
-    # New chunks along the time dim : infer the number of elements resulting from the resampling of each chunk
-    if isinstance(obj_rechunked, xr.Dataset):
-        chunksizes = obj_rechunked.chunks[dim]
+        if freq is not None:
+            obj = obj.resample({dim: freq})
+        return getattr(obj, func)(**map_kwargs)
     else:
-        chunksizes = obj_rechunked.chunks[obj_rechunked.get_axis_num(dim)]
-    new_chunks = []
-    i = 0
-    for chunksize in chunksizes:
-        new_chunks.append(len(np.unique(labels[i : i + chunksize])))
-        i += chunksize
-    template = template.chunk({dim: tuple(new_chunks)})
+        if map_blocks == "from_context":
+            map_blocks = OPTIONS[MAP_BLOCKS]
 
-    return obj_rechunked.map_blocks(_resample_map, (dim, freq, resample_kwargs, func, map_kwargs), template=template)
+        if not uses_dask(obj) or not map_blocks:
+            return obj.resample({dim: freq}, **resample_kwargs).map(func, **map_kwargs)
+
+        if rechunk_for_blockwise is None:
+            msg = f"Using {MAP_BLOCKS}=True requires flox."
+            raise ValueError(msg) from flox_err
+
+        # Make labels, a unique integer for each resample group
+        labels = xr.full_like(obj[dim], -1, dtype=np.int32)
+        for lbl, group_slice in enumerate(obj[dim].resample({dim: freq}).groups.values()):
+            labels[group_slice] = lbl
+
+        obj_rechunked = rechunk_for_blockwise(obj, dim, labels)
+
+        def _resample_map(obj_chnk, dm, frq, rs_kws, fun, mp_kws):
+            return obj_chnk.resample({dm: frq}, **rs_kws).map(fun, **mp_kws)
+
+        # Template. We are hoping that this takes a negligible time as it is never loaded.
+        template = obj_rechunked.resample(**{dim: freq}, **resample_kwargs).first()
+
+        # New chunks along the time dim : infer the number of elements resulting from the resampling of each chunk
+        if isinstance(obj_rechunked, xr.Dataset):
+            chunksizes = obj_rechunked.chunks[dim]
+        else:
+            chunksizes = obj_rechunked.chunks[obj_rechunked.get_axis_num(dim)]
+        new_chunks = []
+        i = 0
+        for chunksize in chunksizes:
+            new_chunks.append(len(np.unique(labels[i : i + chunksize])))
+            i += chunksize
+        template = template.chunk({dim: tuple(new_chunks)})
+
+        return obj_rechunked.map_blocks(
+            _resample_map, (dim, freq, resample_kwargs, func, map_kwargs), template=template
+        )
 
 
 def _compute_daytime_temperature(
