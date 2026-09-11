@@ -908,7 +908,7 @@ def test_robustness_fractions_2d(robust_data, test, exp_chng_frac, exp_pos_frac,
         np.testing.assert_array_almost_equal(changed, exp_changed)
 
 
-def test_robustness_n_dim2():
+def test_robustness_n_pool():
     # deltas
     # ensemble of 5 simulations where model A has 2 members, model B has 2 members
     #  and model C has 1 member.
@@ -920,11 +920,11 @@ def test_robustness_n_dim2():
         ),
     )
 
-    # Don't specify n_dim2, model C will be invalid because there are nans in the second member.
+    # Don't specify n_pool, model C will be invalid because there are nans in the second member.
     fracs = ensembles.robustness_fractions(fut, dim=["model", "member"], test=None)
     np.testing.assert_array_almost_equal(fracs.valid, [2 / 3])  # 2 models with 2 members are valid
 
     # Say that we are expecting a member to be missing.
-    fut = fut.assign_coords(n_dim2=("model", [2, 2, 1]))
+    fut = fut.assign_coords(n_pool=("model", [2, 2, 1]))
     fracs = ensembles.robustness_fractions(fut, dim=["model", "member"], test=None)
     np.testing.assert_array_almost_equal(fracs.valid, [1])  # all are valid
