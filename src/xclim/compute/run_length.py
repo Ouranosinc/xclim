@@ -53,7 +53,7 @@ def use_ufunc(
     dim : str
         The dimension along which to find runs.
     freq : str, optional
-        Resampling frequency. If None, no resampling is applied.
+        Resampling frequency. If None, the dimension provided is completely reduced.
     index : {'first', 'last'}
         If 'first' (default), the run length is indexed with the first element in the run.
         If 'last', with the last element in the run.
@@ -109,7 +109,7 @@ def resample_and_rl(
     *args : Any
         Positional arguments needed in `compute`.
     freq : str, optional
-        Resampling frequency. If None, no resampling is applied.
+        Resampling frequency. If None, the dimension provided is completely reduced.
     dim : str
         The dimension along which to find runs.
     **kwargs : Any
@@ -296,7 +296,7 @@ def rle_statistics(
     dim : str
         Dimension along which to calculate consecutive run; Default: 'time'.
     freq : str, optional
-        Resampling frequency. If None, no resampling is applied.
+        Resampling frequency. If None, the dimension provided is completely reduced.
     ufunc_1dim : Union[str, bool]
         Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
@@ -350,7 +350,7 @@ def longest_run(
     dim : str
         Dimension along which to calculate consecutive run; Default: 'time'.
     freq : str, optional
-        Resampling frequency. If None, no resampling is applied.
+        Resampling frequency. If None, the dimension provided is completely reduced.
     ufunc_1dim : Union[str, bool]
         Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
@@ -397,7 +397,7 @@ def windowed_run_events(
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     freq : str, optional
-        Resampling frequency. If None, no resampling is applied.
+        Resampling frequency. If None, the dimension provided is completely reduced.
     ufunc_1dim : Union[str, bool]
         Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
@@ -450,7 +450,7 @@ def windowed_run_count(
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     freq : str, optional
-        Resampling frequency. If None, no resampling is applied.
+        Resampling frequency. If None, the dimension provided is completely reduced.
     ufunc_1dim : Union[str, bool]
         Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
         usage based on number of data points. Using 1D_ufunc=True is typically more efficient
@@ -501,7 +501,7 @@ def windowed_max_run_sum(
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     freq : str, optional
-        Resampling frequency. If None, no resampling is applied.
+        Resampling frequency. If None, the dimension provided is completely reduced.
     index : {'first', 'last'}
         If 'first', the run length is indexed with the first element in the run.
         If 'last', with the last element in the run.
@@ -552,7 +552,7 @@ def _boundary_run(
     dim : str
         Dimension along which to calculate consecutive run.
     freq : str, optional
-        Resampling frequency. If None, no resampling is applied.
+        Resampling frequency. If None, the dimension provided is completely reduced.
     coord : str, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
@@ -649,7 +649,7 @@ def first_run(
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     freq : str, optional
-        Resampling frequency. If None, no resampling is applied.
+        Resampling frequency. If None, the dimension provided is completely reduced.
     coord : str or bool, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
@@ -699,7 +699,7 @@ def last_run(
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     freq : str, optional
-        Resampling frequency. If None, no resampling is applied.
+        Resampling frequency. If None, the dimension provided is completely reduced.
     coord : Optional[str]
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
@@ -802,7 +802,7 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: Freq | None = No
     dim : str
         Dimension along which to check for the longest run.
     freq : str, optional
-        Resampling frequency. If None, no resampling is applied.
+        Resampling frequency. If None, the dimension provided is completely reduced.
 
     Returns
     -------

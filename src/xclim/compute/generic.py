@@ -101,7 +101,7 @@ def statistics(
         Reducing operation. It can either be a DataArray method or a function that can be applied to a DataArray.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        If None, the dimension provided is completely reduced.
+        If None, time dimension is reduced completely.
     out_units : str, optional
         Output units to assign (no unit conversion is performed).
         Only necessary if `statistic` is function not supported by :py:func:`xclim.core.units.to_agg_units`.
@@ -152,7 +152,7 @@ def running_statistics(
         Reducing operation. Can either be a DataArray method or a function that can be applied to a DataArray.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        Resampling is done after the running statistic. If None, no resampling is applied.
+        Resampling is done after the running statistic. If None, time dimension is reduced completely.
     window_center : bool
         If True, the window is centered on the date. If False, the window is right-aligned.
     out_units : str, optional
@@ -260,7 +260,7 @@ def thresholded_running_statistics(
         Reducing operation. Can either be a DataArray method or a function that can be applied to a DataArray.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        Resampling is done after the running statistic. If None, no resampling is applied.
+        Resampling is done after the running statistic. If None, time dimension is reduced completely.
     window_center : bool
         If True, the window is centered on the date. If False, the window is right-aligned.
     constrain : sequence of str, optional
@@ -497,7 +497,7 @@ def count_percentile_occurrences(
         Start and end of the period used to compute the percentiles. Dates should be given as YYYY-MM-DD.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        This function only makes sense with annual frequencies. If None, no resampling is applied.
+        This function only makes sense with annual frequencies. If None, time dimension is reduced completely.
     window : int
         The number of days on each side of the given day-of-year to include in the climatology.
     bootstrap : bool
@@ -570,7 +570,7 @@ def count_thresholded_percentile_occurrences(
         Start and end of the period used to compute the percentiles. Dates should be given as YYYY-MM-DD.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        This function only makes sense with annual frequencies. If None, no resampling is applied.
+        This function only makes sense with annual frequencies. If None, time dimension is reduced completely.
     window : int
         The number of days on each side of the given day-of-year to include in the climatology.
     bootstrap : bool
@@ -690,7 +690,7 @@ def spell_length_statistics(
     statistic : {'max', 'sum', 'count'} or sequence of str
         Statistic on the spell lengths. If a list, multiple statistics are computed.
     freq : str, optional
-        Resampling frequency. If None, no resampling is applied.
+        Resampling frequency. If None, time dimension is reduced completely.
     min_gap : int
         The shortest possible gap between two spells. Spells closer than this are merged by assigning
         the gap steps to the merged spell.
@@ -802,7 +802,7 @@ def bivariate_spell_length_statistics(
     statistic : {'max', 'sum', 'count'} or sequence of str
         Statistic on the spell lengths. If a list, multiple statistics are computed.
     freq : str, optional
-        Resampling frequency. If None, no resampling is applied.
+        Resampling frequency. If None, time dimension is reduced completely.
     min_gap : int
         The shortest possible gap between two spells. Spells closer than this are merged by assigning
         the gap steps to the merged spell.
@@ -876,7 +876,7 @@ def season(
     aspect : {'start', 'end', 'length'}, or a list of those
         Which season aspect(s) to return. If a list, this function returns a tuple in the same order as this argument.
     freq : str, optional
-        Resampling frequency. If None, no resampling is applied.
+        Resampling frequency. If None, time dimension is reduced completely.
     mid_date : DayOfYearStr, optional
         An optional middle date. The start must happen before and the end after for the season to be valid.
     constrain : Sequence of strings, optional
