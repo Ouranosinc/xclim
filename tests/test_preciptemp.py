@@ -22,7 +22,7 @@ class TestColdAndDry:
         # WHEN
         result = atmos.cold_and_dry_days(ts, pr, ts_per, pr_per, freq="MS")
         # THEN january has 10 cold and dry days
-        assert result.data[0] == 10
+        assert result.cold_and_dry_days.data[0] == 10
 
 
 class TestWarmAndDry:
@@ -39,7 +39,7 @@ class TestWarmAndDry:
         # WHEN
         result = atmos.warm_and_dry_days(ts, pr, ts_per, pr_per, freq="MS")
         # THEN january has 20 warm and dry days
-        assert result.data[0] == 20
+        assert result.warm_and_dry_days.data[0] == 20
 
 
 class TestWarmAndWet:
@@ -56,7 +56,7 @@ class TestWarmAndWet:
         # WHEN
         result = atmos.warm_and_wet_days(ts, pr, ts_per, pr_per, freq="MS")
         # THEN january has 20 warm and wet days
-        assert result.data[0] == 20
+        assert result.warm_and_wet_days.data[0] == 20
 
 
 class TestColdAndWet:
@@ -73,4 +73,4 @@ class TestColdAndWet:
         # WHEN
         result = atmos.cold_and_wet_days(ts, pr, ts_per, pr_per, freq="MS")
         # THEN january has 10 cold and wet days
-        assert result.data[0] == 10
+        assert result.cold_and_wet_days.data[0] == 10

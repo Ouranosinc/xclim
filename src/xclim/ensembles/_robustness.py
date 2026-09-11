@@ -189,7 +189,7 @@ def robustness_fractions(
 
     >>> from xclim import ensembles
     >>> ens = ensembles.create_ensemble(temperature_datasets)
-    >>> tgmean = xclim.atmos.tg_mean(tas=ens.tas, freq="YS")
+    >>> tgmean = xclim.atmos.tg_mean(tas=ens.tas, freq="YS").tg_mean
     >>> fut = tgmean.sel(time=slice("2020", "2050"))
     >>> ref = tgmean.sel(time=slice("1990", "2020"))
     >>> fractions = ensembles.robustness_fractions(fut, ref, test="ttest")

@@ -85,7 +85,7 @@ def test_normal_computation(tasmin_series, tasmax_series, pr_series, tmp_path, i
         data_vars={
             "tasmin": tasmin,
             "tasmax": tasmax,
-            "tas": xclim.convert.mean_temperature_from_max_and_min(tasmin=tasmin, tasmax=tasmax),
+            "tas": xclim.convert.mean_temperature_from_max_and_min(tasmin=tasmin, tasmax=tasmax).tas,
             "pr": pr,
         }
     )

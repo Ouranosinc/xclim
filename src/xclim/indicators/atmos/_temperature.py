@@ -1025,6 +1025,7 @@ cooling_degree_days_approximation = TempWithIndexing(
     "be air conditioned. This method integrates mean, minimum, and maximum temperatures, accounting for asymmetry "
     "in the distributions of temperatures throughout the diurnal cycle.",
     cell_methods="time: sum over days",
+    var_name="cooling_degree_days",
     compute=compute.degree_days_above_approximation,
     parameters={"thresh": {"default": "18.0 degC"}, "freq": {"default": "YS"}},
 )
@@ -1068,6 +1069,7 @@ heating_degree_days_approximation = TempWithIndexing(
     "must be heated. This method integrates mean, minimum, and maximum temperatures, accounting for asymmetry "
     "in the distributions of temperatures throughout the diurnal cycle.",
     cell_methods="time: sum over days",
+    var_name="heating_degree_days",
     compute=compute.degree_days_below_approximation,
     parameters={"thresh": {"default": "17.0 degC"}, "freq": {"default": "YS"}},
 )
@@ -1460,8 +1462,7 @@ frost_free_spell_max_length = Temp(
 
 maximum_consecutive_frost_free_days = Temp(
     title="Maximum consecutive frost free days",
-    # FIXME: shouldn't this be `maximum_`? Breaking changes needed.
-    identifier="consecutive_frost_free_days",
+    identifier="maximum_consecutive_frost_free_days",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Maximum number of consecutive days with minimum temperature {condition} {thresh}",

@@ -16,7 +16,7 @@ class TestLateFrostDays:
 
         lfd = atmos.late_frost_days(tasmin, date_bounds=("04-01", "06-30"))
 
-        np.testing.assert_allclose(lfd.isel(time=0), exp, rtol=1e-03)
+        np.testing.assert_allclose(lfd.late_frost_days.isel(time=0), exp, rtol=1e-03)
 
 
 def test_high_precip_low_temp(pr_series, tasmin_series):
@@ -30,7 +30,7 @@ def test_high_precip_low_temp(pr_series, tasmin_series):
     tas = tasmin_series(tas, start="1999-01-01")
 
     out = atmos.high_precip_low_temp(pr, tas, pr_thresh="1 kg m-2 s-1", tas_thresh="1 C")
-    np.testing.assert_array_equal(out, [1])
+    np.testing.assert_array_equal(out.high_precip_low_temp, [1])
 
 
 class TestDrynessIndex:
@@ -41,8 +41,8 @@ class TestDrynessIndex:
         evspsblpot = ds.evspsblpot
 
         di = atmos.dryness_index(pr, evspsblpot)
-        np.testing.assert_allclose(di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03)
-        assert di.attrs["long_name"] == "Growing season humidity"
+        np.testing.assert_allclose(di.dryness_index, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03)
+        assert di.dryness_index.attrs["long_name"] == "Growing season humidity"
 
     def test_variable_initial_conditions(self, atmosds):
         ds = atmosds
@@ -54,15 +54,15 @@ class TestDrynessIndex:
         di_wet = atmos.dryness_index(pr, evspsblpot, wo="250 mm")
         di_dry = atmos.dryness_index(pr, evspsblpot, wo="100 mm")
 
-        assert np.all(di_wet > di_dry)
-        di_plus_50 = di + 50
-        np.testing.assert_allclose(di_wet, di_plus_50, rtol=1e-03)
-        di_minus_100 = di - 100
-        np.testing.assert_allclose(di_dry, di_minus_100, rtol=1e-03)
+        assert np.all(di_wet.dryness_index > di_dry.dryness_index)
+        di_plus_50 = di.dryness_index + 50
+        np.testing.assert_allclose(di_wet.dryness_index, di_plus_50, rtol=1e-03)
+        di_minus_100 = di.dryness_index - 100
+        np.testing.assert_allclose(di_dry.dryness_index, di_minus_100, rtol=1e-03)
 
-        for value, array in {"200 mm": di, "250 mm": di_wet, "100 mm": di_dry}.items():
-            assert array.attrs["long_name"] == "Growing season humidity"
-            assert value in array.attrs["description"]
+        for value, ds in {"200 mm": di, "250 mm": di_wet, "100 mm": di_dry}.items():
+            assert ds.dryness_index.attrs["long_name"] == "Growing season humidity"
+            assert value in ds.dryness_index.attrs["description"]
 
 
 class TestChill:
@@ -71,14 +71,13 @@ class TestChill:
         tasmin = atmosds.tasmin
         tas = make_hourly_temperature(tasmin, tasmax)
         cu = atmos.chill_units(tas, date_bounds=("04-01", "06-30"))
-        assert cu.attrs["units"] == "1"
-        assert cu.name == "cu"
+        assert cu.cu.attrs["units"] == "1"
         assert cu.time.size == 4
 
         # Values are confirmed with chillR package although not an exact match
         # due to implementation details
         exp = [1546.5, 1344.0, 1162.0, 1457.5]
-        np.testing.assert_allclose(cu.isel(location=0), exp, rtol=1e-03)
+        np.testing.assert_allclose(cu.cu.isel(location=0), exp, rtol=1e-03)
 
     @pytest.mark.parametrize("use_dask", [True, False])
     def test_chill_portions(self, atmosds, use_dask):
@@ -92,15 +91,14 @@ class TestChill:
         with set_options(resample_map_blocks=True):
             cp = atmos.chill_portions(tas, date_bounds=("09-01", "03-30"), freq="YS-JUL")
 
-        assert cp.attrs["units"] == "1"
-        assert cp.name == "cp"
+        assert cp.cp.attrs["units"] == "1"
         # Although its 4 years of data its 5 seasons starting in July
         assert cp.time.size == 5
 
         # Values are confirmed with chillR package although not an exact match
         # due to implementation details
         exp = [np.nan, 99.91534493, 92.5473925, 99.03177047, np.nan]
-        np.testing.assert_allclose(cp.isel(location=0), exp, rtol=1e-03)
+        np.testing.assert_allclose(cp.cp.isel(location=0), exp, rtol=1e-03)
 
 
 def test_water_cycle_intensity(pr_series, evspsbl_series):
@@ -108,7 +106,7 @@ def test_water_cycle_intensity(pr_series, evspsbl_series):
     evspsbl = evspsbl_series(np.ones(31))
 
     wci = atmos.water_cycle_intensity(pr=pr, evspsbl=evspsbl, freq="MS")
-    np.testing.assert_allclose(wci, 2 * 60 * 60 * 24 * 31)
+    np.testing.assert_allclose(wci.water_cycle_intensity, 2 * 60 * 60 * 24 * 31)
 
 
 class TestAridityIndex:
@@ -123,5 +121,5 @@ class TestAridityIndex:
         pet = evspsblpot_series(pet, start="2001-01-01")
         out = atmos.aridity_index(pr, pet)
 
-        assert out.attrs["units"] == "1"
-        np.testing.assert_allclose(out.values, expected)
+        assert out.aridity_index.attrs["units"] == "1"
+        np.testing.assert_allclose(out.aridity_index.values, expected)
