@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import sys
 import textwrap
-from collections.abc import Callable
+import warnings
+from collections.abc import Callable, Sequence
 from inspect import Parameter, signature
 from typing import cast
 
@@ -39,8 +40,8 @@ New tests must be decorated with :py:func:`significance_test` and fulfill the fo
 - Function must accept 2 positional arguments : fut and ref (see :py:func:`robustness_fractions` for definitions).
 - Function may accept other keyword-only arguments.
 - Function must return two (2) values :
-    + `changed` : 1D boolean array along `realization`. True for realization with significant change.
-    + `pvals` : 1D float array along `realization`.
+    + `changed` : 1D boolean array along the realization dimension. True for realization with significant change.
+    + `pvals` : 1D float array along the realization dimension.
       P-values of the statistical test. Should be `None` for test where is doesn't apply.
 """
 
@@ -68,12 +69,30 @@ def significance_test(func: Callable) -> Callable:
     return func
 
 
+def _unpack_dim(dim):
+    """Unpack the dim argument of robustness_fractions into realization_dim and pool_dim."""
+    if isinstance(dim, str):
+        realization_dim = dim
+        pool_dim = "doesnotexist"
+    elif isinstance(dim, Sequence):
+        realization_dim = dim[0]
+        pool_dim = "doesnotexist"
+        if len(dim) == 2:
+            pool_dim = dim[1]
+        else:
+            raise ValueError("If dim is a sequence, it must be of length 1 or 2.")
+    else:
+        raise ValueError("dim must be a string or a sequence of strings.")
+    return realization_dim, pool_dim
+
+
 # This function's docstring is modified to include the registered test names and docs.
 # See end of this file.
 @update_xclim_history
 def robustness_fractions(
     fut: xr.DataArray,
     ref: xr.DataArray | None = None,
+    dim: str | Sequence[str] = "realization",
     test: str | None = None,
     weights: xr.DataArray | None = None,
     invalid: MissingBase | None = None,
@@ -83,27 +102,41 @@ def robustness_fractions(
     r"""
     Calculate robustness statistics.
 
-    The metric for qualifying how members of an ensemble agree on the existence of change and on its sign.
+    The metric for qualifying how realizations of an ensemble agree on
+    the existence of change and on its sign.
 
     Parameters
     ----------
     fut : xr.DataArray
-        Future period values along 'realization' and 'time' (..., nr, nt1)
-        or if `ref` is None, Delta values along `realization` (..., nr).
+        Future period values along 'dim'(s) and 'time' (..., nr, nt1)
+        or if `ref` is None, Delta values along dim(s) ()..., nr).
     ref : xr.DataArray, optional
-        Reference period values along realization' and 'time'  (..., nr, nt2).
+        Reference period values along 'dim'(s) and 'time'  (..., nr, nt2).
         The size of the 'time' axis does not need to match the one of `fut`.
-        But their 'realization' axes must be identical and the other coordinates should be the same.
+        But their dim(s) axes must be identical and the other coordinates should be the same.
         If `None` (default), values of `fut` are assumed to be deltas instead of
         a distribution across the future period.
+    dim : str or list of str, optional
+        If str or list of length 1, the realization dimension along which to compute the fractions.
+        If list of length 2, the first element is the realization dimensionand the second element is the pool dimension.
+        The fractions are computed for each realization, by pooling elements of the pool dimension.
+        The deltas are computed for each realization, by averaging the values along the pool dimension.
+        A typical example would be to have dim = [source_id, variant_id] when using CMIP vocabulary.
+        If the number of expected pooled elements is not the same for all realization,
+        the expected number of valid pooled elements for a given realization should
+        be passed through a `n_pool` coordinate along the realization dimension. If this is not passed,
+        it will be expected that all realizations have the same number of pooled elements
+        and if a pooled element is invalid, the whole associated realization will be invalid.
     test : {tests_list}, optional
         Name of the statistical test used to determine if there was significant change. See notes.
     weights : xr.DataArray
-        Weights to apply along the 'realization' dimension. This array cannot contain missing values.
+        Weights to apply along the realization dimension. This array cannot contain missing values.
     invalid : xc.core.missing.MissingBase instance
         A Missing class from :py:mod:`xclim.core.missing` to use to flag points what are invalid.
         Invalid points are not included in the fractions. Default is MissingAny, which means any
         nan along the "time" dimension means the timeseries is invalid.
+        If dim length is 2, if any expected pool element (based on n_pool) for a given realization
+        is missing data, the realization is invalid.
         Not used if only deltas are passed as `fut`.
     strict_sign : bool
         Whether to include zeros When determining the sign of change. True (default) does not include
@@ -116,45 +149,48 @@ def robustness_fractions(
     Returns
     -------
     xr.Dataset
-        Same coordinates as `fut` and  `ref`, but no `time` and no `realization`.
-        Values are zero if all members were invalid. Variables returned are:
+        Same coordinates as `fut` and  `ref`, but no `time`, no dim(s).
+        Values are zero if all realizations were invalid. Variables returned are:
 
         - changed
-            - The weighted fraction of valid members showing significant change.
+            - The weighted fraction of valid realizations showing significant change.
               Passing `test=None` yields change_frac = 1 everywhere. Same type as `fut`.
 
         - positive
-            - The weighted fraction of valid members showing positive change, no matter if it is significant or not.
+            - The weighted fraction of valid realizations showing positive change,
+              no matter if it is significant or not.
               If `strict_sign=True`, only strictly positive change is included.
 
         - changed_positive
-            - The weighted fraction of valid members showing significant and positive change.
+            - The weighted fraction of valid realizations showing significant and positive change.
 
         - negative
-            - The weighted fraction of valid members showing negative change, no matter if it is significant or not.
+            - The weighted fraction of valid realizations showing negative change,
+              no matter if it is significant or not.
               If `strict_sign=True`, only strictly negative change is included.
 
         - changed_negative
-            - The weighted fraction of valid members showing significant and negative change.
+            - The weighted fraction of valid realizations showing significant and negative change.
 
         - agree
-            - The weighted fraction of valid members agreeing on the sign of change.
+            - The weighted fraction of valid realizations agreeing on the sign of change.
               If `strict_sign=True`, it is the maximum between positive, negative and the zero change.
               Otherwise, it is the maximum between positive and negative (both including zero change).
 
         - valid
-            - The weighted fraction of valid members.
-              By default, a member is valid if there are no NaNs along the time axes of `fut` and `ref`.
+            - The weighted fraction of valid realizations.
+              By default, a realization is valid if there are no NaNs along the time axes
+              of `fut` and `ref` for all existing pooled elements of this realization.
 
         - pvals
             - The p-values estimated by the significance tests.
-              Only returned if the test uses `pvals`. Has the `realization` dimension.
+              Only returned if the test uses `pvals`. Along the realization dimension.
 
     Notes
     -----
-    The table below shows the coefficient needed to retrieve the number of members
+    The table below shows the coefficient needed to retrieve the number of realizations
     that have the indicated characteristics, by multiplying it by the total
-    number of members (`fut.realization.size`) and by `valid_frac`, assuming uniform weights.
+    number of realizations (`fut[dim[0]].size`) and by `valid_frac`, assuming uniform weights.
     For compactness, we rename the outputs cf, pf, cpf, nf and cnf.
 
     +-----------------+--------------------+------------------------+------------+
@@ -167,7 +203,7 @@ def robustness_fractions(
     | Negative change | cnf                | nf - cnf               | nf         |
     +-----------------+--------------------+------------------------+------------+
 
-    And members showing absolutely no change are ``1 - nf - pf``.
+    And realization showing absolutely no change are ``1 - nf - pf``.
 
     Available statistical tests are:{tests_doc}
 
@@ -193,54 +229,75 @@ def robustness_fractions(
     >>> fut = tgmean.sel(time=slice("2020", "2050"))
     >>> ref = tgmean.sel(time=slice("1990", "2020"))
     >>> fractions = ensembles.robustness_fractions(fut, ref, test="ttest")
-    """
-    # Realization dimension name
-    realization = "realization"
 
-    # Assign dummy realization dimension if not present.
-    if realization not in fut.dims:
-        fut = fut.assign_coords({realization: "dummy"})
-        fut = fut.expand_dims(realization)
-    if ref is not None and realization not in ref.dims:
-        ref = ref.assign_coords({realization: "dummy"})
-        ref = ref.expand_dims(realization)
+    See notebook :ref:`notebooks/ensembles:Ensembles` for an examplem with 2 dims.
+    """
+    # unpack dims
+    realization_dim, pool_dim = _unpack_dim(dim)
+    if "member" in fut.dims and pool_dim != "member":
+        warnings.warn(
+            'We noticed that the "member" dimension is present in fut,'
+            ' but not in the second element of "dim". Make sure to pass the correct '
+            'dimensions to "dim" if you want to pool members for each realization.'
+        )
+
+    # Assign dummy realization_dim dimension if not present.
+    if realization_dim not in fut.dims:
+        fut = fut.assign_coords({realization_dim: "dummy"})
+        fut = fut.expand_dims(realization_dim)
+    if ref is not None and realization_dim not in ref.dims:
+        ref = ref.assign_coords({realization_dim: "dummy"})
+        ref = ref.expand_dims(realization_dim)
 
     # Get dummy weights to simplify code
     if weights is not None:
+        if pool_dim in weights.dims:
+            raise ValueError(
+                f"Weights cannot have a {pool_dim} (second element of dim) dimension,"
+                f"only a {realization_dim} (first element of dim) dimension."
+            )
         w = weights
     else:
         w = xr.DataArray(
-            [1] * fut[realization].size,
-            dims=(realization,),
-            coords={"realization": fut[realization]},
+            [1] * fut[realization_dim].size,
+            dims=(realization_dim,),
+            coords={"realization_dim": fut[realization_dim]},
         )
+
+    # if n_pool is not passed as a coordinate, we assume all realizations have the same number of pooled elements
+    if pool_dim in fut.dims and "n_pool" not in fut.coords:
+        fut = fut.assign_coords(n_pool=(realization_dim, [len(fut[pool_dim])] * len(fut[realization_dim])))
+    if ref is not None and pool_dim in ref.dims and "n_pool" not in ref.coords:
+        ref = ref.assign_coords(n_pool=(realization_dim, [len(fut[pool_dim])] * len(fut[realization_dim])))
 
     if ref is None:
         delta = fut
         valid = delta.notnull()
+        if pool_dim in delta.dims:
+            delta = delta.mean(pool_dim)
+
+            valid = valid.sum(pool_dim) == fut.n_pool
         if test not in [None, "threshold"]:
             raise ValueError("When deltas are given (ref=None), 'test' must be None or 'threshold'.")
     else:
         if invalid is None:
             invalid = MissingAny()
         delta = fut.mean("time") - ref.mean("time")
-        valid = ~invalid(fut) & ~invalid(ref)
+
+        if pool_dim in delta.dims:
+            delta = delta.mean(pool_dim)
+            # valid if number of valid members same as the num of member for this real
+            validf = ~invalid(fut)
+            validf = validf.sum(pool_dim) == fut.n_pool
+            validr = ~invalid(ref)
+            validr = validr.sum(pool_dim) == ref.n_pool
+            valid = validf & validr
+        else:
+            valid = ~invalid(fut) & ~invalid(ref)
 
     if test is None:
         test_params = {}
         changed = xr.ones_like(delta).astype(bool)
-        pvals = None
-    elif test == "threshold":
-        abs_thresh = kwargs.get("abs_thresh")
-        rel_thresh = kwargs.get("rel_thresh")
-        if abs_thresh is not None and rel_thresh is None:
-            changed = abs(delta) > abs_thresh
-            test_params = {"abs_thresh": abs_thresh}
-        elif rel_thresh is not None and abs_thresh is None:
-            changed = abs(delta / ref.mean("time")) > rel_thresh
-            test_params = {"rel_thresh": rel_thresh}
-        else:
-            raise ValueError("One and only one of abs_thresh or rel_thresh must be given if test='threshold'.")
         pvals = None
     elif test in SIGNIFICANCE_TESTS:
         test_func = SIGNIFICANCE_TESTS[test]
@@ -250,13 +307,16 @@ def robustness_fractions(
             if p.kind == Parameter.KEYWORD_ONLY
         }
 
-        changed, pvals = test_func(fut, ref, **test_params)
+        changed, pvals = test_func(fut, ref, pool_dim, **test_params)
     else:
         raise ValueError(f"Statistical test {test} must be one of {', '.join(SIGNIFICANCE_TESTS.keys())}.")
 
-    valid_frac = valid.weighted(w).sum(realization) / fut[realization].size
-    n_valid = valid.weighted(w).sum(realization)
-    change_frac = changed.where(valid).weighted(w).sum(realization) / n_valid
+    # at this point all member dimension should have been collapsed,
+    # so we can compute the fractions along realization_dim
+
+    valid_frac = valid.weighted(w).sum(realization_dim) / fut[realization_dim].size
+    n_valid = valid.weighted(w).sum(realization_dim)
+    change_frac = changed.where(valid).weighted(w).sum(realization_dim) / n_valid
     if strict_sign:
         neg_del = compare(delta, "<", 0)
         pos_del = compare(delta, ">", 0)
@@ -264,10 +324,10 @@ def robustness_fractions(
         neg_del = compare(delta, "<=", 0)
         pos_del = compare(delta, ">=", 0)
 
-    neg_frac = neg_del.where(valid).weighted(w).sum(realization) / n_valid
-    pos_frac = pos_del.where(valid).weighted(w).sum(realization) / n_valid
-    change_pos_frac = (pos_del & changed).where(valid).weighted(w).sum(realization) / n_valid
-    change_neg_frac = (neg_del & changed).where(valid).weighted(w).sum(realization) / n_valid
+    neg_frac = neg_del.where(valid).weighted(w).sum(realization_dim) / n_valid
+    pos_frac = pos_del.where(valid).weighted(w).sum(realization_dim) / n_valid
+    change_pos_frac = (pos_del & changed).where(valid).weighted(w).sum(realization_dim) / n_valid
+    change_neg_frac = (neg_del & changed).where(valid).weighted(w).sum(realization_dim) / n_valid
     agree_frac = xr.concat((pos_frac, neg_frac, 1 - pos_frac - neg_frac), "sign").max("sign")
 
     # Metadata
@@ -278,34 +338,36 @@ def robustness_fractions(
     out = xr.Dataset(
         {
             "changed": change_frac.assign_attrs(
-                description=f"Fraction of valid members showing significant change. {test_str}",
+                description=f"Fraction of valid {realization_dim}s showing significant change. {test_str}",
                 units="",
                 test=str(test),
             ),
             "positive": pos_frac.assign_attrs(
-                description=f"Fraction of valid members showing {strict} positive change.",
+                description=f"Fraction of valid {realization_dim}s showing {strict} positive change.",
                 units="",
             ),
             "changed_positive": change_pos_frac.assign_attrs(
-                description=f"Fraction of valid members showing significant and {strict} positive change. {test_str}",
+                description=f"Fraction of valid {realization_dim}s showing significant"
+                f"and {strict}positive change. {test_str}",
                 units="",
                 test=str(test),
             ),
             "negative": neg_frac.assign_attrs(
-                description=f"Fraction of valid members showing {strict} negative change.",
+                description=f"Fraction of valid {realization_dim}s showing {strict} negative change.",
                 units="",
             ),
             "changed_negative": change_neg_frac.assign_attrs(
-                description=f"Fraction of valid members showing significant and {strict} negative change. {test_str}",
+                description=f"Fraction of valid {realization_dim}s showing significant"
+                f" and {strict} negative change. {test_str}",
                 units="",
                 test=str(test),
             ),
             "valid": valid_frac.assign_attrs(
-                description="Fraction of valid members (No missing values along time).",
+                description=f"Fraction of valid {realization_dim}s (No missing values along time).",
                 units="",
             ),
             "agree": agree_frac.assign_attrs(
-                description="Fraction of valid members agreeing on the sign of change. "
+                description=f"Fraction of valid {realization_dim}s agreeing on the sign of change. "
                 + (
                     "Maximum between the positive, negative and no change fractions."
                     if strict_sign
@@ -516,7 +578,32 @@ def robustness_coefficient(fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | x
 
 
 @significance_test
-def _ttest(fut, ref, *, p_change=0.05):
+def _threshold(fut, ref, pool_dim, *, abs_thresh=None, rel_thresh=None):
+    """Change is significant when it exceeds an absolute or relative threshold."""
+    if ref is None:
+        delta = fut
+    else:
+        delta = fut.mean("time") - ref.mean("time")
+    if pool_dim in delta.dims:
+        delta = delta.mean(pool_dim)
+
+    if abs_thresh is not None and rel_thresh is None:
+        changed = abs(delta) > abs_thresh
+    elif rel_thresh is not None and abs_thresh is None:
+        if pool_dim in ref.dims:
+            delta = (fut.mean("time") - ref.mean("time")) / ref.mean("time")
+            delta = delta.mean(pool_dim)
+            changed = abs(delta) > rel_thresh
+        else:
+            changed = abs(delta / ref.mean("time")) > rel_thresh
+    else:
+        raise ValueError("One and only one of abs_thresh or rel_thresh must be given if test='threshold'.")
+    pvals = None
+    return changed, pvals
+
+
+@significance_test
+def _ttest(fut, ref, pool_dim, *, p_change=0.05):
     """
     Single sample T-test. Same test as used by :cite:t:`tebaldi_mapping_2011`.
 
@@ -524,7 +611,16 @@ def _ttest(fut, ref, *, p_change=0.05):
 
     Accepts argument p_change (float, default : 0.05) the p-value threshold for rejecting the hypothesis
     of no significant change.
+
+    If pool_dim is in fut, the pooled elements and years are
+    pooled for the future and averaged for the reference.
     """
+    if pool_dim in fut.dims:
+        # for multimember ensembles, pool the members and year
+        fut = fut.stack(sample=["time", pool_dim])
+        fut = fut.drop_vars(["time", pool_dim])
+        fut = fut.rename({"sample": "time"})
+        ref = ref.mean(pool_dim)
 
     def _ttest_func(f, r):
         # scipy>=1.9: popmean.axis[-1] must equal 1 for both fut and ref
@@ -550,12 +646,21 @@ def _ttest(fut, ref, *, p_change=0.05):
 
 
 @significance_test
-def _welch_ttest(fut, ref, *, p_change=0.05):
+def _welch_ttest(fut, ref, pool_dim, *, p_change=0.05):
     """
     Two-sided T-test, without assuming equal population variance.
 
     Same significance criterion and argument as 'ttest'.
+
+    If pool_dim is in fut, the pooled elements and years are pooled for the future and the reference.
     """
+    if pool_dim in fut.dims:
+        fut = fut.stack(sample=["time", pool_dim])
+        fut = fut.drop_vars(["time", pool_dim])
+        fut = fut.rename({"sample": "time"})
+        ref = ref.stack(sample=["time", pool_dim])
+        ref = ref.drop_vars(["time", pool_dim])
+        ref = ref.rename({"sample": "time"})
 
     # Test hypothesis of no significant change
     # equal_var=False -> Welch's T-test
@@ -582,12 +687,22 @@ def _welch_ttest(fut, ref, *, p_change=0.05):
 
 
 @significance_test
-def _mannwhitney_utest(ref, fut, *, p_change=0.05):
+def _mannwhitney_utest(ref, fut, pool_dim, *, p_change=0.05):
     """
     Two-sided Mann-Whiney U-test.
 
     Same significance criterion and argument as 'ttest'.
+
+    If pool_dim is in fut, the pooled elements and years are pooled for the future and the reference.
+
     """
+    if pool_dim in fut.dims:
+        fut = fut.stack(sample=["time", pool_dim])
+        fut = fut.drop_vars(["time", pool_dim])
+        fut = fut.rename({"sample": "time"})
+        ref = ref.stack(sample=["time", pool_dim])
+        ref = ref.drop_vars(["time", pool_dim])
+        ref = ref.rename({"sample": "time"})
 
     def mwu_wrapper(f, r):  # This specific test can't manage an all-NaN slice
         if np.isnan(f).all() or np.isnan(r).all():
@@ -611,12 +726,23 @@ def _mannwhitney_utest(ref, fut, *, p_change=0.05):
 
 
 @significance_test
-def _brownforsythe_test(fut, ref, *, p_change=0.05):
+def _brownforsythe_test(fut, ref, pool_dim, *, p_change=0.05):
     """
     Brown-Forsythe test assuming skewed, non-normal distributions.
 
     Same significance criterion and argument as 'ttest'.
+
+    If pool_dim is in fut, the pooled elements and years are pooled for the future and the reference.
+
     """
+    if pool_dim in fut.dims:
+        fut = fut.stack(sample=["time", pool_dim])
+        fut = fut.drop_vars(["time", pool_dim])
+        fut = fut.rename({"sample": "time"})
+        ref = ref.stack(sample=["time", pool_dim])
+        ref = ref.drop_vars(["time", pool_dim])
+        ref = ref.rename({"sample": "time"})
+
     pvals = xr.apply_ufunc(
         lambda f, r: spstats.levene(f, r, center="median")[1],
         fut,
@@ -634,29 +760,79 @@ def _brownforsythe_test(fut, ref, *, p_change=0.05):
 
 
 @significance_test
-def _ipcc_ar6_c(fut, ref, *, ref_pi=None):
+def _ipcc_ar6_c(fut, ref, pool_dim, *, ref_pi=None):
     r"""
     The advanced approach used in the IPCC Atlas chapter (:cite:t:`ipccatlas_ar6wg1`).
 
     Change is considered significant if the delta exceeds a threshold related to the internal variability.
     If pre-industrial data is given in argument `ref_pi`, the threshold is defined as
     :math:`\sqrt{2}*1.645*\sigma_{20yr}`, where :math:`\sigma_{20yr}` is the standard deviation of 20-year
-    means computed from non-overlapping periods after detrending with a quadratic fit.
+    means computed from non-overlapping periods after detrending with a quadratic fit and
+    1.645 is the z-score for the 90% confidence interval of the two-sided test .
     Otherwise, when such pre-industrial control data is not available, the threshold is defined in relation to
-    the historical data (`ref`) as :math:`\sqrt{\frac{2}{20}}*1.645*\sigma_{1yr}, where :math:`\sigma_{1yr}`
-    is the inter-annual standard deviation measured after linearly detrending the data.
+    the historical data (`ref`) as :math:`\sqrt{\frac{2}{n}}*1.645*\sigma_{1yr}, where :math:`\sigma_{1yr}`
+    is the inter-annual standard deviation measured after linearly detrending the data
+    and n is the number of years in the reference period.
+    This test is only for ensembles with a single dimension.
     See notebook :ref:`notebooks/ensembles:Ensembles` for more details.
     """
+    if pool_dim in fut.dims:
+        raise ValueError("This test does not support a second dimension. Only give one element or a string to dim.")
     # Ensure annual
     refy = ref.resample(time="YS").mean()
     if ref_pi is None:
         ref_detrended = detrend(refy, dim="time", deg=1)
-        gamma = np.sqrt(2 / 20) * 1.645 * ref_detrended.std("time")
+        gamma = np.sqrt(2 / len(refy.time)) * 1.645 * ref_detrended.std("time")
     else:
         ref_detrended = detrend(refy, dim="time", deg=2)
         gamma = np.sqrt(2) * 1.645 * ref_detrended.resample(time="20YS").mean().std("time")
 
     delta = fut.mean("time") - ref.mean("time")
+    changed = abs(delta) > gamma
+    return changed, None
+
+
+@significance_test
+def _signal_to_noise(fut, ref, pool_dim, confidence=0.9):
+    r"""
+    Robustness test using the signal-to-noise ratio.
+
+
+    Change is considered significant if the delta exceeds a threshold related to the
+    internal variability (noise).
+    The threshold is defined as :math:`z*\sqrt{\frac{\tilde{\sigma}^2_{ref}}{n_{ref}}
+    + \frac{\tilde{\sigma}^2_{fut}}{n_{fut}}}, where :math:`\tilde{\sigma}}`
+    is the pooled interannual variance across members and time measured after linearly
+    detrending the data, n is the number of years in the period and z is the z-score
+    corresponding to the two-sided confidence level.
+    (ex. A 90% confidence level gives a z-score of 1.645.)
+    This is similar to the "ipcc-ar6-c" test, but there is no assumption that the
+    variance will be the same in the past and in the future. Further, this test can handle
+    multimember ensembles, while the "ipcc-ar6-c" test assumes a single dimension.
+
+    """
+    z = spstats.norm.ppf(confidence / 2 + 0.5)
+    # Ensure annual
+    refy = ref.resample(time="YS").mean()
+    futy = fut.resample(time="YS").mean()
+    nref = len(refy.time) * len(ref[pool_dim]) if pool_dim in refy.dims else len(refy.time)
+    nfut = len(futy.time) * len(fut[pool_dim]) if pool_dim in refy.dims else len(refy.time)
+
+    ref_detrended = detrend(refy, dim="time", deg=1)
+    fut_detrended = detrend(futy, dim="time", deg=1)
+
+    if pool_dim in ref_detrended.dims:
+        ref_var = ref_detrended.var(["time", pool_dim])
+        fut_var = fut_detrended.var(["time", pool_dim])
+    else:
+        ref_var = ref_detrended.var("time")
+        fut_var = fut_detrended.var("time")
+
+    gamma = z * np.sqrt((ref_var / nref) + (fut_var / nfut))
+
+    delta = fut.mean("time") - ref.mean("time")
+    if pool_dim in delta.dims:
+        delta = delta.mean(pool_dim)
     changed = abs(delta) > gamma
     return changed, None
 

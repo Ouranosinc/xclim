@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 from scipy.stats.mstats import mquantiles
@@ -627,7 +628,14 @@ def robust_data(random):
         ),
         (
             "ipcc-ar6-c",
-            [0.25, 1, 1, 1],
+            [0.5, 1.0, 1.0, 1.0],
+            [0.25, 0.5, 1, 1],
+            None,
+            {},
+        ),
+        (
+            "signal-to-noise",
+            [0.5, 1.0, 1.0, 1.0],
             [0.25, 0.5, 1, 1],
             None,
             {},
@@ -767,3 +775,156 @@ def test_robustness_coefficient():
 
     R = ensembles.robustness_coefficient(fut.to_dataset(), ref.to_dataset())
     np.testing.assert_almost_equal(R.tas, 0.83743842)
+
+
+@pytest.mark.parametrize(
+    "test,exp_chng_frac,exp_pos_frac,exp_changed,kws",
+    [
+        (
+            "ttest",
+            [0.5, 1, 1, 1],
+            [0.5, 0.5, 1, 1],
+            [
+                [
+                    False,
+                    True,
+                ],
+                [
+                    True,
+                    True,
+                ],
+                [
+                    True,
+                    True,
+                ],
+                [False, True],
+            ],
+            {},
+        ),
+        (
+            "welch-ttest",
+            [0.5, 1, 1, 1],
+            [0.5, 0.5, 1, 1],
+            [
+                [False, True],
+                [
+                    True,
+                    True,
+                ],
+                [
+                    True,
+                    True,
+                ],
+                [
+                    False,
+                    True,
+                ],
+            ],
+            {},
+        ),
+        (
+            "mannwhitney-utest",
+            [0.5, 1, 1, 1],
+            [0.5, 0.5, 1, 1],
+            [
+                [False, True],
+                [
+                    True,
+                    True,
+                ],
+                [
+                    True,
+                    True,
+                ],
+                [False, True],
+            ],
+            {},
+        ),
+        (
+            "brownforsythe-test",
+            [0.5, 0.5, 0.5, 0],
+            [0.5, 0.0, 0.5, 0],
+            [
+                [False, True],
+                [True, False],
+                [
+                    False,
+                    True,
+                ],
+                [False, False],
+            ],
+            {},
+        ),
+        (
+            "signal-to-noise",
+            [0.5, 1.0, 1.0, 1.0],
+            [0.5, 0.5, 1, 1],
+            None,
+            {},
+        ),
+        (
+            "threshold",
+            [0.5, 1, 1, 1],
+            [0.5, 0.5, 1, 1],
+            None,
+            {"rel_thresh": 0.002},
+        ),
+        (
+            "threshold",
+            [0, 0, 0.5, 0],
+            [0, 0, 0.5, 0],
+            None,
+            {"abs_thresh": 2},
+        ),
+        (
+            None,
+            [1, 1, 1, 1],
+            [1, 0.5, 1, 1],
+            [],
+            {},
+        ),
+    ],
+)
+def test_robustness_fractions_2d(robust_data, test, exp_chng_frac, exp_pos_frac, exp_changed, kws):
+    ref, fut = robust_data
+
+    index = pd.MultiIndex.from_product([range(2), range(2)], names=["dim1", "dim2"])
+    fut = fut.assign_coords(realization=index).unstack("realization")
+    ref = ref.assign_coords(realization=index).unstack("realization")
+
+    fracs = ensembles.robustness_fractions(fut, ref, dim=["dim1", "dim2"], test=test, **kws)
+
+    assert fracs.changed.attrs["test"] == str(test)
+
+    np.testing.assert_array_almost_equal(fracs.positive, [1, 0.5, 1, 1])
+    np.testing.assert_array_almost_equal(fracs.agree, [1, 0.5, 1, 1])
+    np.testing.assert_array_almost_equal(fracs.valid, [1, 1, 1, 0.5])
+    np.testing.assert_array_almost_equal(fracs.changed, exp_chng_frac)
+    np.testing.assert_array_almost_equal(fracs.changed_positive, exp_pos_frac)
+
+    if "pvals" in fracs:
+        # 0.05 is the default p_change parameter
+        changed = fracs.pvals < 0.05
+        np.testing.assert_array_almost_equal(changed, exp_changed)
+
+
+def test_robustness_n_pool():
+    # deltas
+    # ensemble of 5 simulations where model A has 2 members, model B has 2 members
+    #  and model C has 1 member.
+    fut = xr.DataArray(
+        np.array([[1, 1], [1, 1], [1, np.nan]]),
+        dims=(
+            "model",
+            "member",
+        ),
+    )
+
+    # Don't specify n_pool, model C will be invalid because there are nans in the second member.
+    fracs = ensembles.robustness_fractions(fut, dim=["model", "member"], test=None)
+    np.testing.assert_array_almost_equal(fracs.valid, [2 / 3])  # 2 models with 2 members are valid
+
+    # Say that we are expecting a member to be missing.
+    fut = fut.assign_coords(n_pool=("model", [2, 2, 1]))
+    fracs = ensembles.robustness_fractions(fut, dim=["model", "member"], test=None)
+    np.testing.assert_array_almost_equal(fracs.valid, [1])  # all are valid
