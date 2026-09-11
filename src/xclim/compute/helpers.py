@@ -1181,6 +1181,8 @@ def resample_map(
             obj = obj.resample({dim: freq})
         return getattr(obj, func)(**map_kwargs)
     else:
+        if freq is None:
+            return func(obj, **map_kwargs)
         if map_blocks == "from_context":
             map_blocks = OPTIONS[MAP_BLOCKS]
 
