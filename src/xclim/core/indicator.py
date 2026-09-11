@@ -1524,8 +1524,9 @@ class _Convenience(_InputChecker):
         # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
         if isinstance(compute, str):
             from xclim import compute as _compute
+            from xclim.compute import generic as _generic
 
-            compute_func = getattr(_compute.generic, compute, getattr(_compute, compute, None))
+            compute_func = getattr(_generic, compute, getattr(_compute, compute, None))
             if compute_func is None:
                 raise ImportError(f"Compute function {compute} not found in xclim.compute or xclim.compute.generic.")
             data["compute"] = compute_func
