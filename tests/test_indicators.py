@@ -616,8 +616,7 @@ def test_indicator_docstring():
         doc[6] == "With injected parameters: window_statistic=min, statistic=count, min_gap=1, constrain=('>', '>=')."
     )
     assert doc[11] == " Minimum surface temperature. Default: 'tasmin'. [Required units : [temperature]]"
-    # FIXME: Changed 34 -> 36. Why does this bug suddenly? is that OK?
-    assert doc[36] == (
+    assert doc[34] == (
         "  Total number of series of at least {window} consecutive days with daily minimum temperature above "
         "{thresh_tasmin} and daily maximum temperature above {thresh_tasmax}. With additional attributes: "
         "**description**: ``{freq} number of heat wave events within a given period. A heat wave occurs when daily "
