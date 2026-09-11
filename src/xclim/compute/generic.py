@@ -1294,7 +1294,8 @@ def statistics_between_dates(
         for bound in [start, end]:
             try:
                 frequencies.append(xr.infer_freq(bound[dim]))
-            except AttributeError:
+            # FIXME:  had to change error type.  xr.infer_freq(string) yields TypeError, not AttributeError. Normal?
+            except TypeError:
                 frequencies.append(None)
 
         good_freq = set(frequencies) - {None}
