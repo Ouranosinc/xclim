@@ -1,10 +1,10 @@
 """Exceptions and error handling utilities."""
 
 from __future__ import annotations
-from typing import Literal
 
 import logging
 import warnings
+from typing import Literal
 
 logger = logging.getLogger("xclim")
 
@@ -46,13 +46,16 @@ def raise_warn_or_log(
         The type of error/exception to raise.
     stacklevel : int
         Stacklevel when warning. Relative to the call of this function (1 is added).
-        
+
     Raises
     ------
     ValueError
         If `mode` is not one of ["ignore", "log", "warn", "raise"].
+        If error message is not a valid string.
     """
     message = msg or getattr(err, "msg", f"Failed with {err!r}.")
+    if not isinstance(message, str):
+        raise ValueError(f"Error message: {message} is not a string.")
     if mode == "ignore":
         pass
     elif mode == "log":

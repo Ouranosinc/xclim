@@ -42,7 +42,7 @@ __all__ = [
     nopython=True,
     cache=True,
 )
-def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cover
+def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: dict[float, float]):  # pragma: no cover
     """
     Compute the Keetch-Byram drought (KBDI) index.
 
@@ -244,9 +244,9 @@ def keetch_byram_drought_index(
         """
         return _keetch_byram_drought_index(_pr, _tasmax, _pr_annual, _kbdi0)
 
-    _pr = convert_units_to(pr, "mm/day", context="hydro")
-    _tasmax = convert_units_to(tasmax, "C")
-    _pr_annual = convert_units_to(pr_annual, "mm/year", context="hydro")
+    _pr: xr.DataArray = convert_units_to(pr, "mm/day", context="hydro")
+    _tasmax: xr.DataArray = convert_units_to(tasmax, "C")
+    _pr_annual: xr.DataArray = convert_units_to(pr_annual, "mm/year", context="hydro")
     if kbdi0 is not None:
         kbdi0 = convert_units_to(kbdi0, "mm/day", context="hydro")
     else:
@@ -324,8 +324,8 @@ def griffiths_drought_factor(
         """
         return _griffiths_drought_factor(_pr, _smd, _lim)
 
-    _pr = convert_units_to(pr, "mm/day", context="hydro")
-    _smd = convert_units_to(smd, "mm/day")
+    _pr: xr.DataArray = convert_units_to(pr, "mm/day", context="hydro")
+    _smd: xr.DataArray = convert_units_to(smd, "mm/day")
 
     if limiting_func == "xlim":
         lim = 0

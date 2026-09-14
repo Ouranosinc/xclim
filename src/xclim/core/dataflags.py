@@ -7,11 +7,10 @@ Pseudo-indicators designed to analyse supplied variables for suspicious/erroneou
 
 from __future__ import annotations
 
-from typing import Any
 from collections.abc import Callable, Sequence
 from functools import reduce
 from inspect import signature
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import xarray

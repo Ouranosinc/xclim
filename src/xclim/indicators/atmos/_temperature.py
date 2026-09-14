@@ -1,6 +1,7 @@
 """Temperature indicator definitions."""
 
 from __future__ import annotations
+
 from typing import Any
 
 from xarray import DataArray
@@ -119,27 +120,27 @@ class TempDailyNoResampling(Indicator):
 class Temp(Daily):
     """Indicators involving daily temperature."""
 
-    keywords = ["temperature"]
+    keywords = ("temperature",)
 
 
 class TempHourly(Hourly):
     """Temperature indicators involving hourly temperature."""
 
-    keywords = ["temperature"]
+    keywords = ("temperature",)
 
 
 class TempWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicators involving daily temperature and adding an indexing possibility."""
 
     src_freq = "D"
-    keywords = ["temperature"]
+    keywords = ("temperature",)
 
 
 class TempHourlyWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicators involving hourly temperature and adding an indexing possibility."""
 
     src_freq = "h"
-    keywords = ["temperature"]
+    keywords = ("temperature",)
 
 
 tn_days_above = Temp(
@@ -1718,8 +1719,8 @@ maximum_consecutive_warm_days = Temp(
 class FireSeasonBase(Indicator):
     """Special Indicator class for FireSeason that accepts any tas[min/max] and optional snd and is not resampling."""
 
-    keywords = ["fire"]
-    
+    keywords = ("fire",)
+
     def cfcheck(self, **das: Any) -> None:
         self._cfcheck_impl(**das)
 

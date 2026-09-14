@@ -68,7 +68,7 @@ repos:
     hooks:
       - id: mypy
         exclude: ^tests/|^docs
-        additional_dependencies: [ 'numpy>=1.21' ]      
+        additional_dependencies: [ 'numpy>=1.21' ]
   - repo: https://github.com/kynan/nbstripout
     rev: 0.9.1
     hooks:

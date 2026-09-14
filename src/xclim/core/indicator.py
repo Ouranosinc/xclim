@@ -65,7 +65,7 @@ from xclim.core.utils import CaseInsensitiveDict, split_auxiliary_coordinates
 
 # Indicators registry
 registry = CaseInsensitiveDict()  # Main indicator registry
-base_registry = {}  # Base classes registry
+base_registry: dict[str, Any] = {}  # Base classes registry
 
 
 # Sentinel class for unset properties of Indicator's parameters."""
@@ -164,7 +164,7 @@ class Parameter:
         """
         if self.injected:
             return deepcopy(self.value)
-        out = {
+        out: dict[str, Any] = {
             "kind": self.kind.value,  # Get the int.
             "description": self.description,
         }
@@ -595,13 +595,13 @@ class IndexWrapper:  # numpydoc ignore=PR01
 class IndicatorBase(IndexWrapper):
     """Extends IndexWrapper by allowing metadata overrides, adding non-parsable fields and orchestrating computation."""
 
-    identifier: str = None
+    identifier: str | None = None
     """Unique ID identifying this indicator. Mostly for registry purposes."""
 
-    realm: str = None
+    realm: str | None = None
     """General domain of validity of the indicator. Should use the same vocabulary as CMIP."""
 
-    keywords: list[str] = ()
+    keywords: tuple[str] = ()
     """
     Keywords describing the indicator and its domains of application.
     Child classes append to the list when inheriting.
@@ -1522,19 +1522,19 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
 
     def __init__(
         self,
-        identifier: str = None,
-        compute: Callable = None,
-        title: str = None,
-        abstract: str = None,
-        realm: str = None,
-        keywords: list[str] = None,
-        references: str = None,
-        notes: str = None,
-        input: dict = None,
-        parameters: dict = None,
-        attrs: dict = None,
+        identifier: str | None = None,
+        compute: Callable | None = None,
+        title: str | None = None,
+        abstract: str | None = None,
+        realm: str | None = None,
+        keywords: list[str] | None = None,
+        references: str | None = None,
+        notes: str | None = None,
+        input: dict | None = None,
+        parameters: dict | None = None,
+        attrs: dict | None = None,
         context: str = "none",
-        src_freq: str | list[str] = None,
+        src_freq: str | list[str] | None = None,
         register: bool = True,
         **attrs_kwargs,
     ):
@@ -1543,13 +1543,13 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
 
         Parameters
         ----------
-        identifier : str
+        identifier : str, optional
             Unique ID for this indicator. Single-output indicator will use this as their output variable
             name if no `var_name`is passed to the first element of `attrs`.
             Unless ``register`` is False, indicators are registered to :py:data:`xclim.core.indicator.registry`,
             which is case-insensitive.
             This field is required and can't be None.
-        compute : func
+        compute : func, optional
             The function computing the indicators. It should return one or more DataArray.
             Metadata will first be parsed from it as much as possible.
         title : str, optional
@@ -1626,7 +1626,7 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02 # pylint: d
     The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods.
     If None, this will be determined by the global configuration (see `xclim.set_options`).
     """
-    missing_options: dict = None
+    missing_options: dict | None = None
     """
     Arguments to pass to the `missing` function.
     If None, this will be determined by the global configuration.
@@ -1708,7 +1708,7 @@ class ResamplingIndicator(CheckMissingIndicator):  # numpydoc ignore=PR02 # pyli
     and the check of allowed periods.
     """
 
-    allowed_periods: list[str] = None
+    allowed_periods: list[str] | None = None
     """
     A list of allowed periods, i.e. base parts of the `freq` parameter.
     For example, indicators meant to be computed annually only will have `allowed_periods=["Y"]`.

@@ -103,10 +103,11 @@ def get_zones(
 
     # Get zone bins (if necessary)
     bins = bins if bins is not None else _get_zone_bins(zone_min, zone_max, zone_step)
+
     if isinstance(bins, list):
         bins = sorted([convert_units_to(b, da) for b in bins])
     else:
-        bins = convert_units_to(bins, da)
+        bins = [convert_units_to(bins, da)]
 
     def _get_zone(_da):
         return np.digitize(_da, bins) - 1

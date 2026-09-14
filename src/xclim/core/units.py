@@ -113,7 +113,7 @@ pint.set_application_registry(units)
 with (files("xclim.data") / "variables.yml").open() as variables:
     CF_CONVERSIONS = safe_load(variables)["conversions"]
 CF_AMOUNTS, CF_RATES = list(zip(*CF_CONVERSIONS["amount2rate"]["valid_names"], strict=True))
-_CONVERSIONS = {}
+_CONVERSIONS: dict[Any, Any] = {}
 
 
 # FIXME: This needs to be properly annotated for mypy compliance.
@@ -375,7 +375,7 @@ def convert_units_to(
     """
     if DataTree and isinstance(source, DataTree):
         return source.map_over_datasets(convert_units_to, target, kwargs={"context": context})
-    if isinstance(source, xr.Dataset):
+    if isinstance(source, xr.Dataset) and hasattr(target, "items"):
         return source.assign({var: convert_units_to(source[var], tgt, context=context) for var, tgt in target.items()})
 
     context = context or "none"
@@ -414,7 +414,11 @@ def convert_units_to(
         if standard_name is not None and source_unit.dimensionality != target_unit.dimensionality:
             dim_order_diff = source_unit.dimensionality / target_unit.dimensionality
             for convname, convconf in CF_CONVERSIONS.items():
-                for direction, sign in [("to", 1), ("from", -1)]:
+                pairs: list[tuple[Literal["to"], int] | tuple[Literal["from"], int]] = [
+                    ("to", 1),
+                    ("from", -1),
+                ]
+                for direction, sign in pairs:
                     # If the dimensionality diff is compatible with this conversion
                     compatible = all(
                         dimdiff == sign * dim_order_diff.get(f"[{dim}]")
@@ -621,7 +625,7 @@ def ensure_delta(unit: xr.DataArray | str | pint.Quantity) -> str:
 def to_agg_units(
     out: xr.DataArray,
     orig: xr.DataArray,
-    statistic: Reducer,
+    statistic: Reducer | Callable,
     dim: str = "time",
     deffreq: Freq | None = "D",
 ) -> xr.DataArray:
@@ -857,10 +861,10 @@ def _rate_and_amount_converter(
         dt = time.diff(dim, label=label).reindex({dim: time}, method="ffill")
         dt = dt.astype("timedelta64[s]").astype(float)  # Convert to seconds
 
-        if to == "amount":
+        if to == "amount" and hasattr(da, "units"):
             tu = (str2pint(da.units) * str2pint("s")).to_reduced_units()
             out = da * dt * tu.m
-        elif to == "rate":
+        elif to == "rate" and hasattr(da, "units"):
             tu = (str2pint(da.units) / str2pint("s")).to_reduced_units()
             out = (da / dt) * tu.m
         else:
@@ -876,7 +880,11 @@ def _rate_and_amount_converter(
         else:
             raise ValueError("Argument `to` must be one of 'amount' or 'rate'.")
 
-    old_name = da.attrs.get("standard_name")
+    if hasattr(da, "attrs"):
+        old_name = da.attrs.get("standard_name")
+    else:
+        old_name = None
+
     if old_name and (new_name := cf_conversion(old_name, "amount2rate", "to" if to == "rate" else "from")):
         out = out.assign_attrs(standard_name=new_name)
 

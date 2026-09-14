@@ -204,7 +204,7 @@ def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
     :cite:cts:`blazejczyk_comparison_2012`
     """
     thresh = 20  # degC
-    t = convert_units_to(tas, "degC")
+    t: xr.DataArray = convert_units_to(tas, "degC")
     t = t.where(t > thresh)
     r = convert_units_to(hurs, "%")
 
@@ -801,8 +801,8 @@ def relative_humidity(
     if method in ("bohren98", "BA90"):
         if tdps is None:
             raise ValueError("To use method 'bohren98' (BA98), dewpoint must be given.")
-        _tdps = convert_units_to(tdps, "K")
-        _tas = convert_units_to(tas, "K")
+        _tdps: xr.DataArray = convert_units_to(tdps, "K")
+        _tas: xr.DataArray = convert_units_to(tas, "K")
         L = 2.501e6
         Rw = (461.5,)
         hurs = 100 * np.exp(-L * (_tas - _tdps) / (Rw * _tas * _tdps))
@@ -1149,8 +1149,8 @@ def snowfall_approximation(
     """
     prsn: xr.DataArray
     if method == "binary":
-        thresh = convert_units_to(thresh, tas)
-        prsn = pr.where(tas <= thresh, 0)
+        _thresh = convert_units_to(thresh, tas)
+        prsn = pr.where(tas <= _thresh, 0)
 
     elif method == "brown":
         if not np.isscalar(thresh):
@@ -1159,10 +1159,10 @@ def snowfall_approximation(
         # Freezing point + 2C in the native units
         thresh_plus_2 = convert_units_to(thresh, "degC") + 2
         upper = convert_units_to(f"{thresh_plus_2} degC", tas)
-        thresh = convert_units_to(thresh, tas)
+        _thresh = convert_units_to(thresh, tas)
 
         # Interpolate fraction over temperature (in units of tas)
-        t = xr.DataArray([-np.inf, thresh, upper, np.inf], dims=("tas",), attrs={"units": "degC"})
+        t = xr.DataArray([-np.inf, _thresh, upper, np.inf], dims=("tas",), attrs={"units": "degC"})
         fraction = xr.DataArray([1.0, 1.0, 0.0, 0.0], dims=("tas",), coords={"tas": t})
 
         # Multiply precip by snowfall fraction
@@ -1311,6 +1311,7 @@ def rain_approximation(
     ----------
     :cite:cts:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019,dai_snowfall_2008`
     """
+    prra: xr.DataArray
     if method.startswith("dai"):
         tas = convert_units_to(tas, "°C")
         if isinstance(landmask, bool):
@@ -1362,7 +1363,7 @@ def rain_approximation(
                 rain_approximation(pr, tas, method=method, landmask=False),
             )
     else:
-        prra: xr.DataArray = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
+        prra = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
     prra = prra.assign_attrs(units=pr.attrs["units"])
     return prra
 
@@ -1992,6 +1993,8 @@ def potential_evapotranspiration(  # pylint: disable=too-many-statements
         _lat = lat
 
     pet: xr.DataArray
+    _tasmax: xr.DataArray
+    _tasmin: xr.DataArray
     if method in ["baierrobertson65", "BR65"]:
         _tasmin = convert_units_to(tasmin, "degF")
         _tasmax = convert_units_to(tasmax, "degF")
@@ -2024,7 +2027,7 @@ def potential_evapotranspiration(  # pylint: disable=too-many-statements
     elif method in ["droogersallen02", "DA02"]:
         _tasmin = convert_units_to(tasmin, "degC")
         _tasmax = convert_units_to(tasmax, "degC")
-        _pr = convert_units_to(pr, "mm/month", context="hydro")
+        _pr: xr.DataArray = convert_units_to(pr, "mm/month", context="hydro")
         if tas is None:
             _tas = (_tasmin + _tasmax) / 2
         else:
@@ -2038,17 +2041,17 @@ def potential_evapotranspiration(  # pylint: disable=too-many-statements
         # Monthly accumulated radiation
         time_d = _get_D_from_M(_tasmin.time)
         ra = extraterrestrial_solar_radiation(time_d, _lat)
-        ra = convert_units_to(ra, "MJ m-2 d-1")
-        ra = ra.resample(time="MS").sum()
+        _ra: xr.DataArray = convert_units_to(ra, "MJ m-2 d-1")
+        _ra = _ra.resample(time="MS").sum()
         # Is used to convert the radiation to evaporation equivalents in mm (kg/MJ)
-        ra = ra * 0.408
+        _ra = _ra * 0.408
 
         tr = _tasmax - _tasmin
         tr = tr.where(tr > 0, 0)
 
         # Droogers and Allen (2002) formula
         ab = tr - 0.0123 * _pr
-        pet = 0.0013 * ra * (_tas + 17.0) * ab**0.76
+        pet = 0.0013 * _ra * (_tas + 17.0) * ab**0.76
         pet = xr.where(np.isnan(ab**0.76), 0, pet)
         pet = pet.clip(0)  # mm/month
 
@@ -2056,7 +2059,7 @@ def potential_evapotranspiration(  # pylint: disable=too-many-statements
         if tas is None:
             _tasmin = convert_units_to(tasmin, "degC")
             _tasmax = convert_units_to(tasmax, "degC")
-            _tas: xr.DataArray = (_tasmin + _tasmax) / 2
+            _tas = (_tasmin + _tasmax) / 2
             _tas = _tas.assign_attrs(units="degC")
         else:
             _tas = convert_units_to(tas, "degC")
@@ -2124,13 +2127,13 @@ def potential_evapotranspiration(  # pylint: disable=too-many-statements
             tas_m = (_tasmax + _tasmin) / 2
             # mean saturation vapour pressure [kPa]
             es = (1 / 2) * (saturation_vapor_pressure(_tasmax) + saturation_vapor_pressure(_tasmin))
-            es = convert_units_to(es, "kPa")
+            _es: xr.DataArray = convert_units_to(es, "kPa")
             # mean actual vapour pressure [kPa]
             # assign units as xarray removes conflicting units (_hurs is 1)
-            ea = (es * _hurs).assign_attrs(units="kPa")
+            _ea = (_es * _hurs).assign_attrs(units="kPa")
 
             # slope of saturation vapour pressure curve  [kPa degC-1]
-            delta = (4098 * es / (tas_m + 237.3) ** 2).assign_attrs(units="kPa degC-1")
+            delta = (4098 * _es / (tas_m + 237.3) ** 2).assign_attrs(units="kPa degC-1")
             # net radiation
             _rsds = convert_units_to(rsds, "MJ m-2 d-1")
             _rsus = convert_units_to(rsus, "MJ m-2 d-1")
@@ -2140,7 +2143,7 @@ def potential_evapotranspiration(  # pylint: disable=too-many-statements
 
             P = 101.325  # Atmospheric pressure [kPa]
             gamma = 0.665e-03 * P  # psychrometric const = C_p*P/(eps*lam) [kPa degC-1]
-            pet = fao_allen98(Rn, tas_m, wa2, es, ea, delta, f"{gamma} kPa degC")
+            pet = fao_allen98(Rn, tas_m, wa2, _es, _ea, delta, f"{gamma} kPa degC")
 
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
@@ -2871,9 +2874,9 @@ def wind_power_potential(
     :cite:cts:`chen_2020,tobin_2018`.
     """
     # Convert units
-    cut_in = convert_units_to(cut_in, wind_speed)
-    rated = convert_units_to(rated, wind_speed)
-    cut_out = convert_units_to(cut_out, wind_speed)
+    _cut_in: xr.DataArray = convert_units_to(cut_in, wind_speed)
+    _rated: xr.DataArray = convert_units_to(rated, wind_speed)
+    _cut_out: xr.DataArray = convert_units_to(cut_out, wind_speed)
 
     # Correct wind speed for air density
     if air_density is not None:
@@ -2884,7 +2887,7 @@ def wind_power_potential(
 
     v = wind_speed * f
 
-    out: xr.DataArray = xr.apply_ufunc(_wind_power_factor, v, cut_in, rated, cut_out)
+    out: xr.DataArray = xr.apply_ufunc(_wind_power_factor, v, _cut_in, _rated, _cut_out)
     out = out.assign_attrs(units="")
     return out
 

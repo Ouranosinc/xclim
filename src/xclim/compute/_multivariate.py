@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import Literal, cast
 
 import numpy as np
@@ -18,7 +18,7 @@ from xclim.compute.generic import (
     interday_difference_statistics,
 )
 from xclim.compute.helpers import compare
-from xclim.core import Freq, Quantified, Reducer
+from xclim.core import Condition, Freq, Quantified, Reducer
 from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import resample_doy, select_time
 from xclim.core.units import (
@@ -692,7 +692,7 @@ def heat_wave_frequency(
     _thresh_tasmax: float = convert_units_to(thresh_tasmax, tasmax)
     _thresh_tasmin: float = convert_units_to(thresh_tasmin, tasmin)
 
-    constrain = (">", ">=")
+    constrain: Sequence[Condition] = (">", ">=")
     cond = (compare(tasmin, op, _thresh_tasmin, constrain)) & (compare(tasmax, op, _thresh_tasmax, constrain))
 
     out = rl.resample_and_rl(
@@ -773,7 +773,7 @@ def heat_wave_max_length(
     _thresh_tasmax: float = convert_units_to(thresh_tasmax, tasmax)
     _thresh_tasmin: float = convert_units_to(thresh_tasmin, tasmin)
 
-    constrain = (">", ">=")
+    constrain: Sequence[Condition] = (">", ">=")
     cond = (compare(tasmin, op, _thresh_tasmin, constrain)) & (compare(tasmax, op, _thresh_tasmax, constrain))
     out = rl.resample_and_rl(
         cond,
@@ -842,7 +842,7 @@ def heat_wave_total_length(
     _thresh_tasmax: float = convert_units_to(thresh_tasmax, tasmax)
     _thresh_tasmin: float = convert_units_to(thresh_tasmin, tasmin)
 
-    constrain = (">", ">=")
+    constrain: Sequence[Condition] = (">", ">=")
     cond = compare(tasmin, op, _thresh_tasmin, constrain) & compare(tasmax, op, _thresh_tasmax, constrain)
     out = rl.resample_and_rl(
         cond,
@@ -1294,7 +1294,7 @@ def fraction_over_precip_thresh(
         # Create time series out of doy values.
         tp = resample_doy(tp, pr)
 
-    constrain = (">", ">=")
+    constrain: Sequence[Condition] = (">", ">=")
     # Total precip during wet days over period
     total = pr.where(compare(pr, condition, thresh, constrain), 0).resample(time=freq).sum(dim="time")
 

@@ -47,7 +47,7 @@ _xr_argops = {
     "coldest": xarray.DataArray.argmin,
 }
 
-_np_ops = {
+_np_ops: dict[str, Literal["max", "min"]] = {
     "wettest": "max",
     "warmest": "max",
     "dryest": "min",  # "dryest" is a common enough spelling mistake
@@ -543,6 +543,7 @@ def _to_quarter(
     xarray.DataArray
         Quarterly time series.
     """
+    ts_var: xarray.DataArray
     if pr is not None and tas is not None:
         raise ValueError("Supply only one variable, 'tas' (exclusive) or 'pr'.")
     if tas is not None:

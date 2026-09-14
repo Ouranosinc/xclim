@@ -239,14 +239,14 @@ def huglin_index(
 
     k: int | xarray.DataArray = 1
     k_aggregated: xarray.DataArray | None = None
-    
+
     method = method.lower()
-    
+
     if method not in ["huglin", "interpolated", "jones"]:
         raise NotImplementedError(
             "Method is not implemented. Only 'huglin', 'interpolated', and 'jones' are supported."
-        )        
-    
+        )
+
     if method in ["huglin", "interpolated"]:
         k = huglin_day_length_latitude_coefficient(lat, method=method, cap_value=cap_value)
     elif method == "jones":
@@ -289,7 +289,7 @@ def biologically_effective_degree_days(
     max_daily_degree_days: Quantified = "9 degC",
     start_date: str | DayOfYearStr = "04-01",
     end_date: str | DayOfYearStr = "11-01",
-    freq: Freq = "YS",
+    freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
 ) -> xarray.DataArray:
     r"""
     Biologically effective growing degree days.
@@ -705,8 +705,8 @@ def dryness_index(  # numpydoc ignore=SS05
         * (pr_masked / 5).clip(max=evspsblpot.time.dt.daysinmonth)
     )
 
-    di_north: xarray.DataArray #| None = None
-    di_south: xarray.DataArray #| None = None
+    di_north: xarray.DataArray  # | None = None
+    di_south: xarray.DataArray  # | None = None
     # Dryness index
     if has_north:
         di_north = _wo + (pr_masked - t_v - e_s).resample(time="YS-JAN").sum()
@@ -807,13 +807,13 @@ def rain_season(
     thresh_dry_start: Quantified = "1.0 mm",
     window_dry_start: int = 7,
     method_dry_start: Literal["per_day", "total"] = "per_day",
-    date_min_start: DayOfYearStr = "05-01",
-    date_max_start: DayOfYearStr = "12-31",
+    date_min_start: DayOfYearStr | None = None,
+    date_max_start: DayOfYearStr | None = None,
     thresh_dry_end: Quantified = "0.0 mm",
     window_dry_end: int = 20,
     method_dry_end: Literal["per_day", "total"] = "per_day",
-    date_min_end: DayOfYearStr = "09-01",
-    date_max_end: DayOfYearStr = "12-31",
+    date_min_end: DayOfYearStr | None = None,
+    date_max_end: DayOfYearStr | None = None,
     freq="YS-JAN",
 ) -> tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray]:
     """
@@ -849,9 +849,9 @@ def rain_season(
         The threshold `thresh_dry_start` is either compared to every daily precipitation
         (`method_dry_start == "per_day"`) or to total precipitations (`method_dry_start == "total"`) in the sequence
         `window_dry_start` days.
-    date_min_start : DayOfYearStr
+    date_min_start : DayOfYearStr, optional, defaults to '05-01'
         First day of year when season can start ("mm-dd").
-    date_max_start : DayOfYearStr
+    date_max_start : DayOfYearStr, optional, defaults to '12-31'
         Last day of year when season can start ("mm-dd").
     thresh_dry_end : str
         Threshold length defining a dry day in the sequence related to `window_dry_end`.
@@ -864,9 +864,9 @@ def rain_season(
         Method used to define a dry sequence associated with `window_dry_end`.
         The threshold `thresh_dry_end` is either compared to every daily precipitation (`method_dry_end == "per_day"`)
         or to total precipitations (`method_dry_end == "total"`) in the sequence `window_dry` days.
-    date_min_end : DayOfYearStr
+    date_min_end : DayOfYearStr, optional, defaults to '09-01'
         First day of year when season can end ("mm-dd").
-    date_max_end : DayOfYearStr
+    date_max_end : DayOfYearStr, optional, defaults to '12-31'
         Last day of year when season can end ("mm-dd").
     freq : str
       Resampling frequency.
@@ -894,6 +894,11 @@ def rain_season(
     ----------
     :cite:cts:`sivakumar_predicting_1998`
     """
+    # Set default dates
+    date_min_start = (date_min_start or DayOfYearStr("05-01"),)
+    date_max_start = (date_max_start or DayOfYearStr("12-31"),)
+    date_min_end = (date_min_end or DayOfYearStr("09-01"),)
+    date_max_end = (date_max_end or DayOfYearStr("12-31"),)
     # Unit conversion.
     pram = rate2amount(pr, out_units="mm")
     _thresh_wet_start: float = convert_units_to(thresh_wet_start, pram)
@@ -1300,7 +1305,7 @@ def effective_growing_degree_days(
     *,
     thresh: Quantified = "5 degC",
     method: Literal["bootsma", "qian"] = "bootsma",
-    after_date: DayOfYearStr = "07-01",
+    after_date: DayOfYearStr | None = None,
     dim: str = "time",
     freq: Freq = "YS",
 ) -> xarray.DataArray:
@@ -1323,7 +1328,7 @@ def effective_growing_degree_days(
         For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold.
         For "qian", the start date is based on a weighted 5-day rolling average,
         based on :py:func`qian_weighted_mean_average`.
-    after_date : str
+    after_date : str, optional, defaults to '07-01'
         Date of the year after which to look for the first frost event. Should have the format '%m-%d'.
     dim : str
         Time dimension.
@@ -1354,6 +1359,8 @@ def effective_growing_degree_days(
     ----------
     :cite:cts:`bootsma_impacts_2005`
     """
+    after_date = after_date or DayOfYearStr("07-01")
+
     _tasmax: xarray.DataArray = convert_units_to(tasmax, "degC")
     _tasmin: xarray.DataArray = convert_units_to(tasmin, "degC")
     _thresh: float = convert_units_to(thresh, "degC")

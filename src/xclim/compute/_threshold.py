@@ -995,7 +995,7 @@ def growing_degree_days(tas: xarray.DataArray, thresh: Quantified = "4.0 degC", 
 def growing_season_start(
     tas: xarray.DataArray,
     thresh: Quantified = "5.0 degC",
-    mid_date: DayOfYearStr | None = "07-01",
+    mid_date: DayOfYearStr | None = None,
     window: int = 5,
     freq: Freq = "YS",
     op: Literal[">", "gt", ">=", "ge"] = ">=",
@@ -1014,7 +1014,7 @@ def growing_season_start(
         Mean daily temperature.
     thresh : Quantified
         Threshold temperature on which to base evaluation.
-    mid_date : str, optional
+    mid_date : str, optional, defaults to '07-01'
         Date of the year before which the season must start. Should have the format '%m-%d'.
         ``None`` removes that constraint.
     window : int
@@ -1033,6 +1033,7 @@ def growing_season_start(
     --------
     The default `freq` and `mid_date` parameters are valid for the northern hemisphere.
     """
+    mid_date = mid_date or DayOfYearStr("07-01")
     return season(
         tas,
         thresh=thresh,
@@ -1050,7 +1051,7 @@ def growing_season_start(
 def growing_season_end(
     tas: xarray.DataArray,
     thresh: Quantified = "5.0 degC",
-    mid_date: DayOfYearStr | None = "07-01",
+    mid_date: DayOfYearStr | None = None,
     window: int = 5,
     freq: Freq = "YS",
     op: Literal[">", ">=", "lt", "le"] = ">",
@@ -1069,7 +1070,7 @@ def growing_season_end(
         Mean daily temperature.
     thresh : Quantified
         Threshold temperature on which to base evaluation.
-    mid_date : str, optional
+    mid_date : str, optional, defaults to '07-01'
         Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
         ``None`` removes that constraint.
     window : int
@@ -1101,6 +1102,7 @@ def growing_season_end(
     where :math:`w` is the number of days where temperature should be inferior to a given threshold after a given date,
     and :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
+    mid_date = mid_date or DayOfYearStr("07-01")
     return season(
         tas,
         thresh=thresh,
@@ -1119,7 +1121,7 @@ def growing_season_length(
     tas: xarray.DataArray,
     thresh: Quantified = "5.0 degC",
     window: int = 6,
-    mid_date: DayOfYearStr | None = "07-01",
+    mid_date: DayOfYearStr | None = None,
     freq: Freq = "YS",
     op: Literal[">", "gt", ">=", "ge"] = ">=",
 ) -> xarray.DataArray:
@@ -1141,7 +1143,7 @@ def growing_season_length(
         Threshold temperature on which to base evaluation.
     window : int
         Minimum number of days with temperature above the threshold to mark the beginning and end of growing season.
-    mid_date : str, optional
+    mid_date : str, optional, defaults to '07-01'
         Date of the year before which the season must start and after which it can end. Should have the format '%m-%d'.
         Setting `None` removes that constraint.
     freq : str
@@ -1190,6 +1192,7 @@ def growing_season_length(
 
     >>> gsl_sh = growing_season_length(tas, mid_date="01-01", freq="YS-JUL")
     """
+    mid_date = mid_date or DayOfYearStr("07-01")
     return season(
         tas,
         thresh=thresh,
@@ -1207,7 +1210,7 @@ def growing_season_length(
 def frost_season_length(
     tasmin: xarray.DataArray,
     window: int = 5,
-    mid_date: DayOfYearStr | None = "01-01",
+    mid_date: DayOfYearStr | None = None,
     thresh: Quantified = "0.0 degC",
     freq: Freq = "YS-JUL",
     op: Literal["<", "lt", "<=", "le"] = "<",
@@ -1226,7 +1229,7 @@ def frost_season_length(
         Minimum daily temperature.
     window : int
         Minimum number of days with temperature below threshold to mark the beginning and end of frost season.
-    mid_date : str, optional
+    mid_date : str, optional, defaults to '01-01'
         The date must be included in the season. It is the earliest the end of the season can be.
         ``None`` removes that constraint.
     thresh : Quantified
@@ -1273,6 +1276,7 @@ def frost_season_length(
 
     >>> fsl_sh = frost_season_length(tasmin, freq="YS")
     """
+    mid_date = mid_date or DayOfYearStr("01-01")
     return season(
         tasmin,
         thresh=thresh,
@@ -1291,7 +1295,7 @@ def frost_free_season_start(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0.0 degC",
     window: int = 5,
-    mid_date: DayOfYearStr | None = "07-01",
+    mid_date: DayOfYearStr | None = None,
     op: Literal[">", "gt", ">=", "ge"] = ">=",
     freq: Freq = "YS",
 ) -> xarray.DataArray:
@@ -1311,7 +1315,7 @@ def frost_free_season_start(
         Threshold temperature on which to base evaluation.
     window : int
         Minimum number of days with temperature above/under the threshold to start/end the season.
-    mid_date : DayOfYearStr, optional
+    mid_date : DayOfYearStr, optional, defaults to '07-01'
         A date that must be included in the season. `None` removes that constraint.
     op : {">", "gt", ">=", "ge"}
         How to compare tasmin and the threshold.
@@ -1335,6 +1339,7 @@ def frost_free_season_start(
     where :math:`w` is the number of days the temperature threshold should be met or exceeded,
     and `i` must be earlier than `mid_date`.
     """
+    mid_date = mid_date or DayOfYearStr("07-01")
     return season(
         tasmin,
         thresh=thresh,
@@ -1353,7 +1358,7 @@ def frost_free_season_end(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0.0 degC",
     window: int = 5,
-    mid_date: DayOfYearStr | None = "07-01",
+    mid_date: DayOfYearStr | None = None,
     op: Literal[">", "gt", ">=", "ge"] = ">=",
     freq: Freq = "YS",
 ) -> xarray.DataArray:
@@ -1373,7 +1378,7 @@ def frost_free_season_end(
         Threshold temperature on which to base evaluation.
     window : int
         Minimum number of days with temperature above/under the threshold to start/end the season.
-    mid_date : DayOfYearStr, optional
+    mid_date : DayOfYearStr, optional, defaults to '07-01'
         A date what must be included in the season. `None` removes that constraint.
     op : {">", "gt", ">=", "ge"}
         How to compare tasmin and the threshold.
@@ -1404,6 +1409,7 @@ def frost_free_season_end(
     An end is only valid if a start is also found and the end must happen later than `mid_date`
     while the start must happen earlier.
     """
+    mid_date = mid_date or DayOfYearStr("07-01")
     return season(
         tasmin,
         thresh=thresh,
@@ -1422,7 +1428,7 @@ def frost_free_season_length(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0.0 degC",
     window: int = 5,
-    mid_date: DayOfYearStr | None = "07-01",
+    mid_date: DayOfYearStr | None = None,
     op: Literal[">", "gt", ">=", "ge"] = ">=",
     freq: Freq = "YS",
 ) -> xarray.DataArray:
@@ -1442,7 +1448,7 @@ def frost_free_season_length(
         Threshold temperature on which to base evaluation.
     window : int
         Minimum number of days with temperature above/under the threshold to start/end the season.
-    mid_date : DayOfYearStr, optional
+    mid_date : DayOfYearStr, optional, defaults to '07-01'
         A date what must be included in the season. `None` removes that constraint.
     op : {">", "gt", ">=", "ge"}
         How to compare tasmin and the threshold.
@@ -1486,6 +1492,7 @@ def frost_free_season_length(
 
     >>> ffsl_sh = frost_free_season_length(tasmin, freq="YS-JUL")
     """
+    mid_date = mid_date or DayOfYearStr("07-01")
     return season(
         tasmin,
         thresh=thresh,
@@ -1554,7 +1561,7 @@ def last_spring_frost(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0 degC",
     op: Literal["<", "lt", "<=", "le"] = "<",
-    before_date: DayOfYearStr = "07-01",
+    before_date: DayOfYearStr | None = None,
     window: int = 1,
     freq: Freq = "YS",
 ) -> xarray.DataArray:
@@ -1572,7 +1579,7 @@ def last_spring_frost(
         Threshold temperature on which to base evaluation.
     op : {"<", "lt", "<=", "le"}
         Comparison operation. Default: "<".
-    before_date : str,
+    before_date : str, optional, defaults to '07-01'
         Date of the year before which to look for the final frost event. Should have the format '%m-%d'.
     window : int
         Minimum number of days with temperature below the threshold needed for evaluation.
@@ -1589,6 +1596,8 @@ def last_spring_frost(
     --------
     The default `freq` and `before_date` parameters are valid for the Northern Hemisphere.
     """
+    before_date = before_date or DayOfYearStr("07-01")
+
     _thresh = convert_units_to(thresh, tasmin)
     cond = compare(tasmin, op, _thresh, constrain=("<", "<="))
 
@@ -1614,7 +1623,7 @@ def first_day_temperature_below(
     tas: xarray.DataArray,
     thresh: Quantified = "0 degC",
     op: Literal["<", "lt", "<=", "le"] = "<",
-    after_date: DayOfYearStr = "07-01",
+    after_date: DayOfYearStr | None = None,
     window: int = 1,
     freq: Freq = "YS",
 ) -> xarray.DataArray:
@@ -1632,7 +1641,7 @@ def first_day_temperature_below(
         Threshold temperature on which to base evaluation.
     op : {"<", "lt", "<=", "le"}
         Comparison operation. Default: ">".
-    after_date : str
+    after_date : str, optional, defaults to '07-01'
         Date of the year after which to look for the first event. Should have the format '%m-%d'.
     window : int
         Minimum number of days with temperature below the threshold needed for evaluation.
@@ -1649,6 +1658,7 @@ def first_day_temperature_below(
     --------
     The default `freq` and `after_date` parameters are valid for the Northern Hemisphere.
     """
+    after_date = after_date or DayOfYearStr("07-01")
     fdtb = day_threshold_reached(
         tas,
         thresh=thresh,
@@ -1668,7 +1678,7 @@ def first_day_temperature_above(
     tas: xarray.DataArray,
     thresh: Quantified = "0 degC",
     op: Literal[">", "gt", ">=", "ge"] = ">",
-    after_date: DayOfYearStr = "01-01",
+    after_date: DayOfYearStr | None = None,
     window: int = 1,
     freq: Freq = "YS",
 ) -> xarray.DataArray:
@@ -1686,7 +1696,7 @@ def first_day_temperature_above(
         Threshold temperature on which to base evaluation.
     op : {">", "gt", ">=", "ge"}
         Comparison operation. Default: ">".
-    after_date : str
+    after_date : str, optional, default to '01-01'
         Date of the year after which to look for the first event. Should have the format '%m-%d'.
     window : int
         Minimum number of days with temperature above the threshold needed for evaluation.
@@ -1715,6 +1725,7 @@ def first_day_temperature_above(
     where :math:`w` is the number of days the temperature threshold should be exceeded, and :math:`[P]` is
     1 if :math:`P` is true, and 0 if false.
     """
+    after_date = after_date or DayOfYearStr("01-01")
     fdtr = day_threshold_reached(
         tas,
         thresh=thresh,
