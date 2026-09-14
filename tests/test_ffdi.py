@@ -148,23 +148,23 @@ class TestFFDI:
         else:
             kbdi0 = None
 
-        kbdi = atmos.keetch_byram_drought_index(test_data["pr"], test_data["tasmax"], pr_annual, kbdi0)
-        assert (kbdi >= 0).all()
-        assert (kbdi <= 203.2).all()
-        assert kbdi.shape == test_data["pr"].shape
+        out = atmos.keetch_byram_drought_index(test_data["pr"], test_data["tasmax"], pr_annual, kbdi0)
+        assert (out.kbdi >= 0).all()
+        assert (out.kbdi <= 203.2).all()
+        assert out.kbdi.shape == test_data["pr"].shape
 
         if limiting_func == "xlim":
             df_max = 10.7216381
         else:
             df_max = 10
 
-        df = atmos.griffiths_drought_factor(test_data["pr"], kbdi)
-        assert (df.isel(time=slice(19, None)) >= 0).all()
-        assert (df.isel(time=slice(19, None)) <= df_max).all()
-        assert df.shape == test_data["pr"].shape
+        out2 = atmos.griffiths_drought_factor(test_data["pr"], out.kbdi)
+        assert (out2.df.isel(time=slice(19, None)) >= 0).all()
+        assert (out2.df.isel(time=slice(19, None)) <= df_max).all()
+        assert out2.df.shape == test_data["pr"].shape
 
-        ffdi = atmos.mcarthur_forest_fire_danger_index(
-            df, test_data["tasmax"], test_data["hurs"], test_data["sfcWindmax"]
+        out3 = atmos.mcarthur_forest_fire_danger_index(
+            out2.df, test_data["tasmax"], test_data["hurs"], test_data["sfcWindmax"]
         )
-        assert (ffdi.isel(time=slice(19, None)) >= 0).all()
-        assert ffdi.shape == test_data["pr"].shape
+        assert (out3.ffdi.isel(time=slice(19, None)) >= 0).all()
+        assert out3.ffdi.shape == test_data["pr"].shape
