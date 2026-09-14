@@ -125,6 +125,7 @@ class TestAridityIndex:
         assert out.aridity_index.attrs["units"] == "1"
         np.testing.assert_allclose(out.aridity_index.values, expected)
 
+
 class TestCanadianHardinessZones:
     def test_simple(self, atmosds):
         ds = atmosds
