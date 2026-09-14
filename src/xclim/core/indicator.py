@@ -1604,8 +1604,9 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
             Unique ID for this indicator. Single-output indicator will use this as their output variable
             name if no `var_name`is passed to the first element of `attrs`.
             Unless ``register`` is False, indicators are registered to :py:data:`xclim.core.indicator.registry`,
-            which is case-insensitive.
-            This field is required and can't be None.
+            using this ID. The registry is case-insensitive.
+            When defining indicators in a python module, it can be helpful to use the same name in the code as the
+            identifier, to avoid confusion between the two, especially for collections and translations.
         compute : func
             The function computing the indicators. It should return one or more DataArray.
             Metadata will first be parsed from it as much as possible.

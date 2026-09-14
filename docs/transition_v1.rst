@@ -33,14 +33,18 @@ These are dictionary-like in structure, holding a collection of indicators and t
 
 The main breaking changes are:
 
-	- Attribute `cf_attrs` was renamed `attrs` and is now a list of :py:class:`~xclim.core.indicator.Output` objects.
-	  These act like dictionaries of attributes, but have also four properties : `var_name`, `units`, `units_metadata` and `dimensionality`.
-	  This name change is to be done in the indicator's constructor and in the YAML files.
-	- Function ``xclim.build_indicator_module_from_yaml`` is changed to :py:meth:`~xclim.core.collection.IndicatorCollection.from_yaml`.
-	- Indicators defined within a collection are not registered by default into the indicators registry, the collection is not added as module under :py:mod:`xclim.indicators`.
-	- When creating an indicator from an existing one, the ``var_name`` of the output of an indicator with a single output now only defaults to the indicator's identifier if the parent does not have a ``var_name``.
-	  Previously, the identifier would always be used as the ``var_name``, regardless of the parent's attributes.
-	- The :py:meth:`xclim.core.indicator.Indicator.from_dict` method is deprecated. Use :py:meth:`xclim.core.indicator.Indicator.copy` instead, calling it on the indicator object you want to subclass/copy.
-	  This new method doesn't parse ``compute`` function names given as string, instead passing the function directly.
+- Attribute `cf_attrs` was renamed `attrs` and is now a list of :py:class:`~xclim.core.indicator.Output` objects.
+  These act like dictionaries of attributes, but have also four properties : `var_name`, `units`, `units_metadata` and `dimensionality`, which are accessed as properties (ex: ``ind.attrs[0].var_name``) and not as dictionary items. This name change is to be applied in the indicator's constructor and in the YAML files.
+- Function ``xclim.build_indicator_module_from_yaml`` is changed to :py:meth:`xclim.core.collection.IndicatorCollection.from_yaml`. Collections are standalone objects, they don't automatically register as python submodules of ``xclim.indicators`` anymore.
+- Indicators defined within a collection are not registered by default into the indicators registry.
+- When creating an indicator from an existing one, the ``var_name`` of the output of an indicator with a single output now only defaults to the indicator's identifier if the parent does not have a ``var_name``. Previously, the identifier would always be used as the ``var_name``, regardless of the parent's attributes.
+- The :py:meth:`xclim.core.indicator.Indicator.from_dict` method is deprecated. Use :py:meth:`xclim.core.indicator.Indicator.copy` instead, calling it on the indicator object you want to subclass/copy.
+  This new method doesn't parse ``compute`` function names given as string, instead passing the function directly.
 
 See the updated :ref:`notebooks/extendxclim:Extending xclim` page for more details.
+
+Indicator registry
+------------------
+The indicator registry :py:data:`xclim.core.indicator.registry` is now case-insensitive and holds indicator *instances*, not *classes*. No need to call ``ind.get_instance()`` to get a working object anymore. As noted above, creating a derived indicator from another is now done by calling :py:meth:`~xclim.core.indicator.Indicator.copy()` on the parent instance.
+
+The base classes registry :py:data:`xclim.core.indicator_base_registry` is preserved.

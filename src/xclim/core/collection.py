@@ -289,7 +289,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
                 locale = loc_file.suffixes[0][1:]
                 _translations[locale] = read_locale_file(loc_file, module=coll_name, encoding=encoding)
         elif translations is not None:
-            # A mapping was passed, we read paths is any.
+            # A mapping was passed, we read paths if any.
             _translations = {
                 lng: (
                     read_locale_file(trans, module=coll_name, encoding=encoding)
