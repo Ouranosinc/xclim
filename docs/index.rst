@@ -14,7 +14,7 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
 
 .. warning::
 
-   This version of xclim brings major changes compared to the v0.x series. See :ref:`Differences between v0 and v1` for guidance on how to transition to xclim v1.
+   This version of xclim brings major changes compared to the v0.x series. See :ref:`transition_v1:Differences between v0 and v1` for guidance on how to transition to xclim v1.
 
 .. toctree::
    :hidden:
@@ -43,6 +43,7 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
 
    authors
    changelog
+   transition_v1
    support
    governance
    security
