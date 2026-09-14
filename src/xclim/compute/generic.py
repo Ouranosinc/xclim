@@ -1234,10 +1234,9 @@ def statistics_between_dates(
     if freq is None:
         frequencies = []
         for bound in [start, end]:
-            try:
+            if isinstance(bound, xr.DataArray) and "time" in bound.coords:
                 frequencies.append(xr.infer_freq(bound["time"]))
-            # FIXME:  had to change error type.  xr.infer_freq(string) yields TypeError, not AttributeError. Normal?
-            except TypeError:
+            else:
                 frequencies.append(None)
 
         good_freq = set(frequencies) - {None}
