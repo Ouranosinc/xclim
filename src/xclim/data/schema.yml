@@ -20,7 +20,7 @@ indicator:
   missing: str(required=False)
   missing_options: map(key=str(), required=False)
   notes: str(required=False)
-  attrs: any(list(include('attrs')), include('attrs'), required=False)
+  outputs: any(list(include('output')), include('output'), required=False)
   parameters: |
     map(str(), num(), bool(), null(), include('parameter'), include('indexer'),
     include('time_range'), key=str(), required=False)
@@ -29,7 +29,7 @@ indicator:
   title: str(required=False)
   context: str(required=False)
 
-attrs: map(str(), key=str(), required=False)
+output: map(str(), key=str(), required=False)
 
 parameter:
   description: str(required=False)

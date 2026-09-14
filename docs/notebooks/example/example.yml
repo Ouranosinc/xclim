@@ -14,7 +14,7 @@ variables:
 bases:
   RXXp:
     compute: extreme_precip_accumulation_and_days
-    attrs:
+    outputs:
       - cell_methods: 'time: sum within days time: sum over days'
         long_name: Annual total PRCP when RR > {perc}th percentile
         units: m
@@ -27,7 +27,7 @@ bases:
 indicators:
   RX1day_summer:
     base: atmos.max_1day_precipitation_amount
-    attrs:
+    outputs:
       long_name: Highest 1-day precipitation amount
     parameters:
       indexer:
@@ -35,7 +35,7 @@ indicators:
     context: hydro
   RX5day_canopy:
     base: max_n_day_precipitation_amount
-    attrs:
+    outputs:
       long_name: Highest 5-day precipitation amount on the canopy
     input:
       pr: prveg
@@ -54,7 +54,7 @@ indicators:
     compute: day_threshold_reached
     input:
       data: tasmin
-    attrs:
+    outputs:
       long_name: First Frost Day (Tmin < 0°C)
       description: First day of the period where the minimum daily temperature goes under 0°C.
       units: ""
@@ -70,14 +70,14 @@ indicators:
         default: YS-JUL
   R95p:
     base: .RXXp
-    attrs:
+    outputs:
       - var_name: R95p
       - var_name: R95p_days
     parameters:
       perc: 95
   R99p:
     base: .RXXp
-    attrs:
+    outputs:
       - var_name: R99p
       - var_name: R99p_days
     parameters:
