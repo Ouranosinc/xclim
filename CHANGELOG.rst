@@ -11,7 +11,7 @@ Announcements
 This release constitutes a major breaking change from the previous stable release (`v0.x`) and introduces several new features, enhancements, and API changes.
 Users are strongly encouraged to review the breaking changes section below to ensure compatibility with their existing codebases.
 Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version.
-See :ref:`Differences between v0 and v1` for a summary of the breaking changes and guidance on how to transition to xclim v1.
+See :ref:`transition_v1:Differences between v0 and v1` for a summary of the breaking changes and guidance on how to transition to xclim v1.
 The `xclim` library is now considered to be production-level stable.
 
 Major changes
