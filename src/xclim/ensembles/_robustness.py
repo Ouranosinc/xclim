@@ -23,6 +23,7 @@ import xarray as xr
 from xclim.compute.helpers import compare, detrend
 from xclim.core.formatting import gen_call_string, update_xclim_history
 from xclim.core.missing import MissingAny, MissingBase
+from xclim.core.utils import uses_dask
 
 __all__ = [
     "robustness_categories",
@@ -308,6 +309,8 @@ def robustness_fractions(
         }
 
         changed, pvals = test_func(fut, ref, pool_dim, **test_params)
+        print("pvals")
+        print(pvals)
     else:
         raise ValueError(f"Statistical test {test} must be one of {', '.join(SIGNIFICANCE_TESTS.keys())}.")
 
@@ -618,7 +621,9 @@ def _ttest(fut, ref, pool_dim, *, p_change=0.05):
     if pool_dim in fut.dims:
         # for multimember ensembles, pool the members and year
         fut = fut.stack(sample=["time", pool_dim])
-        fut = fut.drop_vars(["time", pool_dim])
+        if uses_dask(fut):
+            fut = fut.chunk({"sample": -1})
+        fut = fut.drop_vars(["time", pool_dim, "sample"])
         fut = fut.rename({"sample": "time"})
         ref = ref.mean(pool_dim)
 
@@ -656,11 +661,15 @@ def _welch_ttest(fut, ref, pool_dim, *, p_change=0.05):
     """
     if pool_dim in fut.dims:
         fut = fut.stack(sample=["time", pool_dim])
-        fut = fut.drop_vars(["time", pool_dim])
+        fut = fut.drop_vars(["time", pool_dim, "sample"])
+
         fut = fut.rename({"sample": "time"})
         ref = ref.stack(sample=["time", pool_dim])
-        ref = ref.drop_vars(["time", pool_dim])
+        ref = ref.drop_vars(["time", pool_dim, "sample"])
         ref = ref.rename({"sample": "time"})
+        if uses_dask(fut):
+            fut = fut.chunk({"time": -1})
+            ref = ref.chunk({"time": -1})
 
     # Test hypothesis of no significant change
     # equal_var=False -> Welch's T-test
@@ -698,11 +707,14 @@ def _mannwhitney_utest(ref, fut, pool_dim, *, p_change=0.05):
     """
     if pool_dim in fut.dims:
         fut = fut.stack(sample=["time", pool_dim])
-        fut = fut.drop_vars(["time", pool_dim])
+        fut = fut.drop_vars(["time", pool_dim, "sample"])
         fut = fut.rename({"sample": "time"})
         ref = ref.stack(sample=["time", pool_dim])
-        ref = ref.drop_vars(["time", pool_dim])
+        ref = ref.drop_vars(["time", pool_dim, "sample"])
         ref = ref.rename({"sample": "time"})
+        if uses_dask(fut):
+            fut = fut.chunk({"time": -1})
+            ref = ref.chunk({"time": -1})
 
     def mwu_wrapper(f, r):  # This specific test can't manage an all-NaN slice
         if np.isnan(f).all() or np.isnan(r).all():
@@ -737,11 +749,14 @@ def _brownforsythe_test(fut, ref, pool_dim, *, p_change=0.05):
     """
     if pool_dim in fut.dims:
         fut = fut.stack(sample=["time", pool_dim])
-        fut = fut.drop_vars(["time", pool_dim])
+        fut = fut.drop_vars(["time", pool_dim, "sample"])
         fut = fut.rename({"sample": "time"})
         ref = ref.stack(sample=["time", pool_dim])
-        ref = ref.drop_vars(["time", pool_dim])
+        ref = ref.drop_vars(["time", pool_dim, "sample"])
         ref = ref.rename({"sample": "time"})
+        if uses_dask(fut):
+            fut = fut.chunk({"time": -1})
+            ref = ref.chunk({"time": -1})
 
     pvals = xr.apply_ufunc(
         lambda f, r: spstats.levene(f, r, center="median")[1],
