@@ -137,7 +137,7 @@ class TestCanadianHardinessZones:
         wsgmax10m = statistics(ds.sfcWind, statistic="max", freq="MS")
 
         # Should be caulculated over 30 years, but only four years of data available
-        chz = atmos.canadian_hardiness_zones(
+        out = atmos.canadian_hardiness_zones(
             tasmin=tasmin,
             tasmax=tasmax,
             pr=pr,
@@ -145,4 +145,4 @@ class TestCanadianHardinessZones:
             wsgmax10m=wsgmax10m,
             freq="4YS",
         )
-        np.testing.assert_array_equal(chz.values.ravel(), [11, 14, 0, 5, 19])
+        np.testing.assert_array_equal(out.chz.values.ravel(), [11, 14, 0, 5, 19])
