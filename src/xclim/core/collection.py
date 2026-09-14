@@ -28,14 +28,16 @@ details on each.
         description: <description> # required
         standard_name: <expected standard_name> # optional
         cell_methods: <expected cell_methods> # optional
+    # The `bases` and `indicators` sections have the same syntax. Indicators defined in the `bases` section
+    # will only be created as classes and not instances. They will not be included in the IndicatorCollection's items,
+    # but rather in its `bases` property. This is useful for creating a base from which multiple indicators are declared
+    # in the `indicators`section.
+    bases:
     indicators:
       <identifier>:  # The actual indicator identifier will be prepended by the module name.
         # From which Indicator to inherit
         base: <base indicator class>  # Defaults to module-wide base class
-                                      # If the name startswith a '.', the base class is taken from the current module
-                                      # (thus an indicator declared _above_).
-                                      # Available indicators are listed in `xclim.core.indicator.registry` and
-                                      # other base classes in `xclim.core.indicator.base_registry`.
+                                      # See :ref:`Base class specification` below.
 
         # General metadata, usually parsed from the `compute`s docstring when possible.
         realm: <realm>  # defaults to module-wide realm. One of "atmos", "land", "seaIce", "ocean".
@@ -53,12 +55,12 @@ details on each.
         context: <context> # A unit context enabled during the conversion of the compute's output to the requested units
 
         # Compute function
-        compute: <function name>  # Referring to a function in `compute` module
-                                  # (xclim.compute.generic or xclim.compute)
-                                  # Or to a function declared in the mapping passed to the collection constructor.
+        compute: <function name>  # See :ref:`Compute function specification`, below.
+
         input:  # When "compute" is a generic function, this is a mapping from argument name to the expected variable.
                 # It will change the expected name of the variable as well as its units/dimensionality.
                 # Can refer to a variable declared in the `variables` section above or in `xclim.core.VARIABLES`.
+                # See also :ref:`Inputs` below.
           <var name in compute> : <variable official name>
           ...
 
@@ -79,8 +81,39 @@ All fields are optional. Other fields found in the yaml file will trigger errors
 When a module is built from a yaml file, the yaml is first validated against the schema (see xclim/data/schema.yml)
 using the YAMALE library (:cite:p:`lopker_yamale_2022`). See the "Extending xclim" notebook for more info.
 
+Base class specification
+^^^^^^^^^^^^^^^^^^^^^^^^
+There are multiple ways to specify a base class when defining an indicator. In priority order:
+
+- If ``base`` starts with a '.' (ex: `.RXXp`), the base class is taken from the current module.
+    + It is first searched in `bases` section.
+    + If not found, it is searched as another indicator declared _above_ the current definition.
+- The name is searched in the base class registry, :py:data:`xclim.core.indicator.base_registry` (example: ``Daily``).
+- The name is searched in the indicator registry, :py:data:`xclim.core.indicator.registry` (example: ``prcptot``).
+- If ``base`` contains a '.' :
+    + If the first element is one of xclim's indicators submodules (ex: ``atmos.precip_accumulation``), that indicator
+      is used as a base. Any submodule of ``xclim.indicators`` are possible.
+    + Otherwise, that path is loaded with python's normal import mechanism.
+      (ex: ``mymodule.submod.MyIndicator`` isloaded as ``from mymodule.submod import MyIndicator``).
+
+If the field ``base`` is not given, it defaults to the module-wide ``base``, which itself defaults to
+:py:class:`xclim.core.indicator.Daily``.
+
+Compute function specification
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Similar to the ``base`` field, there are multiple ways to refer to a compute function in the ``compute`` field.
+In priority order:
+
+- If a module or mapping of compute functions was passed to :py:meth:`IndicatorCollection.from_yaml`,
+  the name is searched there (ex: `extreme_precip_accumulation_and_days`).
+- The name is searched in :py:mod:`xclim.compute.generic` (ex: ``statistics``).
+- The name is searched in `:py:mod:`xclim.compute` (ex: ``corn_heat_units``).
+  It may contain a '.' to denote a submodule (ex: ``generic.statistics``).
+- Otherwise, it is loaded with python's normal import mechanism
+  (ex: ``mymodule.submod.my_function`` is loaded as ``from mymodule.submod import my_function``).
+
 Inputs
-~~~~~~
+^^^^^^
 As xclim has strict definitions of possible input variables (see :py:data:`xclim.core.VARIABLES`),
 the mapping of `indicators.<identifier>.input` simply links an argument name from the function given in "compute"
 to one of those official variables.
@@ -90,6 +123,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable
+from importlib import import_module
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
@@ -100,6 +134,7 @@ from yaml import safe_load
 
 import xclim.compute
 import xclim.compute.generic
+import xclim.indicators
 from xclim.core import VARIABLES, raise_warn_or_log
 from xclim.core.indicator import Daily, Indicator, base_registry, registry
 from xclim.core.locales import load_locale, read_locale_file
@@ -109,20 +144,29 @@ from xclim.core.utils import load_module
 class IndicatorCollection(dict):  # numpydoc ignore=PR01
     """A collection of indicators."""
 
-    def __init__(self, indicators: dict[str, Indicator], name: str | None = None, doc: str | None = None):
+    def __init__(
+        self,
+        indicators: dict[str, Indicator],
+        name: str | None = None,
+        bases: dict[str, type] = None,
+        doc: str | None = None,
+    ):
         """
         Create an IndicatorCollection.
 
         Parameters
         ----------
         indicators : dict of Indicator
-            Indicators to put in the new module.
+            Indicators to put in the new collection.
         name : str, optional
             The name of the module.
+        bases : dict, optional
+            Base indicator classes used in definitions of this collection.
         doc : str, optional
             Documentation of the collection. Defaults to a simple header.
         """
         self.name = name
+        self.bases = bases or {}
         self.__doc__ = doc or f"{name.capitalize()} indicators\n" + "=" * (len(name) + 11)
         super().__init__(**indicators)
 
@@ -140,6 +184,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         mode: Literal["raise", "warn", "ignore"] = "raise",
         encoding: str = "UTF8",
         validate: bool | PathLike = True,
+        register: bool = False,
     ):
         """
         Build an indicator collection from a YAML file.
@@ -174,6 +219,13 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
             If True (default), the yaml module is validated against the `xclim` schema.
             Can also be the path to a YAML schema against which to validate;
             Or False, in which case validation is simply skipped.
+        register : bool
+            If True, the indicators created here are registered in xclim's indicators registry
+            :py:data:`~xclim.core.indicator.registry` upon creation, using the collection's name
+            prepended to their identifier as key, as explained above.
+            Defaults to False, making collections independent from xclim's registry.
+            This does not change the behaviour of registering new variables, which are always added
+            to xclim's central :py:data:`xclim.core.VARIABLES`.
 
         Returns
         -------
@@ -211,14 +263,11 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
             yml = safe_load(f)
 
         if validate is not False:
-            # Read schema
-            if validate is not True:
-                schema = yamale.make_schema(validate)
-            else:
-                schema = yamale.make_schema(Path(__file__).parent.parent / "data" / "schema.yml")
-
-            # Validate - a YamaleError will be raised if the module does not comply with the schema.
-            yamale.validate(schema, yamale.make_data(content=yml_path.read_text(encoding=encoding)))
+            cls._validate_yaml(
+                validate if validate is not True else (Path(__file__).parent.parent / "data" / "schema.yml"),
+                yml_path,
+                encoding,
+            )
 
         # Load values from top-level in yml.
         # Priority of arguments differ.
@@ -271,29 +320,41 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
 
         # Parse the indicators:
         mapping = {}
-        for identifier, data in yml["indicators"].items():
-            try:
-                # Get base class
-                base = default_base
-                if (basename := data.pop("base", None)) is not None:
-                    base = cls._find_base_class(basename, mapping)
+        bases = {}
+        # This because we enforce indicators being required and bases being optional
+        for section, sectiondata in [("bases", yml.get("bases", {})), ("indicators", yml["indicators"])]:
+            for identifier, data in sectiondata.items():
+                try:
+                    # Get base class
+                    base = default_base
+                    if (basename := data.pop("base", None)) is not None:
+                        base = cls._find_base_class(basename, mapping, bases)
 
-                if (funcname := data.pop("compute", None)) is not None:
-                    data["compute"] = cls._find_compute_function(funcname, computes)
+                    if (funcname := data.pop("compute", None)) is not None:
+                        data["compute"] = cls._find_compute_function(funcname, computes)
 
-                if data.get("references") and defkwargs.get("references"):
-                    data["references"] = f"{data['references']}\n{defkwargs['references']}"
-                elif defkwargs.get("references"):
-                    data["references"] = defkwargs["references"]
-                data["keywords"] = [*defkwargs.get("keywords", []), *data.get("keywords", [])]
-                data.setdefault("realm", defkwargs.get("realm"))
+                    if data.get("references") and defkwargs.get("references"):
+                        data["references"] = f"{data['references']}\n{defkwargs['references']}"
+                    elif defkwargs.get("references"):
+                        data["references"] = defkwargs["references"]
+                    data["keywords"] = [*defkwargs.get("keywords", []), *data.get("keywords", [])]
+                    data.setdefault("realm", defkwargs.get("realm"))
 
-                mapping[identifier] = base(identifier=f"{coll_name}.{identifier}", module=coll_name, **data)
+                    ind = base(
+                        identifier=f"{coll_name}.{identifier}",
+                        module=coll_name,
+                        register=register and (section == "indicators"),
+                        **data,
+                    )
+                    if section == "bases":
+                        bases[identifier] = ind.__class__
+                    else:
+                        mapping[identifier] = ind
 
-            except Exception as err:  # pylint: disable=broad-except
-                raise_warn_or_log(err, mode, msg=f"Constructing {identifier} failed with {err!r}")
+                except Exception as err:  # pylint: disable=broad-except
+                    raise_warn_or_log(err, mode, msg=f"Constructing {identifier} failed with {err!r}")
 
-        coll = cls(mapping, name=coll_name, doc=doc)
+        coll = cls(mapping, name=coll_name, bases=bases, doc=doc)
         # If there are translations, load them
         if _translations:
             for locale, loc_dict in _translations.items():
@@ -301,16 +362,43 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         return coll
 
     @staticmethod
-    def _find_base_class(name, mapping):
-        if name.startswith("."):
-            # A point means the base has been declared above.
-            base = mapping[name[1:]].__class__
-        elif name in base_registry:
-            base = base_registry[name]
-        elif name in registry:
-            base = registry[name].__class__
-        else:
-            raise ValueError(f"Can't find requested base class {name}.")
+    def _validate_yaml(schema_path, yml_path, encoding):
+        # Read schema
+        schema = yamale.make_schema(schema_path)
+
+        # Validate - a YamaleError will be raised if the module does not comply with the schema.
+        yamale.validate(schema, yamale.make_data(content=yml_path.read_text(encoding=encoding)))
+
+    @staticmethod
+    def _find_base_class(name, mapping, bases):
+        try:
+            if name.startswith("."):
+                # A starting dot means the base has been declared above.
+                if name[1:] in bases:
+                    base = bases[name[1:]]
+                else:
+                    base = mapping[name[1:]].__class__
+            elif name in base_registry:
+                base = base_registry[name]
+            elif name in registry:
+                base = registry[name].__class__
+            elif "." in name:
+                # A dot not at the start means a qualified name either relative to xclim.indicators or full
+                xclim_mods = [
+                    mod
+                    for mod in dir(xclim.indicators)
+                    if isinstance(getattr(xclim.indicators, mod), (IndicatorCollection, ModuleType))
+                ]
+                if name.count(".") == 1 and name.split(".")[0] in xclim_mods:
+                    name = f"xclim.indicators.{name}"
+                modname, indname = name.rsplit(".", 1)
+                base = getattr(import_module(modname), indname)
+                if isinstance(base, Indicator):
+                    base = base.__class__
+            else:
+                raise KeyError(name)
+        except Exception as err:
+            raise ValueError(f"Can't find base class {name}.") from err
         return base
 
     @staticmethod
@@ -318,17 +406,23 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         func = None
         if computes is not None:
             func = getattr(computes, name, None)
-        if func is None:
-            if hasattr(computes, "__getitem__") and name in computes:
+            if func is None and hasattr(computes, "__getitem__") and name in computes:
                 func = computes[name]
-            elif "." in name:
+        if func is None:
+            if "." in name:
                 modname, name = name.split(".")
                 submod = getattr(xclim.compute, modname, None)
                 func = getattr(submod, name, None)
             else:
                 func = getattr(xclim.compute.generic, name, getattr(xclim.compute, name, None))
+        if func is None and "." in name:
+            modname, funcname = name.rsplit(".", 1)
+            try:
+                func = getattr(import_module(modname), funcname)
+            except ModuleNotFoundError as err:
+                raise_warn_or_log(err, "log", msg=f"Failed importing {funcname} from {modname}.")
         if func is None:
-            raise ValueError(f"Can't find requested compute function {name}.")
+            raise ValueError(f"Can't find compute function '{name}'.")
         return func
 
     def __dir__(self):

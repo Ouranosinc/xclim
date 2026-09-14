@@ -752,13 +752,13 @@
     "title": "Calcul les paramètres d'une distribution univariée pour un ensemble de données",
     "abstract": ""
   },
-  "DOY_QMAX": {
+  "RIVO_MAX_DOY": {
     "long_name": "Jour de l'année du maximum du débit en {indexer:nom}",
     "description": "Jour de l'année du maximum du débit en {indexer:nom}.",
     "title": "Jour de l'année du maximum du débit",
     "abstract": ""
   },
-  "DOY_QMIN": {
+  "RIVO_MIN_DOY": {
     "long_name": "Jour de l'année du minimum du débit en {indexer:nom}",
     "description": "Jour de l'année du minimum du débit en {indexer:nom}.",
     "title": "Jour de l'année du minimum du débit",
@@ -818,7 +818,7 @@
     "title": "Durée totale des périodes chaudes",
     "abstract": "Durée totale des périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
   },
-  "CONSECUTIVE_FROST_FREE_DAYS": {
+  "MAXIMUM_CONSECUTIVE_FROST_FREE_DAYS": {
     "long_name": "Nombre maximal de jours consécutifs ayant une température minimale au-dessus ou égale à {thresh}",
     "description": "Nombre maximal {freq:m} de jours consécutifs où la température minimale quotidienne est au-dessus ou égale à {thresh}.",
     "title": "Nombre maximal de jours consécutifs sans gel",
@@ -1069,7 +1069,7 @@
     "title": "Quantité de neige à la surface",
     "abstract": "Quantité de neige à la surface calculée à partir de son épaisseur et de sa densité."
   },
-  "PRLP": {
+  "PRRA": {
     "long_name": "Précipitation liquide (méthode \"{methode}\" avec une température égale ou inférieure à {thresh})",
     "description": "Précipitation liquide estimée à partir de la précipitation totale et de la température selon la méthode {method} et le seuil de température {thresh}.",
     "title": "Approximation de la pluie",
@@ -1472,9 +1472,9 @@
   },
   "FLOW_INDEX": {
     "long_name": "Indice de débit",
-    "description": "Le {p}e percentile du débit normalisé par le débit médian.",
+    "description": "Le {q}e quantile du débit normalisé par le débit médian.",
     "title": "Indice de débit",
-    "abstract": "Indice de débit, calculé comme le rapport entre un percentile donné du débit et la médiane."
+    "abstract": "Indice de débit, calculé comme le rapport entre un quantile donné du débit et la médiane."
   },
   "HIGH_FLOW_FREQUENCY": {
     "long_name": "Fréquence des débits élevés",

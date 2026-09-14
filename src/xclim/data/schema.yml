@@ -4,6 +4,7 @@ keywords: str(required=False)
 module: str(required=False)
 realm: str(required=False)
 references: str(required=False)
+bases: map(include('indicator'), key=regex(r'^[-\w]+$'), required=False)
 indicators: map(include('indicator'), key=regex(r'^[-\w]+$'))
 variables: map(include('variable'), key=regex(r'^[\w]+$'), required=False)
 ---

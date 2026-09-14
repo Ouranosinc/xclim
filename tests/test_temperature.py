@@ -27,7 +27,7 @@ class TestCSDI:
         tn10 = percentile_doy(tn, per=10).sel(percentiles=10)
 
         out = atmos.cold_spell_duration_index(tn, tn10, freq="YS-JUL")
-        assert out[0] == 10
+        assert out.csdi_6[0] == 10
 
     def test_convert_units(self, tasmin_series, random):
         i = 3650
@@ -39,7 +39,7 @@ class TestCSDI:
         tn10 = percentile_doy(tn, per=10).sel(percentiles=10)
 
         out = atmos.cold_spell_duration_index(tn, tn10, freq="YS-JUL")
-        assert out[0] == 10
+        assert out.csdi_6[0] == 10
 
     def test_nan_presence(self, tasmin_series, random):
         i = 3650
@@ -51,7 +51,7 @@ class TestCSDI:
         tn10 = percentile_doy(tn, per=10).sel(percentiles=10)
 
         out = atmos.cold_spell_duration_index(tn, tn10, freq="YS-JUL")
-        assert np.isnan(out[0])
+        assert np.isnan(out.csdi_6[0])
 
 
 class TestDTR:
@@ -70,28 +70,28 @@ class TestDTR:
         # put a nan somewhere
         tasmin.values[32, 1, 0] = np.nan
         tasmin_C.values[32, 1, 0] = np.nan
-        dtr = atmos.daily_temperature_range(tasmin, tasmax, freq="MS")
-        dtrC = atmos.daily_temperature_range(tasmin_C, tasmax_C, freq="MS")
+        out = atmos.daily_temperature_range(tasmin, tasmax, freq="MS")
+        outC = atmos.daily_temperature_range(tasmin_C, tasmax_C, freq="MS")
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
 
         dtr1 = max1 - min1
 
-        np.testing.assert_array_equal(dtr, dtrC)
-        assert dtr.attrs["units"] == "K"
-        assert np.allclose(dtr1[0:31].mean(), dtr.values[0, 0, 0])
+        np.testing.assert_array_equal(out.dtr, outC.dtr)
+        assert out.dtr.attrs["units"] == "K"
+        assert np.allclose(dtr1[0:31].mean(), out.dtr.values[0, 0, 0])
 
-        assert np.isnan(dtr.values[1, 1, 0])
+        assert np.isnan(out.dtr.values[1, 1, 0])
 
-        assert np.isnan(dtr.values[0, -1, -1])
+        assert np.isnan(out.dtr.values[0, -1, -1])
 
-        dtr = atmos.max_daily_temperature_range(tasmin, tasmax, freq="MS")
-        dtrC = atmos.max_daily_temperature_range(tasmin_C, tasmax_C, freq="MS")
-        np.testing.assert_array_equal(dtr, dtrC)
-        assert dtr.attrs["units"] == "K"
-        assert np.allclose(dtr1[0:31].max(), dtr.values[0, 0, 0])
-        assert np.isnan(dtr.values[1, 1, 0])
-        assert np.isnan(dtr.values[0, -1, -1])
+        out = atmos.max_daily_temperature_range(tasmin, tasmax, freq="MS")
+        outC = atmos.max_daily_temperature_range(tasmin_C, tasmax_C, freq="MS")
+        np.testing.assert_array_equal(out.dtrmax, outC.dtrmax)
+        assert out.dtrmax.attrs["units"] == "K"
+        assert np.allclose(dtr1[0:31].max(), out.dtrmax.values[0, 0, 0])
+        assert np.isnan(out.dtrmax.values[1, 1, 0])
+        assert np.isnan(out.dtrmax.values[0, -1, -1])
 
 
 class TestDTRVar:
@@ -110,21 +110,21 @@ class TestDTRVar:
         # put a nan somewhere
         tasmin.values[32, 1, 0] = np.nan
         tasmin_C.values[32, 1, 0] = np.nan
-        dtr = atmos.daily_temperature_range_variability(tasmin, tasmax, freq="MS")
-        dtrC = atmos.daily_temperature_range_variability(tasmin_C, tasmax_C, freq="MS")
+        out = atmos.daily_temperature_range_variability(tasmin, tasmax, freq="MS")
+        outC = atmos.daily_temperature_range_variability(tasmin_C, tasmax_C, freq="MS")
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
-        assert dtr.attrs["units"] == "K"
+        assert out.dtrvar.attrs["units"] == "K"
         dtr1a = max1 - min1
         dtr1 = abs(np.diff(dtr1a))
-        np.testing.assert_array_equal(dtr, dtrC)
+        np.testing.assert_array_equal(out.dtrvar, outC.dtrvar)
 
         # first month jan use 0:30 (n==30) because of day to day diff
-        assert np.allclose(dtr1[0:30].mean(), dtr.values[0, 0, 0])
+        assert np.allclose(dtr1[0:30].mean(), out.dtrvar.values[0, 0, 0])
 
-        assert np.isnan(dtr.values[1, 1, 0])
+        assert np.isnan(out.dtrvar.values[1, 1, 0])
 
-        assert np.isnan(dtr.values[0, -1, -1])
+        assert np.isnan(out.dtrvar.values[0, -1, -1])
 
 
 class TestETR:
@@ -144,19 +144,19 @@ class TestETR:
         tasmin.values[32, 1, 0] = np.nan
         tasmin_C.values[32, 1, 0] = np.nan
 
-        etr = atmos.extreme_temperature_range(tasmin, tasmax, freq="MS")
-        etrC = atmos.extreme_temperature_range(tasmin_C, tasmax_C, freq="MS")
+        out = atmos.extreme_temperature_range(tasmin, tasmax, freq="MS")
+        outC = atmos.extreme_temperature_range(tasmin_C, tasmax_C, freq="MS")
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
 
-        np.testing.assert_array_equal(etr, etrC)
+        np.testing.assert_array_equal(out.etr, outC.etr)
 
         etr1 = max1[0:31].max() - min1[0:31].min()
-        assert np.allclose(etr1, etr.values[0, 0, 0])
+        assert np.allclose(etr1, out.etr.values[0, 0, 0])
 
-        assert np.isnan(etr.values[1, 1, 0])
+        assert np.isnan(out.etr.values[1, 1, 0])
 
-        assert np.isnan(etr.values[0, -1, -1])
+        assert np.isnan(out.etr.values[0, -1, -1])
 
 
 class TestTmean:
@@ -168,27 +168,27 @@ class TestTmean:
     def test_Tmean_3d_data(self, open_dataset):
         ds_tmax = open_dataset(self.nc_files[0])
         ds_tmin = open_dataset(self.nc_files[1])
-        tas = convert.mean_temperature_from_max_and_min(ds_tmin.tasmin, ds_tmax.tasmax)
-        tas_C = convert.mean_temperature_from_max_and_min(ds_tmin.tasmin, ds_tmax.tasmax)
+        tas = convert.mean_temperature_from_max_and_min(ds_tmin.tasmin, ds_tmax.tasmax).tas
+        tas_C = convert.mean_temperature_from_max_and_min(ds_tmin.tasmin, ds_tmax.tasmax).tas
         tas_C.values -= K2C
         tas_C.attrs["units"] = "C"
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
         tas_C.values[180, 1, 0] = np.nan
-        tmmean = atmos.tg_mean(tas)
-        tmmeanC = atmos.tg_mean(tas_C)
+        out = atmos.tg_mean(tas)
+        outC = atmos.tg_mean(tas_C)
         x1 = tas.values[:, 0, 0]
         tmmean1 = x1.mean()
 
         # TODO: Investigate the differences between the two outputs.
         # The conversion to K is done after / before the mean.
-        np.testing.assert_array_almost_equal(tmmeanC, tmmean, 3)
+        np.testing.assert_array_almost_equal(out.tg_mean, outC.tg_mean, 3)
         # test single point vs manual
-        assert np.allclose(tmmean1, tmmean.values[0, 0, 0], tmmeanC.values[0, 0, 0])
+        assert np.allclose(tmmean1, out.tg_mean.values[0, 0, 0], outC.tg_mean.values[0, 0, 0])
         # test single nan point
-        assert np.isnan(tmmean.values[0, 1, 0])
+        assert np.isnan(out.tg_mean.values[0, 1, 0])
         # test all nan point
-        assert np.isnan(tmmean.values[0, -1, -1])
+        assert np.isnan(out.tg_mean.values[0, -1, -1])
 
 
 class TestTx:
@@ -202,41 +202,36 @@ class TestTx:
         # put a nan somewhere
         tasmax.values[180, 1, 0] = np.nan
         tasmax_C.values[180, 1, 0] = np.nan
-        txmean = atmos.tx_mean(tasmax)
-        txmax = atmos.tx_max(tasmax)
-        txmin = atmos.tx_min(tasmax)
+        out = xr.merge([atmos.tx_mean(tasmax), atmos.tx_max(tasmax), atmos.tx_min(tasmax)])
+        outC = xr.merge([atmos.tx_mean(tasmax_C), atmos.tx_max(tasmax_C), atmos.tx_min(tasmax_C)])
 
-        txmeanC = atmos.tx_mean(tasmax_C)
-        txmaxC = atmos.tx_max(tasmax_C)
-        txminC = atmos.tx_min(tasmax_C)
-
-        no_nan = ~np.isnan(txmean).values & ~np.isnan(txmax).values & ~np.isnan(txmin).values
+        no_nan = ~np.isnan(out.tx_mean).values & ~np.isnan(out.tx_max).values & ~np.isnan(out.tx_min).values
 
         # test maxes always greater than mean and mean always greater than min (non nan values only)
-        assert np.all(txmax.values[no_nan] > txmean.values[no_nan]) & np.all(
-            txmean.values[no_nan] > txmin.values[no_nan]
+        assert np.all(out.tx_max.values[no_nan] > out.tx_mean.values[no_nan]) & np.all(
+            out.tx_mean.values[no_nan] > out.tx_min.values[no_nan]
         )
 
-        np.testing.assert_array_almost_equal(txmeanC, txmean, 3)
-        np.testing.assert_array_equal(txminC, txmin)
-        np.testing.assert_array_equal(txmaxC, txmax)
+        np.testing.assert_array_almost_equal(outC.tx_mean, out.tx_mean, 3)
+        np.testing.assert_array_equal(outC.tx_min, out.tx_min)
+        np.testing.assert_array_equal(outC.tx_max, out.tx_max)
         x1 = tasmax.values[:, 0, 0]
         txmean1 = x1.mean()
         txmin1 = x1.min()
         txmax1 = x1.max()
 
         # test single point vs manual
-        assert np.allclose(txmean1, txmean.values[0, 0, 0], txmeanC.values[0, 0, 0])
-        assert np.allclose(txmax1, txmax.values[0, 0, 0], txmaxC.values[0, 0, 0])
-        assert np.allclose(txmin1, txmin.values[0, 0, 0], txminC.values[0, 0, 0])
+        assert np.allclose(txmean1, out.tx_mean.values[0, 0, 0], outC.tx_mean.values[0, 0, 0])
+        assert np.allclose(txmax1, out.tx_max.values[0, 0, 0], outC.tx_max.values[0, 0, 0])
+        assert np.allclose(txmin1, out.tx_min.values[0, 0, 0], outC.tx_min.values[0, 0, 0])
         # test single nan point
-        assert np.isnan(txmean.values[0, 1, 0])
-        assert np.isnan(txmin.values[0, 1, 0])
-        assert np.isnan(txmax.values[0, 1, 0])
+        assert np.isnan(out.tx_mean.values[0, 1, 0])
+        assert np.isnan(out.tx_min.values[0, 1, 0])
+        assert np.isnan(out.tx_max.values[0, 1, 0])
         # test all nan point
-        assert np.isnan(txmean.values[0, -1, -1])
-        assert np.isnan(txmin.values[0, -1, -1])
-        assert np.isnan(txmax.values[0, -1, -1])
+        assert np.isnan(out.tx_mean.values[0, -1, -1])
+        assert np.isnan(out.tx_min.values[0, -1, -1])
+        assert np.isnan(out.tx_max.values[0, -1, -1])
 
 
 class TestTn:
@@ -250,42 +245,37 @@ class TestTn:
         # put a nan somewhere
         tasmin.values[180, 1, 0] = np.nan
         tasmin_C.values[180, 1, 0] = np.nan
-        tnmean = atmos.tn_mean(tasmin)
-        tnmax = atmos.tn_max(tasmin)
-        tnmin = atmos.tn_min(tasmin)
 
-        tnmeanC = atmos.tn_mean(tasmin_C)
-        tnmaxC = atmos.tn_max(tasmin_C)
-        tnminC = atmos.tn_min(tasmin_C)
+        out = xr.merge([atmos.tn_mean(tasmin), atmos.tn_max(tasmin), atmos.tn_min(tasmin)])
+        outC = xr.merge([atmos.tn_mean(tasmin_C), atmos.tn_max(tasmin_C), atmos.tn_min(tasmin_C)])
 
-        no_nan = ~np.isnan(tnmean).values & ~np.isnan(tnmax).values & ~np.isnan(tnmin).values
+        no_nan = ~np.isnan(out.tn_mean).values & ~np.isnan(out.tn_max).values & ~np.isnan(out.tn_min).values
 
         # test maxes always greater than mean and mean always greater than min (non nan values only)
-        assert np.all(tnmax.values[no_nan] > tnmean.values[no_nan]) & np.all(
-            tnmean.values[no_nan] > tnmin.values[no_nan]
+        assert np.all(out.tn_max.values[no_nan] > out.tn_mean.values[no_nan]) & np.all(
+            out.tn_mean.values[no_nan] > out.tn_min.values[no_nan]
         )
 
-        np.testing.assert_array_almost_equal(tnmeanC, tnmean, 3)
-        np.testing.assert_array_equal(tnminC, tnmin)
-        np.testing.assert_array_equal(tnmaxC, tnmax)
-
+        np.testing.assert_array_almost_equal(outC.tn_mean, out.tn_mean, 3)
+        np.testing.assert_array_equal(outC.tn_min, out.tn_min)
+        np.testing.assert_array_equal(outC.tn_max, out.tn_max)
         x1 = tasmin.values[:, 0, 0]
-        txmean1 = x1.mean()
-        txmin1 = x1.min()
-        txmax1 = x1.max()
+        tnmean1 = x1.mean()
+        tnmin1 = x1.min()
+        tnmax1 = x1.max()
 
         # test single point vs manual
-        assert np.allclose(txmean1, tnmean.values[0, 0, 0], tnmeanC.values[0, 0, 0])
-        assert np.allclose(txmax1, tnmax.values[0, 0, 0], tnmaxC.values[0, 0, 0])
-        assert np.allclose(txmin1, tnmin.values[0, 0, 0], tnminC.values[0, 0, 0])
+        assert np.allclose(tnmean1, out.tn_mean.values[0, 0, 0], outC.tn_mean.values[0, 0, 0])
+        assert np.allclose(tnmax1, out.tn_max.values[0, 0, 0], outC.tn_max.values[0, 0, 0])
+        assert np.allclose(tnmin1, out.tn_min.values[0, 0, 0], outC.tn_min.values[0, 0, 0])
         # test single nan point
-        assert np.isnan(tnmean.values[0, 1, 0])
-        assert np.isnan(tnmin.values[0, 1, 0])
-        assert np.isnan(tnmax.values[0, 1, 0])
+        assert np.isnan(out.tn_mean.values[0, 1, 0])
+        assert np.isnan(out.tn_min.values[0, 1, 0])
+        assert np.isnan(out.tn_max.values[0, 1, 0])
         # test all nan point
-        assert np.isnan(tnmean.values[0, -1, -1])
-        assert np.isnan(tnmin.values[0, -1, -1])
-        assert np.isnan(tnmax.values[0, -1, -1])
+        assert np.isnan(out.tn_mean.values[0, -1, -1])
+        assert np.isnan(out.tn_min.values[0, -1, -1])
+        assert np.isnan(out.tn_max.values[0, -1, -1])
 
 
 class TestConsecutiveFrostDays:
@@ -295,7 +285,7 @@ class TestConsecutiveFrostDays:
 
         ts = tasmin_series(a)
         out = atmos.consecutive_frost_days(ts)
-        np.testing.assert_array_equal(out, [1])
+        np.testing.assert_array_equal(out.consecutive_frost_days, [1])
 
     def test_three_freeze_day(self, tasmin_series):
         a = np.zeros(365) + K2C + 5.0
@@ -303,7 +293,7 @@ class TestConsecutiveFrostDays:
 
         ts = tasmin_series(a)
         out = atmos.consecutive_frost_days(ts)
-        np.testing.assert_array_equal(out, [3])
+        np.testing.assert_array_equal(out.consecutive_frost_days, [3])
 
     def test_two_equal_freeze_day(self, tasmin_series):
         a = np.zeros(365) + K2C + 5.0
@@ -311,7 +301,7 @@ class TestConsecutiveFrostDays:
         a[6:9] -= 20
         ts = tasmin_series(a)
         out = atmos.consecutive_frost_days(ts)
-        np.testing.assert_array_equal(out, [3])
+        np.testing.assert_array_equal(out.consecutive_frost_days, [3])
 
     def test_two_events_freeze_day(self, tasmin_series):
         a = np.zeros(365) + K2C + 5.0
@@ -319,7 +309,7 @@ class TestConsecutiveFrostDays:
         a[6:10] -= 20
         ts = tasmin_series(a)
         out = atmos.consecutive_frost_days(ts)
-        np.testing.assert_array_equal(out, [4])
+        np.testing.assert_array_equal(out.consecutive_frost_days, [4])
 
     def test_convert_units_freeze_day(self, tasmin_series):
         a = np.zeros(365) + 5.0
@@ -328,7 +318,7 @@ class TestConsecutiveFrostDays:
         ts = tasmin_series(a)
         ts.attrs["units"] = "C"
         out = atmos.consecutive_frost_days(ts)
-        np.testing.assert_array_equal(out, [4])
+        np.testing.assert_array_equal(out.consecutive_frost_days, [4])
 
     def test_one_nan_day(self, tasmin_series):
         a = np.zeros(365) + K2C + 5.0
@@ -337,15 +327,17 @@ class TestConsecutiveFrostDays:
 
         ts = tasmin_series(a)
         out = atmos.consecutive_frost_days(ts)
-        np.testing.assert_array_equal(out, [np.nan])
+        np.testing.assert_array_equal(out.consecutive_frost_days, [np.nan])
 
 
 class TestConsecutiveFrostFreeDays:
     def test_real_data(self, atmosds):
         tasmin = atmosds.tasmin
         test = atmos.maximum_consecutive_frost_free_days(tasmin)
-        np.testing.assert_allclose(test[2, 0], [68], rtol=1e-1)
-        assert ("Annual maximum number of consecutive days with minimum daily temperature > 0") in test.description
+        np.testing.assert_allclose(test.maximum_consecutive_frost_free_days[2, 0], [68], rtol=1e-1)
+        assert (
+            "Annual maximum number of consecutive days with minimum daily temperature > 0"
+        ) in test.maximum_consecutive_frost_free_days.description
 
 
 class TestFrostSeasonLength:
@@ -356,13 +348,13 @@ class TestFrostSeasonLength:
         tasmin = tasmin_series(a, start="2000-01-01")
         # Default, window = 5, mid_date = 07-01, freq= YS-JUL
         out = atmos.frost_season_length(tasmin=tasmin)
-        np.testing.assert_array_equal(out, [np.nan, 107, np.nan])
+        np.testing.assert_array_equal(out.frost_season_length, [np.nan, 107, np.nan])
 
         out = atmos.frost_season_length(tasmin=tasmin, window=3)
-        np.testing.assert_array_equal(out, [np.nan, 100, np.nan])
+        np.testing.assert_array_equal(out.frost_season_length, [np.nan, 100, np.nan])
 
         out = atmos.frost_season_length(tasmin=tasmin, mid_date="07-01", freq="YS")
-        np.testing.assert_array_equal(out, [0, 181])
+        np.testing.assert_array_equal(out.frost_season_length, [0, 181])
 
 
 class TestColdSpellTotalLength:
@@ -373,9 +365,9 @@ class TestColdSpellTotalLength:
         a[80:100] -= 30  # at the end and beginning
         ts = tas_series(a)
         out = atmos.cold_spell_total_length(ts, window=5, thresh="-10 C", freq="MS")
-        np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
+        np.testing.assert_array_equal(out.cold_spell_total_length, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
         out = atmos.cold_spell_frequency(ts, window=5, thresh="-10 C", freq="MS")
-        np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
+        np.testing.assert_array_equal(out.cold_spell_frequency, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 
     def test_convert_units(self, tas_series):
         a = np.zeros(365)
@@ -385,9 +377,9 @@ class TestColdSpellTotalLength:
         ts = tas_series(a)
         ts.attrs["units"] = "C"
         out = atmos.cold_spell_total_length(ts, window=5, thresh="-10 C", freq="MS")
-        np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
+        np.testing.assert_array_equal(out.cold_spell_total_length, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
         out = atmos.cold_spell_frequency(ts, window=5, thresh="-10 C", freq="MS")
-        np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
+        np.testing.assert_array_equal(out.cold_spell_frequency, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 
     def test_nan_presence(self, tas_series):
         a = np.zeros(365) + K2C
@@ -398,9 +390,9 @@ class TestColdSpellTotalLength:
         ts = tas_series(a)
 
         out = atmos.cold_spell_total_length(ts, window=5, thresh="-10 C", freq="MS")
-        np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, np.nan])
+        np.testing.assert_array_equal(out.cold_spell_total_length, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, np.nan])
         out = atmos.cold_spell_frequency(ts, window=5, thresh="-10 C", freq="MS")
-        np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, np.nan])
+        np.testing.assert_array_equal(out.cold_spell_frequency, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, np.nan])
 
 
 class TestFrostDays:
@@ -417,26 +409,26 @@ class TestFrostDays:
         tasminC.values[180, 1, 0] = np.nan
         # compute with both skipna options
         thresh = 273.16
-        fd = atmos.frost_days(tasmin, freq="YS")
-        fdC = atmos.frost_days(tasminC, freq="YS")
+        out = atmos.frost_days(tasmin, freq="YS")
+        outC = atmos.frost_days(tasminC, freq="YS")
 
         x1 = tasmin.values[:, 0, 0]
 
         fd1 = (x1[x1 < thresh]).size
 
-        np.testing.assert_array_equal(fd, fdC)
+        np.testing.assert_array_equal(out.frost_days, outC.frost_days)
 
-        assert np.allclose(fd1, fd.values[0, 0, 0])
-        assert np.isnan(fd.values[0, 1, 0])
-        assert np.isnan(fd.values[0, -1, -1])
+        assert np.allclose(fd1, out.frost_days.values[0, 0, 0])
+        assert np.isnan(out.frost_days.values[0, 1, 0])
+        assert np.isnan(out.frost_days.values[0, -1, -1])
 
     def test_indexing(self, open_dataset):
         tasmin = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
-        fd1 = atmos.frost_days(tasmin, freq="YS")
-        fd2 = atmos.frost_days(tasmin, freq="YS", date_bounds=["09-01", "12-31"])
+        out1 = atmos.frost_days(tasmin, freq="YS")
+        out2 = atmos.frost_days(tasmin, freq="YS", date_bounds=["09-01", "12-31"])
 
-        np.testing.assert_array_equal(fd1.isel(location=0), [90, 99, 114, 100])
-        np.testing.assert_array_equal(fd2.isel(location=0), [18, 23, 24, 17])
+        np.testing.assert_array_equal(out1.frost_days.isel(location=0), [90, 99, 114, 100])
+        np.testing.assert_array_equal(out2.frost_days.isel(location=0), [18, 23, 24, 17])
 
 
 class TestIceDays:
@@ -453,18 +445,18 @@ class TestIceDays:
         tasC.values[180, 1, 0] = np.nan
         # compute with both skipna options
         thresh = 273.16
-        fd = atmos.ice_days(tas, freq="YS")
-        fdC = atmos.ice_days(tasC, freq="YS")
+        out = atmos.ice_days(tas, freq="YS")
+        outC = atmos.ice_days(tasC, freq="YS")
 
         x1 = tas.values[:, 0, 0]
 
         fd1 = (x1[x1 < thresh]).size
 
-        np.testing.assert_array_equal(fd, fdC)
+        np.testing.assert_array_equal(out.ice_days, outC.ice_days)
 
-        assert np.allclose(fd1, fd.values[0, 0, 0])
-        assert np.isnan(fd.values[0, 1, 0])
-        assert np.isnan(fd.values[0, -1, -1])
+        assert np.allclose(fd1, out.ice_days.values[0, 0, 0])
+        assert np.isnan(out.ice_days.values[0, 1, 0])
+        assert np.isnan(out.ice_days.values[0, -1, -1])
 
 
 class TestCoolingDegreeDays:
@@ -479,15 +471,15 @@ class TestCoolingDegreeDays:
 
         # compute with both skipna options
         thresh = 18 + K2C
-        cdd = atmos.cooling_degree_days(tas, thresh="18 C", freq="YS")
+        out = atmos.cooling_degree_days(tas, thresh="18 C", freq="YS")
 
         x1 = tas.values[:, 0, 0]
 
         cdd1 = (x1[x1 > thresh] - thresh).sum()
 
-        assert np.allclose(cdd1, cdd.values[0, 0, 0])
-        assert np.isnan(cdd.values[0, 1, 0])
-        assert np.isnan(cdd.values[0, -1, -1])
+        assert np.allclose(cdd1, out.cooling_degree_days.values[0, 0, 0])
+        assert np.isnan(out.cooling_degree_days.values[0, 1, 0])
+        assert np.isnan(out.cooling_degree_days.values[0, -1, -1])
 
     def test_convert_units(self, open_dataset):
         # test with 3d data
@@ -500,7 +492,7 @@ class TestCoolingDegreeDays:
 
         # compute with both skipna options
         thresh = 18
-        cdd = atmos.cooling_degree_days(tas, thresh="18 C", freq="YS")
+        out = atmos.cooling_degree_days(tas, thresh="18 C", freq="YS")
 
         x1 = tas.values[:, 0, 0]
         # x2 = tas.values[:, 1, 0]
@@ -508,11 +500,11 @@ class TestCoolingDegreeDays:
         cdd1 = (x1[x1 > thresh] - thresh).sum()
         # gdd2 = (x2[x2 > thresh] - thresh).sum()
 
-        assert np.allclose(cdd1, cdd.values[0, 0, 0])
+        assert np.allclose(cdd1, out.cooling_degree_days.values[0, 0, 0])
         # assert (np.allclose(gdd1, gdds.values[0, 0, 0]))
-        assert np.isnan(cdd.values[0, 1, 0])
+        assert np.isnan(out.cooling_degree_days.values[0, 1, 0])
         # assert (np.allclose(gdd2, gdds.values[0, 1, 0]))
-        assert np.isnan(cdd.values[0, -1, -1])
+        assert np.isnan(out.cooling_degree_days.values[0, -1, -1])
         # assert (np.isnan(gdds.values[0, -1, -1]))
 
 
@@ -527,15 +519,15 @@ class TestHeatingDegreeDays:
         tas.attrs["cell_methods"] = "time: mean within days"
         # compute with both skipna options
         thresh = 17 + K2C
-        hdd = atmos.heating_degree_days(tas, freq="YS")
+        out = atmos.heating_degree_days(tas, freq="YS")
 
         x1 = tas.values[:, 0, 0]
 
         hdd1 = (thresh - x1).clip(min=0).sum()
 
-        assert np.allclose(hdd1, hdd.values[0, 0, 0])
-        assert np.isnan(hdd.values[0, 1, 0])
-        assert np.isnan(hdd.values[0, -1, -1])
+        assert np.allclose(hdd1, out.heating_degree_days.values[0, 0, 0])
+        assert np.isnan(out.heating_degree_days.values[0, 1, 0])
+        assert np.isnan(out.heating_degree_days.values[0, -1, -1])
 
     def test_convert_units(self, open_dataset):
         # test with 3d data
@@ -547,15 +539,15 @@ class TestHeatingDegreeDays:
         tas.attrs["cell_methods"] = "time: mean within days"
         # compute with both skipna options
         thresh = 17
-        hdd = atmos.heating_degree_days(tas, freq="YS")
+        out = atmos.heating_degree_days(tas, freq="YS")
 
         x1 = tas.values[:, 0, 0]
 
         hdd1 = (thresh - x1).clip(min=0).sum()
 
-        assert np.allclose(hdd1, hdd.values[0, 0, 0])
-        assert np.isnan(hdd.values[0, 1, 0])
-        assert np.isnan(hdd.values[0, -1, -1])
+        assert np.allclose(hdd1, out.heating_degree_days.values[0, 0, 0])
+        assert np.isnan(out.heating_degree_days.values[0, 1, 0])
+        assert np.isnan(out.heating_degree_days.values[0, -1, -1])
 
 
 class TestGrowingDegreeDays:
@@ -571,17 +563,17 @@ class TestGrowingDegreeDays:
 
         # compute with both skipna options
         thresh = K2C + 4
-        gdd = atmos.growing_degree_days(tas, freq="YS")
+        out = atmos.growing_degree_days(tas, freq="YS")
 
         x1 = tas.values[:, 0, 0]
 
         gdd1 = (x1[x1 > thresh] - thresh).sum()
 
-        assert np.allclose(gdd1, gdd.values[0, 0, 0])
+        assert np.allclose(gdd1, out.growing_degree_days.values[0, 0, 0])
 
-        assert np.isnan(gdd.values[0, 1, 0])
+        assert np.isnan(out.growing_degree_days.values[0, 1, 0])
 
-        assert np.isnan(gdd.values[0, -1, -1])
+        assert np.isnan(out.growing_degree_days.values[0, -1, -1])
 
     def test_conversion(self, open_dataset):
         ds = open_dataset(self.cancities_file)
@@ -590,8 +582,8 @@ class TestGrowingDegreeDays:
         ds_pt = ds.isel(location=1)
         out1 = atmos.growing_degree_days(tas=ds_pt.tas, thresh="5 degC", freq="MS")
         out2 = atmos.growing_degree_days(tas=ds_pt.tas_F, thresh="5 degC", freq="MS")
-        np.testing.assert_allclose(out1.values, out2.values, rtol=1e-4)
-        assert out1.units == out2.units
+        np.testing.assert_allclose(out1.growing_degree_days.values, out2.growing_degree_days.values, rtol=1e-4)
+        assert out1.growing_degree_days.units == out2.growing_degree_days.units
 
 
 class TestHeatSpellFrequency:
@@ -604,21 +596,21 @@ class TestHeatSpellFrequency:
         tn = tasmin_series(tn1 + K2C, start="1/1/2000")
         tx = tasmax_series(tx1 + K2C, start="1/1/2000")
 
-        hsf = atmos.heat_spell_frequency(
+        out = atmos.heat_spell_frequency(
             tn,
             tx,
             thresh_tasmin="22.1 C",
             thresh_tasmax="30.1 C",
             freq="YS",
         )
-        np.testing.assert_allclose(hsf.values[:1], 2)
+        np.testing.assert_allclose(out.heat_spell_frequency.values[:1], 2)
 
-        hsf = atmos.heat_spell_frequency(tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=5, freq="YS")
-        np.testing.assert_allclose(hsf.values[:1], 1)
+        out = atmos.heat_spell_frequency(tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=5, freq="YS")
+        np.testing.assert_allclose(out.heat_spell_frequency.values[:1], 1)
 
         # no hs
-        hsf = atmos.heat_spell_frequency(tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS")
-        np.testing.assert_allclose(hsf.values[:1], 0)
+        out = atmos.heat_spell_frequency(tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS")
+        np.testing.assert_allclose(out.heat_spell_frequency.values[:1], 0)
 
     def test_gap(self, tasmax_series, tasmin_series):
         tn1 = np.zeros(366)
@@ -629,8 +621,8 @@ class TestHeatSpellFrequency:
         tn = tasmin_series(tn1 + K2C, start="1/1/2000")
         tx = tasmax_series(tx1 + K2C, start="1/1/2000")
 
-        hsf = atmos.heat_spell_frequency(tn, tx, thresh_tasmin="22.1 C", thresh_tasmax="30.1 C", freq="YS", min_gap=3)
-        np.testing.assert_allclose(hsf.values[:1], 1)
+        out = atmos.heat_spell_frequency(tn, tx, thresh_tasmin="22.1 C", thresh_tasmax="30.1 C", freq="YS", min_gap=3)
+        np.testing.assert_allclose(out.heat_spell_frequency.values[:1], 1)
 
 
 class TestHeatSpellMaxLength:
@@ -643,16 +635,16 @@ class TestHeatSpellMaxLength:
         tn = tasmin_series(tn1 + K2C, start="1/1/2000")
         tx = tasmax_series(tx1 + K2C, start="1/1/2000")
 
-        hsf = atmos.heat_spell_max_length(
+        out = atmos.heat_spell_max_length(
             tn,
             tx,
             thresh_tasmin="22.1 C",
             thresh_tasmax="30.1 C",
             freq="YS",
         )
-        np.testing.assert_allclose(hsf.values[:1], 4)
+        np.testing.assert_allclose(out.heat_spell_max_length.values[:1], 4)
 
-        hsf = atmos.heat_spell_max_length(
+        out = atmos.heat_spell_max_length(
             tn,
             tx,
             thresh_tasmin="22 C",
@@ -660,11 +652,11 @@ class TestHeatSpellMaxLength:
             window=5,
             freq="YS",
         )
-        np.testing.assert_allclose(hsf.values[:1], 5)
+        np.testing.assert_allclose(out.heat_spell_max_length.values[:1], 5)
 
         # no hs
-        hsf = atmos.heat_spell_max_length(tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS")
-        np.testing.assert_allclose(hsf.values[:1], 0)
+        out = atmos.heat_spell_max_length(tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS")
+        np.testing.assert_allclose(out.heat_spell_max_length.values[:1], 0)
 
 
 class TestHeatSpellTotalLength:
@@ -677,15 +669,15 @@ class TestHeatSpellTotalLength:
         tn = tasmin_series(tn1 + K2C, start="1/1/2000")
         tx = tasmax_series(tx1 + K2C, start="1/1/2000")
 
-        hsf = atmos.heat_spell_total_length(tn, tx, thresh_tasmin="22.1 C", thresh_tasmax="30.1 C", freq="YS")
-        np.testing.assert_allclose(hsf.values[:1], 7)
+        out = atmos.heat_spell_total_length(tn, tx, thresh_tasmin="22.1 C", thresh_tasmax="30.1 C", freq="YS")
+        np.testing.assert_allclose(out.heat_spell_total_length.values[:1], 7)
 
-        hsf = atmos.heat_spell_total_length(tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=5, freq="YS")
-        np.testing.assert_allclose(hsf.values[:1], 5)
+        out = atmos.heat_spell_total_length(tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=5, freq="YS")
+        np.testing.assert_allclose(out.heat_spell_total_length.values[:1], 5)
 
         # no hs
-        hsf = atmos.heat_spell_total_length(tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS")
-        np.testing.assert_allclose(hsf.values[:1], 0)
+        out = atmos.heat_spell_total_length(tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS")
+        np.testing.assert_allclose(out.heat_spell_total_length.values[:1], 0)
 
 
 class TestHeatWaveFrequency:
@@ -702,20 +694,20 @@ class TestHeatWaveFrequency:
         txC = tasmax_series(tx1, start="1/1/2000")
         txC.attrs["units"] = "C"
 
-        hwf = atmos.heat_wave_frequency(tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS")
-        hwfC = atmos.heat_wave_frequency(tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS")
-        np.testing.assert_array_equal(hwf, hwfC)
-        np.testing.assert_allclose(hwf.values[:1], 2)
+        out = atmos.heat_wave_frequency(tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS")
+        outC = atmos.heat_wave_frequency(tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS")
+        np.testing.assert_array_equal(out.heat_wave_frequency, outC.heat_wave_frequency)
+        np.testing.assert_allclose(out.heat_wave_frequency.values[:1], 2)
 
-        hwf = atmos.heat_wave_frequency(tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=4, freq="YS")
-        np.testing.assert_allclose(hwf.values[:1], 1)
+        out = atmos.heat_wave_frequency(tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=4, freq="YS")
+        np.testing.assert_allclose(out.heat_wave_frequency.values[:1], 1)
 
         # one long hw
-        hwf = atmos.heat_wave_frequency(tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C", freq="YS")
-        np.testing.assert_allclose(hwf.values[:1], 1)
+        out = atmos.heat_wave_frequency(tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C", freq="YS")
+        np.testing.assert_allclose(out.heat_wave_frequency.values[:1], 1)
         # no hw
-        hwf = atmos.heat_wave_frequency(tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS")
-        np.testing.assert_allclose(hwf.values[:1], 0)
+        out = atmos.heat_wave_frequency(tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS")
+        np.testing.assert_allclose(out.heat_wave_frequency.values[:1], 0)
 
 
 class TestHeatWaveMaxLength:
@@ -732,20 +724,20 @@ class TestHeatWaveMaxLength:
         txC = tasmax_series(tx1, start="1/1/2000")
         txC.attrs["units"] = "C"
 
-        hwf = atmos.heat_wave_max_length(tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS")
-        hwfC = atmos.heat_wave_max_length(tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS")
-        np.testing.assert_array_equal(hwf, hwfC)
-        np.testing.assert_allclose(hwf.values[:1], 4)
+        out = atmos.heat_wave_max_length(tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS")
+        outC = atmos.heat_wave_max_length(tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS")
+        np.testing.assert_array_equal(out.heat_wave_max_length, outC.heat_wave_max_length)
+        np.testing.assert_allclose(out.heat_wave_max_length.values[:1], 4)
 
-        hwf = atmos.heat_wave_max_length(tn, tx, thresh_tasmin="20 C", thresh_tasmax="30 C", window=4, freq="YS")
-        np.testing.assert_allclose(hwf.values[:1], 5)
+        out = atmos.heat_wave_max_length(tn, tx, thresh_tasmin="20 C", thresh_tasmax="30 C", window=4, freq="YS")
+        np.testing.assert_allclose(out.heat_wave_max_length.values[:1], 5)
 
         # one long hw
-        hwf = atmos.heat_wave_max_length(tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C", freq="YS")
-        np.testing.assert_allclose(hwf.values[:1], 10)
+        out = atmos.heat_wave_max_length(tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C", freq="YS")
+        np.testing.assert_allclose(out.heat_wave_max_length.values[:1], 10)
         # no hw
-        hwf = atmos.heat_wave_max_length(tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS")
-        np.testing.assert_allclose(hwf.values[:1], 0)
+        out = atmos.heat_wave_max_length(tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS")
+        np.testing.assert_allclose(out.heat_wave_max_length.values[:1], 0)
 
 
 class TestHeatWaveTotalLength:
@@ -762,20 +754,20 @@ class TestHeatWaveTotalLength:
         txC = tasmax_series(tx1, start="1/1/2000")
         txC.attrs["units"] = "C"
 
-        hwf = atmos.heat_wave_total_length(tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS")
-        hwfC = atmos.heat_wave_total_length(tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS")
-        np.testing.assert_array_equal(hwf, hwfC)
-        np.testing.assert_allclose(hwf.values[:1], 7)
+        out = atmos.heat_wave_total_length(tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS")
+        outC = atmos.heat_wave_total_length(tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS")
+        np.testing.assert_array_equal(out.heat_wave_total_length, outC.heat_wave_total_length)
+        np.testing.assert_allclose(out.heat_wave_total_length.values[:1], 7)
 
-        hwf = atmos.heat_wave_total_length(tn, tx, thresh_tasmin="20 C", thresh_tasmax="30 C", window=4, freq="YS")
-        np.testing.assert_allclose(hwf.values[:1], 5)
+        out = atmos.heat_wave_total_length(tn, tx, thresh_tasmin="20 C", thresh_tasmax="30 C", window=4, freq="YS")
+        np.testing.assert_allclose(out.heat_wave_total_length.values[:1], 5)
 
         # one long hw
-        hwf = atmos.heat_wave_total_length(tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C", freq="YS")
-        np.testing.assert_allclose(hwf.values[:1], 10)
+        out = atmos.heat_wave_total_length(tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C", freq="YS")
+        np.testing.assert_allclose(out.heat_wave_total_length.values[:1], 10)
         # no hw
-        hwf = atmos.heat_wave_total_length(tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS")
-        np.testing.assert_allclose(hwf.values[:1], 0)
+        out = atmos.heat_wave_total_length(tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS")
+        np.testing.assert_allclose(out.heat_wave_total_length.values[:1], 0)
 
     def test_2dthresholds(self, tasmax_series, tasmin_series):
         tasmax = tasmax_series(np.arange(365) + 3, start="1/1/2001").expand_dims(lat=np.arange(20), lon=np.arange(20))
@@ -794,7 +786,7 @@ class TestHeatWaveTotalLength:
             attrs={"units": "K"},
         )
 
-        hwtl = atmos.heat_wave_total_length(
+        outl = atmos.heat_wave_total_length(
             tasmin,
             tasmax,
             thresh_tasmin=thresh_tasmin,
@@ -806,9 +798,11 @@ class TestHeatWaveTotalLength:
         exp = xr.DataArray(
             [[21, 12, 2], [11, 11, 2], [1, 1, 1]],
             dims=("lon", "lat"),
-            coords={"lon": hwtl.lon[:3], "lat": hwtl.lat[:3]},
+            coords={"lon": outl.lon[:3], "lat": outl.lat[:3]},
         )
-        np.testing.assert_array_equal(exp, hwtl.isel(time=3, lon=slice(None, 3), lat=slice(None, 3)))
+        np.testing.assert_array_equal(
+            exp, outl.heat_wave_total_length.isel(time=3, lon=slice(None, 3), lat=slice(None, 3))
+        )
 
 
 class TestDailyFreezeThaw:
@@ -822,18 +816,18 @@ class TestDailyFreezeThaw:
         # put a nan somewhere
         tasmin.values[180, 1, 0] = np.nan
 
-        frzthw = atmos.daily_freezethaw_cycles(tasmin, tasmax, freq="YS")
+        out = atmos.daily_freezethaw_cycles(tasmin, tasmax, freq="YS")
 
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
 
         frzthw1 = ((min1 < K2C) * (max1 > K2C) * 1.0).sum()
 
-        np.testing.assert_allclose(frzthw1, frzthw.values[0, 0, 0])
+        np.testing.assert_allclose(frzthw1, out.dlyfrzthw.values[0, 0, 0])
 
-        assert np.isnan(frzthw.values[0, 1, 0])
+        assert np.isnan(out.dlyfrzthw.values[0, 1, 0])
 
-        assert np.isnan(frzthw.values[0, -1, -1])
+        assert np.isnan(out.dlyfrzthw.values[0, -1, -1])
 
     def test_convert_units(self, open_dataset):
         tasmax = open_dataset(self.nc_tasmax).tasmax
@@ -850,7 +844,7 @@ class TestDailyFreezeThaw:
                 warnings.simplefilter("always", DeprecationWarning)
             else:
                 warnings.simplefilter("error")
-            frzthw = atmos.daily_freezethaw_cycles(
+            out = atmos.daily_freezethaw_cycles(
                 tasmin,
                 tasmax,
                 thresh_tasmin="0 degC",
@@ -863,9 +857,9 @@ class TestDailyFreezeThaw:
 
         frzthw1 = (((min1 < 0) & (max1 > 0)) * 1.0).sum()
 
-        np.testing.assert_allclose(frzthw1, frzthw.values[0, 0, 0])
-        assert np.isnan(frzthw.values[0, 1, 0])
-        assert np.isnan(frzthw.values[0, -1, -1])
+        np.testing.assert_allclose(frzthw1, out.dlyfrzthw.values[0, 0, 0])
+        assert np.isnan(out.dlyfrzthw.values[0, 1, 0])
+        assert np.isnan(out.dlyfrzthw.values[0, -1, -1])
 
 
 class TestGrowingSeasonLength:
@@ -881,7 +875,7 @@ class TestGrowingSeasonLength:
 
         out = atmos.growing_season_length(ts)
 
-        np.testing.assert_array_equal(out, tt.sum())
+        np.testing.assert_array_equal(out.growing_season_length, tt.sum())
 
     def test_convert_units(self, tas_series, random):
         a = np.zeros(366)
@@ -894,7 +888,7 @@ class TestGrowingSeasonLength:
 
         out = atmos.growing_season_length(ts)
 
-        np.testing.assert_array_equal(out, tt.sum())
+        np.testing.assert_array_equal(out.growing_season_length, tt.sum())
 
     def test_nan_presence(self, tas_series, random):
         a = np.zeros(366)
@@ -908,7 +902,7 @@ class TestGrowingSeasonLength:
 
         out = atmos.growing_season_length(ts)
 
-        np.testing.assert_array_equal(out, [np.nan])
+        np.testing.assert_array_equal(out.growing_season_length, [np.nan])
 
     def test_multiyear(self, tas_series, random):
         a = np.zeros(366 * 10)
@@ -922,7 +916,7 @@ class TestGrowingSeasonLength:
 
         out = atmos.growing_season_length(ts)
 
-        np.testing.assert_array_equal(out[3], tt[0:366].sum().values)
+        np.testing.assert_array_equal(out.growing_season_length[3], tt[0:366].sum().values)
 
 
 class TestTnDaysBelow:
@@ -939,20 +933,20 @@ class TestTnDaysBelow:
         tasC.values[180, 1, 0] = np.nan
         # compute with both skipna options
         thresh = 273.16 + -10
-        fd = atmos.tn_days_below(tas, thresh="-10 degC", freq="YS")
-        fdC = atmos.tn_days_below(tasC, thresh="-10 degC", freq="YS")
+        out = atmos.tn_days_below(tas, thresh="-10 degC", freq="YS")
+        outC = atmos.tn_days_below(tasC, thresh="-10 degC", freq="YS")
 
         x1 = tas.values[:, 0, 0]
 
         fd1 = (x1[x1 < thresh]).size
 
-        np.testing.assert_array_equal(fd, fdC)
+        np.testing.assert_array_equal(out.tn_days_below, outC.tn_days_below)
 
-        assert np.allclose(fd1, fd.values[0, 0, 0])
+        assert np.allclose(fd1, out.tn_days_below.values[0, 0, 0])
 
-        assert np.isnan(fd.values[0, 1, 0])
+        assert np.isnan(out.tn_days_below.values[0, 1, 0])
 
-        assert np.isnan(fd.values[0, -1, -1])
+        assert np.isnan(out.tn_days_below.values[0, -1, -1])
 
 
 class TestTxDaysAbove:
@@ -969,20 +963,20 @@ class TestTxDaysAbove:
         tasC.values[180, 1, 0] = np.nan
         # compute with both skipna options
         thresh = 273.16 + 25
-        fd = atmos.tx_days_above(tas, freq="YS")
-        fdC = atmos.tx_days_above(tasC, freq="YS")
+        out = atmos.tx_days_above(tas, freq="YS")
+        outC = atmos.tx_days_above(tasC, freq="YS")
 
         x1 = tas.values[:, 0, 0]
 
         fd1 = (x1[x1 > thresh]).size
 
-        np.testing.assert_array_equal(fd, fdC)
+        np.testing.assert_array_equal(out.tx_days_above, outC.tx_days_above)
 
-        assert np.allclose(fd1, fd.values[0, 0, 0])
+        assert np.allclose(fd1, out.tx_days_above.values[0, 0, 0])
 
-        assert np.isnan(fd.values[0, 1, 0])
+        assert np.isnan(out.tx_days_above.values[0, 1, 0])
 
-        assert np.isnan(fd.values[0, -1, -1])
+        assert np.isnan(out.tx_days_above.values[0, -1, -1])
 
 
 class TestTnDaysAbove:
@@ -1011,11 +1005,11 @@ class TestTnDaysAbove:
 
         out1 = (x1[x1 > thresh]).size
 
-        np.testing.assert_array_equal(out, outC)
+        np.testing.assert_array_equal(out[tn_indice], outC[tn_indice])
 
-        assert np.allclose(out1, out.values[0, 0, 0])
-        assert np.isnan(out.values[0, 1, 0])
-        assert np.isnan(out.values[0, -1, -1])
+        assert np.allclose(out1, out[tn_indice].values[0, 0, 0])
+        assert np.isnan(out[tn_indice].values[0, 1, 0])
+        assert np.isnan(out[tn_indice].values[0, -1, -1])
 
 
 class TestTxTnDaysAbove:
@@ -1039,18 +1033,18 @@ class TestTxTnDaysAbove:
 
         out = atmos.tx_tn_days_above(tasmin, tasmax, thresh_tasmax="25 C", thresh_tasmin="18 C")
         outC = atmos.tx_tn_days_above(tasminC, tasmaxC, thresh_tasmax="25 C", thresh_tasmin="18 C")
-        np.testing.assert_array_equal(out, outC)
+        np.testing.assert_array_equal(out.tx_tn_days_above, outC.tx_tn_days_above)
 
         min1 = tasmin.values[:, 53, 76]
         max1 = tasmax.values[:, 53, 76]
 
         out1 = ((min1 > (K2C + 18)) * (max1 > (K2C + 25)) * 1.0).sum()
 
-        assert np.allclose(out1, out.values[0, 53, 76])
+        assert np.allclose(out1, out.tx_tn_days_above.values[0, 53, 76])
 
-        assert np.isnan(out.values[0, 1, 0])
+        assert np.isnan(out.tx_tn_days_above.values[0, 1, 0])
 
-        assert np.isnan(out.values[0, -1, -1])
+        assert np.isnan(out.tx_tn_days_above.values[0, -1, -1])
 
 
 class TestT90p:
@@ -1069,10 +1063,10 @@ class TestT90p:
         out = atmos.tg90p(tas, t90, freq="MS")
         outC = atmos.tg90p(tasC, t90, freq="MS")
 
-        np.testing.assert_array_equal(out, outC)
-        assert out[0] == 30
-        assert out[1] == 29
-        assert out[5] == 25
+        np.testing.assert_array_equal(out.tg90p, outC.tg90p)
+        assert out.tg90p[0] == 30
+        assert out.tg90p[1] == 29
+        assert out.tg90p[5] == 25
 
         # nan treatment
         tas[33] = np.nan
@@ -1080,10 +1074,10 @@ class TestT90p:
         out = atmos.tg90p(tas, t90, freq="MS")
         outC = atmos.tg90p(tasC, t90, freq="MS")
 
-        np.testing.assert_array_equal(out, outC)
-        assert out[0] == 30
-        assert np.isnan(out[1])
-        assert out[5] == 25
+        np.testing.assert_array_equal(out.tg90p, outC.tg90p)
+        assert out.tg90p[0] == 30
+        assert np.isnan(out.tg90p[1])
+        assert out.tg90p[5] == 25
 
     def test_tn90p_simple(self, tasmin_series):
         i = 366
@@ -1100,10 +1094,10 @@ class TestT90p:
         out = atmos.tn90p(tas, t90, freq="MS")
         outC = atmos.tn90p(tasC, t90, freq="MS")
 
-        np.testing.assert_array_equal(out, outC)
-        assert out[0] == 30
-        assert out[1] == 29
-        assert out[5] == 25
+        np.testing.assert_array_equal(out.tn90p, outC.tn90p)
+        assert out.tn90p[0] == 30
+        assert out.tn90p[1] == 29
+        assert out.tn90p[5] == 25
 
         # nan treatment
         tas[33] = np.nan
@@ -1111,10 +1105,10 @@ class TestT90p:
         out = atmos.tn90p(tas, t90, freq="MS")
         outC = atmos.tn90p(tasC, t90, freq="MS")
 
-        np.testing.assert_array_equal(out, outC)
-        assert out[0] == 30
-        assert np.isnan(out[1])
-        assert out[5] == 25
+        np.testing.assert_array_equal(out.tn90p, outC.tn90p)
+        assert out.tn90p[0] == 30
+        assert np.isnan(out.tn90p[1])
+        assert out.tn90p[5] == 25
 
     def test_tx90p_simple(self, tasmax_series):
         i = 366
@@ -1131,10 +1125,10 @@ class TestT90p:
         out = atmos.tx90p(tas, t90, freq="MS")
         outC = atmos.tx90p(tasC, t90, freq="MS")
 
-        np.testing.assert_array_equal(out, outC)
-        assert out[0] == 30
-        assert out[1] == 29
-        assert out[5] == 25
+        np.testing.assert_array_equal(out.tx90p, outC.tx90p)
+        assert out.tx90p[0] == 30
+        assert out.tx90p[1] == 29
+        assert out.tx90p[5] == 25
 
         # nan treatment
         tas[33] = np.nan
@@ -1142,10 +1136,10 @@ class TestT90p:
         out = atmos.tx90p(tas, t90, freq="MS")
         outC = atmos.tx90p(tasC, t90, freq="MS")
 
-        np.testing.assert_array_equal(out, outC)
-        assert out[0] == 30
-        assert np.isnan(out[1])
-        assert out[5] == 25
+        np.testing.assert_array_equal(out.tx90p, outC.tx90p)
+        assert out.tx90p[0] == 30
+        assert np.isnan(out.tx90p[1])
+        assert out.tx90p[5] == 25
 
     def test_tx90p__seasonal_indexer(self, tasmax_series):
         # GIVEN
@@ -1157,7 +1151,7 @@ class TestT90p:
         # WHEN
         out = atmos.tx90p(tas, t90, freq="YS", season="JJA")
         # THEN
-        assert out[0] == 87  # non regression test
+        assert out.tx90p[0] == 87  # non regression test
 
 
 class TestT10p:
@@ -1176,10 +1170,10 @@ class TestT10p:
         out = atmos.tg10p(tas, t10, freq="MS")
         outC = atmos.tg10p(tasC, t10, freq="MS")
 
-        np.testing.assert_array_equal(out, outC)
+        np.testing.assert_array_equal(out.tg10p, outC.tg10p)
 
-        assert out[0] == 0
-        assert out[5] == 5
+        assert out.tg10p[0] == 0
+        assert out.tg10p[5] == 5
 
         # nan treatment
         tas[33] = np.nan
@@ -1187,10 +1181,10 @@ class TestT10p:
         out = atmos.tg10p(tas, t10, freq="MS")
         outC = atmos.tg10p(tasC, t10, freq="MS")
 
-        np.testing.assert_array_equal(out, outC)
-        assert out[0] == 0
-        assert np.isnan(out[1])
-        assert out[5] == 5
+        np.testing.assert_array_equal(out.tg10p, outC.tg10p)
+        assert out.tg10p[0] == 0
+        assert np.isnan(out.tg10p[1])
+        assert out.tg10p[5] == 5
 
     def test_tn10p_simple(self, tasmin_series):
         i = 366
@@ -1207,9 +1201,9 @@ class TestT10p:
         out = atmos.tn10p(tas, t10, freq="MS")
         outC = atmos.tn10p(tasC, t10, freq="MS")
 
-        np.testing.assert_array_equal(out, outC)
-        assert out[0] == 0
-        assert out[5] == 5
+        np.testing.assert_array_equal(out.tn10p, outC.tn10p)
+        assert out.tn10p[0] == 0
+        assert out.tn10p[5] == 5
 
         # nan treatment
         tas[33] = np.nan
@@ -1217,10 +1211,10 @@ class TestT10p:
         out = atmos.tn10p(tas, t10, freq="MS")
         outC = atmos.tn10p(tasC, t10, freq="MS")
 
-        np.testing.assert_array_equal(out, outC)
-        assert out[0] == 0
-        assert np.isnan(out[1])
-        assert out[5] == 5
+        np.testing.assert_array_equal(out.tn10p, outC.tn10p)
+        assert out.tn10p[0] == 0
+        assert np.isnan(out.tn10p[1])
+        assert out.tn10p[5] == 5
 
     def test_tx10p_simple(self, tasmax_series):
         i = 366
@@ -1237,9 +1231,9 @@ class TestT10p:
         out = atmos.tx10p(tas, t10, freq="MS")
         outC = atmos.tx10p(tasC, t10, freq="MS")
 
-        np.testing.assert_array_equal(out, outC)
-        assert out[0] == 0
-        assert out[5] == 5
+        np.testing.assert_array_equal(out.tx10p, outC.tx10p)
+        assert out.tx10p[0] == 0
+        assert out.tx10p[5] == 5
 
         # nan treatment
         tas[33] = np.nan
@@ -1247,15 +1241,15 @@ class TestT10p:
         out = atmos.tx10p(tas, t10, freq="MS")
         outC = atmos.tx10p(tasC, t10, freq="MS")
 
-        np.testing.assert_array_equal(out, outC)
-        assert out[0] == 0
-        assert np.isnan(out[1])
-        assert out[5] == 5
+        np.testing.assert_array_equal(out.tx10p, outC.tx10p)
+        assert out.tx10p[0] == 0
+        assert np.isnan(out.tx10p[1])
+        assert out.tx10p[5] == 5
 
 
 def test_freshet_start(tas_series):
     out = atmos.freshet_start(tas_series(np.arange(-50, 350) + 274, start="1/1/2000"), freq="YS")
-    assert out[0] == 51
+    assert out.freshet_start[0] == 51
 
 
 def test_degree_days_exceedance_date(open_dataset):
@@ -1268,19 +1262,20 @@ def test_degree_days_exceedance_date(open_dataset):
         condition=">",
         sum_thresh="200 K days",
     )
-    np.testing.assert_array_equal(out, np.array([[153, 136, 9, 6]]).T)
+    np.testing.assert_array_equal(out.degree_days_exceedance_date, np.array([[153, 136, 9, 6]]).T)
     assert (
         "Day of year when the integral of degree days (mean daily temperature > 4 degC) exceeds 200 K days."
-        in out.attrs["description"]
+        in out.degree_days_exceedance_date.attrs["description"]
     )
 
     out = atmos.degree_days_exceedance_date(
         tas=tas, thresh="4 degC", condition=">", sum_thresh="200 K days", after_date="07-01"
     )
-    np.testing.assert_array_equal(out, np.array([[199, 193, 190, 190]]).T)
+    np.testing.assert_array_equal(out.degree_days_exceedance_date, np.array([[199, 193, 190, 190]]).T)
     assert (
         "Day of year when the integral of degree days (mean daily temperature > 4 degC) "
-        "exceeds 200 K days, with the cumulative sum starting from 07-01." in out.attrs["description"]
+        "exceeds 200 K days, with the cumulative sum starting from 07-01."
+        in out.degree_days_exceedance_date.attrs["description"]
     )
 
     with set_options(check_missing="skip"):
@@ -1292,7 +1287,7 @@ def test_degree_days_exceedance_date(open_dataset):
             after_date="07-02",
             freq="YS",
         )
-        np.testing.assert_array_equal(out, np.array([[np.nan, 280, 241, 244]]).T)
+        np.testing.assert_array_equal(out.degree_days_exceedance_date, np.array([[np.nan, 280, 241, 244]]).T)
 
 
 @pytest.mark.parametrize("never_reached,exp", [(None, np.nan), (300, 300), ("12-01", 335)])
@@ -1309,7 +1304,7 @@ def test_degree_days_exceedance_date_never_reached(open_dataset, never_reached, 
         never_reached=never_reached,
         freq="YS",
     ).squeeze("time")
-    np.testing.assert_array_equal(out, np.array([exp, 242, 222, 223]))
+    np.testing.assert_array_equal(out.degree_days_exceedance_date, np.array([exp, 242, 222, 223]))
 
 
 class TestWarmSpellDurationIndex:
@@ -1318,8 +1313,10 @@ class TestWarmSpellDurationIndex:
         tx90 = percentile_doy(tasmax, window=5, per=90)
 
         out = atmos.warm_spell_duration_index(tasmax=tasmax, tasmax_per=tx90, window=3, freq="YS-JUL")
-        np.testing.assert_array_equal(out.isel(location=0, percentiles=0), np.array([np.nan, 4, 0, 0, np.nan]))
-        assert "Annual number of days with at least 3 consecutive days" in out.description
+        np.testing.assert_array_equal(
+            out.warm_spell_duration_index.isel(location=0, percentiles=0), np.array([np.nan, 4, 0, 0, np.nan])
+        )
+        assert "Annual number of days with at least 3 consecutive days" in out.warm_spell_duration_index.description
 
     def test_wsdi_custom_percentiles_parameters(self, open_dataset):
         # GIVEN
@@ -1329,9 +1326,9 @@ class TestWarmSpellDurationIndex:
         tx90 = percentile_doy(tasmax_per, per=[42, 24], window=2)
         out = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
         # THEN
-        assert "[42 24]th" in out.attrs["description"]
-        assert "2 day(s) window" in out.attrs["description"]
-        assert "['1990-01-01', '1991-12-31']" in out.attrs["description"]
+        assert "[42 24]th" in out.warm_spell_duration_index.attrs["description"]
+        assert "2 day(s) window" in out.warm_spell_duration_index.attrs["description"]
+        assert "['1990-01-01', '1991-12-31']" in out.warm_spell_duration_index.attrs["description"]
 
     def test_wsdi_default_percentiles_parameters(self, open_dataset):
         # GIVEN
@@ -1342,9 +1339,9 @@ class TestWarmSpellDurationIndex:
         del tx90.attrs["climatology_bounds"]
         res = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
         # THEN
-        assert "{unknown} day(s) window" in res.attrs["description"]
-        assert "{unknown} period" in res.attrs["description"]
-        assert "{unknown}th percentile(s)" in res.attrs["description"]
+        assert "{unknown} day(s) window" in res.warm_spell_duration_index.attrs["description"]
+        assert "{unknown} period" in res.warm_spell_duration_index.attrs["description"]
+        assert "{unknown}th percentile(s)" in res.warm_spell_duration_index.attrs["description"]
 
 
 def test_corn_heat_units(open_dataset):
@@ -1355,14 +1352,16 @@ def test_corn_heat_units(open_dataset):
         tnC = tn - K2C
         tnC.attrs["units"] = "C"
 
-    chu = atmos.corn_heat_units(tasmin=tn, tasmax=tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC")
-    chuC = atmos.corn_heat_units(tasmin=tnC, tasmax=tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC")
+    out = atmos.corn_heat_units(tasmin=tn, tasmax=tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC")
+    outC = atmos.corn_heat_units(tasmin=tnC, tasmax=tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC")
 
-    np.testing.assert_allclose(chu, chuC, rtol=1e-3)
+    np.testing.assert_allclose(out.chu, outC.chu, rtol=1e-3)
 
-    np.testing.assert_allclose(chu[0, 180:185], np.array([12.933, 11.361, 11.1365, 13.419, 15.569]), rtol=1e-4)
+    np.testing.assert_allclose(out.chu[0, 180:185], np.array([12.933, 11.361, 11.1365, 13.419, 15.569]), rtol=1e-4)
 
-    assert "minimum and maximum daily temperatures both exceed 4.44 degC and 10 degC, respectively." in chu.description
+    assert (
+        "minimum and maximum daily temperatures both exceed 4.44 degC and 10 degC, respectively." in out.chu.description
+    )
 
 
 class TestFreezeThawSpell:
@@ -1370,7 +1369,7 @@ class TestFreezeThawSpell:
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
         out = atmos.freezethaw_spell_frequency(tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS")
-        np.testing.assert_array_equal(out.isel(location=0), [34.0, 37.0, 36.0, 30.0])
+        np.testing.assert_array_equal(out.freezethaw_spell_frequency.isel(location=0), [34.0, 37.0, 36.0, 30.0])
 
         # At location -1, year 2 has no spells of length >=2
         out = atmos.freezethaw_spell_frequency(
@@ -1379,13 +1378,13 @@ class TestFreezeThawSpell:
             window=2,
             freq="YS",
         )
-        np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 1, 1])
+        np.testing.assert_array_equal(out.freezethaw_spell_frequency.isel(location=-1), [0, 0, 1, 1])
 
-        assert out.attrs["long_name"] == (
+        assert out.freezethaw_spell_frequency.attrs["long_name"] == (
             "Frequency of events where maximum daily temperatures are above 0 degC "
             "and minimum daily temperatures are at or below 0 degC for at least 2 consecutive day(s)."
         )
-        assert out.attrs["description"] in [
+        assert out.freezethaw_spell_frequency.attrs["description"] in [
             "Annual number of freeze-thaw spells, where maximum daily temperatures are above 0 degC "
             "and minimum daily temperatures are at or below 0 degC for at least 2 consecutive day(s)."
         ]
@@ -1394,7 +1393,9 @@ class TestFreezeThawSpell:
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
         out = atmos.freezethaw_spell_mean_length(tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS")
-        np.testing.assert_allclose(out.isel(location=0), [1.911765, 2.027027, 1.888889, 1.733333], rtol=1e-06)
+        np.testing.assert_allclose(
+            out.freezethaw_spell_mean_length.isel(location=0), [1.911765, 2.027027, 1.888889, 1.733333], rtol=1e-06
+        )
 
         # At location -1, year 2 has no spells of length >=2
         out = atmos.freezethaw_spell_mean_length(
@@ -1403,13 +1404,13 @@ class TestFreezeThawSpell:
             window=2,
             freq="YS",
         )
-        np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 4, 2])
+        np.testing.assert_array_equal(out.freezethaw_spell_mean_length.isel(location=-1), [0, 0, 4, 2])
 
-        assert out.attrs["long_name"] == (
+        assert out.freezethaw_spell_mean_length.attrs["long_name"] == (
             "Average length of events where maximum daily temperatures are above 0 degC "
             "and minimum daily temperatures are at or below 0 degC for at least 2 consecutive day(s)."
         )
-        assert out.attrs["description"] in [
+        assert out.freezethaw_spell_mean_length.attrs["description"] in [
             "Annual average length of freeze-thaw spells, where maximum daily temperatures are above 0 degC "
             "and minimum daily temperatures are at or below 0 degC for at least 2 consecutive day(s)."
         ]
@@ -1418,7 +1419,7 @@ class TestFreezeThawSpell:
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
         out = atmos.freezethaw_spell_max_length(tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS")
-        np.testing.assert_array_equal(out.isel(location=0), [12, 7, 7, 4])
+        np.testing.assert_array_equal(out.freezethaw_spell_max_length.isel(location=0), [12, 7, 7, 4])
 
         # At location -1, year 2 has no spells of length >=2
         out = atmos.freezethaw_spell_max_length(
@@ -1427,13 +1428,13 @@ class TestFreezeThawSpell:
             window=2,
             freq="YS",
         )
-        np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 4, 2])
+        np.testing.assert_array_equal(out.freezethaw_spell_max_length.isel(location=-1), [0, 0, 4, 2])
 
-        assert out.attrs["long_name"] == (
+        assert out.freezethaw_spell_max_length.attrs["long_name"] == (
             "Maximal length of events where maximum daily temperatures are above 0 degC "
             "and minimum daily temperatures are at or below 0 degC for at least 2 consecutive day(s)."
         )
-        assert out.attrs["description"] in [
+        assert out.freezethaw_spell_max_length.attrs["description"] in [
             "Annual maximal length of freeze-thaw spells, where maximum daily temperatures are above 0 degC "
             "and minimum daily temperatures are at or below 0 degC for at least 2 consecutive day(s)."
         ]
@@ -1447,7 +1448,7 @@ class TestHotSpellFrequency:
         tx = tasmax_series(a + K2C, start="1/1/2000")
 
         out = atmos.hot_spell_frequency(tx)
-        np.testing.assert_array_equal(out, 2)
+        np.testing.assert_array_equal(out.hot_spell_frequency, 2)
 
 
 class TestHotSpellMaxLength:
@@ -1458,7 +1459,7 @@ class TestHotSpellMaxLength:
         tx = tasmax_series(a + K2C, start="1/1/2000")
 
         out = atmos.hot_spell_max_length(tx)
-        np.testing.assert_array_equal(out, 5)
+        np.testing.assert_array_equal(out.hot_spell_max_length, 5)
 
 
 class TestHotSpellTotalLength:
@@ -1469,7 +1470,7 @@ class TestHotSpellTotalLength:
         tx = tasmax_series(a + K2C, start="1/1/2000")
 
         out = atmos.hot_spell_total_length(tx)
-        np.testing.assert_array_equal(out, 8)
+        np.testing.assert_array_equal(out.hot_spell_total_length, 8)
 
 
 class TestHotSpellMaxMagnitude:
@@ -1478,21 +1479,21 @@ class TestHotSpellMaxMagnitude:
         tx[:5] = np.array([30, 30, 30, 30, 30])
         tx = tasmax_series(tx + K2C, start="1/1/2000")
         hwm = atmos.hot_spell_max_magnitude(tx, freq="YS")
-        np.testing.assert_array_equal(hwm, [25])
+        np.testing.assert_array_equal(hwm.hot_spell_max_magnitude, [25])
 
     def test_small_window_single_day(self, tasmax_series):
         tx = np.zeros(366)
         tx[5:8] = np.array([30, 0, 30])
         tx = tasmax_series(tx + K2C, start="1/1/2000")
         hwm = atmos.hot_spell_max_magnitude(tx, window=1, freq="YS")
-        np.testing.assert_array_equal(hwm, [5])
+        np.testing.assert_array_equal(hwm.hot_spell_max_magnitude, [5])
 
     def test_small_window_double_day(self, tasmax_series):
         tx = np.zeros(366)
         tx[5:7] = np.array([30, 30])
         tx = tasmax_series(tx + K2C, start="1/1/2000")
         hwm = atmos.hot_spell_max_magnitude(tx, window=1, freq="YS")
-        np.testing.assert_array_equal(hwm, [10])
+        np.testing.assert_array_equal(hwm.hot_spell_max_magnitude, [10])
 
     def test_convert_units(self, tasmax_series):
         tx = np.zeros(366)
@@ -1500,7 +1501,7 @@ class TestHotSpellMaxMagnitude:
         tx = tasmax_series(tx, start="1/1/2000")
         tx.attrs["units"] = "C"
         hwm = atmos.hot_spell_max_magnitude(tx, freq="YS")
-        np.testing.assert_array_equal(hwm, [25])
+        np.testing.assert_array_equal(hwm.hot_spell_max_magnitude, [25])
 
     def test_nan_presence(self, tasmax_series):
         tx = np.zeros(366)
@@ -1509,7 +1510,7 @@ class TestHotSpellMaxMagnitude:
         tx = tasmax_series(tx + K2C, start="1/1/2000")
 
         hwm = atmos.hot_spell_max_magnitude(tx, freq="YS")
-        np.testing.assert_array_equal(hwm, [np.nan])
+        np.testing.assert_array_equal(hwm.hot_spell_max_magnitude, [np.nan])
 
 
 class TestColdSpellFrequency:
@@ -1520,7 +1521,7 @@ class TestColdSpellFrequency:
         tg = tas_series(a + K2C, start="1/1/2000")
 
         out = atmos.cold_spell_frequency(tg, freq="YS")
-        np.testing.assert_array_equal(out, 1)
+        np.testing.assert_array_equal(out.cold_spell_frequency, 1)
 
 
 class TestColdSpellMaxLength:
@@ -1531,7 +1532,7 @@ class TestColdSpellMaxLength:
         tg = tas_series(a + K2C, start="1/1/2000")
 
         out = atmos.cold_spell_max_length(tg, freq="YS")
-        np.testing.assert_array_equal(out, 5)
+        np.testing.assert_array_equal(out.cold_spell_max_length, 5)
 
 
 class TestHotDays:
@@ -1548,25 +1549,25 @@ class TestHotDays:
         tasC.values[180, 1, 0] = np.nan
         # compute with both skipna options
         thresh = 273.16 + 25
-        fd = atmos.hot_days(tas, freq="YS")
-        fdC = atmos.hot_days(tasC, freq="YS")
+        out = atmos.hot_days(tas, freq="YS")
+        outC = atmos.hot_days(tasC, freq="YS")
 
         x1 = tas.values[:, 0, 0]
 
         fd1 = (x1[x1 > thresh]).size
 
-        np.testing.assert_array_equal(fd, fdC)
+        np.testing.assert_array_equal(out.hot_days, outC.hot_days)
 
-        assert np.allclose(fd1, fd.values[0, 0, 0])
+        assert np.allclose(fd1, out.hot_days.values[0, 0, 0])
 
-        assert np.isnan(fd.values[0, 1, 0])
+        assert np.isnan(out.hot_days.values[0, 1, 0])
 
-        assert np.isnan(fd.values[0, -1, -1])
+        assert np.isnan(out.hot_days.values[0, -1, -1])
 
     def test_indexing(self, open_dataset):
         tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
-        fd1 = atmos.hot_days(tasmax, freq="YS")
-        fd2 = atmos.hot_days(tasmax, freq="YS", date_bounds=["06-01", "09-30"])
+        out1 = atmos.hot_days(tasmax, freq="YS")
+        out2 = atmos.hot_days(tasmax, freq="YS", date_bounds=["06-01", "09-30"])
 
-        np.testing.assert_array_equal(fd1.isel(location=1), [58, 75, 42, 54])
-        np.testing.assert_array_equal(fd2.isel(location=1), [53, 63, 34, 52])
+        np.testing.assert_array_equal(out1.hot_days.isel(location=1), [58, 75, 42, 54])
+        np.testing.assert_array_equal(out2.hot_days.isel(location=1), [53, 63, 34, 52])

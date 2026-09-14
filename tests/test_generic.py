@@ -16,20 +16,20 @@ K2C = 273.15
 
 
 class TestStatistics:
-    def test_month(self, q_series):
-        q = q_series(np.arange(1000))
+    def test_month(self, rivo_series):
+        q = rivo_series(np.arange(1000))
         o = generic.statistics(q, "count", freq="YS", month=3)
         np.testing.assert_array_equal(o, 31)
 
-    def test_season(self, q_series):
-        q = q_series(np.arange(1000))
+    def test_season(self, rivo_series):
+        q = rivo_series(np.arange(1000))
         o = generic.statistics(q, "count", freq="YS-DEC", season="DJF")
         assert o[0] == 31 + 29
 
 
 class TestRunningStatistics:
-    def test_rollingmax(self, q_series):
-        q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
+    def test_rollingmax(self, rivo_series):
+        q = rivo_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
         o = generic.running_statistics(
             q, statistic="max", window=14, window_center=False, window_statistic="mean", freq="YS"
         )
@@ -43,8 +43,8 @@ class TestRunningStatistics:
         )
         assert o.attrs["units"] == "m3 s-1"
 
-    def test_rollingmaxindexer(self, q_series):
-        q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
+    def test_rollingmaxindexer(self, rivo_series):
+        q = rivo_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
         o = generic.running_statistics(
             q, statistic="min", window=14, window_center=False, window_statistic="max", freq="YS", season="DJF"
         )
@@ -53,8 +53,8 @@ class TestRunningStatistics:
         )  # 14th day for 1st year, then Jan 1st for the next two
         assert o.attrs["units"] == "m3 s-1"
 
-    def test_freq(self, q_series):
-        q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
+    def test_freq(self, rivo_series):
+        q = rivo_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
         o = generic.running_statistics(
             q, statistic="max", window=3, window_center=True, window_statistic="integral", freq="MS"
         )

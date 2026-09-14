@@ -41,8 +41,7 @@ def uniindtemp_compute(
 
 uniIndTemp = Daily(
     realm="atmos",
-    identifier="test.tmin",
-    module="test",
+    identifier="tmin",
     attrs=[
         dict(
             var_name="tmin{thresh}",
@@ -55,6 +54,7 @@ uniIndTemp = Daily(
     ],
     compute=uniindtemp_compute,
     parameters={"method": "injected"},
+    register=False,
 )
 
 
@@ -66,11 +66,11 @@ def uniindpr_compute(da: xr.DataArray, freq: str):
 
 uniIndPr = Daily(
     realm="atmos",
-    identifier="test.prmax",
+    identifier="prmax",
     attrs=[dict(units="mm/s")],
     context="hydro",
-    module="test",
     compute=uniindpr_compute,
+    register=False,
 )
 
 
@@ -83,10 +83,10 @@ def uniclim_compute(da: xr.DataArray, freq="YS", **indexer):
 uniClim = ResamplingIndicator(
     src_freq="D",
     realm="atmos",
-    identifier="test.clim",
+    identifier="clim",
     attrs=[dict(units="K")],
-    module="test",
     compute=uniclim_compute,
+    register=False,
 )
 
 
@@ -100,7 +100,7 @@ def multitemp_compute(tas: xr.DataArray, freq: str):
 
 multiTemp = Daily(
     realm="atmos",
-    identifier="test.minmaxtemp",
+    identifier="minmaxtemp",
     attrs=[
         dict(
             var_name="tmin",
@@ -114,8 +114,8 @@ multiTemp = Daily(
             description="Grouped computation of tmax and tmin",
         ),
     ],
-    module="test",
     compute=multitemp_compute,
+    register=False,
 )
 
 
@@ -134,19 +134,18 @@ def multioptvar_compute(
 multiOptVar = Indicator(
     src_freq="D",
     realm="atmos",
-    identifier="test.multiopt",
+    identifier="multiopt",
     attrs=[dict(units="K")],
-    module="test",
     compute=multioptvar_compute,
+    register=False,
 )
 
 
 def test_attrs(tas_series):
 
     a = tas_series(np.arange(360.0))
-    txm = uniIndTemp(a, thresh="5 degC", freq="YS")
-    assert txm.cell_methods == "time: mean time: mean within years"
-    assert txm.name == "tmin5degC"
+    out = uniIndTemp(a, thresh="5 degC", freq="YS")
+    assert out.tmin5degC.cell_methods == "time: mean time: mean within years"
     assert uniIndTemp.standard_name == "{freq} mean temperature"
     assert uniIndTemp.attrs[0]["another_attr"] == "With a value."
 
@@ -157,7 +156,8 @@ def test_attrs(tas_series):
         attrs={"long_name": "A thresh", "units": "degC"},
         name="TT",
     )
-    txm = uniIndTemp(a, thresh=thresh, freq="YS")
+    with xclim.set_options(as_dataset=False):
+        txm = uniIndTemp(a, thresh=thresh, freq="YS")
     assert txm.attrs["long_name"].endswith("with <an array> threshold.")
 
 
@@ -175,7 +175,7 @@ def test_keep_attrs(tasmin_series, tasmax_series, xropt, exp):
     tn = tasmin_series(np.arange(360.0))
     tx.attrs.update(something="blabla", bing="bang", foo="bar")
     tn.attrs.update(something="blabla", bing="bong")
-    with xr.set_options(keep_attrs=xropt):
+    with xr.set_options(keep_attrs=xropt), xclim.set_options(as_dataset=False):
         tg = multiOptVar(tasmin=tn, tasmax=tx)
 
     assert (tg.attrs.get("something") == "blabla") is exp
@@ -190,7 +190,7 @@ def test_as_dataset(tasmax_series, tasmin_series, xrkeep):
     tx.attrs.update(something="blabla", bing="bang", foo="bar")
     tn.attrs.update(something="blabla", bing="bong")
     dsin = xr.Dataset({"tasmax": tx, "tasmin": tn}, attrs={"fou": "barre"})
-    with xr.set_options(keep_attrs=xrkeep), xclim.set_options(as_dataset=True):
+    with xr.set_options(keep_attrs=xrkeep):
         dsout = multiOptVar(ds=dsin)
     assert isinstance(dsout, xr.Dataset)
     if xrkeep:
@@ -204,8 +204,7 @@ def test_as_dataset(tasmax_series, tasmin_series, xrkeep):
 
 def test_as_dataset_multi(tas_series):
     tg = tas_series(np.arange(360.0))
-    with xclim.set_options(as_dataset=True):
-        dsout = multiTemp(tas=tg, freq="YS")
+    dsout = multiTemp(tas=tg, freq="YS")
     assert isinstance(dsout, xr.Dataset)
     assert "tmin" in dsout.data_vars
     assert "tmax" in dsout.data_vars
@@ -225,8 +224,7 @@ def test_datatree(tasmin_series, tasmax_series):
     dt = DataTree.from_dict({"/base": ds1, "/base/withlats": ds2, "/noleap": ds3})
 
     dtout = multiOptVar(ds=dt)
-    with xclim.set_options(as_dataset=True):
-        ds1out = multiOptVar(ds=ds1)
+    ds1out = multiOptVar(ds=ds1)
 
     xr.testing.assert_equal(dtout["base"].dataset.multiopt, ds1out.multiopt)
 
@@ -252,6 +250,8 @@ def test_opt_vars(tasmin_series, tasmax_series):
 
 
 def test_registering():
+    assert "tmin" not in registry
+    uniIndTemp.__class__(identifier="test.tmin", register=True)
     assert "test.tmin" in registry
 
 
@@ -260,7 +260,7 @@ def test_module():
     assert atmos.tg_mean.__module__.split(".")[2] == "atmos"
 
 
-def test_temp_unit_conversion(tas_series):
+def test_temp_unit_conversion(tas_series, as_da):
     a = tas_series(np.arange(365), start="2001-01-01")
     txk = uniIndTemp(a, freq="YS")
 
@@ -275,7 +275,7 @@ def test_temp_unit_conversion(tas_series):
     np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
 
-def test_temp_diff_unit_conversion(tasmax_series, tasmin_series):
+def test_temp_diff_unit_conversion(tasmax_series, tasmin_series, as_da):
     tx = tasmax_series(np.arange(365) + 1, start="2001-01-01")
     tn = tasmin_series(np.arange(365), start="2001-01-01")
     txC = convert_units_to(tx, "degC")
@@ -291,13 +291,13 @@ def test_temp_diff_unit_conversion(tasmax_series, tasmin_series):
 
 def test_multiindicator(tas_series):
     tas = tas_series(np.arange(366), start="2000-01-01")
-    tmin, tmax = multiTemp(tas, freq="YS")
+    out = multiTemp(tas, freq="YS")
 
-    assert tmin[0] == tas.min()
-    assert tmax[0] == tas.max()
-    assert tmin.attrs["standard_name"] == "Min temp"
-    assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
-    assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert out.tmin[0] == tas.min()
+    assert out.tmax[0] == tas.max()
+    assert out.tmin.attrs["standard_name"] == "Min temp"
+    assert out.tmin.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert out.tmax.attrs["description"] == "Grouped computation of tmax and tmin"
     assert multiTemp.units == ["K", "K"]
 
     # Attrs passed as keywords - together
@@ -319,12 +319,12 @@ def test_multiindicator(tas_series):
         ],
         compute=multitemp_compute,
     )
-    tmin, tmax = ind(tas, freq="YS")
-    assert tmin[0] == tas.min()
-    assert tmax[0] == tas.max()
-    assert tmin.attrs["standard_name"] == "Min temp"
-    assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
-    assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
+    out = ind(tas, freq="YS")
+    assert out.tmin[0] == tas.min()
+    assert out.tmax[0] == tas.max()
+    assert out.tmin.attrs["standard_name"] == "Min temp"
+    assert out.tmin.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert out.tmax.attrs["description"] == "Grouped computation of tmax and tmin"
 
     with pytest.raises(ValueError, match="Output #2 of minmaxtemp2 is missing a var_name"):
         ind = Daily(
@@ -352,12 +352,12 @@ def test_multiindicator(tas_series):
         description="Grouped computation of tmax and tmin",
         compute=multitemp_compute,
     )
-    tmin, tmax = ind(tas, freq="YS")
-    assert tmin[0] == tas.min()
-    assert tmax[0] == tas.max()
-    assert tmin.attrs["standard_name"] == "Min temp"
-    assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
-    assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
+    out = ind(tas, freq="YS")
+    assert out.tmin[0] == tas.min()
+    assert out.tmax[0] == tas.max()
+    assert out.tmin.attrs["standard_name"] == "Min temp"
+    assert out.tmin.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert out.tmax.attrs["description"] == "Grouped computation of tmax and tmin"
     assert ind.units == ["K", "K"]
 
     # All must be the same length
@@ -382,10 +382,16 @@ def test_multiindicator(tas_series):
         compute=uniindtemp_compute,
     )
     with pytest.raises(ValueError, match="Indicator test.minmaxtemp4 was wrongly defined"):
-        _tmin, _tmax = ind(tas, freq="YS")
+        ind(tas, freq="YS")
 
 
-def test_missing(tas_series):
+def test_deriving_multiindicator():
+    new = multiTemp.__class__(identifier="minmaxtemp2", register=False)
+
+    assert new.attrs[0].var_name == "tmin"
+
+
+def test_missing(tas_series, as_da):
     a = tas_series(np.ones(365, float), start="1/1/2000")
 
     # By default, missing is set to "from_context", and the default missing option is "any"
@@ -415,7 +421,7 @@ def test_missing(tas_series):
     assert out.isnull()
 
 
-def test_missing_from_context(tas_series):
+def test_missing_from_context(tas_series, as_da):
     a = tas_series(np.ones(365, float), start="1/1/2000")
     # Null value
     a[5] = np.nan
@@ -546,7 +552,7 @@ def test_doc():
     assert "and the docstring of :py:func:`fire_weather_ufunc` for more information." in doc
 
 
-def test_delayed(tasmax_series):
+def test_delayed(tasmax_series, as_da):
     tasmax = tasmax_series(np.arange(360.0)).chunk({"time": 5})
     out = uniIndTemp(tasmax)
     assert isinstance(out.data, dask.array.Array)
@@ -555,11 +561,13 @@ def test_delayed(tasmax_series):
 def test_formatting(pr_series):
     out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.0 * units.mm / units.day)
     # pint 0.10 now pretty print day as d.
-    assert out.attrs["long_name"] == "Number of days with daily precipitation at or above 1 mm d-1"
-    assert out.attrs["description"] in ["Annual number of days with daily precipitation at or above 1 mm d-1."]
+    assert out.wetdays.attrs["long_name"] == "Number of days with daily precipitation at or above 1 mm d-1"
+    assert out.wetdays.attrs["description"] in ["Annual number of days with daily precipitation at or above 1 mm d-1."]
     out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.5 * units.mm / units.day)
-    assert out.attrs["long_name"] == "Number of days with daily precipitation at or above 1.5 mm d-1"
-    assert out.attrs["description"] in ["Annual number of days with daily precipitation at or above 1.5 mm d-1."]
+    assert out.wetdays.attrs["long_name"] == "Number of days with daily precipitation at or above 1.5 mm d-1"
+    assert out.wetdays.attrs["description"] in [
+        "Annual number of days with daily precipitation at or above 1.5 mm d-1."
+    ]
 
 
 def test_IndexWrapper():
@@ -676,14 +684,11 @@ def test_indicator_errors():
         ),
         compute=func,
         input={"data": "tas"},
+        register=False,
     )
-    ind = Daily(identifier="indi", module="test", **d)
-
-    with pytest.raises(TypeError, match="Missing argument 'identifier'"):
-        Daily(**d)
+    ind = Daily(identifier="indi", **d)
 
     d["identifier"] = "bad_indi"
-    d["module"] = "test"
 
     func.__doc__ = "\n".join(doc)
     d["parameters"] = {}
@@ -720,9 +725,10 @@ def test_indicator_errors():
         ),
         compute=func,
         input={"data": "tas"},
+        register=False,
     )
     with pytest.raises(ValueError, match="ResamplingIndicator require a 'freq'"):
-        Daily(identifier="indi", module="test", **d)
+        Daily(identifier="indi", **d)
 
 
 def test_indicator_call_errors(tas_series):
@@ -739,11 +745,7 @@ def test_indicator_call_errors(tas_series):
 def test_resamplingIndicator_new_error():
     with pytest.raises(ValueError, match="ResamplingIndicator require a 'freq'"):
         Daily(
-            realm="atmos",
-            identifier="multiopt",
-            attrs=[dict(units="K")],
-            module="test",
-            compute=multioptvar_compute,
+            realm="atmos", identifier="multiopt", attrs=[dict(units="K")], compute=multioptvar_compute, register=False
         )
 
 
@@ -751,24 +753,24 @@ def test_resampling_indicator_with_indexing(tas_series):
     tas = tas_series(np.ones(731), start="2003-01-01", units="°C")
 
     out = xclim.atmos.tx_days_above(tas, thresh="0 degC", freq="YS")
-    np.testing.assert_allclose(out, [365, 366])
+    np.testing.assert_allclose(out.tx_days_above, [365, 366])
 
     out = xclim.atmos.tx_days_above(tas, thresh="0 degC", freq="YS", month=2)
-    np.testing.assert_allclose(out, [28, 29])
+    np.testing.assert_allclose(out.tx_days_above, [28, 29])
 
     out = xclim.atmos.tx_days_above(tas, thresh="0 degC", freq="YS-JUL", doy_bounds=(1, 50))
-    np.testing.assert_allclose(out, [50, 50, np.nan])
+    np.testing.assert_allclose(out.tx_days_above, [50, 50, np.nan])
 
     out = xclim.atmos.tx_days_above(tas, thresh="0 degC", freq="YS", doy_bounds=(50, None))
-    np.testing.assert_allclose(out, [316, 317])
+    np.testing.assert_allclose(out.tx_days_above, [316, 317])
 
     out = xclim.atmos.tx_days_above(tas, thresh="0 degC", freq="YS", date_bounds=("02-29", "04-01"))
-    np.testing.assert_allclose(out, [32, 33])
+    np.testing.assert_allclose(out.tx_days_above, [32, 33])
 
     out = xclim.atmos.tx_days_above(
         tas, thresh="0 degC", freq="YS-JUL", date_bounds=(None, "04-01"), bounds_freq="YS-JUL"
     )
-    np.testing.assert_allclose(out, [np.nan, 275, np.nan])
+    np.testing.assert_allclose(out.tx_days_above, [np.nan, 275, np.nan])
 
 
 def test_indicator_indexing_doy_bounds_spatial(tasmin_series):
@@ -782,7 +784,7 @@ def test_indicator_indexing_doy_bounds_spatial(tasmin_series):
     # such cases return an entirely masked array
     # No values are missing as there are no values to count
     np.testing.assert_array_equal(
-        out,
+        out.tn_days_above,
         [[151.0, 151.0], [0, 0], [266.0, 266.0], [200.0, 200.0], [365.0, 365.0]],
     )
 
@@ -794,7 +796,7 @@ def test_indicator_indexing_doy_bounds_spatial(tasmin_series):
     # NaN, 200 is valid but incomplete for first year
     # NaN, NaN is valid (include NaN by default) but incomplete for first and last year
     np.testing.assert_array_equal(
-        out, [[0, 0, 0], [np.nan, 46, np.nan], [82, 82, np.nan], [np.nan, 19, 19], [np.nan, 365, np.nan]]
+        out.tn_days_above, [[0, 0, 0], [np.nan, 46, np.nan], [82, 82, np.nan], [np.nan, 19, 19], [np.nan, 365, np.nan]]
     )
 
 
@@ -809,7 +811,7 @@ def test_indicator_indexing_doy_bounds_temporal(tasmin_series):
     # 340, 20 is an invalid indexer for freq YS.
     # such cases return an entirely masked array
     # No values are missing as there are no values to count
-    np.testing.assert_array_equal(out, [151, 0, 266, 200, 365])
+    np.testing.assert_array_equal(out.tn_days_above, [151, 0, 266, 200, 365])
 
     out = atmos.tn_days_above(da, thresh="0 °C", freq="YS", doy_bounds=(None, end))
     # start as None = 1 for freq YS (default) and includes doy NaNs (default)
@@ -818,7 +820,7 @@ def test_indicator_indexing_doy_bounds_temporal(tasmin_series):
     # None, NaN: 1 to 365
     # None, 200: 1 to 200
     # None, NaN: 1 to 365
-    np.testing.assert_array_equal(out, [200, 20, 365, 200, 365])
+    np.testing.assert_array_equal(out.tn_days_above, [200, 20, 365, 200, 365])
 
     out = atmos.tn_days_above(da, thresh="0 °C", freq="YS", doy_bounds=(start, None), include_doy_bounds_nans=False)
     # end as None = 365 for freq YS (default) and excludes doy NaNs
@@ -827,7 +829,7 @@ def test_indicator_indexing_doy_bounds_temporal(tasmin_series):
     # 100, None: 100 to 365
     # NaN, None: masked, no values to count (0)
     # NaN, None: masked, no values to count (0)
-    np.testing.assert_array_equal(out, [316, 26, 266, 0, 0])
+    np.testing.assert_array_equal(out.tn_days_above, [316, 26, 266, 0, 0])
 
 
 def test_all_inputs_known():
