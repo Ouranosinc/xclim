@@ -697,23 +697,26 @@ def to_agg_units(
     >>> degdays.units
     'd K'
     """
+    _statistic: str
     if not isinstance(statistic, str):
-        statistic = statistic.__name__
+        _statistic = statistic.__name__
+    else:
+        _statistic = statistic
 
     is_difference = (
-        True if statistic in ["std", "var"] or "difference" in orig.attrs.get("units_metadata", "") else None
+        True if _statistic in ["std", "var"] or "difference" in orig.attrs.get("units_metadata", "") else None
     )
 
-    if statistic in ["min", "max", "mean", "sum", "std"]:
+    if _statistic in ["min", "max", "mean", "sum", "std"]:
         out.attrs.update(pint2cfattrs(str2pint(orig.units), is_difference))
 
-    elif statistic in ["var"]:
+    elif _statistic in ["var"]:
         out.attrs.update(pint2cfattrs(str2pint(orig.units) ** 2, is_difference))
 
-    elif statistic in ["doymin", "doymax"]:
+    elif _statistic in ["doymin", "doymax"]:
         out.attrs.update(units="1", is_dayofyear=np.int32(1), calendar=get_calendar(orig))
 
-    elif statistic in ["count", "integral"]:
+    elif _statistic in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig, deffreq=deffreq, dim=dim)
         orig_u = units2pint(orig)
         freq_u = str2pint(freq_u_raw)
@@ -721,10 +724,10 @@ def to_agg_units(
         with xr.set_options(keep_attrs=True):
             out = out * m
 
-        if statistic == "count":
+        if _statistic == "count":
             out.attrs["units"] = freq_u_raw
 
-        elif statistic == "integral":
+        elif _statistic == "integral":
             if "[temperature]" in orig_u.dimensionality:
                 # ensure delta_temperature
                 orig_u = 1 * orig_u - 1 * orig_u
@@ -740,12 +743,11 @@ def to_agg_units(
                 out.attrs.update(pint2cfattrs(orig_u * freq_u, is_difference))
     else:
         raise ValueError(
-            f"Unknown aggregation statistic {statistic}. "
+            f"Unknown aggregation statistic {_statistic}. "
             "Known statistics are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
         )
-
     # Remove units_metadata where it doesn't make sense
-    if statistic in ["doymin", "doymax", "count"]:
+    if _statistic in ["doymin", "doymax", "count"]:
         out.attrs.pop("units_metadata", None)
 
     return out
@@ -1547,7 +1549,7 @@ def declare_units(**units_by_name) -> Callable:
     return dec
 
 
-def infer_context(standard_name: str | None = None, dimension: str | None = None) -> str:
+def infer_context(standard_name: str | None = None, dimension: str | None = None) -> Literal["infer", "hydro", "none"]:
     """
     Return units context based on either the variable's standard name or the pint dimension.
 

@@ -76,14 +76,14 @@ class FireWeather(Indicator):
 
     src_freq = "D"
     context = "hydro"
-    keywords = ("fire",)
+    keywords = ["fire"]
 
 
 class Precip(Daily):
     """Indicator involving daily pr series."""
 
     context = "hydro"
-    keywords = ("precipitation",)
+    keywords = ["precipitation"]
 
 
 class PrecipAmount(Precip):
@@ -111,7 +111,7 @@ class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
 
     src_freq = "D"
     context = "hydro"
-    keywords = ("precipitation",)
+    keywords = ["precipitation"]
 
 
 class PrecipTempWithIndexing(ResamplingIndicatorWithIndexing):
@@ -119,7 +119,7 @@ class PrecipTempWithIndexing(ResamplingIndicatorWithIndexing):
 
     src_freq = "D"
     context = "hydro"
-    keywords = ("precipitation",)
+    keywords = ["precipitation"]
 
 
 class PrecipTemp(Precip):
@@ -130,7 +130,7 @@ class HrPrecip(Hourly):
     """Indicator involving hourly pr series."""
 
     context = "hydro"
-    keywords = ("precipitation",)
+    keywords = ["precipitation"]
 
 
 class DailyPrecipNoResample(Indicator):
@@ -138,7 +138,7 @@ class DailyPrecipNoResample(Indicator):
 
     src_freq = "D"
     context = "hydro"
-    keywords = ("precipitation",)
+    keywords = ["precipitation"]
 
 
 rain_on_frozen_ground_days = PrecipTempWithIndexing(

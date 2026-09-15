@@ -42,9 +42,10 @@ if HAS_PYTEST_SOCKET:
     from pytest_socket import SocketBlockedError
 else:
 
-    class SocketBlockedError(Exception):
+    class _SocketBlockedError(Exception):
         """Stand-in exception for when pytest_socket is not available."""
 
+    SocketBlockedError = _SocketBlockedError
 
 logger = logging.getLogger("xclim")
 

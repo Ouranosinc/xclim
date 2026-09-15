@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.resources as _resources
+from pathlib import Path
 
 from xclim import compute, ensembles
 from xclim import indicators as _indicators

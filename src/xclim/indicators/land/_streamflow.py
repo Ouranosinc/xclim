@@ -44,7 +44,7 @@ class StreamflowNoResampling(Indicator):
     """Indicators involving streamflow without resampling."""
 
     context = "hydro"
-    keywords = ("streamflow", "hydrology")
+    keywords = ["streamflow", "hydrology"]
 
 
 class Streamflow(ResamplingIndicator):
@@ -52,7 +52,7 @@ class Streamflow(ResamplingIndicator):
 
     context = "hydro"
     src_freq = "D"
-    keywords = ("streamflow", "snow", "hydrology")
+    keywords = ["streamflow", "snow", "hydrology"]
 
 
 base_flow_index = Streamflow(

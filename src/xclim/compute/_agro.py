@@ -895,10 +895,10 @@ def rain_season(
     :cite:cts:`sivakumar_predicting_1998`
     """
     # Set default dates
-    date_min_start = (date_min_start or DayOfYearStr("05-01"),)
-    date_max_start = (date_max_start or DayOfYearStr("12-31"),)
-    date_min_end = (date_min_end or DayOfYearStr("09-01"),)
-    date_max_end = (date_max_end or DayOfYearStr("12-31"),)
+    date_min_start = date_min_start or DayOfYearStr("05-01")
+    date_max_start = date_max_start or DayOfYearStr("12-31")
+    date_min_end = date_min_end or DayOfYearStr("09-01")
+    date_max_end = date_max_end or DayOfYearStr("12-31")
     # Unit conversion.
     pram = rate2amount(pr, out_units="mm")
     _thresh_wet_start: float = convert_units_to(thresh_wet_start, pram)

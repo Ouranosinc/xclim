@@ -61,7 +61,7 @@ class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
     def __delitem__(self, key: str):
         del self._data[self._casefold(key)]
 
-    def update(self, other: Mapping, **kwargs):  # numpydoc ignore=GL08
+    def update(self, other: Mapping, **kwargs: Any) -> None:  # numpydoc ignore=GL08
         if hasattr(other, "keys"):
             for k in other.keys():
                 self[k] = other[k]

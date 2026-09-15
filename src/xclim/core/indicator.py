@@ -601,7 +601,7 @@ class IndicatorBase(IndexWrapper):
     realm: str | None = None
     """General domain of validity of the indicator. Should use the same vocabulary as CMIP."""
 
-    keywords: tuple[str] = ()
+    keywords: list[str] = []
     """
     Keywords describing the indicator and its domains of application.
     Child classes append to the list when inheriting.
