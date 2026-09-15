@@ -343,14 +343,14 @@ def generate_local_dict(locale: str, init_english: bool = False) -> CaseInsensit
                 eng = ""
             ind_attrs.setdefault(prop, eng)
 
-        for atts in indicator.attrs:
+        for outmeta in indicator.outputs:
             # In the case of single output, put var attrs in main dict
-            if len(indicator.attrs) > 1:
-                ind_attrs = attrs.setdefault(f"{ind_name}.{atts.var_name}", {})
+            if len(indicator.outputs) > 1:
+                ind_attrs = attrs.setdefault(f"{ind_name}.{outmeta.var_name}", {})
 
             for attr in indicator._translatable_attrs:
                 if init_english:
-                    eng = atts.get(attr)
+                    eng = outmeta.attrs.get(attr)
                     if not isinstance(eng, str):
                         eng = ""
                 else:

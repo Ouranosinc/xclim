@@ -237,11 +237,14 @@ class Parameter:
         return inspect.Parameter(name, kind=kind, default=self.default, annotation=annot)
 
 
-class Output(dict):  # numpydoc ignore=PR01
-    """Dictionary metadata for the output of an indicator."""
+class Output:  # numpydoc ignore=PR01
+    """Metadata for the output of an indicator."""
 
     var_name: str | None
     """Output variable name."""
+
+    attrs: dict
+    """Output variable attributes."""
 
     dimensionality: str | None
     """Dimensionality specification, similar but not necessarily compatible with pint."""
@@ -258,10 +261,11 @@ class Output(dict):  # numpydoc ignore=PR01
         dimensionality: str | None = None,
         units: str | None = None,
         units_metadata: str | None = None,
-        **kwargs,
+        attrs: dict | None = None,
+        **attrs_kwargs,
     ):
         """
-        Create an output attributes dictionary.
+        Create an output metadata store.
 
         Parameters
         ----------
@@ -274,15 +278,24 @@ class Output(dict):  # numpydoc ignore=PR01
             Units of the output. When set, the indicator computation will explicitly convert the output.
         units_metadata : str, optional
             Additional CF metadata for the units.
-        **kwargs
-            Any other attribute describing the metadata, which will be added as attributes.
-            Usually, output variable will use `standard_name`, `long_name` and `description`.
+        attrs :  dict, optional
+            Attributes describing the metadata, which will be added as attribute on the compute DataArray.
+            Usually, indicators will set `standard_name` (if there's one), `long_name` and `description`.
+        **attrs_kwargs
+            Attributes can also be passed as kwargs.
         """
         self.var_name = var_name
         self.dimensionality = dimensionality
         self.units = units
         self.units_metadata = units_metadata
-        super().__init__(**kwargs)
+        attrs = attrs or {}
+        for field in ["var_name", "dimensionality", "units", "units_metadata"]:
+            if field in attrs:
+                raise ValueError(
+                    f"Field `{field}` can't be passed through `attrs` when initializing an indicator Output,"
+                    "pass it directly instead."
+                )
+        self.attrs = attrs | attrs_kwargs
 
     @property
     def meta(self) -> dict:
@@ -301,23 +314,54 @@ class Output(dict):  # numpydoc ignore=PR01
             "units_metadata": self.units_metadata,
         }
 
+    def get(self, key, default=None):
+        """
+        Convenience method to access any metadata element.
+
+        This method acts as if the ``Output`` object was a single dictionary of all metadata elements and attributes.
+
+        Parameters
+        ----------
+        key : str
+            Name of the metadata element (or attribute) to return.
+            If ``key`` is not one of ``var_name``, ``dimensionality``,
+            ``units`` or ``units_metadata`` it is searched in ``self.attrs``.
+        default : any
+            If the key is not found, default value to return.
+
+        Returns
+        -------
+        any
+            The corresponding value, or ``default`` if the key isn't found.
+        """
+        if key in self.meta:
+            return self.meta[key]
+        return self.attrs.get(key, default)
+
+    def __getitem__(self, key):
+        """Convenience method to access any metadata element."""
+        res = self.get(key, _empty)
+        if res is _empty:
+            raise KeyError(key)
+        return res
+
     def __or__(self, other):
         """Dict-style merging via the OR operator."""
         meta = self.meta
         if isinstance(other, Output):
             other_meta = other.meta
-            other_attrs = dict(other)
+            other_attrs = other.attrs
         else:
             other_meta = {k: v for k, v in other.items() if k in meta}
-            other_attrs = {k: v for k, v in other.items() if k not in meta}
+            other_attrs = other.get("attrs", {}) | {k: v for k, v in other.items() if k not in meta and k != "attrs"}
         merged_meta = {k: v if other_meta.get(k) is None else other_meta[k] for k, v in self.meta.items()}
-        merged = dict(self) | other_attrs
-        return self.__class__(**merged_meta, **merged)
+        merged_attrs = self.attrs | other_attrs
+        return self.__class__(**merged_meta, **merged_attrs)
 
     def __repr__(self):
         """Readable representation."""
         meta = ", ".join(f"{k}='{v}'" for k, v in self.meta.items() if k != "var_name" and v is not None)
-        attrs = ", ".join(f"{k}='{v}'" for k, v in self.items())
+        attrs = ", ".join(f"{k}='{v}'" for k, v in self.attrs.items())
         return f"<{self.__class__.__name__} {self.var_name or '[unnamed]'} ({meta}) : {attrs}>"
 
     def _gen_doc(self, multiple_returns: bool = True) -> str:
@@ -343,11 +387,11 @@ class Output(dict):  # numpydoc ignore=PR01
             dim = f", [{self.units}]"
         elif self.dimensionality:
             dim = f", {self.dimensionality}"
-        sname = "" if self.get("standard_name") is None else f"{self['standard_name']}, "
+        sname = "" if self.attrs.get("standard_name") is None else f"{self.attrs['standard_name']}, "
         add = "."
-        if other := (set(self.keys()) - {"standard_name", "long_name"}):
-            add = f". With additional attributes: {', '.join([f'**{k}**: ``{self[k]}``' for k in other])}"
-        return f"{name}xarray.DataArray{dim}\n  {sname}{self.get('long_name', '')}{add}"
+        if other := (set(self.attrs.keys()) - {"standard_name", "long_name"}):
+            add = f". With additional attributes: {', '.join([f'**{k}**: ``{self.attrs[k]}``' for k in other])}"
+        return f"{name}xarray.DataArray{dim}\n  {sname}{self.attrs.get('long_name', '')}{add}"
 
 
 class IndexWrapper:  # numpydoc ignore=PR01
@@ -380,7 +424,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
     :py:class:`~xclim.core.indicator.Parameter`.
     """
 
-    attrs: list[Output]  # Returns section
+    outputs: list[Output]  # Returns section
     """List of output metadata."""
 
     def __new__(cls, compute):
@@ -493,7 +537,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
                 "title": title,
                 "abstract": abstract,
                 "_all_parameters": inputs,
-                "attrs": outputs,
+                "outputs": outputs,
                 "notes": notes,
                 "references": references,
                 "compute": staticmethod(compute),
@@ -516,7 +560,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
         int
             The number of outputs.
         """
-        return len(self.attrs)
+        return len(self.outputs)
 
     @property
     def parameters(self) -> Mapping[str, Parameter]:
@@ -581,7 +625,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
 
         paramstext = "\n".join([p._gen_doc(name=n) for n, p in self.parameters.items()])
         parameters = f"Parameters\n----------\n{paramstext}"
-        returnstext = "\n".join([o._gen_doc(multiple_returns=len(self.attrs) > 1) for o in self.attrs])
+        returnstext = "\n".join([o._gen_doc(multiple_returns=len(self.outputs) > 1) for o in self.outputs])
         returns = f"Returns\n-------\n{returnstext}"
 
         extra_sections = []
@@ -677,9 +721,9 @@ class IndicatorBase(IndexWrapper):
         kwds["_all_parameters"] = parameters
 
         # Output Attributes
-        attrs = cls._update_attrs(cls.attrs, kwds.pop("attrs", None))
-        attrs = cls._ensure_correct_attrs(attrs, identifier)
-        kwds["attrs"] = attrs
+        outputs = cls._update_outputs(cls.outputs, kwds.pop("outputs", None))
+        outputs = cls._ensure_correct_outputs(outputs, identifier)
+        kwds["outputs"] = outputs
 
         # Other metadata
         # If these fields were not given, set them from the parsed docstring
@@ -803,38 +847,38 @@ class IndicatorBase(IndexWrapper):
         return dict(sorted(parameters.items(), key=sortkey))
 
     @classmethod
-    def _update_attrs(cls, attrs, new_attrs):
+    def _update_outputs(cls, outputs, new_outputs):
         """
         Merge parent output attributes with passed specifications.
 
         Parameters
         ----------
-        attrs : list of Output
+        outputs : list of Output
             List of :py:class:`Output` objects.
-        new_attrs : list of dict or list of Output or dict
+        new_outputs : list of dict or list of Output or dict
             The output metadata passed to the indicator constructor.
 
         Returns
         -------
         list of Output
-            The merged list of Output objects, as long as the longest of `attrs` and `new_attrs`.
+            The merged list of Output objects, as long as the longest of `outputs` and `new_outputs`.
         """
-        if not new_attrs:
-            new_attrs = []
-        if isinstance(new_attrs, dict):
-            new_attrs = [new_attrs]
+        if not new_outputs:
+            new_outputs = []
+        if isinstance(new_outputs, dict):
+            new_outputs = [new_outputs]
 
         # Merging is implemented on Output objects as OR
-        return [(oo | nn) for oo, nn in zip_longest(attrs, new_attrs, fillvalue=Output())]
+        return [(oo | nn) for oo, nn in zip_longest(outputs, new_outputs, fillvalue=Output())]
 
     @classmethod
-    def _ensure_correct_attrs(cls, attrs, identifier):
+    def _ensure_correct_outputs(cls, outputs, identifier):
         """
         Ensure all output attributes are correct.
 
         Parameters
         ----------
-        attrs : list of Output
+        outputs : list of Output
             List of :py:class:`Output` objects.
         identifier : str, optional
             Identifier of the indicator.
@@ -842,17 +886,17 @@ class IndicatorBase(IndexWrapper):
         Returns
         -------
         list
-            Same as `attrs`, potentially modified.
+            Same as `outputs`, potentially modified.
         """
         # For single output, var_name defaults to identifier.
-        if len(attrs) == 1 and attrs[0].var_name is None and identifier is not None:
-            attrs[0].var_name = identifier.split(".")[-1]
+        if len(outputs) == 1 and outputs[0].var_name is None and identifier is not None:
+            outputs[0].var_name = identifier.split(".")[-1]
 
         # check if we have var_names for everybody
-        for i, atts in enumerate(attrs, 1):
+        for i, atts in enumerate(outputs, 1):
             if atts.var_name is None:
                 raise ValueError(f"Output #{i} of {identifier} is missing a var_name.")
-        return attrs
+        return outputs
 
     def __call__(self, *args, **kwargs):
         """Perform the computation."""
@@ -885,17 +929,16 @@ class IndicatorBase(IndexWrapper):
             )
 
         # Name the outputs and convert to output units
-        for i, atts in enumerate(self.attrs):
-            outs[i] = outs[i].rename(atts.var_name)
-            if atts.units is not None:
-                u = {"units": atts.units}
-                if atts.units_metadata is not None:
-                    u["units_metadata"] = atts.units_metadata
+        for i, outmeta in enumerate(self.outputs):
+            outs[i] = outs[i].rename(outmeta.var_name)
+            if outmeta.units is not None:
+                u = {"units": outmeta.units}
+                if outmeta.units_metadata is not None:
+                    u["units_metadata"] = outmeta.units_metadata
                 outs[i] = convert_units_to(outs[i], u, self.context)
                 # TODO: Should we remove this ? Priority should be given to CF format, no ?
-                outs[i].attrs.update(
-                    **u
-                )  # Override what convert_units_to does, in case atts.units was not CF compliant
+                # Override what convert_units_to does, in case outmeta.units was not CF compliant
+                outs[i].attrs.update(**u)
 
         outs, meta = self._postprocess(outs, das, params, meta)
 
@@ -1161,19 +1204,15 @@ class _MetadataFormatter(_DataTreeIterator):
             parent_attrs = {k: v for k, v in list(das.values())[0].attrs.items() if k not in self._drop_attrs}
 
         fmtargs = self._get_formatter_args(das | params, meta)
-        for out, new_attrs in zip(outs, self.attrs, strict=False):
+        for out, outmeta in zip(outs, self.outputs, strict=False):
             out.attrs.update(parent_attrs)
-            formatted = self._format_attrs(
-                new_attrs,
-                fmtargs,
-                meta,
-            )
+            formatted = self._format_attrs(outmeta.attrs, fmtargs, meta, outmeta.var_name)
             if "cell_methods" in parent_attrs and "cell_methods" in formatted:
                 formatted["cell_methods"] = f"{parent_attrs['cell_methods']} {formatted['cell_methods']}"
             out.attrs.update(formatted)
 
-            if "{" in new_attrs.var_name:
-                out.name = default_formatter.format(new_attrs.var_name, **fmtargs).replace(" ", "")
+            if "{" in outmeta.var_name:
+                out.name = default_formatter.format(outmeta.var_name, **fmtargs).replace(" ", "")
         return outs, meta
 
     def _get_formatter_args(self, args, meta):
@@ -1211,7 +1250,7 @@ class _MetadataFormatter(_DataTreeIterator):
                 mba[param.compute_name] = mba[name]
         return mba
 
-    def _format_attrs(self, attrs, fmtargs, meta=None, formatter=default_formatter):
+    def _format_attrs(self, attrs, fmtargs, meta=None, var_name=None, formatter=default_formatter):
         """
         Format attributes with the run-time values of `compute` call parameters.
 
@@ -1220,13 +1259,14 @@ class _MetadataFormatter(_DataTreeIterator):
 
         Parameters
         ----------
-        attrs : Output or dict[str, str]
-            The attributes to format and update. All will be formatted except `units` or `units_metadata`,
-            which were already handled at computation time.
+        attrs : dict[str, str]
+            The attributes to format and update.
         fmtargs : dict[str, Any]
             Arguments to the formatter, as given by :py:meth:`MetadataFormatter._get_formatter_args`.
         meta : dict, optional
             A dictionary of things subclasses can populate and use.
+        var_name : str, optional
+            The name of the variable of which the attributed are being formatted.
         formatter : AttrFormatter
             Plaintext mappings for indicator attributes.
 
@@ -1237,9 +1277,6 @@ class _MetadataFormatter(_DataTreeIterator):
         """
         out = {}
         for key, val in attrs.items():
-            if key in ["units", "units_metadata"]:
-                continue
-
             if callable(val):
                 val = val(**fmtargs)
 
@@ -1273,7 +1310,7 @@ class _MetadataFormatter(_DataTreeIterator):
 
         # Format attributes
         fmtargs = self._get_formatter_args(args, {})
-        out["outputs"] = [self._format_attrs(attrs, fmtargs) | attrs.meta for attrs in self.attrs]
+        out["outputs"] = [self._format_attrs(outmeta.attrs, fmtargs) | outmeta.meta for outmeta in self.outputs]
         out["parameters"] = {k: p.json() for k, p in self._all_parameters.items()}
         return out
 
@@ -1284,7 +1321,7 @@ class _LocaleMetadataFormatter(_MetadataFormatter):
     _translatable_attrs = ["long_name", "description", "comment"]
     _translatable_props = ["title", "abstract"]
 
-    def _format_attrs(self, attrs, fmtargs, meta=None, formatter=default_formatter):
+    def _format_attrs(self, attrs, fmtargs, meta=None, var_name=None, formatter=default_formatter):
         out = super()._format_attrs(attrs, fmtargs, meta, formatter)
         for loc in OPTIONS[METADATA_LOCALES]:  # ty: ignore[not-iterable]
             out.update(
@@ -1292,7 +1329,7 @@ class _LocaleMetadataFormatter(_MetadataFormatter):
                     xloc.get_local_attrs(
                         [self.identifier] + self.get_parent_ids(),
                         locale=loc,
-                        var_name=attrs.var_name,
+                        var_name=var_name,
                         names=self._translatable_attrs,
                         append_locale_name=True,
                     ),
@@ -1315,15 +1352,15 @@ class _LocaleMetadataFormatter(_MetadataFormatter):
             xloc.get_local_attrs(
                 [self.identifier] + self.get_parent_ids(),
                 locale=locale,
-                var_name=atts.var_name,
+                var_name=outmeta.var_name,
                 names=self._translatable_attrs,
                 append_locale_name=False,
             )
-            for atts in self.attrs
+            for outmeta in self.outputs
         ]
         if fill_missing:
-            for attrs, en_attrs in zip(out["attrs"], self.attrs, strict=True):
-                for k, v in en_attrs.items():
+            for attrs, outmeta in zip(out["attrs"], self.outputs, strict=True):
+                for k, v in outmeta.attrs.items():
                     if k not in attrs and k in self._translatable_attrs:
                         attrs[k] = v
         return out
@@ -1434,7 +1471,7 @@ class _InputChecker(_DeprecationWarner):
 class _Convenience(_InputChecker):
     """
     Adds pre-processing to the constructor arguments so it can accept some v0 names
-    and CF attributes passed by name instead of within `attrs`.
+    and CF attributes passed by name instead of within `outputs`.
     """
 
     _cf_names: list[str] = [
@@ -1452,28 +1489,28 @@ class _Convenience(_InputChecker):
     def __new__(cls, **kwargs):
         if "cf_attrs" in kwargs:
             warnings.warn(
-                "Indicator argument `cf_attrs` has been renamed to `attrs` in xclim v1.", FutureWarning, stacklevel=2
+                "Indicator argument `cf_attrs` has been renamed to `outputs` in xclim v1.", FutureWarning, stacklevel=2
             )
-            kwargs["attrs"] = kwargs.pop("cf_attrs")
+            kwargs["outputs"] = kwargs.pop("cf_attrs")
 
-        attrs = kwargs.pop("attrs", None) or []
+        outputs = kwargs.pop("outputs", None) or []
         passed = {}
         for name in cls._cf_names:
             if vals := kwargs.pop(name, None):
                 passed[name] = vals
         if passed:
-            n = len(attrs)
+            n = len(outputs)
             if n == 0:
                 n = max(len(vals) if isinstance(vals, (list, tuple)) else 1 for vals in passed.values())
-                attrs = [{} for i in range(n)]
+                outputs = [{} for i in range(n)]
             for name, vals in passed.items():
                 if not isinstance(vals, (list, tuple)):
                     vals = [vals] * n
-                if len(vals) != len(attrs):
-                    raise ValueError(f"Attribute {name} has {len(vals)} elements but {len(attrs)} were expected.")
-                for atts, val in zip(attrs, vals, strict=True):
+                if len(vals) != len(outputs):
+                    raise ValueError(f"Attribute {name} has {len(vals)} elements but {len(outputs)} were expected.")
+                for atts, val in zip(outputs, vals, strict=True):
                     atts[name] = val
-        kwargs["attrs"] = attrs
+        kwargs["outputs"] = outputs
 
         module = kwargs.get("module", cls.__module__)
         # Infer realm for built-in xclim instances, handle module
@@ -1490,7 +1527,7 @@ class _Convenience(_InputChecker):
     def __getattr__(self, attr):
         """Return the attribute."""
         if attr in self._cf_names:
-            out = [attrs.get(attr, attrs.meta.get(attr, "")) for attrs in self.attrs]
+            out = [outmeta.attrs.get(attr, outmeta.meta.get(attr, "")) for outmeta in self.outputs]
             if len(out) == 1:
                 return out[0]
             return out
@@ -1580,8 +1617,8 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
     Instantiating a new indicator returns an instance but also registers is
     in :py:data:`xclim.core.indicator.registry`.
 
-    Attributes in `Indicator.attrs` will be formatted and added to the output variable(s).
-    This attribute is a list of :py:class:`Output` dict-like objects.
+    Metadata and attributes in `Indicator.outputs` will be formatted and added to the output variable(s).
+    This attribute is a list of :py:class:`Output` objects.
 
     A lot of the Indicator's metadata is parsed from the underlying `compute` function's
     docstring and signature. Input variables and parameters are listed in
@@ -1608,11 +1645,11 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
         notes: str = None,
         input: dict = None,
         parameters: dict = None,
-        attrs: dict = None,
+        outputs: dict = None,
         context: str = "none",
         src_freq: str | list[str] = None,
         register: bool = True,
-        **attrs_kwargs,
+        **outputs_kwargs,
     ):
         """
         Create a new indicator.
@@ -1654,9 +1691,9 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
             or dictionaries of properties to override the ones parsed from the docstring.
             See :py:class:`~xclim.core.indicator.Parameter` for valid properties. Additionally,
             `name` can be passed to change the name of the argument in the call signature.
-        attrs : list of dict
-            Attributes to be formatted and added to the computation's output.
-            Any attribute are accepted, but `var_name` is required for multi-output indicators.
+        outputs : list of dict or list of Output
+            Metadata for the computation's output : name, units and attributes.
+            Any attribute are accepted, but giving a `var_name` is required for multi-output indicators.
             The list must be the same length as the number of outputs of the compute function.
         context : str
             A `pint` unit context enabled during the computation of this indicator.
@@ -1666,8 +1703,8 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
         register : bool
             If True (default), the indicator is registered into the :py:data:`registry` dictionary of indicators
             using its identifier as key.
-        **attrs_kwargs
-            For convenience, output attributes can also be passed by name to the constructor.
+        **outputs_kwargs
+            For convenience, output attributes and metadata can also be passed by name to the constructor.
         """  # numpydoc ignore=PR01,PR02
         super().__init__(
             identifier=identifier,
@@ -1680,11 +1717,11 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
             notes=notes,
             input=input or {},
             parameters=parameters or {},
-            attrs=attrs or {},
+            outputs=outputs or {},
             context=context,
             src_freq=src_freq,
             register=register,
-            **attrs_kwargs,
+            **outputs_kwargs,
         )
 
 
