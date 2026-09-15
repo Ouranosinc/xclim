@@ -68,6 +68,25 @@ registry = CaseInsensitiveDict()  # Main indicator registry
 base_registry = {}  # Base classes registry
 
 
+__all__ = [
+    "CheckMissingIndicator",
+    "Daily",
+    "Hourly",
+    "IndexWrapper",
+    "IndexingIndicator",
+    "Indicator",
+    "IndicatorBase",
+    "Output",
+    "Parameter",
+    "ReducingIndicator",
+    "ResamplingIndicator",
+    "ResamplingIndicatorWithIndexing",
+    "StandardizedIndexes",
+    "base_registry",
+    "registry",
+]
+
+
 # Sentinel class for unset properties of Indicator's parameters."""
 class _empty:  # pylint: disable=too-few-public-methods
     pass

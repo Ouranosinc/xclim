@@ -103,7 +103,7 @@ autodoc-obsolete: install-docs clean-docs ## create sphinx-apidoc files (obsolet
 
 autodoc-custom-index: install-docs clean-docs ## create sphinx-apidoc files but with special index handling for indices and indicators
 	mkdir -p docs/apidoc/
-	sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/indicators src/xclim/indices
+	sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/compute src/xclim/indicators
 	rm docs/apidoc/xclim.rst
 	env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim
 
