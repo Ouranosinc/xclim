@@ -65,15 +65,26 @@ details on each.
           ...
 
         # Parameters
-        <param name>: <param data>  # Simplest case, to inject parameters in the compute function.
-                                    # Kwargs-like parameters like ``indexer`` must be injected as a dictionary here.
-        <param name>:  # To change parameters metadata or to declare units when "compute" is a generic function.
-          default : <param default>
-          description: <param description>
-          name : <param name>  # Change the name of the parameter (similar to what `input` does for variables)
-          kind: <param kind> # Override the parameter kind. This is mostly useful for transforming an
-                             # optional variable into a required one by passing ``kind: 0``.
-        ...
+        parameters:
+          <param name>: <param data>  # Simplest case, to inject parameters in the compute function.
+                                      # Kwargs-like parameters like ``indexer`` must be injected as a dictionary here.
+          <param name>:  # To change parameters metadata or to declare units when "compute" is a generic function.
+            default: <param default>
+            description: <param description>
+            name: <param name>  # Change the name of the parameter (similar to what `input` does for variables)
+            kind: <param kind> # Override the parameter kind. This is mostly useful for transforming an
+                               # optional variable into a required one by passing ``kind: 0``.
+          ...
+
+        # Output metadata
+        outputs:   # List of mappings, one for each output.
+            - var_name: <var name>  # Name to give to the output
+              units: <units>        # Units to convert the output to and assign as attribute
+              attrs:                # Mapping of attributes to assign to the output, can be templated strings.
+                  long_name: <...>
+                  description: <...>
+            - ...
+
       ...  # and so on.
 
 All fields are optional. Other fields found in the yaml file will trigger errors when validation is activated.

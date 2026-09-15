@@ -29,7 +29,7 @@ indicator:
   title: str(required=False)
   context: str(required=False)
 
-output: map(str(), key=str(), required=False)
+output: map(any(str(), map(str(), key=str())), key=str(), required=False)
 
 parameter:
   description: str(required=False)

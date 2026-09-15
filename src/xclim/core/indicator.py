@@ -242,7 +242,8 @@ class Output:  # numpydoc ignore=PR01
         dimensionality: str | None = None,
         units: str | None = None,
         units_metadata: str | None = None,
-        **attrs,
+        attrs: dict | None = None,
+        **attrs_kwargs,
     ):
         """
         Create an output metadata store.
@@ -258,15 +259,24 @@ class Output:  # numpydoc ignore=PR01
             Units of the output. When set, the indicator computation will explicitly convert the output.
         units_metadata : str, optional
             Additional CF metadata for the units.
-        **attrs
-            Any other attribute describing the metadata, which will be added as attributes.
+        attrs :  dict, optional
+            Attributes describing the metadata, which will be added as attribute on the compute DataArray.
             Usually, indicators will set `standard_name` (if there's one), `long_name` and `description`.
+        **attrs_kwargs
+            Attributes can also be passed as kwargs.
         """
         self.var_name = var_name
         self.dimensionality = dimensionality
         self.units = units
         self.units_metadata = units_metadata
-        self.attrs = attrs
+        attrs = attrs or {}
+        for field in ["var_name", "dimensionality", "units", "units_metadata"]:
+            if field in attrs:
+                raise ValueError(
+                    f"Field `{field}` can't be passed through `attrs` when initializing an indicator Output,"
+                    "pass it directly instead."
+                )
+        self.attrs = attrs | attrs_kwargs
 
     @property
     def meta(self) -> dict:
@@ -324,7 +334,7 @@ class Output:  # numpydoc ignore=PR01
             other_attrs = other.attrs
         else:
             other_meta = {k: v for k, v in other.items() if k in meta}
-            other_attrs = {k: v for k, v in other.items() if k not in meta}
+            other_attrs = other.get("attrs", {}) | {k: v for k, v in other.items() if k not in meta and k != "attrs"}
         merged_meta = {k: v if other_meta.get(k) is None else other_meta[k] for k, v in self.meta.items()}
         merged_attrs = self.attrs | other_attrs
         return self.__class__(**merged_meta, **merged_attrs)

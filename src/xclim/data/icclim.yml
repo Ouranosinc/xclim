@@ -20,11 +20,13 @@ indicators:
   TG90p:
     base: tg90p
     outputs:
-      long_name: Days with TG>90th percentile of daily mean temperature (warm days)
+    - attrs:
+        long_name: Days with TG>90th percentile of daily mean temperature (warm days)
   TG10p:
     base: tg10p
     outputs:
-      long_name: Days with TG<10th percentile of daily mean temperature (cold days)
+    - attrs:
+        long_name: Days with TG<10th percentile of daily mean temperature (cold days)
   TGx:
     base: tg_max
   TGn:
@@ -32,11 +34,13 @@ indicators:
   TX90p:
     base: tx90p
     outputs:
-      long_name: Days with TX>90th percentile of daily maximum temperature (warm day-times)
+    - attrs:
+        long_name: Days with TX>90th percentile of daily maximum temperature (warm day-times)
   TX10p:
     base: tx10p
     outputs:
-      long_name: Days with TX<10th percentile of daily maximum temperature (cold day-times)
+    - attrs:
+        long_name: Days with TX<10th percentile of daily maximum temperature (cold day-times)
   TXx:
     base: tx_max
   TXn:
@@ -44,11 +48,13 @@ indicators:
   TN90p:
     base: tn90p
     outputs:
-      long_name: Days with TN>90th percentile of daily minimum temperature (warm nights)
+    - attrs:
+        long_name: Days with TN>90th percentile of daily minimum temperature (warm nights)
   TN10p:
     base: tn10p
     outputs:
-      long_name: Days with TN<10th percentile of daily minimum temperature (cold nights)
+    - attrs:
+        long_name: Days with TN<10th percentile of daily minimum temperature (cold nights)
   TNx:
     base: tn_max
   TNn:
@@ -56,9 +62,10 @@ indicators:
   HI:
     base: huglin_index
     outputs:
-      long_name: >
-        Huglin heliothermal index (Summation of ((Tmean + Tmax)/2 - 10°C) * Latitude-based
-        day-length coefficient (`k`), for days between 1 April and 31 October)
+    - attrs:
+        long_name: >
+          Huglin heliothermal index (Summation of ((Tmean + Tmax)/2 - 10°C) * Latitude-based
+          day-length coefficient (`k`), for days between 1 April and 31 October)
     parameters:
       method: huglin
       thresh: 10 degC
@@ -67,9 +74,10 @@ indicators:
   BEDD:
     base: biologically_effective_degree_days
     outputs:
-      long_name: >
-        Biologically effective growing degree days (Summation of min(max((Tmin + Tmax)/2 - 10°C, 0), 9°C),
-        for days between 1 April and 30 September)
+    - attrs:
+        long_name: >
+          Biologically effective growing degree days (Summation of min(max((Tmin + Tmax)/2 - 10°C, 0), 9°C),
+          for days between 1 April and 30 September)
     parameters:
       method: icclim
       thresh_tasmin: 10 degC
@@ -82,90 +90,105 @@ indicators:
   CSDI:
     base: cold_spell_duration_index
     outputs:
-      long_name: Cold-spell duration index
+    - attrs:
+        long_name: Cold-spell duration index
     parameters:
       window: 6
   WSDI:
     base: warm_spell_duration_index
     outputs:
-      long_name: Warm-spell duration index
+    - attrs:
+        long_name: Warm-spell duration index
     parameters:
       window: 6
   SU:
     base: tx_days_above
     outputs:
-      long_name: Summer days (TX>25°C)
+    - attrs:
+        long_name: Summer days (TX>25°C)
     parameters:
       thresh: 25 degC
   CSU:
     base: maximum_consecutive_warm_days
     outputs:
-      long_name: Maximum number of consecutive summer day
+    - attrs:
+        long_name: Maximum number of consecutive summer day
     parameters:
       thresh: 25 degC
   TR:
     base: tropical_nights
     outputs:
-      long_name: Tropical nights (TN>20°C)
+    - attrs:
+        long_name: Tropical nights (TN>20°C)
     parameters:
       thresh: 20 degC
   GD4:
     base: growing_degree_days
     outputs:
-      long_name: Growing degree days (sum of TG>4°C)
+    - attrs:
+        long_name: Growing degree days (sum of TG>4°C)
     parameters:
       thresh: 4 degC
   FD:
     base: frost_days
     outputs:
-      long_name: Frost days (TN<0°C)
+    - attrs:
+        long_name: Frost days (TN<0°C)
     parameters:
       thresh: 0 degC
   CFD:
     base: consecutive_frost_days
     outputs:
-      long_name: Maximum number of consecutive frost days (TN<0°C)
+    - attrs:
+        long_name: Maximum number of consecutive frost days (TN<0°C)
     parameters:
       thresh: 0 degC
   GSL:
     base: growing_season_length
     outputs:
-      long_name: Growing season length
+    - attrs:
+        long_name: Growing season length
     parameters:
       thresh: 5 degC
       window: 6
   ID:
     base: ice_days
     outputs:
-      long_name: Ice days (TX<0°C)
+    - attrs:
+        long_name: Ice days (TX<0°C)
     parameters:
       thresh: 0 degC
   HD17:
     base: heating_degree_days
     outputs:
-      long_name: Heating degree days (sum of17°C - TG)
+    - attrs:
+        long_name: Heating degree days (sum of17°C - TG)
     parameters:
       thresh: 17 degC
   CDD:
     base: cdd
     outputs:
-      long_name: Maximum number of consecutive dry days (RR<1 mm)
+    - attrs:
+        long_name: Maximum number of consecutive dry days (RR<1 mm)
     parameters:
       thresh: 1 mm/day
   CWD:
     base: cwd
     outputs:
-      long_name: Maximum number of consecutive wet days (RR≥1 mm)
+    - attrs:
+        long_name: Maximum number of consecutive wet days (RR≥1 mm)
     parameters:
       thresh: 1 mm/day
   RR:
     base: prcptot
     outputs:
-      long_name: Precipitation sum
+    - attrs:
+        long_name: Precipitation sum
   PRCPTOT:
     base: wet_prcptot
     outputs:
-      long_name: Precipitation sum over wet days
+    - attrs:
+        long_name: Precipitation sum over wet days
     parameters:
       thresh: 1 mm/day
   SDII:
@@ -175,41 +198,49 @@ indicators:
   ETR:
     base: etr
     outputs:
-      long_name: Intra-period extreme temperature range
+    - attrs:
+        long_name: Intra-period extreme temperature range
   DTR:
     base: dtr
     outputs:
-      long_name: Mean of diurnal temperature range
+    - attrs:
+        long_name: Mean of diurnal temperature range
   vDTR:
     base: dtrvar
     outputs:
-      long_name: Mean absolute day-to-day difference in DTR
+    - attrs:
+        long_name: Mean absolute day-to-day difference in DTR
   RR1:
     base: wetdays
     outputs:
-      long_name: Wet days (RR≥1 mm)
+    - attrs:
+        long_name: Wet days (RR≥1 mm)
     parameters:
       thresh: 1 mm/day
   R10mm:
     base: wetdays
     outputs:
-      long_name: Heavy precipitation days (precipitation≥10 mm)
+    - attrs:
+        long_name: Heavy precipitation days (precipitation≥10 mm)
     parameters:
       thresh: 10 mm/day
   R20mm:
     base: wetdays
     outputs:
-      long_name: Very heavy precipitation days (precipitation≥20 mm)
+    - attrs:
+        long_name: Very heavy precipitation days (precipitation≥20 mm)
     parameters:
       thresh: 20 mm/day
   RX1day:
     base: rx1day
     outputs:
-      long_name: Highest 1-day precipitation amount
+    - attrs:
+        long_name: Highest 1-day precipitation amount
   RX5day:
     base: max_n_day_precipitation_amount
     outputs:
-      long_name: Highest 5-day precipitation amount
+    - attrs:
+        long_name: Highest 5-day precipitation amount
     parameters:
       window: 5
   R75p:
@@ -218,7 +249,6 @@ indicators:
       thresh: 1 mm/day
       pr_per:
         description: 75th percentile of wet day precipitation flux.
-
   R95p:
     base: days_over_precip_thresh
     parameters:
@@ -234,7 +264,8 @@ indicators:
   R75pTOT:
     base: fraction_over_precip_thresh
     outputs:
-      long_name: Precipitation fraction due to moderate wet days (>75th percentile)
+    - attrs:
+        long_name: Precipitation fraction due to moderate wet days (>75th percentile)
     parameters:
       thresh: 1 mm/day
       pr_per:
@@ -242,7 +273,8 @@ indicators:
   R95pTOT:
     base: fraction_over_precip_thresh
     outputs:
-      long_name: Precipitation fraction due to very wet days (>95th percentile)
+    - attrs:
+        long_name: Precipitation fraction due to very wet days (>95th percentile)
     parameters:
       thresh: 1 mm/day
       pr_per:
@@ -250,7 +282,8 @@ indicators:
   R99pTOT:
     base: fraction_over_precip_thresh
     outputs:
-      long_name: Precipitation fraction due to extremely wet days (>99th percentile)
+    - attrs:
+        long_name: Precipitation fraction due to extremely wet days (>99th percentile)
     parameters:
       thresh: 1 mm/day
       pr_per:
@@ -259,32 +292,37 @@ indicators:
     realm: land
     base: snow_depth
     outputs:
-      long_name: Mean of daily snow depth
+    - attrs:
+        long_name: Mean of daily snow depth
   SD1:
     realm: land
     base: snd_season_length
     outputs:
-      long_name: Snow days (SD≥1 cm)
+    - attrs:
+        long_name: Snow days (SD≥1 cm)
     parameters:
       thresh: 1 cm
   SD5cm:
     realm: land
     base: snd_season_length
     outputs:
-      long_name: Snow days (SD≥5 cm)
+    - attrs:
+        long_name: Snow days (SD≥5 cm)
     parameters:
       thresh: 5 cm
   SD50cm:
     realm: land
     base: snd_season_length
     outputs:
-      long_name: Snow days (SD≥50 cm)
+    - attrs:
+        long_name: Snow days (SD≥50 cm)
     parameters:
       thresh: 50 cm
   CD:
     base: cold_and_dry_days
     outputs:
-      long_name: Cold and dry days
+    - attrs:
+        long_name: Cold and dry days
     parameters:
       tas_per:
         description: Daily 25th percentile of temperature.
@@ -293,7 +331,8 @@ indicators:
   WD:
     base: warm_and_dry_days
     outputs:
-      long_name: Warm and dry days
+    - attrs:
+        long_name: Warm and dry days
     parameters:
       tas_per:
         description: Daily 75th percentile of temperature.
@@ -302,7 +341,8 @@ indicators:
   WW:
     base: warm_and_wet_days
     outputs:
-      long_name: Warm and wet days
+    - attrs:
+        long_name: Warm and wet days
     parameters:
       tas_per:
         description: Daily 75th percentile of temperature.
@@ -311,7 +351,8 @@ indicators:
   CW:
     base: cold_and_wet_days
     outputs:
-      long_name: cold and wet days
+    - attrs:
+        long_name: cold and wet days
     parameters:
       tas_per:
         description: Daily 25th percentile of temperature.

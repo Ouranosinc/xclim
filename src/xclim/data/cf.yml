@@ -18,18 +18,20 @@ doc: |
 
   However, indicators calculating a date will have no units in this module. "clix-meta" suggests "day", but that
   already means something else.
+realm: atmos
+references: clix-meta https://github.com/clix-meta/clix-meta
 indicators:
   cdd:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Maximum consecutive dry days (Precip < 1mm)
-      proposed_standard_name: spell_length_with_lwe_thickness_of_precipitation_amount_below_threshold
-      standard_name: spell_length_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold
-      var_name: cdd
     compute: clix.spell_length
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        long_name: Maximum consecutive dry days (Precip < 1mm)
+        proposed_standard_name: spell_length_with_lwe_thickness_of_precipitation_amount_below_threshold
+        standard_name: spell_length_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold
+      var_name: cdd
     parameters:
       condition: <
       freq:
@@ -39,16 +41,17 @@ indicators:
     references: ETCCDI
     title: Maximum consecutive dry days (Precip < 1mm)
   cddcoldTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: "Cooling Degree Days (sum of Tmean \u2013 {threshold}C, for days\
-        \ when Tmean > {threshold}C)"
-      standard_name: integral_wrt_time_of_air_temperature_excess
-      units: degree_Celsius day
-      var_name: cddcold{threshold}
     compute: clix.temperature_sum
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: "Cooling Degree Days (sum of Tmean \u2013 {threshold}C, for days\
+          \ when Tmean > {threshold}C)"
+        standard_name: integral_wrt_time_of_air_temperature_excess
+      units: degree_Celsius day
+      var_name: cddcold{threshold}
     parameters:
       condition: '>'
       freq:
@@ -57,15 +60,16 @@ indicators:
     title: "Cooling Degree Days (sum of Tmean \u2013 {threshold}C, for days when Tmean\
       \ > {threshold}C)"
   cfd:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consecutive frost days (Tmin < 0 C)
-      proposed_standard_name: spell_length_with_air_temperature_below_threshold
-      standard_name: spell_length_of_days_with_air_temperature_below_threshold
-      var_name: cfd
     compute: clix.spell_length
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum number of consecutive frost days (Tmin < 0 C)
+        proposed_standard_name: spell_length_with_air_temperature_below_threshold
+        standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      var_name: cfd
     parameters:
       condition: <
       freq:
@@ -75,15 +79,16 @@ indicators:
     references: ECA&D
     title: Maximum number of consecutive frost days (Tmin < 0 C)
   csu:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consecutive summer days (Tmax >25 C)
-      proposed_standard_name: spell_length_with_air_temperature_above_threshold
-      standard_name: spell_length_of_days_with_air_temperature_above_threshold
-      var_name: csu
     compute: clix.spell_length
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum number of consecutive summer days (Tmax >25 C)
+        proposed_standard_name: spell_length_with_air_temperature_above_threshold
+        standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      var_name: csu
     parameters:
       condition: '>'
       freq:
@@ -93,15 +98,16 @@ indicators:
     references: ECA&D
     title: Maximum number of consecutive summer days (Tmax >25 C)
   ctmgeTT:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consecutive days with Tmean >= {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
-      standard_name: spell_length_of_days_with_air_temperature_above_threshold
-      var_name: ctmge{threshold}
     compute: clix.spell_length
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum number of consecutive days with Tmean >= {threshold}C
+        proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
+        standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      var_name: ctmge{threshold}
     parameters:
       condition: '>='
       freq:
@@ -110,15 +116,16 @@ indicators:
     references: CLIPC
     title: Maximum number of consecutive days with Tmean >= {threshold}C
   ctmgtTT:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consecutive days with Tmean > {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_above_threshold
-      standard_name: spell_length_of_days_with_air_temperature_above_threshold
-      var_name: ctmgt{threshold}
     compute: clix.spell_length
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum number of consecutive days with Tmean > {threshold}C
+        proposed_standard_name: spell_length_with_air_temperature_above_threshold
+        standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      var_name: ctmgt{threshold}
     parameters:
       condition: '>'
       freq:
@@ -127,15 +134,16 @@ indicators:
     references: CLIPC
     title: Maximum number of consecutive days with Tmean > {threshold}C
   ctmleTT:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consecutive days with Tmean <= {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
-      standard_name: spell_length_of_days_with_air_temperature_below_threshold
-      var_name: ctmle{threshold}
     compute: clix.spell_length
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum number of consecutive days with Tmean <= {threshold}C
+        proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
+        standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      var_name: ctmle{threshold}
     parameters:
       condition: <=
       freq:
@@ -144,15 +152,16 @@ indicators:
     references: CLIPC
     title: Maximum number of consecutive days with Tmean <= {threshold}C
   ctmltTT:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consecutive days with Tmean < {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_below_threshold
-      standard_name: spell_length_of_days_with_air_temperature_below_threshold
-      var_name: ctmlt{threshold}
     compute: clix.spell_length
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum number of consecutive days with Tmean < {threshold}C
+        proposed_standard_name: spell_length_with_air_temperature_below_threshold
+        standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      var_name: ctmlt{threshold}
     parameters:
       condition: <
       freq:
@@ -161,15 +170,16 @@ indicators:
     references: CLIPC
     title: Maximum number of consecutive days with Tmean < {threshold}C
   ctngeTT:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consecutive days with Tmin >= {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
-      standard_name: spell_length_of_days_with_air_temperature_above_threshold
-      var_name: ctnge{threshold}
     compute: clix.spell_length
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum number of consecutive days with Tmin >= {threshold}C
+        proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
+        standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      var_name: ctnge{threshold}
     parameters:
       condition: '>='
       freq:
@@ -178,15 +188,16 @@ indicators:
     references: CLIPC
     title: Maximum number of consecutive days with Tmin >= {threshold}C
   ctngtTT:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consecutive days with Tmin > {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_above_threshold
-      standard_name: spell_length_of_days_with_air_temperature_above_threshold
-      var_name: ctngt{threshold}
     compute: clix.spell_length
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum number of consecutive days with Tmin > {threshold}C
+        proposed_standard_name: spell_length_with_air_temperature_above_threshold
+        standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      var_name: ctngt{threshold}
     parameters:
       condition: '>'
       freq:
@@ -195,15 +206,16 @@ indicators:
     references: CLIPC
     title: Maximum number of consecutive days with Tmin > {threshold}C
   ctnleTT:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consecutive days with Tmin <= {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
-      standard_name: spell_length_of_days_with_air_temperature_below_threshold
-      var_name: ctnle{threshold}
     compute: clix.spell_length
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum number of consecutive days with Tmin <= {threshold}C
+        proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
+        standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      var_name: ctnle{threshold}
     parameters:
       condition: <=
       freq:
@@ -212,15 +224,16 @@ indicators:
     references: CLIPC
     title: Maximum number of consecutive days with Tmin <= {threshold}C
   ctnltTT:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consecutive days with Tmin < {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_below_threshold
-      standard_name: spell_length_of_days_with_air_temperature_below_threshold
-      var_name: ctnlt{threshold}
     compute: clix.spell_length
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum number of consecutive days with Tmin < {threshold}C
+        proposed_standard_name: spell_length_with_air_temperature_below_threshold
+        standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      var_name: ctnlt{threshold}
     parameters:
       condition: <
       freq:
@@ -229,15 +242,16 @@ indicators:
     references: CLIPC
     title: Maximum number of consecutive days with Tmin < {threshold}C
   ctxgeTT:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consecutive days with Tmax >= {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
-      standard_name: spell_length_of_days_with_air_temperature_above_threshold
-      var_name: ctxge{threshold}
     compute: clix.spell_length
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum number of consecutive days with Tmax >= {threshold}C
+        proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
+        standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      var_name: ctxge{threshold}
     parameters:
       condition: '>='
       freq:
@@ -246,15 +260,16 @@ indicators:
     references: CLIPC
     title: Maximum number of consecutive days with Tmax >= {threshold}C
   ctxgtTT:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consecutive days with Tmax > {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_above_threshold
-      standard_name: spell_length_of_days_with_air_temperature_above_threshold
-      var_name: ctxgt{threshold}
     compute: clix.spell_length
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum number of consecutive days with Tmax > {threshold}C
+        proposed_standard_name: spell_length_with_air_temperature_above_threshold
+        standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      var_name: ctxgt{threshold}
     parameters:
       condition: '>'
       freq:
@@ -263,15 +278,16 @@ indicators:
     references: CLIPC
     title: Maximum number of consecutive days with Tmax > {threshold}C
   ctxleTT:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consecutive days with Tmax <= {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
-      standard_name: spell_length_of_days_with_air_temperature_below_threshold
-      var_name: ctxle{threshold}
     compute: clix.spell_length
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum number of consecutive days with Tmax <= {threshold}C
+        proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
+        standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      var_name: ctxle{threshold}
     parameters:
       condition: <=
       freq:
@@ -280,15 +296,16 @@ indicators:
     references: CLIPC
     title: Maximum number of consecutive days with Tmax <= {threshold}C
   ctxltTT:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consecutive days with Tmax < {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_below_threshold
-      standard_name: spell_length_of_days_with_air_temperature_below_threshold
-      var_name: ctxlt{threshold}
     compute: clix.spell_length
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum number of consecutive days with Tmax < {threshold}C
+        proposed_standard_name: spell_length_with_air_temperature_below_threshold
+        standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      var_name: ctxlt{threshold}
     parameters:
       condition: <
       freq:
@@ -297,16 +314,17 @@ indicators:
     references: CLIPC
     title: Maximum number of consecutive days with Tmax < {threshold}C
   cwd:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Maximum consecutive wet days (Precip >= 1mm)
-      proposed_standard_name: spell_length_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
-      standard_name: spell_length_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
-      var_name: cwd
     compute: clix.spell_length
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Maximum consecutive wet days (Precip >= 1mm)
+        proposed_standard_name: spell_length_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
+        standard_name: spell_length_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
+      var_name: cwd
     parameters:
       condition: '>='
       freq:
@@ -316,15 +334,16 @@ indicators:
     references: ETCCDI
     title: Maximum consecutive wet days (Precip >= 1mm)
   ddgtTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Degree Days above threshold {threshold}C
-      standard_name: integral_wrt_time_of_air_temperature_excess
-      units: degree_Celsius day
-      var_name: ddgt{threshold}
     compute: clix.temperature_sum
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Degree Days above threshold {threshold}C
+        standard_name: integral_wrt_time_of_air_temperature_excess
+      units: degree_Celsius day
+      var_name: ddgt{threshold}
     parameters:
       condition: '>'
       freq:
@@ -332,15 +351,16 @@ indicators:
     references: CLIPC
     title: Degree Days above threshold {threshold}C
   ddltTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Degree Days below threshold {threshold}C
-      standard_name: integral_wrt_time_of_air_temperature_deficit
-      units: degree_Celsius day
-      var_name: ddlt{threshold}
     compute: clix.temperature_sum
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Degree Days below threshold {threshold}C
+        standard_name: integral_wrt_time_of_air_temperature_deficit
+      units: degree_Celsius day
+      var_name: ddlt{threshold}
     parameters:
       condition: <
       freq:
@@ -348,16 +368,17 @@ indicators:
     references: CLIPC
     title: Degree Days below threshold {threshold}C
   dtr:
-    outputs:
-    - cell_methods: 'time: range within days time: mean over days'
-      long_name: Mean Diurnal Temperature Range
-      proposed_standard_name: air_temperature_range
-      units: degree_Celsius
-      var_name: dtr
     compute: clix.diurnal_temperature_range
     input:
       high_data: tasmax
       low_data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: range within days time: mean over days'
+        long_name: Mean Diurnal Temperature Range
+        proposed_standard_name: air_temperature_range
+      units: degree_Celsius
+      var_name: dtr
     parameters:
       freq:
         default: MS
@@ -365,29 +386,31 @@ indicators:
     references: ETCCDI
     title: Mean Diurnal Temperature Range
   etr:
-    outputs:
-    - cell_methods: 'time: range'
-      long_name: Intra-period extreme temperature range
-      proposed_standard_name: air_temperature_range
-      units: degree_Celsius
-      var_name: etr
     compute: clix.extreme_temperature_range
     input:
       high_data: tasmax
       low_data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: range'
+        long_name: Intra-period extreme temperature range
+        proposed_standard_name: air_temperature_range
+      units: degree_Celsius
+      var_name: etr
     parameters:
       freq:
         default: MS
     references: ECA&D
     title: Intra-period extreme temperature range
   faf:
-    outputs:
-    - long_name: First Autumn Frost (day-of-year during Jul-Dec when Tmin < 0 degC)
-      proposed_standard_name: first_occurrence_of_air_temperature_below_threshold
-      var_name: faf
     compute: clix.first_occurrence
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        long_name: First Autumn Frost (day-of-year during Jul-Dec when Tmin < 0 degC)
+        proposed_standard_name: first_occurrence_of_air_temperature_below_threshold
+      var_name: faf
     parameters:
       after_date: 07-01
       condition: <
@@ -397,16 +420,17 @@ indicators:
     references: B4EST
     title: First Autumn Frost (day-of-year during Jul-Dec when Tmin < 0 degC)
   fd:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of Frost Days (Tmin < 0C)
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: '1'
-      var_name: fd
     compute: clix.count_occurrences
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of Frost Days (Tmin < 0C)
+        proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+        standard_name: number_of_days_with_air_temperature_below_threshold
+      units: '1'
+      var_name: fd
     parameters:
       condition: <
       freq:
@@ -415,15 +439,16 @@ indicators:
     references: ETCCDI
     title: Number of Frost Days (Tmin < 0C)
   fg:
-    outputs:
-    - cell_methods: 'time: mean'
-      long_name: Mean of daily mean wind strength
-      standard_name: wind_speed
-      units: meter second-1
-      var_name: fg
     compute: clix.statistics
     input:
       data: sfcWind
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean'
+        long_name: Mean of daily mean wind strength
+        standard_name: wind_speed
+      units: meter second-1
+      var_name: fg
     parameters:
       freq:
         default: MS
@@ -431,16 +456,17 @@ indicators:
     references: ECA&D
     title: Mean of daily mean wind strength
   fg6bft:
-    outputs:
-    - cell_methods: 'time: mean within days time: sum over days'
-      long_name: Days with daily averaged wind strength >= 6 Bft (>=10.8 m/s)
-      proposed_standard_name: number_of_occurrences_with_wind_speed_at_or_above_threshold
-      standard_name: number_of_days_with_wind_speed_above_threshold
-      units: '1'
-      var_name: fg6bft
     compute: clix.count_occurrences
     input:
       data: sfcWind
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean within days time: sum over days'
+        long_name: Days with daily averaged wind strength >= 6 Bft (>=10.8 m/s)
+        proposed_standard_name: number_of_occurrences_with_wind_speed_at_or_above_threshold
+        standard_name: number_of_days_with_wind_speed_above_threshold
+      units: '1'
+      var_name: fg6bft
     parameters:
       condition: '>='
       freq:
@@ -449,16 +475,17 @@ indicators:
     references: ECA&D
     title: Days with daily averaged wind strength >= 6 Bft (>=10.8 m/s)
   fgcalm:
-    outputs:
-    - cell_methods: 'time: mean within days time: sum over days'
-      long_name: Calm days (daily mean wind strength <= 2 m/s)
-      proposed_standard_name: number_of_occurrences_with_wind_speed_at_or_below_threshold
-      standard_name: number_of_days_with_wind_speed_below_threshold
-      units: '1'
-      var_name: fgcalm
     compute: clix.count_occurrences
     input:
       data: sfcWind
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean within days time: sum over days'
+        long_name: Calm days (daily mean wind strength <= 2 m/s)
+        proposed_standard_name: number_of_occurrences_with_wind_speed_at_or_below_threshold
+        standard_name: number_of_days_with_wind_speed_below_threshold
+      units: '1'
+      var_name: fgcalm
     parameters:
       condition: <=
       freq:
@@ -467,15 +494,16 @@ indicators:
     references: ECA&D
     title: Calm days (daily mean wind strength <= 2 m/s)
   fxx:
-    outputs:
-    - cell_methods: 'time: maximum'
-      long_name: Maximum value of daily maximum wind gust strength
-      standard_name: wind_speed_of_gust
-      units: meter second-1
-      var_name: fxx
     compute: clix.statistics
     input:
       data: wsgsmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum'
+        long_name: Maximum value of daily maximum wind gust strength
+        standard_name: wind_speed_of_gust
+      units: meter second-1
+      var_name: fxx
     parameters:
       freq:
         default: MS
@@ -483,16 +511,17 @@ indicators:
     references: ECA&D
     title: Maximum value of daily maximum wind gust strength
   gd4:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: "Growing degree days (sum of Tmean \u2013 4C, for days when Tmean\
-        \ > 4C)"
-      standard_name: integral_wrt_time_of_air_temperature_excess
-      units: degree_Celsius day
-      var_name: gd4
     compute: clix.temperature_sum
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: "Growing degree days (sum of Tmean \u2013 4C, for days when Tmean\
+          \ > 4C)"
+        standard_name: integral_wrt_time_of_air_temperature_excess
+      units: degree_Celsius day
+      var_name: gd4
     parameters:
       condition: '>'
       freq:
@@ -501,16 +530,17 @@ indicators:
     references: ECA&D
     title: "Growing degree days (sum of Tmean \u2013 4C, for days when Tmean > 4C)"
   gddgrowTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: "Annual Growing Degree Days (sum of Tmean \u2013 {threshold}C, for\
-        \ days when Tmean > {threshold}C)"
-      standard_name: integral_wrt_time_of_air_temperature_excess
-      units: degree_Celsius day
-      var_name: gddgrow{threshold}
     compute: clix.temperature_sum
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: "Annual Growing Degree Days (sum of Tmean \u2013 {threshold}C,\
+          \ for days when Tmean > {threshold}C)"
+        standard_name: integral_wrt_time_of_air_temperature_excess
+      units: degree_Celsius day
+      var_name: gddgrow{threshold}
     parameters:
       condition: '>'
       freq:
@@ -519,16 +549,17 @@ indicators:
     title: "Annual Growing Degree Days (sum of Tmean \u2013 {threshold}C, for days\
       \ when Tmean > {threshold}C)"
   hd17:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: "Heating degree days (sum of 17C \u2013 Tmean, for days when Tmean\
-        \ < 17C)"
-      standard_name: integral_wrt_time_of_air_temperature_deficit
-      units: degree_Celsius day
-      var_name: hd17
     compute: clix.temperature_sum
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: "Heating degree days (sum of 17C \u2013 Tmean, for days when Tmean\
+          \ < 17C)"
+        standard_name: integral_wrt_time_of_air_temperature_deficit
+      units: degree_Celsius day
+      var_name: hd17
     parameters:
       condition: <
       freq:
@@ -537,16 +568,17 @@ indicators:
     references: ECA&D
     title: "Heating degree days (sum of 17C \u2013 Tmean, for days when Tmean < 17C)"
   hddheatTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Heating Degree Days (sum of {threshold}C  - Tmean, for days when
-        Tmean < {threshold}C )
-      standard_name: integral_wrt_time_of_air_temperature_deficit
-      units: degree_Celsius day
-      var_name: hddheat{threshold}
     compute: clix.temperature_sum
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Heating Degree Days (sum of {threshold}C  - Tmean, for days when
+          Tmean < {threshold}C )
+        standard_name: integral_wrt_time_of_air_temperature_deficit
+      units: degree_Celsius day
+      var_name: hddheat{threshold}
     parameters:
       condition: <
       freq:
@@ -555,16 +587,17 @@ indicators:
     title: Heating Degree Days (sum of {threshold}C  - Tmean, for days when Tmean
       < {threshold}C )
   id:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of sharp Ice Days (Tmax < 0C)
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: '1'
-      var_name: id
     compute: clix.count_occurrences
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of sharp Ice Days (Tmax < 0C)
+        proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+        standard_name: number_of_days_with_air_temperature_below_threshold
+      units: '1'
+      var_name: id
     parameters:
       condition: <
       freq:
@@ -573,13 +606,14 @@ indicators:
     references: ETCCDI
     title: Number of sharp Ice Days (Tmax < 0C)
   lsf:
-    outputs:
-    - long_name: Last Spring Frost (day-of-year during Jan-Jun when Tmin < 0 degC)
-      proposed_standard_name: last_occurrence_of_air_temperature_below_threshold
-      var_name: lsf
     compute: clix.last_occurrence
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        long_name: Last Spring Frost (day-of-year during Jan-Jun when Tmin < 0 degC)
+        proposed_standard_name: last_occurrence_of_air_temperature_below_threshold
+      var_name: lsf
     parameters:
       before_date: 07-01
       condition: <
@@ -589,16 +623,17 @@ indicators:
     references: B4EST
     title: Last Spring Frost (day-of-year during Jan-Jun when Tmin < 0 degC)
   maxdtr:
-    outputs:
-    - cell_methods: 'time: range within days time: maximum over days'
-      long_name: Maximum Diurnal Temperature Range
-      proposed_standard_name: air_temperature_range
-      units: degree_Celsius
-      var_name: maxdtr
     compute: clix.diurnal_temperature_range
     input:
       high_data: tasmax
       low_data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: range within days time: maximum over days'
+        long_name: Maximum Diurnal Temperature Range
+        proposed_standard_name: air_temperature_range
+      units: degree_Celsius
+      var_name: maxdtr
     parameters:
       freq:
         default: MS
@@ -606,16 +641,17 @@ indicators:
     references: SMHI
     title: Maximum Diurnal Temperature Range
   nzero:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of zero-crossing days (days when Tmin < 0 degC < Tmax)
-      proposed_standard_name: number_of_occurrences_with_air_temperature_level_crossings
-      units: '1'
-      var_name: nzero
     compute: clix.count_level_crossings
     input:
       high_data: tasmax
       low_data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of zero-crossing days (days when Tmin < 0 degC < Tmax)
+        proposed_standard_name: number_of_occurrences_with_air_temperature_level_crossings
+      units: '1'
+      var_name: nzero
     parameters:
       freq:
         default: YS
@@ -623,15 +659,16 @@ indicators:
     references: SMHI
     title: Number of zero-crossing days (days when Tmin < 0 degC < Tmax)
   pp:
-    outputs:
-    - cell_methods: 'time: mean'
-      long_name: Mean of daily sea level pressure
-      standard_name: air_pressure_at_sea_level
-      units: hPa
-      var_name: pp
     compute: clix.statistics
     input:
       data: psl
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean'
+        long_name: Mean of daily sea level pressure
+        standard_name: air_pressure_at_sea_level
+      units: hPa
+      var_name: pp
     parameters:
       freq:
         default: MS
@@ -639,16 +676,17 @@ indicators:
     references: ECA&D
     title: Mean of daily sea level pressure
   prcptot:
-    outputs:
-    - cell_methods: 'time: mean over days'
-      long_name: Total precipitation during Wet Days
-      standard_name: lwe_thickness_of_precipitation_amount
-      units: mm
-      var_name: prcptot
     compute: clix.thresholded_statistics
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean over days'
+        long_name: Total precipitation during Wet Days
+        standard_name: lwe_thickness_of_precipitation_amount
+      units: mm
+      var_name: prcptot
     parameters:
       condition: '>='
       freq:
@@ -658,17 +696,18 @@ indicators:
     references: ETCCDI
     title: Total precipitation during Wet Days
   r10mm:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of heavy precipitation days (Precip >=10mm)
-      proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
-      standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
-      units: '1'
-      var_name: r10mm
     compute: clix.count_occurrences
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of heavy precipitation days (Precip >=10mm)
+        proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
+        standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
+      units: '1'
+      var_name: r10mm
     parameters:
       condition: '>='
       freq:
@@ -677,17 +716,18 @@ indicators:
     references: ETCCDI
     title: Number of heavy precipitation days (Precip >=10mm)
   r20mm:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of very heavy precipitation days (Precip >= 20mm)
-      proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
-      standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
-      units: '1'
-      var_name: r20mm
     compute: clix.count_occurrences
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of very heavy precipitation days (Precip >= 20mm)
+        proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
+        standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
+      units: '1'
+      var_name: r20mm
     parameters:
       condition: '>='
       freq:
@@ -696,16 +736,17 @@ indicators:
     references: ETCCDI
     title: Number of very heavy precipitation days (Precip >= 20mm)
   rPRCpDAYS:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days when precipitation is above the {percentile}th percentile
-      standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
-      units: '1'
-      var_name: r{percentile}pDAYS
     compute: clix.count_thresholded_percentile_occurrences
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days when precipitation is above the {percentile}th percentile
+        standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
+      units: '1'
+      var_name: r{percentile}pDAYS
     parameters:
       data_condition: '>='
       data_threshold: 1 mm day-1
@@ -718,16 +759,17 @@ indicators:
     references: 2022 Ad hoc group
     title: Number of days when precipitation is above the {percentile}th percentile
   rPRCpPCT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Percentage of total precipitation amount from days above the {percentile}th
-        percentile
-      units: '%'
-      var_name: r{percentile}pPCT
     compute: clix.count_thresholded_percentile_occurrences
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Percentage of total precipitation amount from days above the {percentile}th
+          percentile
+      units: '%'
+      var_name: r{percentile}pPCT
     parameters:
       data_condition: '>='
       data_threshold: 1 mm day-1
@@ -741,16 +783,17 @@ indicators:
     title: Percentage of total precipitation amount from days above the {percentile}th
       percentile
   rPRCpSUM:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Total precipitation amount from days above the {percentile}th percentile
-      standard_name: lwe_thickness_of_precipitation_amount
-      units: mm
-      var_name: r{percentile}pSUM
     compute: clix.count_thresholded_percentile_occurrences
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Total precipitation amount from days above the {percentile}th percentile
+        standard_name: lwe_thickness_of_precipitation_amount
+      units: mm
+      var_name: r{percentile}pSUM
     parameters:
       data_condition: '>='
       data_threshold: 1 mm day-1
@@ -763,16 +806,17 @@ indicators:
     references: 2022 Ad hoc group
     title: Total precipitation amount from days above the {percentile}th percentile
   rPRCpctl:
-    outputs:
-    - long_name: '{percentiles}th percentile of precipitation during wet days (Precip
-        >= 1mm)'
-      standard_name: lwe_thickness_of_precipitation_amount
-      units: mm
-      var_name: r{percentiles}pctl
     compute: clix.thresholded_percentile
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        long_name: '{percentiles}th percentile of precipitation during wet days (Precip
+          >= 1mm)'
+        standard_name: lwe_thickness_of_precipitation_amount
+      units: mm
+      var_name: r{percentiles}pctl
     parameters:
       condition: '>='
       freq:
@@ -782,17 +826,18 @@ indicators:
     title: '{percentiles}th percentile of precipitation during wet days (Precip >=
       1mm)'
   rRTmm:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with daily Precip >= {threshold}mm)
-      proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
-      standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
-      units: '1'
-      var_name: r{threshold}mm
     compute: clix.count_occurrences
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with daily Precip >= {threshold}mm)
+        proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
+        standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
+      units: '1'
+      var_name: r{threshold}mm
     parameters:
       condition: '>='
       freq:
@@ -800,15 +845,16 @@ indicators:
     references: ETCCDI
     title: Number of days with daily Precip >= {threshold}mm)
   rh:
-    outputs:
-    - cell_methods: 'time: mean'
-      long_name: Mean of daily relative humidity
-      standard_name: relative_humidity
-      units: '%'
-      var_name: rh
     compute: clix.statistics
     input:
       data: hurs
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean'
+        long_name: Mean of daily relative humidity
+        standard_name: relative_humidity
+      units: '%'
+      var_name: rh
     parameters:
       freq:
         default: MS
@@ -816,16 +862,17 @@ indicators:
     references: ECA&D
     title: Mean of daily relative humidity
   rr:
-    outputs:
-    - cell_methods: 'time: mean within days time: mean over days'
-      long_name: Precipitation sum
-      standard_name: lwe_thickness_of_precipitation_amount
-      units: mm
-      var_name: rr
     compute: clix.thresholded_statistics
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean within days time: mean over days'
+        long_name: Precipitation sum
+        standard_name: lwe_thickness_of_precipitation_amount
+      units: mm
+      var_name: rr
     parameters:
       condition: '>='
       freq:
@@ -835,17 +882,18 @@ indicators:
     references: ECA&D
     title: Precipitation sum
   rr1:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of Wet Days (precip >= 1 mm)
-      proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
-      standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
-      units: '1'
-      var_name: rr1
     compute: clix.count_occurrences
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of Wet Days (precip >= 1 mm)
+        proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
+        standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
+      units: '1'
+      var_name: rr1
     parameters:
       condition: '>='
       freq:
@@ -854,16 +902,17 @@ indicators:
     references: ECA&D
     title: Number of Wet Days (precip >= 1 mm)
   rx1day:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum 1-day precipitation
-      standard_name: lwe_thickness_of_precipitation_amount
-      units: mm
-      var_name: rx1day
     compute: clix.thresholded_statistics
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum 1-day precipitation
+        standard_name: lwe_thickness_of_precipitation_amount
+      units: mm
+      var_name: rx1day
     parameters:
       condition: '>='
       freq:
@@ -873,15 +922,16 @@ indicators:
     references: ETCCDI
     title: Maximum 1-day precipitation
   rx5day:
-    outputs:
-    - long_name: Maximum 5-day precipitation
-      standard_name: lwe_thickness_of_precipitation_amount
-      units: mm
-      var_name: rx5day
     compute: clix.thresholded_running_statistics
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        long_name: Maximum 5-day precipitation
+        standard_name: lwe_thickness_of_precipitation_amount
+      units: mm
+      var_name: rx5day
     parameters:
       condition: '>='
       freq:
@@ -893,15 +943,16 @@ indicators:
     references: ETCCDI
     title: Maximum 5-day precipitation
   rxNDday:
-    outputs:
-    - long_name: Maximum {window_size}-day precipitation
-      standard_name: lwe_thickness_of_precipitation_amount
-      units: mm
-      var_name: rx{window_size}day
     compute: clix.thresholded_running_statistics
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        long_name: Maximum {window_size}-day precipitation
+        standard_name: lwe_thickness_of_precipitation_amount
+      units: mm
+      var_name: rx{window_size}day
     parameters:
       condition: '>='
       freq:
@@ -912,15 +963,16 @@ indicators:
     references: ET-SCI
     title: Maximum {window_size}-day precipitation
   sd:
-    outputs:
-    - cell_methods: 'time: mean'
-      long_name: Mean of daily snow depth
-      standard_name: surface_snow_thickness
-      units: cm
-      var_name: sd
     compute: clix.statistics
     input:
       data: snd
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean'
+        long_name: Mean of daily snow depth
+        standard_name: surface_snow_thickness
+      units: cm
+      var_name: sd
     parameters:
       freq:
         default: MS
@@ -928,16 +980,17 @@ indicators:
     references: ECA&D
     title: Mean of daily snow depth
   sd1:
-    outputs:
-    - cell_methods: 'time: mean within days time: sum over days'
-      long_name: Snow days (SD >= 1 cm)
-      proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
-      standard_name: number_of_days_with_surface_snow_thickness_above_threshold
-      units: '1'
-      var_name: sd1
     compute: clix.count_occurrences
     input:
       data: snd
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean within days time: sum over days'
+        long_name: Snow days (SD >= 1 cm)
+        proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
+        standard_name: number_of_days_with_surface_snow_thickness_above_threshold
+      units: '1'
+      var_name: sd1
     parameters:
       condition: '>='
       freq:
@@ -946,16 +999,17 @@ indicators:
     references: ECA&D
     title: Snow days (SD >= 1 cm)
   sd50cm:
-    outputs:
-    - cell_methods: 'time: mean within days time: sum over days'
-      long_name: Number of days with snow depth >= 50 cm
-      proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
-      standard_name: number_of_days_with_surface_snow_thickness_above_threshold
-      units: '1'
-      var_name: sd50cm
     compute: clix.count_occurrences
     input:
       data: snd
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean within days time: sum over days'
+        long_name: Number of days with snow depth >= 50 cm
+        proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
+        standard_name: number_of_days_with_surface_snow_thickness_above_threshold
+      units: '1'
+      var_name: sd50cm
     parameters:
       condition: '>='
       freq:
@@ -964,16 +1018,17 @@ indicators:
     references: ECA&D
     title: Number of days with snow depth >= 50 cm
   sd5cm:
-    outputs:
-    - cell_methods: 'time: mean within days time: sum over days'
-      long_name: Number of days with snow depth >= 5 cm
-      proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
-      standard_name: number_of_days_with_surface_snow_thickness_above_threshold
-      units: '1'
-      var_name: sd5cm
     compute: clix.count_occurrences
     input:
       data: snd
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean within days time: sum over days'
+        long_name: Number of days with snow depth >= 5 cm
+        proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
+        standard_name: number_of_days_with_surface_snow_thickness_above_threshold
+      units: '1'
+      var_name: sd5cm
     parameters:
       condition: '>='
       freq:
@@ -982,16 +1037,17 @@ indicators:
     references: ECA&D
     title: Number of days with snow depth >= 5 cm
   sdDcm:
-    outputs:
-    - cell_methods: 'time: mean within days time: sum over days'
-      long_name: Number of days with snow depth >= {threshold} cm
-      proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
-      standard_name: number_of_days_with_surface_snow_thickness_above_threshold
-      units: '1'
-      var_name: sd{threshold}cm
     compute: clix.count_occurrences
     input:
       data: snd
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean within days time: sum over days'
+        long_name: Number of days with snow depth >= {threshold} cm
+        proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
+        standard_name: number_of_days_with_surface_snow_thickness_above_threshold
+      units: '1'
+      var_name: sd{threshold}cm
     parameters:
       condition: '>='
       freq:
@@ -999,16 +1055,17 @@ indicators:
     references: ECA&D
     title: Number of days with snow depth >= {threshold} cm
   sdii:
-    outputs:
-    - cell_methods: 'time: mean over days'
-      long_name: Average precipitation during Wet Days (SDII)
-      standard_name: lwe_precipitation_rate
-      units: mm day-1
-      var_name: sdii
     compute: clix.thresholded_statistics
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean over days'
+        long_name: Average precipitation during Wet Days (SDII)
+        standard_name: lwe_precipitation_rate
+      units: mm day-1
+      var_name: sdii
     parameters:
       condition: '>='
       freq:
@@ -1018,14 +1075,15 @@ indicators:
     references: ETCCDI
     title: Average precipitation during Wet Days (SDII)
   ss:
-    outputs:
-    - long_name: Sunshine duration, sum
-      standard_name: duration_of_sunshine
-      units: hour
-      var_name: ss
     compute: clix.statistics
     input:
       data: sund
+    outputs:
+    - attrs:
+        long_name: Sunshine duration, sum
+        standard_name: duration_of_sunshine
+      units: hour
+      var_name: ss
     parameters:
       freq:
         default: MS
@@ -1033,16 +1091,17 @@ indicators:
     references: ECA&D
     title: Sunshine duration, sum
   su:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of Summer Days (Tmax > 25C)
-      proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      units: '1'
-      var_name: su
     compute: clix.count_occurrences
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of Summer Days (Tmax > 25C)
+        proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
+        standard_name: number_of_days_with_air_temperature_above_threshold
+      units: '1'
+      var_name: su
     parameters:
       condition: '>'
       freq:
@@ -1051,15 +1110,16 @@ indicators:
     references: ETCCDI
     title: Number of Summer Days (Tmax > 25C)
   tg:
-    outputs:
-    - cell_methods: 'time: mean'
-      long_name: Mean of daily mean temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tg
     compute: clix.statistics
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean'
+        long_name: Mean of daily mean temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tg
     parameters:
       freq:
         default: MS
@@ -1067,13 +1127,14 @@ indicators:
     references: ECA&D
     title: Mean of daily mean temperature
   tg10p:
-    outputs:
-    - long_name: Percentage of days when Tmean < 10th percentile
-      units: '%'
-      var_name: tg10p
     compute: clix.count_percentile_occurrences
     input:
       data: tas
+    outputs:
+    - attrs:
+        long_name: Percentage of days when Tmean < 10th percentile
+      units: '%'
+      var_name: tg10p
     parameters:
       condition: <
       freq:
@@ -1085,13 +1146,14 @@ indicators:
     references: ECA&D
     title: Percentage of days when Tmean < 10th percentile
   tg90p:
-    outputs:
-    - long_name: Percentage of days when Tmean > 90th percentile
-      units: '%'
-      var_name: tg90p
     compute: clix.count_percentile_occurrences
     input:
       data: tas
+    outputs:
+    - attrs:
+        long_name: Percentage of days when Tmean > 90th percentile
+      units: '%'
+      var_name: tg90p
     parameters:
       condition: '>'
       freq:
@@ -1103,30 +1165,32 @@ indicators:
     references: ECA&D
     title: Percentage of days when Tmean > 90th percentile
   tmPRCpctl:
-    outputs:
-    - long_name: '{percentiles}th percentile of Tmean'
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tm{percentiles}pctl
     compute: clix.percentile
     input:
       data: tas
+    outputs:
+    - attrs:
+        long_name: '{percentiles}th percentile of Tmean'
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tm{percentiles}pctl
     parameters:
       freq:
         default: YS
     references: CLIPC
     title: '{percentiles}th percentile of Tmean'
   tmge10:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmean >= 10C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      units: '1'
-      var_name: tmge10
     compute: clix.count_occurrences
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmean >= 10C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
+        standard_name: number_of_days_with_air_temperature_above_threshold
+      units: '1'
+      var_name: tmge10
     parameters:
       condition: '>='
       freq:
@@ -1135,16 +1199,17 @@ indicators:
     references: ET-SCI
     title: Number of days with Tmean >= 10C
   tmge5:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmean >= 5C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      units: '1'
-      var_name: tmge5
     compute: clix.count_occurrences
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmean >= 5C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
+        standard_name: number_of_days_with_air_temperature_above_threshold
+      units: '1'
+      var_name: tmge5
     parameters:
       condition: '>='
       freq:
@@ -1153,16 +1218,17 @@ indicators:
     references: ET-SCI
     title: Number of days with Tmean >= 5C
   tmgeTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmean >= {threshold}C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      units: '1'
-      var_name: tmge{threshold}
     compute: clix.count_occurrences
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmean >= {threshold}C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
+        standard_name: number_of_days_with_air_temperature_above_threshold
+      units: '1'
+      var_name: tmge{threshold}
     parameters:
       condition: '>='
       freq:
@@ -1170,13 +1236,14 @@ indicators:
     references: CLIPC
     title: Number of days with Tmean >= {threshold}C
   tmgtPRCp:
-    outputs:
-    - long_name: Percentage of days when Tmean > {percentile}th percentile
-      units: '%'
-      var_name: tmgt{percentile}p
     compute: clix.count_percentile_occurrences
     input:
       data: tas
+    outputs:
+    - attrs:
+        long_name: Percentage of days when Tmean > {percentile}th percentile
+      units: '%'
+      var_name: tmgt{percentile}p
     parameters:
       condition: '>'
       freq:
@@ -1187,16 +1254,17 @@ indicators:
     references: CLIPC
     title: Percentage of days when Tmean > {percentile}th percentile
   tmgtTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmean > {threshold}C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      units: '1'
-      var_name: tmgt{threshold}
     compute: clix.count_occurrences
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmean > {threshold}C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
+        standard_name: number_of_days_with_air_temperature_above_threshold
+      units: '1'
+      var_name: tmgt{threshold}
     parameters:
       condition: '>'
       freq:
@@ -1204,16 +1272,17 @@ indicators:
     references: CLIPC
     title: Number of days with Tmean > {threshold}C
   tmleTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmean <= {threshold}C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_below_threshold
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: '1'
-      var_name: tmle{threshold}
     compute: clix.count_occurrences
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmean <= {threshold}C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_below_threshold
+        standard_name: number_of_days_with_air_temperature_below_threshold
+      units: '1'
+      var_name: tmle{threshold}
     parameters:
       condition: <=
       freq:
@@ -1221,16 +1290,17 @@ indicators:
     references: CLIPC
     title: Number of days with Tmean <= {threshold}C
   tmlt10:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmean < 10C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: '1'
-      var_name: tmlt10
     compute: clix.count_occurrences
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmean < 10C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+        standard_name: number_of_days_with_air_temperature_below_threshold
+      units: '1'
+      var_name: tmlt10
     parameters:
       condition: <
       freq:
@@ -1239,16 +1309,17 @@ indicators:
     references: ET-SCI
     title: Number of days with Tmean < 10C
   tmlt5:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmean < 5C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: '1'
-      var_name: tmlt5
     compute: clix.count_occurrences
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmean < 5C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+        standard_name: number_of_days_with_air_temperature_below_threshold
+      units: '1'
+      var_name: tmlt5
     parameters:
       condition: <
       freq:
@@ -1257,13 +1328,14 @@ indicators:
     references: ET-SCI
     title: Number of days with Tmean < 5C
   tmltPRCp:
-    outputs:
-    - long_name: Percentage of days when Tmean < {percentile}th percentile
-      units: '%'
-      var_name: tmlt{percentile}p
     compute: clix.count_percentile_occurrences
     input:
       data: tas
+    outputs:
+    - attrs:
+        long_name: Percentage of days when Tmean < {percentile}th percentile
+      units: '%'
+      var_name: tmlt{percentile}p
     parameters:
       condition: <
       freq:
@@ -1274,16 +1346,17 @@ indicators:
     references: CLIPC
     title: Percentage of days when Tmean < {percentile}th percentile
   tmltTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmean < {threshold}C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: '1'
-      var_name: tmlt{threshold}
     compute: clix.count_occurrences
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmean < {threshold}C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+        standard_name: number_of_days_with_air_temperature_below_threshold
+      units: '1'
+      var_name: tmlt{threshold}
     parameters:
       condition: <
       freq:
@@ -1291,15 +1364,16 @@ indicators:
     references: CLIPC
     title: Number of days with Tmean < {threshold}C
   tmm:
-    outputs:
-    - cell_methods: 'time: mean over days'
-      long_name: Mean daily mean temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tmm
     compute: clix.statistics
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean over days'
+        long_name: Mean daily mean temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tmm
     parameters:
       freq:
         default: YS
@@ -1307,15 +1381,16 @@ indicators:
     references: ET-SCI
     title: Mean daily mean temperature
   tmmax:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum daily mean temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tmmax
     compute: clix.statistics
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum daily mean temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tmmax
     parameters:
       freq:
         default: YS
@@ -1323,15 +1398,16 @@ indicators:
     references: CLIPC
     title: Maximum daily mean temperature
   tmmean:
-    outputs:
-    - cell_methods: 'time: mean over days'
-      long_name: Mean daily mean temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tmmean
     compute: clix.statistics
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean over days'
+        long_name: Mean daily mean temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tmmean
     parameters:
       freq:
         default: YS
@@ -1339,15 +1415,16 @@ indicators:
     references: CLIPC
     title: Mean daily mean temperature
   tmmin:
-    outputs:
-    - cell_methods: 'time: minimum over days'
-      long_name: Minimum daily mean temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tmmin
     compute: clix.statistics
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: minimum over days'
+        long_name: Minimum daily mean temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tmmin
     parameters:
       freq:
         default: YS
@@ -1355,15 +1432,16 @@ indicators:
     references: CLIPC
     title: Minimum daily mean temperature
   tmn:
-    outputs:
-    - cell_methods: 'time: minimum over days'
-      long_name: Minimum daily mean temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tmn
     compute: clix.statistics
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: minimum over days'
+        long_name: Minimum daily mean temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tmn
     parameters:
       freq:
         default: YS
@@ -1371,15 +1449,16 @@ indicators:
     references: ET-SCI
     title: Minimum daily mean temperature
   tmx:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum daily mean temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tmx
     compute: clix.statistics
     input:
       data: tas
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum daily mean temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tmx
     parameters:
       freq:
         default: YS
@@ -1387,15 +1466,16 @@ indicators:
     references: ET-SCI
     title: Maximum daily mean temperature
   tn:
-    outputs:
-    - cell_methods: 'time: mean'
-      long_name: Mean of daily minimum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tn
     compute: clix.statistics
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean'
+        long_name: Mean of daily minimum temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tn
     parameters:
       freq:
         default: MS
@@ -1403,13 +1483,14 @@ indicators:
     references: ECA&D
     title: Mean of daily minimum temperature
   tn10p:
-    outputs:
-    - long_name: Percentage of days when Tmin < 10th percentile
-      units: '%'
-      var_name: tn10p
     compute: clix.count_percentile_occurrences
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        long_name: Percentage of days when Tmin < 10th percentile
+      units: '%'
+      var_name: tn10p
     parameters:
       condition: <
       freq:
@@ -1421,13 +1502,14 @@ indicators:
     references: ETCCDI
     title: Percentage of days when Tmin < 10th percentile
   tn90p:
-    outputs:
-    - long_name: Percentage of days when Tmin > 90th percentile
-      units: '%'
-      var_name: tn90p
     compute: clix.count_percentile_occurrences
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        long_name: Percentage of days when Tmin > 90th percentile
+      units: '%'
+      var_name: tn90p
     parameters:
       condition: '>'
       freq:
@@ -1439,30 +1521,32 @@ indicators:
     references: ETCCDI
     title: Percentage of days when Tmin > 90th percentile
   tnPRCpctl:
-    outputs:
-    - long_name: '{percentiles}th percentile of Tmin'
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tn{percentiles}pctl
     compute: clix.percentile
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        long_name: '{percentiles}th percentile of Tmin'
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tn{percentiles}pctl
     parameters:
       freq:
         default: YS
     references: CLIPC
     title: '{percentiles}th percentile of Tmin'
   tngeTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmin >= {threshold}C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      units: '1'
-      var_name: tnge{threshold}
     compute: clix.count_occurrences
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmin >= {threshold}C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
+        standard_name: number_of_days_with_air_temperature_above_threshold
+      units: '1'
+      var_name: tnge{threshold}
     parameters:
       condition: '>='
       freq:
@@ -1470,13 +1554,14 @@ indicators:
     references: CLIPC
     title: Number of days with Tmin >= {threshold}C
   tngtPRCp:
-    outputs:
-    - long_name: Percentage of days when Tmin > {percentile}th percentile
-      units: '%'
-      var_name: tngt{percentile}p
     compute: clix.count_percentile_occurrences
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        long_name: Percentage of days when Tmin > {percentile}th percentile
+      units: '%'
+      var_name: tngt{percentile}p
     parameters:
       condition: '>'
       freq:
@@ -1487,16 +1572,17 @@ indicators:
     references: CLIPC
     title: Percentage of days when Tmin > {percentile}th percentile
   tngtTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmin > {threshold}C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      units: '1'
-      var_name: tngt{threshold}
     compute: clix.count_occurrences
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmin > {threshold}C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
+        standard_name: number_of_days_with_air_temperature_above_threshold
+      units: '1'
+      var_name: tngt{threshold}
     parameters:
       condition: '>'
       freq:
@@ -1504,16 +1590,17 @@ indicators:
     references: CLIPC
     title: Number of days with Tmin > {threshold}C
   tnleTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmin <= {threshold}C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_below_threshold
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: '1'
-      var_name: tnle{threshold}
     compute: clix.count_occurrences
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmin <= {threshold}C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_below_threshold
+        standard_name: number_of_days_with_air_temperature_below_threshold
+      units: '1'
+      var_name: tnle{threshold}
     parameters:
       condition: <=
       freq:
@@ -1521,16 +1608,17 @@ indicators:
     references: CLIPC
     title: Number of days with Tmin <= {threshold}C
   tnlt2:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of weak Frost Days (Tmin < +2C)
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: '1'
-      var_name: tnlt2
     compute: clix.count_occurrences
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of weak Frost Days (Tmin < +2C)
+        proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+        standard_name: number_of_days_with_air_temperature_below_threshold
+      units: '1'
+      var_name: tnlt2
     parameters:
       condition: <
       freq:
@@ -1539,13 +1627,14 @@ indicators:
     references: ET-SCI
     title: Number of weak Frost Days (Tmin < +2C)
   tnltPRCp:
-    outputs:
-    - long_name: Percentage of days when Tmin < {percentile}th percentile
-      units: '%'
-      var_name: tnlt{percentile}p
     compute: clix.count_percentile_occurrences
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        long_name: Percentage of days when Tmin < {percentile}th percentile
+      units: '%'
+      var_name: tnlt{percentile}p
     parameters:
       condition: <
       freq:
@@ -1556,16 +1645,17 @@ indicators:
     references: CLIPC
     title: Percentage of days when Tmin < {percentile}th percentile
   tnltTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmin < {threshold}C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: '1'
-      var_name: tnlt{threshold}
     compute: clix.count_occurrences
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmin < {threshold}C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+        standard_name: number_of_days_with_air_temperature_below_threshold
+      units: '1'
+      var_name: tnlt{threshold}
     parameters:
       condition: <
       freq:
@@ -1573,16 +1663,17 @@ indicators:
     references: CLIPC
     title: Number of days with Tmin < {threshold}C
   tnltm2:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of sharp Frost Days (Tmin < -2C)
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: '1'
-      var_name: tnltm2
     compute: clix.count_occurrences
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of sharp Frost Days (Tmin < -2C)
+        proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+        standard_name: number_of_days_with_air_temperature_below_threshold
+      units: '1'
+      var_name: tnltm2
     parameters:
       condition: <
       freq:
@@ -1591,15 +1682,16 @@ indicators:
     references: ET-SCI
     title: Number of sharp Frost Days (Tmin < -2C)
   tnltm20:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: '1'
-      var_name: tnltm20
     compute: clix.count_occurrences
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+        standard_name: number_of_days_with_air_temperature_below_threshold
+      units: '1'
+      var_name: tnltm20
     parameters:
       condition: <
       freq:
@@ -1607,15 +1699,16 @@ indicators:
       threshold: -20 degree_Celsius
     references: ET-SCI
   tnm:
-    outputs:
-    - cell_methods: 'time: mean over days'
-      long_name: Mean daily minimum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tnm
     compute: clix.statistics
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean over days'
+        long_name: Mean daily minimum temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tnm
     parameters:
       freq:
         default: YS
@@ -1623,15 +1716,16 @@ indicators:
     references: ET-SCI
     title: Mean daily minimum temperature
   tnmax:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum daily minimum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tnmax
     compute: clix.statistics
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum daily minimum temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tnmax
     parameters:
       freq:
         default: YS
@@ -1639,15 +1733,16 @@ indicators:
     references: CLIPC
     title: Maximum daily minimum temperature
   tnmean:
-    outputs:
-    - cell_methods: 'time: mean over days'
-      long_name: Mean daily minimum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tnmean
     compute: clix.statistics
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean over days'
+        long_name: Mean daily minimum temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tnmean
     parameters:
       freq:
         default: YS
@@ -1655,15 +1750,16 @@ indicators:
     references: CLIPC
     title: Mean daily minimum temperature
   tnmin:
-    outputs:
-    - cell_methods: 'time: minimum over days'
-      long_name: Minimum daily minimum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tnmin
     compute: clix.statistics
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: minimum over days'
+        long_name: Minimum daily minimum temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tnmin
     parameters:
       freq:
         default: YS
@@ -1671,15 +1767,16 @@ indicators:
     references: CLIPC
     title: Minimum daily minimum temperature
   tnn:
-    outputs:
-    - cell_methods: 'time: minimum over days'
-      long_name: Minimum daily minimum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tnn
     compute: clix.statistics
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: minimum over days'
+        long_name: Minimum daily minimum temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tnn
     parameters:
       freq:
         default: YS
@@ -1687,15 +1784,16 @@ indicators:
     references: ETCCDI
     title: Minimum daily minimum temperature
   tnx:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum daily minimum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tnx
     compute: clix.statistics
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum daily minimum temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tnx
     parameters:
       freq:
         default: YS
@@ -1703,16 +1801,17 @@ indicators:
     references: ETCCDI
     title: Maximum daily minimum temperature
   tr:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of Tropical Nights (Tmin > 20C)
-      proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      units: '1'
-      var_name: tr
     compute: clix.count_occurrences
     input:
       data: tasmin
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of Tropical Nights (Tmin > 20C)
+        proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
+        standard_name: number_of_days_with_air_temperature_above_threshold
+      units: '1'
+      var_name: tr
     parameters:
       condition: '>'
       freq:
@@ -1721,15 +1820,16 @@ indicators:
     references: ETCCDI
     title: Number of Tropical Nights (Tmin > 20C)
   tx:
-    outputs:
-    - cell_methods: 'time: mean'
-      long_name: Mean of daily maximum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tx
     compute: clix.statistics
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean'
+        long_name: Mean of daily maximum temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tx
     parameters:
       freq:
         default: MS
@@ -1737,13 +1837,14 @@ indicators:
     references: ECA&D
     title: Mean of daily maximum temperature
   tx10p:
-    outputs:
-    - long_name: Percentage of days when Tmax < 10th percentile
-      units: '%'
-      var_name: tx10p
     compute: clix.count_percentile_occurrences
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        long_name: Percentage of days when Tmax < 10th percentile
+      units: '%'
+      var_name: tx10p
     parameters:
       condition: <
       freq:
@@ -1755,13 +1856,14 @@ indicators:
     references: ETCCDI
     title: Percentage of days when Tmax < 10th percentile
   tx90p:
-    outputs:
-    - long_name: Percentage of days when Tmax > 90th percentile
-      units: '%'
-      var_name: tx90p
     compute: clix.count_percentile_occurrences
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        long_name: Percentage of days when Tmax > 90th percentile
+      units: '%'
+      var_name: tx90p
     parameters:
       condition: '>'
       freq:
@@ -1773,30 +1875,32 @@ indicators:
     references: ETCCDI
     title: Percentage of days when Tmax > 90th percentile
   txPRCpctl:
-    outputs:
-    - long_name: '{percentiles}th percentile of Tmax'
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tx{percentiles}pctl
     compute: clix.percentile
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        long_name: '{percentiles}th percentile of Tmax'
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tx{percentiles}pctl
     parameters:
       freq:
         default: YS
     references: CLIPC
     title: '{percentiles}th percentile of Tmax'
   txge30:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of Hot Days (Tmax >= 35C)
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      units: '1'
-      var_name: txge30
     compute: clix.count_occurrences
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of Hot Days (Tmax >= 35C)
+        proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
+        standard_name: number_of_days_with_air_temperature_above_threshold
+      units: '1'
+      var_name: txge30
     parameters:
       condition: '>='
       freq:
@@ -1805,16 +1909,17 @@ indicators:
     references: ET-SCI
     title: Number of Hot Days (Tmax >= 35C)
   txge35:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of Very Hot Days (Tmax >= 35C)
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      units: '1'
-      var_name: txge35
     compute: clix.count_occurrences
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of Very Hot Days (Tmax >= 35C)
+        proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
+        standard_name: number_of_days_with_air_temperature_above_threshold
+      units: '1'
+      var_name: txge35
     parameters:
       condition: '>='
       freq:
@@ -1823,16 +1928,17 @@ indicators:
     references: ET-SCI
     title: Number of Very Hot Days (Tmax >= 35C)
   txgeTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmax >= {threshold}C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      units: '1'
-      var_name: txge{threshold}
     compute: clix.count_occurrences
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmax >= {threshold}C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
+        standard_name: number_of_days_with_air_temperature_above_threshold
+      units: '1'
+      var_name: txge{threshold}
     parameters:
       condition: '>='
       freq:
@@ -1840,13 +1946,14 @@ indicators:
     references: CLIPC
     title: Number of days with Tmax >= {threshold}C
   txgt50p:
-    outputs:
-    - long_name: Percentage of days when Tmax > 50th percentile
-      units: '%'
-      var_name: txgt50p
     compute: clix.count_percentile_occurrences
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        long_name: Percentage of days when Tmax > 50th percentile
+      units: '%'
+      var_name: txgt50p
     parameters:
       condition: '>'
       freq:
@@ -1858,13 +1965,14 @@ indicators:
     references: ET-SCI
     title: Percentage of days when Tmax > 50th percentile
   txgtPRCp:
-    outputs:
-    - long_name: Percentage of days when Tmax > {percentile}th percentile
-      units: '%'
-      var_name: txgt{percentile}p
     compute: clix.count_percentile_occurrences
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        long_name: Percentage of days when Tmax > {percentile}th percentile
+      units: '%'
+      var_name: txgt{percentile}p
     parameters:
       condition: '>'
       freq:
@@ -1875,16 +1983,17 @@ indicators:
     references: CLIPC
     title: Percentage of days when Tmax > {percentile}th percentile
   txgtTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmax > {threshold}C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      units: '1'
-      var_name: txgt{threshold}
     compute: clix.count_occurrences
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmax > {threshold}C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
+        standard_name: number_of_days_with_air_temperature_above_threshold
+      units: '1'
+      var_name: txgt{threshold}
     parameters:
       condition: '>'
       freq:
@@ -1892,16 +2001,17 @@ indicators:
     references: CLIPC
     title: Number of days with Tmax > {threshold}C
   txleTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmax <= {threshold}C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_below_threshold
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: '1'
-      var_name: txle{threshold}
     compute: clix.count_occurrences
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmax <= {threshold}C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_below_threshold
+        standard_name: number_of_days_with_air_temperature_below_threshold
+      units: '1'
+      var_name: txle{threshold}
     parameters:
       condition: <=
       freq:
@@ -1909,13 +2019,14 @@ indicators:
     references: CLIPC
     title: Number of days with Tmax <= {threshold}C
   txltPRCp:
-    outputs:
-    - long_name: Percentage of days when Tmax < {percentile}th percentile
-      units: '%'
-      var_name: txlt{percentile}p
     compute: clix.count_percentile_occurrences
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        long_name: Percentage of days when Tmax < {percentile}th percentile
+      units: '%'
+      var_name: txlt{percentile}p
     parameters:
       condition: <
       freq:
@@ -1926,16 +2037,17 @@ indicators:
     references: CLIPC
     title: Percentage of days when Tmax < {percentile}th percentile
   txltTT:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of days with Tmax < {threshold}C
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: '1'
-      var_name: txlt{threshold}
     compute: clix.count_occurrences
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of days with Tmax < {threshold}C
+        proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+        standard_name: number_of_days_with_air_temperature_below_threshold
+      units: '1'
+      var_name: txlt{threshold}
     parameters:
       condition: <
       freq:
@@ -1943,15 +2055,16 @@ indicators:
     references: CLIPC
     title: Number of days with Tmax < {threshold}C
   txm:
-    outputs:
-    - cell_methods: 'time: mean over days'
-      long_name: Mean daily maximum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: txm
     compute: clix.statistics
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean over days'
+        long_name: Mean daily maximum temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: txm
     parameters:
       freq:
         default: YS
@@ -1959,15 +2072,16 @@ indicators:
     references: ET-SCI
     title: Mean daily maximum temperature
   txmax:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum daily maximum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: txmax
     compute: clix.statistics
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum daily maximum temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: txmax
     parameters:
       freq:
         default: YS
@@ -1975,15 +2089,16 @@ indicators:
     references: CLIPC
     title: Maximum daily maximum temperature
   txmean:
-    outputs:
-    - cell_methods: 'time: mean over days'
-      long_name: Mean daily maximum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: txmean
     compute: clix.statistics
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: mean over days'
+        long_name: Mean daily maximum temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: txmean
     parameters:
       freq:
         default: YS
@@ -1991,15 +2106,16 @@ indicators:
     references: CLIPC
     title: Mean daily maximum temperature
   txmin:
-    outputs:
-    - cell_methods: 'time: minimum over days'
-      long_name: Minimum daily maximum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: txmin
     compute: clix.statistics
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: minimum over days'
+        long_name: Minimum daily maximum temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: txmin
     parameters:
       freq:
         default: YS
@@ -2007,15 +2123,16 @@ indicators:
     references: CLIPC
     title: Minimum daily maximum temperature
   txn:
-    outputs:
-    - cell_methods: 'time: minimum over days'
-      long_name: Minimum daily maximum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: txn
     compute: clix.statistics
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: minimum over days'
+        long_name: Minimum daily maximum temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: txn
     parameters:
       freq:
         default: YS
@@ -2023,15 +2140,16 @@ indicators:
     references: ETCCDI
     title: Minimum daily maximum temperature
   txx:
-    outputs:
-    - cell_methods: 'time: maximum over days'
-      long_name: Maximum daily maximum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: txx
     compute: clix.statistics
     input:
       data: tasmax
+    outputs:
+    - attrs:
+        cell_methods: 'time: maximum over days'
+        long_name: Maximum daily maximum temperature
+        standard_name: air_temperature
+      units: degree_Celsius
+      var_name: txx
     parameters:
       freq:
         default: YS
@@ -2039,32 +2157,34 @@ indicators:
     references: ETCCDI
     title: Maximum daily maximum temperature
   vdtr:
-    outputs:
-    - long_name: Mean day-to-day variation in Diurnal Temperature Range
-      proposed_standard_name: air_temperature_difference
-      units: degree_Celsius
-      var_name: vdtr
     compute: clix.interday_diurnal_temperature_range
     input:
       high_data: tasmax
       low_data: tasmin
+    outputs:
+    - attrs:
+        long_name: Mean day-to-day variation in Diurnal Temperature Range
+        proposed_standard_name: air_temperature_difference
+      units: degree_Celsius
+      var_name: vdtr
     parameters:
       freq:
         default: MS
     references: ECA&D
     title: Mean day-to-day variation in Diurnal Temperature Range
   wetdays:
-    outputs:
-    - cell_methods: 'time: sum over days'
-      long_name: Number of Wet Days (precip >= 1 mm)
-      proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
-      standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
-      units: '1'
-      var_name: wetdays
     compute: clix.count_occurrences
     context: hydro
     input:
       data: pr
+    outputs:
+    - attrs:
+        cell_methods: 'time: sum over days'
+        long_name: Number of Wet Days (precip >= 1 mm)
+        proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
+        standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
+      units: '1'
+      var_name: wetdays
     parameters:
       condition: '>='
       freq:
@@ -2072,5 +2192,3 @@ indicators:
       threshold: 1 mm day-1
     references: CLIPC
     title: Number of Wet Days (precip >= 1 mm)
-realm: atmos
-references: clix-meta https://github.com/clix-meta/clix-meta
