@@ -33,8 +33,8 @@ These are dictionary-like in structure, holding a collection of indicators and t
 
 The main breaking changes are:
 
-- Attribute `cf_attrs` was renamed `outputs` and is now a list of :py:class:`~xclim.core.indicator.Output` objects.
-  These are stores for metadata, with the following properties: `var_name`, `units`, `units_metadata`, `dimensionality` and `attrs`. The latest is the dictionary holding the attributes to put on the indicator's output.
+- Attribute `cf_attrs` was renamed to `outputs` and is now a list of :py:class:`~xclim.core.indicator.Output` objects.
+  These are stores for metadata, with the following properties: `var_name`, `units`, `units_metadata`, `dimensionality` and `attrs`. The latest is the dictionary holding the attributes that populate the ``Indicator``'s output.
 - Function ``xclim.build_indicator_module_from_yaml`` is changed to :py:meth:`xclim.core.collection.IndicatorCollection.from_yaml`. Collections are standalone objects, they don't automatically register as python submodules of ``xclim.indicators`` anymore. This is also means the ``module`` argument of the :py:func:`~xclim.core.indicator.Indicator` constructor is not needed anymore in most cases.
 - Indicators defined within a collection are not registered by default into the indicators registry.
 - When creating an indicator from an existing one, the ``var_name`` of the output of an indicator with a single output now only defaults to the indicator's identifier if the parent does not have a ``var_name``. Previously, the identifier would always be used as the ``var_name``, regardless of the parent's attributes.
