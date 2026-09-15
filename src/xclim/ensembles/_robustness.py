@@ -309,8 +309,6 @@ def robustness_fractions(
         }
 
         changed, pvals = test_func(fut, ref, pool_dim, **test_params)
-        print("pvals")
-        print(pvals)
     else:
         raise ValueError(f"Statistical test {test} must be one of {', '.join(SIGNIFICANCE_TESTS.keys())}.")
 
