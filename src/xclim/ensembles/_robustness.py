@@ -289,8 +289,10 @@ def robustness_fractions(
             delta = delta.mean(pool_dim)
             # valid if number of valid members same as the num of member for this real
             validf = ~invalid(fut)
+            print(validf.isel(rlat=50, rlon=50).values)
             validf = validf.sum(pool_dim) == fut.n_pool
             validr = ~invalid(ref)
+            print(validr.isel(rlat=50, rlon=50).values)
             validr = validr.sum(pool_dim) == ref.n_pool
             valid = validf & validr
         else:
@@ -314,8 +316,12 @@ def robustness_fractions(
 
     # at this point all member dimension should have been collapsed,
     # so we can compute the fractions along realization_dim
+    print(valid.isel(rlat=50, rlon=50).values)
 
-    valid_frac = valid.weighted(w).sum(realization_dim) / fut[realization_dim].size
+    # TODO: reviewer please confirm that changing the denominator makes sense.
+    # this change is not because of my new feature. I think it was an error in the past.
+    # as we do the weighted sum, we should divide by the sum of weights to get a fraction that make sense I think
+    valid_frac = valid.weighted(w).sum(realization_dim) / w.sum(realization_dim)
     n_valid = valid.weighted(w).sum(realization_dim)
     change_frac = changed.where(valid).weighted(w).sum(realization_dim) / n_valid
     if strict_sign:
