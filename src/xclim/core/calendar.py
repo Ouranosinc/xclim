@@ -222,7 +222,7 @@ def common_calendar(calendars: Sequence[str], join: Literal["inner", "outer"] = 
         "julian": "standard",
     }
     ranks = {"360_day": 0, "noleap": 1, "standard": 2, "all_leap": 3}
-    calendars = sorted([trans.get(cal, cal) for cal in calendars], key=ranks.get)
+    calendars = sorted([trans.get(cal, cal) for cal in calendars], key=ranks.__getitem__)
 
     if join == "outer":
         return calendars[-1]
@@ -461,8 +461,10 @@ def percentile_doy(
         doy_chunk_size = np.ceil(len(rrr.dayofyear) / (window * time_chunks_count))
         rrr = rrr.chunk({"stack_dim": -1, "dayofyear": doy_chunk_size})
 
-    if np.isscalar(per):
-        per = [per]
+    if isinstance(per, (float, int, np.floating, np.integer)):
+        per_list = [float(per)]
+    else:
+        per_list = [float(p) for p in per]
 
     p = xr.apply_ufunc(
         calc_perc,
@@ -470,12 +472,12 @@ def percentile_doy(
         input_core_dims=[["stack_dim"]],
         output_core_dims=[["percentiles"]],
         keep_attrs=True,
-        kwargs={"percentiles": per, "alpha": alpha, "beta": beta, "copy": copy},
+        kwargs={"percentiles": per_list, "alpha": alpha, "beta": beta, "copy": copy},
         dask="parallelized",
         output_dtypes=[rrr.dtype],
-        dask_gufunc_kwargs={"output_sizes": {"percentiles": len(per)}},
+        dask_gufunc_kwargs={"output_sizes": {"percentiles": len(per_list)}},
     )
-    p = p.assign_coords(percentiles=xr.DataArray(per, dims=("percentiles",)))
+    p = p.assign_coords(percentiles=xr.DataArray(per_list, dims=("percentiles",)))
 
     # The percentile for the 366th day has a sample size of 1/4 of the other days.
     # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
@@ -512,7 +514,7 @@ def build_climatology_bounds(da: xr.DataArray) -> list[str]:
 
 
 def compare_offsets(
-    freqA: str, op: Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"], freqB: str
+    freqA: Freq, op: Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"], freqB: Freq
 ) -> bool:
     """
     Compare offsets string based on their approximate length, according to a given operator.
@@ -624,7 +626,7 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     return f"{mult if mult > 1 else ''}{base}{start}{'-' if anchor else ''}{anchor or ''}"
 
 
-def is_offset_divisor(divisor: str, offset: str):
+def is_offset_divisor(divisor: Freq, offset: Freq):
     """
     Check that divisor is a divisor of offset.
 
@@ -827,6 +829,8 @@ def time_bnds(
 
     See the `relevant CF convention <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.13/cf-conventions.html#bounds-one-d>`.
     """
+    frequency: Freq
+    _frequency: Any | None = None
     if isinstance(time, xr.DataArray | xr.Dataset):
         time = time.indexes[time.name]
     # elif isinstance(time, DataArrayResample | DatasetResample):
@@ -834,7 +838,7 @@ def time_bnds(
         for grouper in time.groupers:  # ty: ignore[not-iterable]
             if "time" in grouper.codes.dims:
                 datetime = grouper.unique_coord.data
-                freq = freq or grouper.grouper.freq
+                _frequency = freq or grouper.grouper.freq
                 if datetime.dtype == "O":
                     time = xr.CFTimeIndex(datetime)
                 else:
@@ -845,18 +849,20 @@ def time_bnds(
             raise ValueError('Got object resampled along another dimension than "time".')
 
     if freq is None and hasattr(time, "freq"):
-        freq = time.freq
+        frequency = time.freq
     if freq is None:
-        freq = xr.infer_freq(time)
+        frequency = xr.infer_freq(time)
         if freq is None:
             raise NotImplementedError(
                 "Irregular time coordinates are not supported. Please pass a frequency explicitly."
             )
-    elif hasattr(freq, "freqstr"):
+    elif _frequency is not None:
         # When freq is an Offset
-        freq = freq.freqstr
+        frequency = _frequency.freqstr
+    else:
+        frequency = freq
 
-    freq_base, freq_is_start = parse_offset(freq)[1:3]
+    freq_base, freq_is_start = parse_offset(frequency)[1:3]
 
     # Normalizing without using `.normalize` because cftime doesn't have it
     floor = {"hour": 0, "minute": 0, "second": 0, "microsecond": 0, "nanosecond": 0}
@@ -872,12 +878,12 @@ def time_bnds(
         floor.pop("nanosecond")
 
     if isinstance(time, xr.CFTimeIndex):
-        period = cftime_offsets.to_offset(freq)
+        period = cftime_offsets.to_offset(frequency)
         is_on_offset = period.onOffset
         day = pd.Timedelta("1D").to_pytimedelta()
         floor.pop("nanosecond")  # unsupported by cftime
     else:
-        period = pd.tseries.frequencies.to_offset(freq)
+        period = pd.tseries.frequencies.to_offset(frequency)
         is_on_offset = period.is_on_offset
         day = pd.Timedelta("1D")
 
@@ -1215,11 +1221,9 @@ def select_between_doys(
     if (isinstance(doy_bounds[0], int) or (doy_bounds[0] is None)) and (
         isinstance(doy_bounds[1], int) or (doy_bounds[1] is None)
     ):  # Simple case
-        if doy_bounds[0] is None:
-            doy_bounds = (1, doy_bounds[1])
-        if doy_bounds[1] is None:
-            doy_bounds = (doy_bounds[0], 366)
-        mask = da.time.dt.dayofyear.isin(_get_doys(*doy_bounds, include_bounds))
+        doy_bound_l = doy_bounds[0] or 1
+        doy_bound_r = doy_bounds[1] or 366
+        mask = da.time.dt.dayofyear.isin(_get_doys(doy_bound_l, doy_bound_r, include_bounds))
     else:
         if drop:
             # At least one of the bounds is an array, drop won't work
@@ -1449,6 +1453,9 @@ def select_time(
             end = _doys_from_string(date_bounds[1], bnds.time, cal) if date_bounds[1] is not None else None
             doy_bounds = (start, end)
 
+        if doy_bounds is None:
+            raise ValueError("doy_bounds is not defined")
+
         return select_between_doys(da, doy_bounds, include_bounds, include_doy_bounds_nans, bounds_freq, drop=drop)
 
     else:
@@ -1579,10 +1586,10 @@ def stack_periods(
         )
 
     # Convert integer inputs to freq strings
-    mult, *args = parse_offset(freq)
-    win_frq = construct_offset(mult * window, *args)
-    strd_frq = construct_offset(mult * stride, *args)
-    minl_frq = construct_offset(mult * min_length, *args)
+    mult, abase, astart, aanchor = parse_offset(freq)
+    win_frq = construct_offset(mult * window, abase, astart, aanchor)
+    strd_frq = construct_offset(mult * stride, abase, astart, aanchor)
+    minl_frq = construct_offset(mult * min_length, abase, astart, aanchor)
 
     # The same time coord as da, but with one extra element.
     # This way, the last window's last index is not returned as None by xarray's grouper.
@@ -1792,8 +1799,8 @@ def unstack_periods(da: DataType, dim: str = "period") -> DataType:
     Nwin = window // stride
     mid = (Nwin - 1) // 2  # index of the center window
 
-    mult, *args = parse_offset(freq)
-    strd_frq = construct_offset(mult * stride, *args)
+    mult, base, start, anchor = parse_offset(freq)
+    strd_frq = construct_offset(mult * stride, base, start, anchor)
 
     periods = []
     for i, (start, length) in enumerate(zip(starts.values, lengths.values, strict=False)):

@@ -148,7 +148,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         self,
         indicators: dict[str, Indicator],
         name: str | None = None,
-        bases: dict[str, type] = None,
+        bases: dict[str, type] | None = None,
         doc: str | None = None,
     ):
         """
@@ -167,6 +167,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         """
         self.name = name
         self.bases = bases or {}
+        name = str(name)
         self.__doc__ = doc or f"{name.capitalize()} indicators\n" + "=" * (len(name) + 11)
         super().__init__(**indicators)
 
@@ -319,8 +320,8 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
             VARIABLES[varname] = vardata.copy()
 
         # Parse the indicators:
-        mapping = {}
-        bases = {}
+        mapping: dict[str, Indicator] = {}
+        bases: dict[str, type] = {}
         # This because we enforce indicators being required and bases being optional
         for section, sectiondata in [("bases", yml.get("bases", {})), ("indicators", yml["indicators"])]:
             for identifier, data in sectiondata.items():

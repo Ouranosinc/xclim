@@ -20,7 +20,7 @@ import xarray as xr
 from scipy.stats import rv_continuous
 
 from xclim.compute.generic import statistics
-from xclim.core import DateStr, Freq, Quantified
+from xclim.core import DateStr, Freq
 from xclim.core.calendar import compare_offsets, resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
 from xclim.core.utils import uses_dask
@@ -220,7 +220,7 @@ def fit(
 
 def parametric_quantile(
     p: xr.DataArray,
-    q: float | Sequence[float],
+    q: float | Sequence[float] | np.ndarray,
     dist: str | rv_continuous | None = None,
 ) -> xr.DataArray:
     """
@@ -232,7 +232,7 @@ def parametric_quantile(
         Distribution parameters returned by the `fit` function.
         The array should have dimension `dparams` storing the distribution parameters,
         and attribute `scipy_dist`, storing the name of the distribution.
-    q : float or Sequence of float
+    q : float, Sequence of float or np.ndarray of float
         Quantile to compute, which must be between `0` and `1`, inclusive.
     dist : str or rv_continuous distribution object, optional
         The distribution name or instance if the `scipy_dist` attribute is not available on `p`.
@@ -248,18 +248,18 @@ def parametric_quantile(
     """
     _q = np.atleast_1d(q)
 
-    dist = get_dist(dist or p.attrs["scipy_dist"])
+    distribution = get_dist(dist or p.attrs["scipy_dist"])
 
     # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
     if np.all(_q > 0.5):
 
         def func(x):
-            return dist.isf(1 - _q, *x)
+            return distribution.isf(1 - _q, *x)
 
     else:
 
         def func(x):
-            return dist.ppf(_q, *x)
+            return distribution.ppf(_q, *x)
 
     data = xr.apply_ufunc(
         func,
@@ -279,8 +279,8 @@ def parametric_quantile(
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
     attrs = {
-        "long_name": f"{dist.name} quantiles",
-        "description": f"Quantiles estimated by the {dist.name} distribution",
+        "long_name": f"{distribution.name} quantiles",
+        "description": f"Quantiles estimated by the {distribution.name} distribution",
         "cell_methods": "dparams: ppf",
         "history": update_history(
             "Compute parametric quantiles from distribution parameters",
@@ -324,10 +324,10 @@ def parametric_cdf(
             raise ValueError("`v` must be one-dimensional.")
         da_v = v
 
-    dist = get_dist(dist or p.attrs["scipy_dist"])
+    distribution = get_dist(dist or p.attrs["scipy_dist"])
 
     data = xr.apply_ufunc(
-        lambda v, p: dist.cdf(v, *p),
+        lambda v, p: distribution.cdf(v, *p),
         da_v,
         p,
         input_core_dims=[["v"], ["dparams"]],
@@ -345,8 +345,8 @@ def parametric_cdf(
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
     attrs = {
-        "long_name": f"{dist.name} cdf",
-        "description": f"CDF estimated by the {dist.name} distribution",
+        "long_name": f"{distribution.name} cdf",
+        "description": f"CDF estimated by the {distribution.name} distribution",
         "cell_methods": "dparams: v",
         "history": update_history(
             "Compute parametric cdf from distribution parameters",
@@ -390,10 +390,10 @@ def parametric_pdf(
             raise ValueError("`v` must be one-dimensional.")
         da_v = v
 
-    dist = get_dist(dist or p.attrs["scipy_dist"])
+    distribution = get_dist(dist or p.attrs["scipy_dist"])
 
     data = xr.apply_ufunc(
-        lambda v, p: dist.pdf(v, *p),
+        lambda v, p: distribution.pdf(v, *p),
         da_v,
         p,
         input_core_dims=[["v"], ["dparams"]],
@@ -411,8 +411,8 @@ def parametric_pdf(
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
     attrs = {
-        "long_name": f"{dist.name} PDF",
-        "description": f"PDF estimated by the {dist.name} distribution",
+        "long_name": f"{distribution.name} PDF",
+        "description": f"PDF estimated by the {distribution.name} distribution",
         "cell_methods": "dparams: v",
         "history": update_history(
             "Compute parametric pdf from distribution parameters",
@@ -463,19 +463,19 @@ def fa(
     """
     # Fit the parameters of the distribution
     p = fit(da, dist, method=method)
-    t = np.atleast_1d(t)
+    t_arr = np.atleast_1d(t)
 
     if mode in ["max", "high"]:
-        q = 1 - 1.0 / t
+        q = 1 - 1.0 / t_arr
 
     elif mode in ["min", "low"]:
-        q = 1.0 / t
+        q = 1.0 / t_arr
 
     else:
         raise ValueError(f"Mode `{mode}` should be either 'max' or 'min'.")
 
     # Compute the quantiles
-    out = parametric_quantile(p, q, dist).rename({"quantile": "return_period"}).assign_coords(return_period=t)
+    out = parametric_quantile(p, q, dist).rename({"quantile": "return_period"}).assign_coords(return_period=t_arr)
     out.attrs["mode"] = mode
     return out
 
@@ -488,7 +488,7 @@ def frequency_analysis(
     window: int = 1,
     freq: Freq | None = None,
     method: str = "ML",
-    **indexer: int | float | str,
+    **indexer: dict[str, int | float | str],
 ) -> xr.DataArray:
     r"""
     Return the value corresponding to a return period.
@@ -538,7 +538,12 @@ def frequency_analysis(
     freq = freq or ("YS-DEC" if indexer.get("season") == "DJF" else "YS")
 
     # Extract the time series of min or max over the period
-    sel = statistics(da, statistic=mode, freq=freq, **indexer)
+    out_units: str | None
+    if "out_units" in indexer and isinstance(indexer["out_units"], str):
+        out_units = indexer.pop("out_units")
+    else:
+        out_units = None
+    sel = statistics(da, statistic=mode, freq=freq, out_units=out_units, **indexer)
 
     if uses_dask(sel):
         sel = sel.chunk({"time": -1})
@@ -962,7 +967,7 @@ def standardized_index(
     fitkwargs: dict | None,
     cal_start: DateStr | None,
     cal_end: DateStr | None,
-    params: Quantified | None = None,
+    params: xr.DataArray | None = None,
     prob_zero_interpolation: Literal["center", "upper"] | float = "upper",
     plotting_position_zero: Literal["ecdf", "weibull"] | tuple[float, float] = "ecdf",
     **indexer,
@@ -1059,7 +1064,7 @@ def standardized_index(
         freq, window, dist, indexer = (params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"])
         # Unpack attrs to None and {} if needed
         freq = None if freq == "" else freq
-        indexer = json.loads(indexer)
+        indexer = json.loads(**indexer)
         if cal_start or cal_end:
             warnings.warn(
                 "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
@@ -1067,18 +1072,25 @@ def standardized_index(
             )
         zero_inflated = any(k in params.attrs for k in ["number_of_zeros"])
 
+    if window is None or dist is None or method is None or zero_inflated is None:
+        raise ValueError(
+            "Parameters 'window', 'dist', 'method', and 'zero_inflated' are neither set nor defined in 'params'."
+        )
+
     # assign values to interp_factor and alpha,beta, if needed
     if zero_inflated is not None:
-        interp_factor = {"center": 1 / 2, "upper": 1}.get(prob_zero_interpolation, None)
-        if interp_factor is None:
-            if isinstance(prob_zero_interpolation, str):
+        if isinstance(prob_zero_interpolation, str):
+            interp_factor = {"center": 1 / 2, "upper": 1}.get(prob_zero_interpolation, None)
+            if interp_factor is None:
                 raise ValueError("Accepted strings for `prob_zero_interpolation` are: ['center', 'upper']")
+        else:
             interp_factor = prob_zero_interpolation
 
-        alpha_beta = {"ecdf": (0, 1), "weibull": (0, 0)}.get(plotting_position_zero, None)
-        if alpha_beta is None:
-            if isinstance(plotting_position_zero, str):
+        if isinstance(plotting_position_zero, str):
+            alpha_beta = {"ecdf": (0.0, 1.0), "weibull": (0.0, 0.0)}.get(plotting_position_zero, None)
+            if alpha_beta is None:
                 raise ValueError("Accepted strings for `plotting_position_zero` are: ['ecdf', 'weibull']")
+        else:
             alpha_beta = plotting_position_zero
 
     # apply resampling and rolling operations

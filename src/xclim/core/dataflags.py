@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from functools import reduce
 from inspect import signature
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import xarray
@@ -29,7 +29,7 @@ from xclim.core.calendar import climatological_mean_doy, within_bnds_doy
 from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to, declare_units, infer_context, str2pint
 
-_REGISTRY = {}
+_REGISTRY: dict[str, Callable[..., Any]] = {}
 
 ALL_OPERATORS = Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"]
 
@@ -412,9 +412,9 @@ def values_op_thresh_repeating_for_n_or_more_days(
     >>> comparison = "eq"
     >>> flagged = values_op_thresh_repeating_for_n_or_more_days(ds.pr, n=days, thresh=units, op=comparison)
     """
-    thresh = convert_units_to(thresh, da, context=infer_context(standard_name=da.attrs.get("standard_name")))
+    _thresh = convert_units_to(thresh, da, context=infer_context(standard_name=da.attrs.get("standard_name")))
 
-    repetitions = _sanitize_attrs(suspicious_run(da, window=n, op=op, thresh=thresh))
+    repetitions = _sanitize_attrs(suspicious_run(da, window=n, op=op, thresh=_thresh))
     description = f"Repetitive values at {thresh} for at least {n} days found for {da.name}."
     repetitions.attrs["description"] = description
     repetitions.attrs["units"] = ""
@@ -455,8 +455,8 @@ def wind_values_outside_of_bounds(
     >>> ceiling, floor = "46 m s-1", "0 m s-1"
     >>> flagged = wind_values_outside_of_bounds(sfcWind_dataset, upper=ceiling, lower=floor)
     """
-    lower, upper = convert_units_to(lower, da), convert_units_to(upper, da)
-    unbounded_percentages = _sanitize_attrs((da < lower) | (da > upper))
+    _lower, _upper = convert_units_to(lower, da), convert_units_to(upper, da)
+    unbounded_percentages = _sanitize_attrs((da < _lower) | (da > _upper))
     description = f"Percentage values exceeding bounds of {lower} and {upper} found for {da.name}."
     unbounded_percentages.attrs["description"] = description
     unbounded_percentages.attrs["units"] = ""
@@ -587,7 +587,7 @@ def data_flags(  # noqa: C901
     da: xarray.DataArray,
     ds: xarray.Dataset | None = None,
     flags: dict | None = None,
-    dims: None | str | Sequence[str] = "all",
+    dims: None | str | Sequence[str] | set[str] = "all",
     freq: str | None = None,
     raise_flags: bool = False,
 ) -> xarray.Dataset:

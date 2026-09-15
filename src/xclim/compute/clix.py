@@ -298,7 +298,7 @@ def first_occurrence(
     threshold: Quantified,
     condition: Condition,
     freq: Freq,
-    after_date: DayOfYearStr = None,
+    after_date: DayOfYearStr | None = None,
 ) -> xr.DataArray:
     """
     Calculate the first time during the specified time period when a threshold is exceeded.
@@ -373,7 +373,7 @@ def last_occurrence(
     threshold: Quantified,
     condition: Condition,
     freq: Freq,
-    before_date: DayOfYearStr = None,
+    before_date: DayOfYearStr | None = None,
 ) -> xr.DataArray:
     """
     Calculate the last time during the specified time period when a threshold exceeded.

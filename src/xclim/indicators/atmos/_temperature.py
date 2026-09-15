@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from xarray import DataArray
 
 from xclim import compute
@@ -1720,7 +1722,10 @@ class FireSeasonBase(Indicator):
 
     keywords = ["fire"]
 
-    def cfcheck(self, tas: DataArray, snd: DataArray = None):
+    def cfcheck(self, **das: Any) -> None:
+        self._cfcheck_impl(**das)
+
+    def _cfcheck(self, tas: DataArray | None = None, snd: DataArray | None = None) -> None:
         r"""
         Verify the CF-compliance of the input data.
 

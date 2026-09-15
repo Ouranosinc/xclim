@@ -156,7 +156,7 @@ class AttrFormatter(string.Formatter):
         """
         baseval = self._match_value(value)
         if baseval is None:  # Not something we know how to translate
-            if format_spec in self.modifiers + ["r"]:  # Woops, however a known format spec was asked
+            if format_spec in f"{self.modifiers}r":  # Woops, however a known format spec was asked
                 warnings.warn(f"Requested formatting `{format_spec}` for unknown string `{value}`.")
                 format_spec = ""
             return super().format_field(value, format_spec)

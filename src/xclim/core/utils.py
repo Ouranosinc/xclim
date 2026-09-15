@@ -30,8 +30,8 @@ class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
 
     # ruff: disable[D102, D105]
 
-    def __init__(self, data: Mapping = None):
-        self._data = {}
+    def __init__(self, data: Mapping | None = None):
+        self._data: dict[Any, Any] = {}
         if data:
             self.update(data)
 
@@ -55,13 +55,13 @@ class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
     def setdefault(self, key: str, default: Any = None) -> Any:  # numpydoc ignore=GL08
         return self._data.setdefault(self._casefold(key), default)
 
-    def __contains__(self, key: str) -> bool:
-        return self._casefold(key) in self._data
+    def __contains__(self, key: object) -> bool:
+        return isinstance(key, str) and self._casefold(key) in self._data
 
     def __delitem__(self, key: str):
         del self._data[self._casefold(key)]
 
-    def update(self, other: Mapping, **kwargs):  # numpydoc ignore=GL08
+    def update(self, other: Mapping, **kwargs: Any) -> None:  # numpydoc ignore=GL08
         if hasattr(other, "keys"):
             for k in other.keys():
                 self[k] = other[k]
@@ -186,6 +186,8 @@ def load_module(path: os.PathLike, name: str | None = None) -> ModuleType:
     """
     path = Path(path)
     spec = importlib.util.spec_from_file_location(name or path.stem, path)
+    if spec is None:
+        raise ValueError("spec is not a valid ModuleSpec type but None.")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)  # This executes code, effectively loading the module
     return mod

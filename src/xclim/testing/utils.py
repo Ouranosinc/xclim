@@ -42,9 +42,10 @@ if HAS_PYTEST_SOCKET:
     from pytest_socket import SocketBlockedError
 else:
 
-    class SocketBlockedError(Exception):
+    class _SocketBlockedError(Exception):
         """Stand-in exception for when pytest_socket is not available."""
 
+    SocketBlockedError = _SocketBlockedError
 
 logger = logging.getLogger("xclim")
 
@@ -75,6 +76,7 @@ default_testdata_repo_url = "https://raw.githubusercontent.com/Ouranosinc/xclim-
 """Default URL of the testing data repository to use when fetching datasets."""
 
 HAS_POOCH = bool(ilu.find_spec("pooch"))
+default_testdata_cache: Path | None
 if HAS_POOCH:
     import pooch
 

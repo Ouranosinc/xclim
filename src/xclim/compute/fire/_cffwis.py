@@ -134,7 +134,7 @@ from __future__ import annotations
 
 from collections import OrderedDict, namedtuple
 from collections.abc import Sequence
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -161,23 +161,32 @@ __all__ = [
     "overwintering_drought_code",
 ]
 
-default_params: dict[str, int | float | tuple[float, str]] = {
-    "temp_start_thresh": (12.0, "degC"),
-    "temp_end_thresh": (5.0, "degC"),
-    "snow_thresh": (0.01, "m"),
-    "temp_condition_days": 3,
-    "snow_condition_days": 3,
+default_params_float: dict[str, float] = {
     "carry_over_fraction": 0.75,
     "wetting_efficiency_fraction": 0.75,
+    "snow_min_cover_frac": 0.75,
+}
+default_params_int: dict[str, int] = {
+    "temp_condition_days": 3,
+    "snow_condition_days": 3,
     "dc_start": 15,
     "dmc_start": 6,
     "ffmc_start": 85,
-    "prec_thresh": (1.0, "mm/d"),
     "dc_dry_factor": 5,
     "dmc_dry_factor": 2,
     "snow_cover_days": 60,
-    "snow_min_cover_frac": 0.75,
+}
+default_params_tuple: dict[str, tuple[float, str]] = {
+    "temp_start_thresh": (12.0, "degC"),
+    "temp_end_thresh": (5.0, "degC"),
+    "snow_thresh": (0.01, "m"),
+    "prec_thresh": (1.0, "mm/d"),
     "snow_min_mean_depth": (0.1, "m"),
+}
+default_params: dict[str, Any] = {
+    **default_params_float,
+    **default_params_int,
+    **default_params_tuple,
 }
 """
 Default values for numerical parameters of fire_weather_ufunc.
@@ -414,7 +423,7 @@ def _drought_code(  # pragma: no cover
     """
     fl = _day_length_factor(lat, mth)
 
-    t = max(t, -2.8)
+    t = np.maximum(t, -2.8)
     pe = (0.36 * (t + 2.8) + fl) / 2  # *Eq.22*#
     pe = max(pe, 0.0)
 
@@ -561,7 +570,7 @@ def _overwintering_drought_code(
     Qf = 800 * np.exp(-DCf / 400)
     Qs = a * Qf + b * (3.94 * wpr)
     DCs = 400 * np.log(800 / Qs)
-    DCs = max(DCs, minDC)
+    DCs = np.maximum(DCs, minDC)
     return DCs
 
 
@@ -587,7 +596,7 @@ def _fire_season(
     tas : array_like
         Temperature [degC], the time axis on the last position.
     snd : array_like, optional
-        Snow depth [m], time axis on the last position, used with method == 'LA08'.
+        Snow depth [m], time axis on the last position, used with method in ['LA08', 'GFWED'].
     method : {"WF93", "LA08", "GFWED"}
         Which method to use. Defaults to "WF93".
     temp_start_thresh : float
@@ -627,6 +636,8 @@ def _fire_season(
             shut_down = np.all(temp < temp_end_thresh, axis=-1)
 
         elif method == "LA08":
+            if snd is None:
+                raise ValueError("snd must be set with method is 'LA08'")
             snow = snd[..., it - snow_condition_days + 1 : it + 1]
             temp = tas[..., it - temp_condition_days + 1 : it + 1]
 
@@ -636,6 +647,8 @@ def _fire_season(
             shut_down = (snd[..., it] > snow_thresh) | np.all(temp < temp_end_thresh, axis=-1)
 
         elif method == "GFWED":
+            if snd is None:
+                raise ValueError("snd must be set with method is 'GFWED'")
             msnow = np.mean(snd[..., it - snow_condition_days + 1 : it + 1], axis=-1)
             mtemp = np.mean(tas[..., it - temp_condition_days + 1 : it + 1], axis=-1)
 
@@ -896,7 +909,7 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
     winter_pr: xr.DataArray | None = None,
     season_mask: xr.DataArray | None = None,
     start_dates: str | xr.DataArray | None = None,  # noqa: F841
-    indexes: Sequence[str] | None = None,
+    indexes: Sequence[str] | set[str] | None = None,
     season_method: str | None = None,
     overwintering: bool = False,
     dry_start: str | None = None,
@@ -1097,8 +1110,8 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
 
     # Output config from the current indexes list
     outputs = indexes
-    output_dtypes: list[np.dtype] = [tas.dtype] * len(indexes)
-    output_core_dims = len(indexes) * [("time",)]
+    output_dtypes: list[np.dtype | type[bool]] = [tas.dtype] * len(indexes)
+    output_core_dims: list[tuple] = len(indexes) * [("time",)]
 
     if season_mask is not None:
         # A mask was passed, ignore passed method and tell the ufunc to use it.
@@ -1124,7 +1137,7 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
 
         # Activating overwintering will produce an extra output, that has no "time" dimension.
         outputs.append("winter_pr")
-        output_core_dims.append([])
+        output_core_dims.append(())
         output_dtypes.append(pr.dtype)
 
     # Kwargs from default parameters. take the value when it is a tuple.
@@ -1687,7 +1700,8 @@ def fire_season(
 
         return season_mask
 
-    ds = convert_units_to(tas, "degC").rename("tas").to_dataset()
+    da: xr.DataArray = convert_units_to(tas, "degC")
+    ds = da.rename("tas").to_dataset()
     if snd is not None:
         ds["snd"] = convert_units_to(snd, "m")
         ds = ds.unify_chunks()

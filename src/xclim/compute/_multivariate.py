@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import Literal, cast
 
 import numpy as np
@@ -18,7 +18,7 @@ from xclim.compute.generic import (
     interday_difference_statistics,
 )
 from xclim.compute.helpers import compare
-from xclim.core import Freq, Quantified, Reducer
+from xclim.core import Condition, Freq, Quantified, Reducer
 from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import resample_doy, select_time
 from xclim.core.units import (
@@ -689,11 +689,11 @@ def heat_wave_frequency(
     ----------
     :cite:cts:`casati_regional_2013,robinson_definition_2001`
     """
-    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
-    thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
+    _thresh_tasmax: float = convert_units_to(thresh_tasmax, tasmax)
+    _thresh_tasmin: float = convert_units_to(thresh_tasmin, tasmin)
 
-    constrain = (">", ">=")
-    cond = (compare(tasmin, op, thresh_tasmin, constrain)) & (compare(tasmax, op, thresh_tasmax, constrain))
+    constrain: Sequence[Condition] = (">", ">=")
+    cond = (compare(tasmin, op, _thresh_tasmin, constrain)) & (compare(tasmax, op, _thresh_tasmax, constrain))
 
     out = rl.resample_and_rl(
         cond,
@@ -770,11 +770,11 @@ def heat_wave_max_length(
     ----------
     :cite:cts:`casati_regional_2013,robinson_definition_2001`
     """
-    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
-    thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
+    _thresh_tasmax: float = convert_units_to(thresh_tasmax, tasmax)
+    _thresh_tasmin: float = convert_units_to(thresh_tasmin, tasmin)
 
-    constrain = (">", ">=")
-    cond = (compare(tasmin, op, thresh_tasmin, constrain)) & (compare(tasmax, op, thresh_tasmax, constrain))
+    constrain: Sequence[Condition] = (">", ">=")
+    cond = (compare(tasmin, op, _thresh_tasmin, constrain)) & (compare(tasmax, op, _thresh_tasmax, constrain))
     out = rl.resample_and_rl(
         cond,
         resample_before_rl,
@@ -839,11 +839,11 @@ def heat_wave_total_length(
     -----
     See notes and references of `heat_wave_max_length`
     """
-    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
-    thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
+    _thresh_tasmax: float = convert_units_to(thresh_tasmax, tasmax)
+    _thresh_tasmin: float = convert_units_to(thresh_tasmin, tasmin)
 
-    constrain = (">", ">=")
-    cond = compare(tasmin, op, thresh_tasmin, constrain) & compare(tasmax, op, thresh_tasmax, constrain)
+    constrain: Sequence[Condition] = (">", ">=")
+    cond = compare(tasmin, op, _thresh_tasmin, constrain) & compare(tasmax, op, _thresh_tasmax, constrain)
     out = rl.resample_and_rl(
         cond,
         resample_before_rl,
@@ -920,6 +920,7 @@ def liquid_precip_ratio(
 
        R_j = \frac{PR^{\mathrm{liquid}}_{j}}{PR_j}
     """
+    rain: xarray.DataArray
     if prra is not None:
         rain = convert_units_to(prra, pr)
     elif prsn is not None:
@@ -1174,10 +1175,10 @@ def high_precip_low_temp(
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
     >>> hplt = high_precip_low_temp(pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC")
     """
-    pr_thresh = convert_units_to(pr_thresh, pr, context="hydro")
-    tas_thresh = convert_units_to(tas_thresh, tas)
+    _pr_thresh: float = convert_units_to(pr_thresh, pr, context="hydro")
+    _tas_thresh: float = convert_units_to(tas_thresh, tas)
 
-    cond = (pr >= pr_thresh) * (tas < tas_thresh) * 1
+    cond = (pr >= _pr_thresh) * (tas < _tas_thresh) * 1
     out = cond.resample(time=freq).sum(dim="time")
     return to_agg_units(out, pr, "count", deffreq="D")
 
@@ -1231,8 +1232,8 @@ def days_over_precip_thresh(
     >>> p75 = pr.quantile(0.75, dim="time", keep_attrs=True)
     >>> r75p = days_over_precip_thresh(pr, p75)
     """
-    _pr_per = convert_units_to(pr_per, pr, context="hydro")
-    _thresh = convert_units_to(thresh, pr, context="hydro")
+    _pr_per: xarray.DataArray = convert_units_to(pr_per, pr, context="hydro")
+    _thresh: float = convert_units_to(thresh, pr, context="hydro")
 
     tp = _pr_per.where(_pr_per > _thresh, _thresh)
     if "dayofyear" in pr_per.coords:
@@ -1285,15 +1286,15 @@ def fraction_over_precip_thresh(
     xarray.DataArray, [dimensionless]
         Fraction of precipitation over threshold during wet days.
     """
-    pr_per = convert_units_to(pr_per, pr, context="hydro")
-    thresh = convert_units_to(thresh, pr, context="hydro")
+    _pr_per: xarray.DataArray = convert_units_to(pr_per, pr, context="hydro")
+    _thresh: float = convert_units_to(thresh, pr, context="hydro")
 
-    tp = pr_per.where(pr_per > thresh, thresh)
-    if "dayofyear" in pr_per.coords:
+    tp = _pr_per.where(_pr_per > _thresh, _thresh)
+    if "dayofyear" in _pr_per.coords:
         # Create time series out of doy values.
         tp = resample_doy(tp, pr)
 
-    constrain = (">", ">=")
+    constrain: Sequence[Condition] = (">", ">=")
     # Total precip during wet days over period
     total = pr.where(compare(pr, condition, thresh, constrain), 0).resample(time=freq).sum(dim="time")
 
@@ -1370,7 +1371,7 @@ def tg10p(
     tas_per: xarray.DataArray,
     freq: Freq = "YS",
     bootstrap: bool = False,
-    condition: Literal[">", ">=", "gt", "ge"] = "<",
+    condition: Literal["<", "<=", "lt", "le"] = "<",
 ) -> xarray.DataArray:
     r"""
     Number of days with daily mean temperature below the 10th percentile.
@@ -1544,7 +1545,7 @@ def tx90p(
     tasmax_per: xarray.DataArray,
     freq: Freq = "YS",
     bootstrap: bool = False,
-    condition: Literal["<", "<=", "lt", "le"] = ">",
+    condition: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
     r"""
     Number of days with daily maximum temperature over the 90th percentile.
@@ -1879,8 +1880,8 @@ def blowing_snow(
     xarray.DataArray
         Number of days when snowfall and wind speeds are above respective thresholds.
     """
-    snd_thresh = convert_units_to(snd_thresh, snd)
-    sfcWind_thresh = convert_units_to(sfcWind_thresh, sfcWind)
+    _snd_thresh: float = convert_units_to(snd_thresh, snd)
+    _sfcWind_thresh: float = convert_units_to(sfcWind_thresh, sfcWind)
 
     # Net snow accumulation over the last `window` days
     snow = snd.diff(dim="time").rolling(time=window, center=False).sum()
@@ -1888,7 +1889,7 @@ def blowing_snow(
     sfcWind = select_time(sfcWind, **indexer)
 
     # Blowing snow conditions
-    cond = (snow >= snd_thresh) * (sfcWind >= sfcWind_thresh) * 1
+    cond = (snow >= _snd_thresh) * (sfcWind >= _sfcWind_thresh) * 1
 
     out = cond.resample(time=freq).sum(dim="time")
     out = out.assign_attrs(units=to_agg_units(out, snd, "count", deffreq="D"))

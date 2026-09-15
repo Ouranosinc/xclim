@@ -52,6 +52,7 @@ import warnings
 from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
+from typing import Any
 
 from xclim.core.formatting import AttrFormatter, default_formatter
 from xclim.core.utils import CaseInsensitiveDict
@@ -67,7 +68,7 @@ TRANSLATABLE_ATTRS = [
 List of attributes to consider translatable when generating locale dictionaries.
 """
 
-_LOCALES = {}
+_LOCALES: dict[Any, Any] = {}
 
 
 def list_locales() -> list:
@@ -132,7 +133,7 @@ def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str,
         return locale, deepcopy(_LOCALES[locale])
 
     if isinstance(locale[1], dict):
-        trans = CaseInsensitiveDict(locale[1])
+        trans = {k: v for k, v in CaseInsensitiveDict(locale[1]).items()}
     else:
         # Thus, a string pointing to a json file
         trans = read_locale_file(locale[1])
@@ -148,7 +149,7 @@ def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str,
 def get_local_attrs(
     indicator: str | Sequence[str],
     locale: str,
-    var_name: str = None,
+    var_name: str | None = None,
     names: Sequence[str] | None = None,
     append_locale_name: bool = True,
 ) -> dict:
@@ -188,7 +189,7 @@ def get_local_attrs(
     loc_name, loc_dict = get_local_dict(locale)
     loc_name = f"_{loc_name}" if append_locale_name else ""
 
-    local_attrs = {}
+    local_attrs: dict[str, str] = {}
     for ind in reversed(indicator):
         local_attrs = local_attrs | loc_dict.get(ind.lower(), {})
         if var_name:
@@ -274,7 +275,7 @@ def read_locale_file(filename, module: str | None = None, encoding: str = "UTF8"
 
     modstr = f"{module}." if module is not None else ""
     locdict = CaseInsensitiveDict({(k if k == "attrs_mapping" else f"{modstr}{k}"): v for k, v in data.items()})
-    return locdict
+    return {k: v for k, v in locdict.items()}
 
 
 def load_locale(locdata: str | Path | dict[str, dict], locale: str) -> None:
@@ -317,7 +318,8 @@ def generate_local_dict(locale: str, init_english: bool = False) -> CaseInsensit
     from ..core.indicator import registry  # pylint: disable=import-outside-toplevel
 
     if locale in _LOCALES:
-        _, attrs = get_local_dict(locale)
+        _, _attrs = get_local_dict(locale)
+        attrs = CaseInsensitiveDict(_attrs)
         for ind_name in attrs.copy().keys():
             if ind_name != "attrs_mapping" and ind_name not in registry:
                 attrs.pop(ind_name)

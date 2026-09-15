@@ -65,7 +65,7 @@ _freq_to_timedelta = {"min": "m"}
 def expected_count(
     time: xr.DataArray,
     freq: Freq | None = None,
-    src_timestep: str | None = None,
+    src_timestep: Freq | None = None,
     **indexer,
 ) -> xr.DataArray:
     """
@@ -255,7 +255,7 @@ class MissingBase:
         self,
         da: xr.DataArray,
         freq: Freq | None = None,
-        src_timestep: str | None = None,
+        src_timestep: Freq | None = None,
         **indexer,
     ) -> xr.DataArray:
         """
@@ -354,7 +354,7 @@ class MissingTwoSteps(MissingBase):
         self,
         da: xr.DataArray,
         freq: Freq | None = None,
-        src_timestep: str | None = None,
+        src_timestep: Freq | None = None,
         **indexer,
     ) -> xr.DataArray:
         """
@@ -524,14 +524,14 @@ class AtLeastNValid(MissingTwoSteps):
 
 
 def missing_any(  # noqa: D103 # numpydoc ignore=GL08
-    da: xr.DataArray, freq: Freq, src_timestep: str | None = None, **indexer
+    da: xr.DataArray, freq: Freq, src_timestep: Freq | None = None, **indexer
 ) -> xr.DataArray:
     """Return whether there are missing days in the array."""
     return MissingAny()(da, freq, src_timestep, **indexer)
 
 
 def missing_some_but_not_all(  # noqa: D103 # numpydoc ignore=GL08
-    da: xr.DataArray, freq: Freq, src_timestep: str | None = None, **indexer
+    da: xr.DataArray, freq: Freq, src_timestep: Freq | None = None, **indexer
 ) -> xr.DataArray:
     """Return whether there are some missing days in the array, but not all are missing."""
     return MissingSomeButNotAll()(da, freq, src_timestep, **indexer)
@@ -540,7 +540,7 @@ def missing_some_but_not_all(  # noqa: D103 # numpydoc ignore=GL08
 def missing_wmo(  # noqa: D103 # numpydoc ignore=GL08
     da: xr.DataArray,
     freq: Freq,
-    src_timestep: str | None = None,
+    src_timestep: Freq | None = None,
     nm: int = 11,
     nc: int = 5,
     **indexer,
@@ -551,7 +551,7 @@ def missing_wmo(  # noqa: D103 # numpydoc ignore=GL08
 def missing_pct(  # noqa: D103 # numpydoc ignore=GL08
     da: xr.DataArray,
     freq: Freq,
-    src_timestep: str | None = None,
+    src_timestep: Freq | None = None,
     tolerance: float = 0.1,
     subfreq: Freq | None = None,
     **indexer,
@@ -562,7 +562,7 @@ def missing_pct(  # noqa: D103 # numpydoc ignore=GL08
 def at_least_n_valid(  # noqa: D103 # numpydoc ignore=GL08
     da: xr.DataArray,
     freq: Freq,
-    src_timestep: str | None = None,
+    src_timestep: Freq | None = None,
     n: int = 20,
     subfreq: Freq | None = None,
     **indexer,
@@ -570,7 +570,7 @@ def at_least_n_valid(  # noqa: D103 # numpydoc ignore=GL08
     return AtLeastNValid(n=n, subfreq=subfreq)(da, freq, src_timestep, **indexer)
 
 
-def missing_from_context(da: xr.DataArray, freq: Freq, src_timestep: str | None = None, **indexer) -> xr.DataArray:
+def missing_from_context(da: xr.DataArray, freq: Freq, src_timestep: Freq | None = None, **indexer) -> xr.DataArray:
     """
     Mask periods as missing according to the algorithm and options set in xclim's global options.
 

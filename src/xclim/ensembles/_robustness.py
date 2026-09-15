@@ -20,6 +20,7 @@ import scipy.stats as spstats
 import xarray as xr
 
 from xclim.compute.helpers import compare, detrend
+from xclim.core import Condition
 from xclim.core.formatting import gen_call_string, update_xclim_history
 from xclim.core.missing import MissingAny, MissingBase
 
@@ -30,7 +31,7 @@ __all__ = [
 ]
 
 
-SIGNIFICANCE_TESTS = {}
+SIGNIFICANCE_TESTS: dict[str, Callable] = {}
 """Registry of change significance tests.
 
 New tests must be decorated with :py:func:`significance_test` and fulfill the following requirements:
@@ -236,7 +237,7 @@ def robustness_fractions(
         if abs_thresh is not None and rel_thresh is None:
             changed = abs(delta) > abs_thresh
             test_params = {"abs_thresh": abs_thresh}
-        elif rel_thresh is not None and abs_thresh is None:
+        elif rel_thresh is not None and abs_thresh is None and isinstance(ref, xr.DataArray):
             changed = abs(delta / ref.mean("time")) > rel_thresh
             test_params = {"rel_thresh": rel_thresh}
         else:
@@ -339,8 +340,8 @@ def robustness_categories(
     valid: xr.DataArray | None = None,
     *,
     categories: list[str] | None = None,
-    ops: list[tuple[str, str]] | None = None,
-    thresholds: list[tuple[float, float]] | None = None,
+    ops: list[tuple[Condition, Condition | None]] | None = None,
+    thresholds: list[tuple[float, float | None]] | None = None,
 ) -> xr.DataArray:
     """
     Create a categorical robustness map for mapping hatching patterns.
@@ -672,6 +673,9 @@ def _gen_test_entry(namefunc):
 
     return entry
 
+
+if robustness_fractions.__doc__ is None:
+    robustness_fractions.__doc__ = ""
 
 robustness_fractions.__doc__ = robustness_fractions.__doc__.format(
     tests_list="{" + ", ".join(list(SIGNIFICANCE_TESTS.keys()) + ["threshold"]) + "}",
