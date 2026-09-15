@@ -1173,7 +1173,7 @@ def resample_map(
     """
     resample_kwargs = resample_kwargs or {}
     map_kwargs = map_kwargs or {}
-    args = map_kwargs.pop("args", [])
+    map_args = map_kwargs.pop("args", [])
 
     # Get function for xclim-implemented statistics
     func = func if not isinstance(func, str) else XCLIM_OPS.get(func, func)
@@ -1181,15 +1181,15 @@ def resample_map(
         map_kwargs["dim"] = dim
         if freq is not None:
             obj = obj.resample({dim: freq})
-        return getattr(obj, func)(*args, **map_kwargs)
+        return getattr(obj, func)(*map_args, **map_kwargs)
     else:
         if freq is None:
-            return func(obj, *args, **map_kwargs)
+            return func(obj, *map_args, **map_kwargs)
         if map_blocks == "from_context":
             map_blocks = OPTIONS[MAP_BLOCKS]
 
         if not uses_dask(obj) or not map_blocks:
-            return obj.resample({dim: freq}, **resample_kwargs).map(func, **map_kwargs)
+            return obj.resample({dim: freq}, **resample_kwargs).map(func, *map_args, **map_kwargs)
 
         if rechunk_for_blockwise is None:
             msg = f"Using {MAP_BLOCKS}=True requires flox."
@@ -1202,8 +1202,8 @@ def resample_map(
 
         obj_rechunked = rechunk_for_blockwise(obj, dim, labels)
 
-        def _resample_map(obj_chnk, dm, frq, rs_kws, fun, mp_kws):
-            return obj_chnk.resample({dm: frq}, **rs_kws).map(fun, **mp_kws)
+        def _resample_map(obj_chnk, dm, frq, rs_kws, fun, mp_args, mp_kws):
+            return obj_chnk.resample({dm: frq}, **rs_kws).map(fun, *mp_args, **mp_kws)
 
         # Template. We are hoping that this takes a negligible time as it is never loaded.
         template = obj_rechunked.resample(**{dim: freq}, **resample_kwargs).first()
@@ -1221,7 +1221,7 @@ def resample_map(
         template = template.chunk({dim: tuple(new_chunks)})
 
         return obj_rechunked.map_blocks(
-            _resample_map, (dim, freq, resample_kwargs, func, map_kwargs), template=template
+            _resample_map, (dim, freq, resample_kwargs, func, map_args, map_kwargs), template=template
         )
 
 
