@@ -18,7 +18,7 @@ These files are expected to be defined as in this example for French:
             "YS-*": ["annuel", "annuelle", "annuels", "annuelles"],
             # ... and so on for other frequent parameters translation...
         },
-        "DTRVAR": {
+        "dtrvar": {
             "long_name": "Variabilité de l'amplitude de la température diurne",
             "description": "Variabilité {freq:f} de l'amplitude de la température diurne (définie comme la moyenne de la variation journalière de l'amplitude de température sur une période donnée)",
             "title": "Variation quotidienne absolue moyenne de l'amplitude de la température diurne",
@@ -28,10 +28,13 @@ These files are expected to be defined as in this example for French:
         # ... and so on for other indicators...
     }
 
-Indicators are named by subclass identifier, the same as in the indicator registry (`xclim.core.indicators.registry`),
-but which can differ from the callable name. In this case, the indicator is called through
-`atmos.daily_temperature_range_variability`, but its identifier is `DTRVAR`.
-Use the `ind.__class__.__name__` accessor to get its registry name.
+Indicators are named by their identifier, the same as in the indicator registry (`xclim.core.indicators.registry`),
+but which can differ from the callable name. In the example above, the indicator is usually called in python code
+using `atmos.daily_temperature_range_variability`, but its identifier is `dtrvar`.
+Use the `ind.identifier` accessor to get its registry name, they are case-insensitive.
+
+Accordingly, when writing a translation file for an :py:class:`~xclim.core.collection.IndicatorCollection`, the keys
+to use are the same as the ones in the ``indicators`` section of the collection's YAML file.
 
 Here, the usual parameter passed to the formatting of "description" is "freq" and is usually translated from "YS"
 to "annual". However, in French and in this sentence, the feminine form should be used, so the "f" modifier is added
@@ -340,14 +343,14 @@ def generate_local_dict(locale: str, init_english: bool = False) -> CaseInsensit
                 eng = ""
             ind_attrs.setdefault(prop, eng)
 
-        for atts in indicator.attrs:
+        for outmeta in indicator.outputs:
             # In the case of single output, put var attrs in main dict
-            if len(indicator.attrs) > 1:
-                ind_attrs = attrs.setdefault(f"{ind_name}.{atts.var_name}", {})
+            if len(indicator.outputs) > 1:
+                ind_attrs = attrs.setdefault(f"{ind_name}.{outmeta.var_name}", {})
 
             for attr in indicator._translatable_attrs:
                 if init_english:
-                    eng = atts.get(attr)
+                    eng = outmeta.attrs.get(attr)
                     if not isinstance(eng, str):
                         eng = ""
                 else:

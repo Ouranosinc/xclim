@@ -275,6 +275,7 @@ Modules for xclim Developers
 .. autoclass:: xclim.core.indicator.Indicator
    :members:
    :inherited-members:
+   :special-members: __init__
    :noindex:
 
 .. autoclass:: ReducingIndicator
