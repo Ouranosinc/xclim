@@ -32,9 +32,7 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
    notebooks/usage
    notebooks/index
    indicators
-   checks
    notebooks/units
-   internationalization
    notebooks/cli
    analogues
    contributing
@@ -51,10 +49,16 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
    references
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: User API
 
-   api
+   user_api/indicator
+   user_api/compute
+   user_api/ensemble
+   user_api/analog
+   user_api/units_calendar
+   user_api/checks
+   user_api/developers
 
 .. toctree::
    :maxdepth: 1

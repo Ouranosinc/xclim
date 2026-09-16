@@ -2,9 +2,9 @@
 Clix-meta index functions submodule
 ===================================
 
-Generic indices implementing index functions from the `clix-meta <https://github.com/clix-meta/clix-meta/>`
+Generic indices implementing index functions from the `clix-meta`_
 framework for climate index definitions. Functions here are redefinitions of functions in
-:py:mod:`xclim.indices.generic` but with signatures that match the clix-meta vocabulary.
+:py:mod:`xclim.compute.generic` but with signatures that match the clix-meta vocabulary.
 
 This module tries to follow the clix-meta definitions as closely as possible,
 which means it can have meaningful differences with the rest of xclim.
@@ -17,6 +17,8 @@ already means something else. Also, the argument `percentile` in many functions 
 with the function `percentile`.
 
 This version of xclim implements clix-meta v0.6.1 .
+
+.. _clix-meta: https://github.com/clix-meta/clix-meta
 """
 
 from __future__ import annotations

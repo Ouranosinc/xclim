@@ -219,7 +219,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
             in :py:mod:`xclim.compute.generic` and finally in :py:mod:`xclim.compute`.
         translations : Mapping of dicts or path, optional
             Translated metadata for the new indicators. Keys of the mapping must be two-character language tags.
-            Values can be translations dictionaries as defined in :ref:`internationalization:Internationalization`.
+            Values can be translations dictionaries as defined in :py:mod:`xclim.core.locales`.
             They can also be a path to a JSON file defining the translations.
         mode : {'raise', 'warn', 'ignore'}
             How to deal with broken indicator definitions.

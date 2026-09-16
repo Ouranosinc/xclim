@@ -8,7 +8,7 @@ variable. The functions defined here are the building blocks for most xclim indi
 A generic index function should take in one or multiple variable in the form of :py:class:`xarray.DataArray`,
 as its first arguments. Almost all functions here should also take a `freq` argument, defining the resampling period.
 A specific vocabulary and annotations are used in this submodule to define arguments as clearly as possible.
-The vocabulary is strongly inspired from `clix-meta <https://github.com/clix-meta/clix-meta/>`_.
+The vocabulary is strongly inspired from `clix-meta`_.
 
 - ``data: xr.DataArray`` : The first(s) arguments of all index function. When multiple variables are required,
     an integer suffix is added.
@@ -23,6 +23,8 @@ The vocabulary is strongly inspired from `clix-meta <https://github.com/clix-met
     `xclim` only officially supports the frequency strings that xarray's implementation of CFtime supports,
     so the ones completely independent of a specific calendar.
 - ``**indexer`` : Time selection arguments as implemented by :py:func:`~xclim.core.calendar.select_time`.
+
+.. _clix-meta: https://github.com/clix-meta/clix-meta
 """
 
 from __future__ import annotations

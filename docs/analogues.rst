@@ -58,8 +58,3 @@ Analogues Metrics API
 ---------------------
 
 See: :ref:`spatial-analogues-api`
-
-Analogues Developer Functions
------------------------------
-
-See: :ref:`spatial-analogues-developer-api`
