@@ -90,15 +90,15 @@ def robustness_fractions(
     ----------
     fut : xr.DataArray
         Future period values along 'realization' and 'time' (..., nr, nt1)
-        or if `ref` is None, Delta values along `realization` (..., nr).
+        or if `ref` is None, Delta values along 'realization' (..., nr).
     ref : xr.DataArray, optional
-        Reference period values along realization' and 'time'  (..., nr, nt2).
+        Reference period values along 'realization' and 'time'  (..., nr, nt2).
         The size of the 'time' axis does not need to match the one of `fut`.
         But their 'realization' axes must be identical and the other coordinates should be the same.
         If `None` (default), values of `fut` are assumed to be deltas instead of
         a distribution across the future period.
     test : {tests_list}, optional
-        Name of the statistical test used to determine if there was significant change. See notes.
+        Name of the statistical test used to determine if there was significant change. See Notes.
     weights : xr.DataArray
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
     invalid : xc.core.missing.MissingBase instance
@@ -107,17 +107,17 @@ def robustness_fractions(
         nan along the "time" dimension means the timeseries is invalid.
         Not used if only deltas are passed as `fut`.
     strict_sign : bool
-        Whether to include zeros When determining the sign of change. True (default) does not include
+        Whether to include zeros when determining the sign of change. True (default) does not include
         them, the comparison is done with `>` and `<`, while false uses `>=`, `<=`.
         When True, the "agree" fraction is the largest of three : positive, negative, zero change.
         When False, it is the largest of two : zero-or-positive, zero-or-negative.
     **kwargs : dict
-        Other arguments specific to the statistical test. See notes.
+        Other arguments specific to the statistical test. See Notes.
 
     Returns
     -------
     xr.Dataset
-        Same coordinates as `fut` and  `ref`, but no `time` and no `realization`.
+        Same coordinates as `fut` and `ref`, but no `time` and no `realization`.
         Values are zero if all members were invalid. Variables returned are:
 
         - changed
@@ -364,8 +364,8 @@ def robustness_categories(
         The fraction of members that were valid for the robustness calculation.
         Can also be passed as a variable of the first argument.
     categories : list of str, optional
-        The label of each robustness categories. They are stored in the semicolon separated flag_descriptions
-        attribute as well as in a compressed form in the flag_meanings attribute.
+        The label of each robustness categories. They are stored in the semicolon separated ``flag_descriptions``
+        attribute as well as in a compressed form in the ``flag_meanings`` attribute.
         If a point is mapped to two categories, priority is given to the first one in this list.
     ops : list of tuples of str, optional
         For each category, the comparison operators for `change_frac` and `agree_frac`.
@@ -429,12 +429,12 @@ def robustness_categories(
 
 @update_xclim_history
 def robustness_coefficient(fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | xr.Dataset) -> xr.DataArray | xr.Dataset:
-    """
+    r"""
     Calculate the robustness coefficient quantifying the robustness of a climate change signal in an ensemble.
 
     Taken from :cite:ts:`knutti_robustness_2013`.
 
-    The robustness metric is defined as R = 1 − A1 / A2 , where A1 is defined as the integral of the squared area
+    The robustness metric is defined as R = 1 - A1 / A2 , where A1 is defined as the integral of the squared area
     between two cumulative density functions characterizing the individual model projections and the multimodel mean
     projection and A2 is the integral of the squared area between two cumulative density functions characterizing
     the multimodel mean projection and the historical climate.
@@ -454,7 +454,7 @@ def robustness_coefficient(fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | x
     Returns
     -------
     xr.DataArray or xr.Dataset
-        The robustness coefficient, ]-inf, 1], float. Same type as `fut` or `ref`.
+        The robustness coefficient, $(-\infty, 1]$, float. Same type as `fut` or `ref`.
 
     References
     ----------
@@ -508,8 +508,8 @@ def robustness_coefficient(fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | x
     R.attrs.update(
         name="R",
         long_name="Ensemble robustness coefficient",
-        description="Ensemble robustness coefficient as defined by Knutti and Sedláček (2013).",
-        reference="Knutti, R. and Sedláček, J. (2013) Robustness and uncertainties in the new CMIP5 climate "
+        description="Ensemble robustness coefficient as defined by Knutti and Sedlacek (2013).",
+        reference="Knutti, R. and Sedlacek, J. (2013) Robustness and uncertainties in the new CMIP5 climate "
         "model projections. Nat. Clim. Change.",
         units="",
     )
