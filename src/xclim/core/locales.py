@@ -1,6 +1,5 @@
 """
-Internationalization
-====================
+Internationalization module.
 
 This module defines methods and object to help the internationalization of metadata for
 climate indicators computed by xclim. Go to :ref:`notebooks/customize:Adding translated metadata` to see

@@ -12,7 +12,6 @@ Indicators
 
 .. automodule:: xclim.core.collection
    :members:
-   :noindex:
 
 Compute functions
 =================
@@ -42,38 +41,32 @@ types.
    :members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 .. automodule:: xclim.compute.helpers
    :members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 .. automodule:: xclim.compute.run_length
    :members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 .. automodule:: xclim.compute.stats
    :members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 Function Library
 ----------------
 When an indicator can't be simply implemented only using a :py:mod:`xclim.compute.generic` function, then a custom compute function
 is implemented here.
 
-
 .. automodule:: xclim.compute
    :members:
    :imported-members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 Fire indices submodule
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -83,13 +76,11 @@ Compute functions related to fire and fire weather. Currently, submodules exist 
    :members: fire_weather_ufunc, fire_season, overwintering_drought_code, drought_code, cffwis_indices
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 .. automodule:: xclim.compute.fire._ffdi
    :members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 .. only:: html
 
@@ -154,41 +145,29 @@ Ensembles Module
 
 .. automodule:: xclim.ensembles
    :members: create_ensemble, ensemble_mean_std_max_min, ensemble_percentiles
-   :noindex:
 
 .. automodule:: xclim.ensembles._reduce
-   :noindex:
 
 .. Use of autofunction is so that paths do not include private modules.
 .. autofunction:: xclim.ensembles.kkz_reduce_ensemble
-   :noindex:
 
 .. autofunction:: xclim.ensembles.kmeans_reduce_ensemble
-   :noindex:
 
 .. autofunction:: xclim.ensembles.plot_rsqprofile
-   :noindex:
 
 .. automodule:: xclim.ensembles._robustness
-   :noindex:
 
 .. autofunction:: xclim.ensembles.robustness_fractions
-   :noindex:
 
 .. autofunction:: xclim.ensembles.robustness_categories
-   :noindex:
 
 .. autofunction:: xclim.ensembles.robustness_coefficient
-   :noindex:
 
 .. automodule:: xclim.ensembles._partitioning
-    :noindex:
 
 .. autofunction:: xclim.ensembles.hawkins_sutton
-    :noindex:
 
 .. autofunction:: xclim.ensembles.lafferty_sriver
-    :noindex:
 
 Units Handling Submodule
 ========================
@@ -197,7 +176,6 @@ Units Handling Submodule
    :members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 .. _spatial-analogues-api:
 
@@ -205,31 +183,22 @@ Spatial Analogues Module
 ========================
 
 .. autoclass:: xclim.analog.spatial_analogs
-   :noindex:
 
 .. autofunction:: xclim.analog.friedman_rafsky
-   :noindex:
 
 .. autofunction:: xclim.analog.kldiv
-   :noindex:
 
 .. autofunction:: xclim.analog.kolmogorov_smirnov
-   :noindex:
 
 .. autofunction:: xclim.analog.nearest_neighbor
-   :noindex:
 
 .. autofunction:: xclim.analog.seuclidean
-   :noindex:
 
 .. autofunction:: xclim.analog.szekely_rizzo
-   :noindex:
 
 .. autofunction:: xclim.analog.zech_aslan
-   :noindex:
 
 .. autofunction:: xclim.analog.mahalanobis
-   :noindex:
 
 Other Utilities
 ===============
@@ -238,69 +207,55 @@ Other Utilities
    :members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 .. automodule:: xclim.core.formatting
    :members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 .. automodule:: xclim.core.options
    :members: set_options
-   :noindex:
 
 .. automodule:: xclim.core.utils
    :members:
    :undoc-members:
    :member-order: bysource
    :show-inheritance:
-   :noindex:
 
 Modules for xclim Developers
 ============================
 
 .. automodule:: xclim.core.indicator
-   :noindex:
 
 .. autoclass:: xclim.core.indicator.Parameter
    :members: injected, json, update
-   :noindex:
 
 .. autoclass:: xclim.core.indicator.Output
    :members:
    :show-inheritance:
-   :noindex:
 
 .. autoclass:: xclim.core.indicator.Indicator
    :members:
    :inherited-members:
    :special-members: __init__
-   :noindex:
 
 .. autoclass:: ReducingIndicator
    :members:
-   :noindex:
 
 .. autoclass:: IndexingIndicator
    :members:
-   :noindex:
 
 .. autoclass:: ResamplingIndicator
    :members:
-   :noindex:
 
 .. autoclass:: ResamplingIndicatorWithIndexing
    :members:
-   :noindex:
 
 .. autoclass:: Hourly
    :members:
-   :noindex:
 
 .. autoclass:: Daily
    :members:
-   :noindex:
 
 
 Bootstrapping Algorithms for Indicators Submodule
@@ -309,7 +264,6 @@ Bootstrapping Algorithms for Indicators Submodule
 .. automodule:: xclim.core.bootstrapping
    :members:
    :show-inheritance:
-   :noindex:
 
 .. _`spatial-analogues-developer-api`:
 
@@ -317,10 +271,8 @@ Spatial Analogues Helpers
 -------------------------
 
 .. autofunction:: xclim.analog.metric
-   :noindex:
 
 .. autofunction:: xclim.analog.standardize
-   :noindex:
 
 Testing Module
 --------------
@@ -329,10 +281,8 @@ Testing Module
    :members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 .. automodule:: xclim.testing.helpers
    :members:
    :undoc-members:
    :show-inheritance:
-   :noindex:

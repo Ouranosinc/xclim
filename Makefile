@@ -101,16 +101,14 @@ autodoc-obsolete: install-docs clean-docs ## create sphinx-apidoc files (obsolet
 	mkdir -p docs/apidoc/
 	sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim
 
-autodoc-custom-index: install-docs clean-docs ## create sphinx-apidoc files but with special index handling for indices and indicators
+autodoc-noindex: install-docs clean-docs ## create sphinx-apidoc files but with special index handling for indices and indicators
 	mkdir -p docs/apidoc/
-	sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/compute src/xclim/indicators
-	rm docs/apidoc/xclim.rst
 	env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim
 
-linkcheck: autodoc-custom-index ## run checks over all external links found throughout the documentation
+linkcheck: autodoc-noindex ## run checks over all external links found throughout the documentation
 	$(MAKE) -C docs linkcheck
 
-build-docs: autodoc-custom-index ## generate Sphinx HTML documentation, including API docs, but without indexes for for indices and indicators
+build-docs: autodoc-noindex ## generate Sphinx HTML documentation, including API docs, but without indexes
 	$(MAKE) -C docs html
 
 docs: build-docs  ## open the built documentation in a web browser
@@ -120,7 +118,7 @@ docs: build-docs  ## open the built documentation in a web browser
 	{ sleep 2; $(BROWSER) "http://localhost:54345"; } &
 	python -m http.server 54345 --directory docs/_build/html/
 
-servedocs: autodoc-custom-index ## generate Sphinx HTML documentation, including API docs, but without indexes for for indices and indicators, and watch for changes
+servedocs: autodoc-noindex ## generate Sphinx HTML documentation, including API docs, but without indexes for for indices and indicators, and watch for changes
 	$(MAKE) -C docs livehtml
 
 release: dist ## package and upload a release
