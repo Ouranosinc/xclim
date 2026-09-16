@@ -20,23 +20,23 @@ def test_wind_speed_from_vectors():
     vas = xr.DataArray(np.array([4.0, -4.0]), dims=["x"])
     vas.attrs["units"] = "m s-1"
 
-    wind, wind_dir = convert.wind_speed_from_vector(uas=uas, vas=vas)
-    np.testing.assert_allclose(wind, [5.0, 5.0])
-    np.testing.assert_allclose(wind_dir, [216.86989764584402, 36.86989764584402])
+    out = convert.wind_speed_from_vector(uas=uas, vas=vas)
+    np.testing.assert_allclose(out.sfcWind, [5.0, 5.0])
+    np.testing.assert_allclose(out.sfcWindfromdir, [216.86989764584402, 36.86989764584402])
 
     # missing values
     uas[0] = np.nan
-    wind, wind_dir = convert.wind_speed_from_vector(uas=uas, vas=vas)
-    np.testing.assert_array_equal(wind.isnull(), [True, False])
-    np.testing.assert_array_equal(wind_dir.isnull(), [True, False])
+    wind = convert.wind_speed_from_vector(uas=uas, vas=vas)
+    np.testing.assert_array_equal(wind.sfcWind.isnull(), [True, False])
+    np.testing.assert_array_equal(wind.sfcWindfromdir.isnull(), [True, False])
 
     # Calm thresh and northerly
     uas[:] = 0
     vas[0] = 0.9
     vas[1] = -1.1
-    wind, wind_dir = convert.wind_speed_from_vector(uas=uas, vas=vas, calm_wind_thresh="1 m/s")
-    np.testing.assert_array_equal(wind, [0.9, 1.1])
-    np.testing.assert_allclose(wind_dir, [0.0, 360.0])
+    wind = convert.wind_speed_from_vector(uas=uas, vas=vas, calm_wind_thresh="1 m/s")
+    np.testing.assert_array_equal(wind.sfcWind, [0.9, 1.1])
+    np.testing.assert_allclose(wind.sfcWindfromdir, [0.0, 360.0])
 
 
 def test_wind_vector_from_speed():
@@ -45,15 +45,14 @@ def test_wind_vector_from_speed():
     sfcWindfromdir = xr.DataArray(np.array([360.0, 36.86989764584402, 0.0]), dims=["x"])
     sfcWindfromdir.attrs["units"] = "degree"
 
-    uas, vas = convert.wind_vector_from_speed(sfcWind=sfcWind, sfcWindfromdir=sfcWindfromdir)
-    np.testing.assert_allclose(uas, [0.0, -3.0, 0.0], atol=1e-14)
-    np.testing.assert_allclose(vas, [-3.0, -4.0, -0.2], atol=1e-14)
+    out = convert.wind_vector_from_speed(sfcWind=sfcWind, sfcWindfromdir=sfcWindfromdir)
+    np.testing.assert_allclose(out.uas, [0.0, -3.0, 0.0], atol=1e-14)
+    np.testing.assert_allclose(out.vas, [-3.0, -4.0, -0.2], atol=1e-14)
 
     # missing values
     sfcWind[0] = np.nan
     sfcWindfromdir[1] = np.nan
     wind_vectors = convert.wind_vector_from_speed(sfcWind=sfcWind, sfcWindfromdir=sfcWindfromdir)
-    # try using namedtuple accessor
     np.testing.assert_array_equal(wind_vectors.uas.isnull(), [True, True, False])
     np.testing.assert_array_equal(wind_vectors.vas.isnull(), [True, True, False])
 
@@ -63,7 +62,7 @@ def test_relative_humidity_dewpoint(timeseries):
         convert.relative_humidity_from_dewpoint(
             tas=timeseries(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C, "tas"),
             tdps=timeseries(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C, "tdps"),
-        ),
+        ).hurs,
         timeseries([np.nan, 100, 93, 71, 52, 73, 94, 31, 20], "hurs"),
         rtol=0.02,
         atol=1,
@@ -76,7 +75,7 @@ def test_relative_humidity_dewpoint_clip(timeseries):
             tas=timeseries(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C, "tas"),
             tdps=timeseries(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C, "tdps"),
             invalid_values="clip",
-        ),
+        ).hurs,
         timeseries([100, 100, 93, 71, 52, 73, 94, 31, 20], "hurs"),
         rtol=0.02,
         atol=1,
@@ -92,13 +91,12 @@ def test_humidex(tas_series):
 
     # expected values from https://en.wikipedia.org/wiki/Humidex
     h = convert.humidex(tas, dtas)
-    np.testing.assert_array_almost_equal(h, [16, 29, 47, 52], 0)
-    assert h.name == "humidex"
+    np.testing.assert_array_almost_equal(h.humidex, [16, 29, 47, 52], 0)
 
     # Test with dataset (#1432)
     ds = xr.Dataset({"tas": tas, "dewpoint": dtas})
     h2 = convert.humidex(ds=ds, tdps="dewpoint")
-    np.testing.assert_array_almost_equal(h, h2)
+    np.testing.assert_array_almost_equal(h.humidex, h2.humidex)
 
 
 def test_heat_index(atmosds):
@@ -133,8 +131,7 @@ def test_heat_index(atmosds):
 
     with set_options(cf_compliance="raise"):
         hi = convert.heat_index(tas, hurs)
-    np.testing.assert_array_almost_equal(hi, expected, 0)
-    assert hi.name == "heat_index"
+    np.testing.assert_array_almost_equal(hi.heat_index, expected, 0)
 
 
 def test_saturation_vapor_pressure(tas_series):
@@ -145,8 +142,7 @@ def test_saturation_vapor_pressure(tas_series):
         method="sonntag90",
         ice_thresh="0 degC",
     )
-    np.testing.assert_allclose(e_sat, e_sat_exp, atol=0.5, rtol=0.005)
-    assert e_sat.name == "e_sat"
+    np.testing.assert_allclose(e_sat.e_sat, e_sat_exp, atol=0.5, rtol=0.005)
 
 
 def test_relative_humidity(tas_series, hurs_series, huss_series, ps_series):
@@ -162,8 +158,7 @@ def test_relative_humidity(tas_series, hurs_series, huss_series, ps_series):
         method="sonntag90",
         ice_thresh="0 degC",
     )
-    np.testing.assert_allclose(hurs, hurs_exp, atol=0.5, rtol=0.005)
-    assert hurs.name == "hurs"
+    np.testing.assert_allclose(hurs.hurs, hurs_exp, atol=0.5, rtol=0.005)
 
 
 def test_specific_humidity(tas_series, hurs_series, huss_series, ps_series):
@@ -179,8 +174,7 @@ def test_specific_humidity(tas_series, hurs_series, huss_series, ps_series):
         method="sonntag90",
         ice_thresh="0 degC",
     )
-    np.testing.assert_allclose(huss, huss_exp, atol=1e-4, rtol=0.05)
-    assert huss.name == "huss"
+    np.testing.assert_allclose(huss.huss, huss_exp, atol=1e-4, rtol=0.05)
 
 
 def test_specific_humidity_from_dewpoint(tas_series, ps_series, huss_series):
@@ -198,15 +192,14 @@ def test_specific_humidity_from_dewpoint(tas_series, ps_series, huss_series):
         ps=ps,
         method="sonntag90",
     )
-    np.testing.assert_allclose(huss, huss_exp, atol=1e-4, rtol=0.05)
-    assert huss.name == "huss"
+    np.testing.assert_allclose(huss.huss, huss_exp, atol=1e-4, rtol=0.05)
 
 
 @pytest.mark.parametrize("method", ["tetens30", "wmo08", "aerk96", "buck81"])
 def test_dewpoint_from_specific_humidity(atmosds, method):
     tdps = convert.dewpoint_from_specific_humidity(huss=atmosds.huss, ps=atmosds.ps)
     # atmosds.huss was computed with Sonntag90, so we can't expect a perfect match
-    xr.testing.assert_allclose(tdps, atmosds.tdps, atol=0.2, rtol=0.001)
+    xr.testing.assert_allclose(tdps.tdps, atmosds.tdps, atol=0.2, rtol=0.001)
 
 
 def test_snowfall_approximation(pr_series, tas_series, prsn_series):
@@ -285,7 +278,7 @@ def test_snowfall_approximation(pr_series, tas_series, prsn_series):
         ]
     )
     prsn = convert.snowfall_approximation(pr, tas=tas, method="dai_annual", clip_temp="20 °C")
-    np.testing.assert_allclose(prsn, exp, atol=1e-4, rtol=1e-2)
+    np.testing.assert_allclose(prsn.prsn, exp, atol=1e-4, rtol=1e-2)
 
 
 def test_rain_approximation(pr_series, tas_series):
@@ -294,30 +287,30 @@ def test_rain_approximation(pr_series, tas_series):
 
     prlp = convert.rain_approximation(pr, tas=tas, thresh="5 degC", method="binary")
 
-    np.testing.assert_allclose(prlp, [0, 0, 0, 0, 0, 1, 1, 1, 1, 1], atol=1e-5, rtol=1e-3)
+    np.testing.assert_allclose(prlp.prra, [0, 0, 0, 0, 0, 1, 1, 1, 1, 1], atol=1e-5, rtol=1e-3)
 
 
 def test_wind_chill_index(atmosds):
     out = convert.wind_chill_index(ds=atmosds)
 
-    np.testing.assert_allclose(out.isel(time=0), [np.nan, -6.716, -35.617, -8.486, np.nan], rtol=1e-3)
+    np.testing.assert_allclose(out.wind_chill.isel(time=0), [np.nan, -6.716, -35.617, -8.486, np.nan], rtol=1e-3)
 
     out_us = convert.wind_chill_index(ds=atmosds, method="US")
 
-    np.testing.assert_allclose(out_us.isel(time=0), [-1.429, -6.716, -35.617, -8.486, 2.781], rtol=1e-3)
+    np.testing.assert_allclose(out_us.wind_chill.isel(time=0), [-1.429, -6.716, -35.617, -8.486, 2.781], rtol=1e-3)
 
 
 def test_wind_profile(atmosds):
-    out: xr.DataArray = convert.wind_profile(wind_speed=atmosds.sfcWind, h_r="10 m", h="100 m", alpha=1 / 7)
-    assert out.attrs["units"] == "m s-1"
-    assert (out > atmosds.sfcWind).all()
+    out = convert.wind_profile(wind_speed=atmosds.sfcWind, h_r="10 m", h="100 m", alpha=1 / 7)
+    assert out.wind_speed.attrs["units"] == "m s-1"
+    assert (out.wind_speed > atmosds.sfcWind).all()
 
 
 def test_wind_power_potential(atmosds):
     out = convert.wind_power_potential(wind_speed=atmosds.sfcWind)
-    assert out.attrs["units"] == "1"
-    assert (out >= 0).all()
-    assert (out <= 1).all()
+    assert out.wind_power_potential.attrs["units"] == "1"
+    assert (out.wind_power_potential >= 0).all()
+    assert (out.wind_power_potential <= 1).all()
 
 
 def test_wind_power_potential_from_3h_series():
@@ -327,7 +320,7 @@ def test_wind_power_potential_from_3h_series():
     from xclim.testing.helpers import test_timeseries
 
     w = test_timeseries(np.ones(96) * 15, variable="sfcWind", start="7/1/2000", units="m s-1", freq="3h")
-    out = convert.wind_power_potential(wind_speed=w)
+    out = convert.wind_power_potential(wind_speed=w).wind_power_potential
 
     # Multiply with nominal capacity
     power = out * 100
@@ -351,7 +344,7 @@ class TestPotentialEvapotranspiration:
         uas = ds.uas
         vas = ds.vas
 
-        sfcWind, _ = convert.wind_speed_from_vector(uas, vas)
+        sfcWind = convert.wind_speed_from_vector(uas, vas).sfcWind
 
         with xr.set_options(keep_attrs=True):
             tnC = tn - K2C
@@ -361,47 +354,48 @@ class TestPotentialEvapotranspiration:
             hurs_pct = hurs * 100
             hurs_pct.attrs["units"] = "%"
 
-        pet_br65 = convert.potential_evapotranspiration(tn, tx, method="BR65")
-        pet_br65C = convert.potential_evapotranspiration(tnC, tx, method="BR65")
-        pet_hg85 = convert.potential_evapotranspiration(tn, tx, method="HG85")
-        pet_hg85C = convert.potential_evapotranspiration(tnC, tx, method="HG85")
-        pet_tw48 = convert.potential_evapotranspiration(tas=tm, method="TW48")
-        pet_tw48C = convert.potential_evapotranspiration(tas=tmC, method="TW48")
-        pet_mb05 = convert.potential_evapotranspiration(tn, tx, method="MB05")
-        pet_mb05C = convert.potential_evapotranspiration(tnC, tx, method="MB05")
-        pet_fao_pm98 = convert.potential_evapotranspiration(
-            tn,
-            tx,
-            hurs=hurs,
-            rsds=rsds,
-            rsus=rsus,
-            rlds=rlds,
-            rlus=rlus,
-            sfcWind=sfcWind,
-            method="FAO_PM98",
-        )
-        pet_fao_pm98C = convert.potential_evapotranspiration(
-            tnC,
-            tx,
-            hurs=hurs,
-            rsds=rsds,
-            rsus=rsus,
-            rlds=rlds,
-            rlus=rlus,
-            sfcWind=sfcWind,
-            method="FAO_PM98",
-        )
-        pet_fao_pm98pct = convert.potential_evapotranspiration(
-            tn,
-            tx,
-            hurs=hurs_pct,
-            rsds=rsds,
-            rsus=rsus,
-            rlds=rlds,
-            rlus=rlus,
-            sfcWind=sfcWind,
-            method="FAO_PM98",
-        )
+        with set_options(as_dataset=False):
+            pet_br65 = convert.potential_evapotranspiration(tn, tx, method="BR65")
+            pet_br65C = convert.potential_evapotranspiration(tnC, tx, method="BR65")
+            pet_hg85 = convert.potential_evapotranspiration(tn, tx, method="HG85")
+            pet_hg85C = convert.potential_evapotranspiration(tnC, tx, method="HG85")
+            pet_tw48 = convert.potential_evapotranspiration(tas=tm, method="TW48")
+            pet_tw48C = convert.potential_evapotranspiration(tas=tmC, method="TW48")
+            pet_mb05 = convert.potential_evapotranspiration(tn, tx, method="MB05")
+            pet_mb05C = convert.potential_evapotranspiration(tnC, tx, method="MB05")
+            pet_fao_pm98 = convert.potential_evapotranspiration(
+                tn,
+                tx,
+                hurs=hurs,
+                rsds=rsds,
+                rsus=rsus,
+                rlds=rlds,
+                rlus=rlus,
+                sfcWind=sfcWind,
+                method="FAO_PM98",
+            )
+            pet_fao_pm98C = convert.potential_evapotranspiration(
+                tnC,
+                tx,
+                hurs=hurs,
+                rsds=rsds,
+                rsus=rsus,
+                rlds=rlds,
+                rlus=rlus,
+                sfcWind=sfcWind,
+                method="FAO_PM98",
+            )
+            pet_fao_pm98pct = convert.potential_evapotranspiration(
+                tn,
+                tx,
+                hurs=hurs_pct,
+                rsds=rsds,
+                rsus=rsus,
+                rlds=rlds,
+                rlus=rlus,
+                sfcWind=sfcWind,
+                method="FAO_PM98",
+            )
 
         np.testing.assert_allclose(pet_br65, pet_br65C, atol=1)
         np.testing.assert_allclose(pet_hg85, pet_hg85C, atol=1)
@@ -424,28 +418,29 @@ class TestPotentialEvapotranspiration:
         uas = ds.uas
         vas = ds.vas
 
-        sfcWind, _ = convert.wind_speed_from_vector(uas, vas)
+        sfcWind = convert.wind_speed_from_vector(uas, vas).sfcWind
 
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
 
-        pet_br65 = convert.potential_evapotranspiration(tn, tx, method="BR65")
-        pet_hg85 = convert.potential_evapotranspiration(tn, tx, method="HG85")
-        pet_fao_pm98 = convert.potential_evapotranspiration(
-            tn,
-            tx,
-            hurs=hurs,
-            rsds=rsds,
-            rsus=rsus,
-            rlds=rlds,
-            rlus=rlus,
-            sfcWind=sfcWind,
-            method="FAO_PM98",
-        )
+        with set_options(as_dataset=False):
+            pet_br65 = convert.potential_evapotranspiration(tn, tx, method="BR65")
+            pet_hg85 = convert.potential_evapotranspiration(tn, tx, method="HG85")
+            pet_fao_pm98 = convert.potential_evapotranspiration(
+                tn,
+                tx,
+                hurs=hurs,
+                rsds=rsds,
+                rsus=rsus,
+                rlds=rlds,
+                rlus=rlus,
+                sfcWind=sfcWind,
+                method="FAO_PM98",
+            )
 
-        tm[0, 0:31] = np.nan
+            tm[0, 0:31] = np.nan
 
-        pet_tw48 = convert.potential_evapotranspiration(tas=tm, method="TW48")
+            pet_tw48 = convert.potential_evapotranspiration(tas=tm, method="TW48")
 
         np.testing.assert_allclose(pet_br65.isel(location=0, time=slice(100, 102)), [np.nan, np.nan])
         np.testing.assert_allclose(pet_hg85.isel(location=0, time=slice(100, 102)), [np.nan, np.nan])
@@ -472,7 +467,7 @@ class TestWaterBudget:
         uas = ds.uas
         vas = ds.vas
 
-        sfcWind, _ = convert.wind_speed_from_vector(uas, vas)
+        sfcWind = convert.wind_speed_from_vector(uas, vas).sfcWind
 
         with xr.set_options(keep_attrs=True):
             tnC = tn - K2C
@@ -482,40 +477,41 @@ class TestWaterBudget:
             petR = pet * 86400
             petR.attrs["units"] = "mm/day"
 
-        p_pet_br65 = convert.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="BR65")
-        p_pet_br65C = convert.water_budget_from_tas(prR, tasmin=tnC, tasmax=tx, method="BR65")
-        p_pet_hg85 = convert.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="HG85")
-        p_pet_hg85C = convert.water_budget_from_tas(prR, tasmin=tnC, tasmax=tx, method="HG85")
-        p_pet_tw48 = convert.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="TW48")
-        p_pet_tw48C = convert.water_budget_from_tas(prR, tasmin=tnC, tasmax=tx, method="TW48")
+        with set_options(as_dataset=False):
+            p_pet_br65 = convert.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="BR65")
+            p_pet_br65C = convert.water_budget_from_tas(prR, tasmin=tnC, tasmax=tx, method="BR65")
+            p_pet_hg85 = convert.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="HG85")
+            p_pet_hg85C = convert.water_budget_from_tas(prR, tasmin=tnC, tasmax=tx, method="HG85")
+            p_pet_tw48 = convert.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="TW48")
+            p_pet_tw48C = convert.water_budget_from_tas(prR, tasmin=tnC, tasmax=tx, method="TW48")
 
-        p_pet_fao_pm98 = convert.water_budget_from_tas(
-            pr=pr,
-            tasmin=tn,
-            tasmax=tx,
-            hurs=hurs,
-            rsds=rsds,
-            rsus=rsus,
-            rlds=rlds,
-            rlus=rlus,
-            sfcWind=sfcWind,
-            method="FAO_PM98",
-        )
-        p_pet_fao_pm98R = convert.water_budget_from_tas(
-            pr=prR,
-            tasmin=tn,
-            tasmax=tx,
-            hurs=hurs,
-            rsds=rsds,
-            rsus=rsus,
-            rlds=rlds,
-            rlus=rlus,
-            sfcWind=sfcWind,
-            method="FAO_PM98",
-        )
+            p_pet_fao_pm98 = convert.water_budget_from_tas(
+                pr=pr,
+                tasmin=tn,
+                tasmax=tx,
+                hurs=hurs,
+                rsds=rsds,
+                rsus=rsus,
+                rlds=rlds,
+                rlus=rlus,
+                sfcWind=sfcWind,
+                method="FAO_PM98",
+            )
+            p_pet_fao_pm98R = convert.water_budget_from_tas(
+                pr=prR,
+                tasmin=tn,
+                tasmax=tx,
+                hurs=hurs,
+                rsds=rsds,
+                rsus=rsus,
+                rlds=rlds,
+                rlus=rlus,
+                sfcWind=sfcWind,
+                method="FAO_PM98",
+            )
 
-        p_pet_evpot = convert.water_budget(pr, evspsblpot=pet)
-        p_pet_evpotR = convert.water_budget(prR, evspsblpot=petR)
+            p_pet_evpot = convert.water_budget(pr, evspsblpot=pet)
+            p_pet_evpotR = convert.water_budget(prR, evspsblpot=petR)
 
         np.testing.assert_allclose(p_pet_br65, p_pet_br65C, atol=1)
         np.testing.assert_allclose(p_pet_hg85, p_pet_hg85C, atol=1)
@@ -539,33 +535,34 @@ class TestWaterBudget:
         uas = ds.uas
         vas = ds.vas
 
-        sfcWind, _ = convert.wind_speed_from_vector(uas, vas)
+        sfcWind = convert.wind_speed_from_vector(uas, vas).sfcWind
 
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
 
-        p_pet_br65 = convert.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="BR65")
-        p_pet_hg85 = convert.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="HG85")
-        p_pet_fao_pm98 = convert.water_budget_from_tas(
-            pr=pr,
-            tasmin=tn,
-            tasmax=tx,
-            hurs=hurs,
-            rsds=rsds,
-            rsus=rsus,
-            rlds=rlds,
-            rlus=rlus,
-            sfcWind=sfcWind,
-            method="FAO_PM98",
-        )
+        with set_options(as_dataset=False):
+            p_pet_br65 = convert.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="BR65")
+            p_pet_hg85 = convert.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="HG85")
+            p_pet_fao_pm98 = convert.water_budget_from_tas(
+                pr=pr,
+                tasmin=tn,
+                tasmax=tx,
+                hurs=hurs,
+                rsds=rsds,
+                rsus=rsus,
+                rlds=rlds,
+                rlus=rlus,
+                sfcWind=sfcWind,
+                method="FAO_PM98",
+            )
 
-        tm[0, 0:31] = np.nan
+            tm[0, 0:31] = np.nan
 
-        p_pet_tw48 = convert.water_budget_from_tas(pr, tas=tm, method="TW48")
+            p_pet_tw48 = convert.water_budget_from_tas(pr, tas=tm, method="TW48")
 
-        pet[0, 0:31] = np.nan
+            pet[0, 0:31] = np.nan
 
-        p_pet_evpot = convert.water_budget(pr, evspsblpot=pet)
+            p_pet_evpot = convert.water_budget(pr, evspsblpot=pet)
 
         np.testing.assert_allclose(p_pet_br65[0, 100:102], [np.nan, np.nan])
         np.testing.assert_allclose(p_pet_hg85[0, 100:102], [np.nan, np.nan])
@@ -580,7 +577,7 @@ class TestUTCI:
 
         tas = dataset.tas
         hurs = dataset.hurs
-        sfcWind, _ = convert.wind_speed_from_vector(uas=dataset.uas, vas=dataset.vas)
+        sfcWind = convert.wind_speed_from_vector(uas=dataset.uas, vas=dataset.vas).sfcWind
         rsds = dataset.rsds
         rsus = dataset.rsus
         rlds = dataset.rlds
@@ -599,7 +596,7 @@ class TestUTCI:
             stat="sunlit",
         )
 
-        np.testing.assert_allclose(utci.isel(time=0), utci_exp, rtol=1e-03)
+        np.testing.assert_allclose(utci.utci.isel(time=0), utci_exp, rtol=1e-03)
 
 
 class TestMeanRadiantTemperature:
@@ -619,20 +616,20 @@ class TestMeanRadiantTemperature:
         mrt_ins = convert.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="instant")
 
         rtol = 1e-03
-        np.testing.assert_allclose(mrt_sun.isel(time=0), exp_sun, rtol=rtol)
-        np.testing.assert_allclose(mrt_ins.isel(time=0), exp_ins, rtol=rtol)
+        np.testing.assert_allclose(mrt_sun.mrt.isel(time=0), exp_sun, rtol=rtol)
+        np.testing.assert_allclose(mrt_ins.mrt.isel(time=0), exp_ins, rtol=rtol)
 
 
 class TestClearnessIndex:
     def test_ci_physical_constraints(self, atmosds):
         rsds = atmosds.rsds
         rtop = extraterrestrial_solar_radiation(rsds.time, rsds.lat)
-        ci = convert.clearness_index(rsds)
+        ci = convert.clearness_index(rsds).ci
         assert ((ci >= 0) | (ci <= rtop) | (ci.isnull() & rsds.isnull())).all()
 
     def test_ci_and_inverse_transform(self, atmosds):
         rsds = atmosds.rsds
-        ci = convert.clearness_index(rsds)
+        ci = convert.clearness_index(rsds).ci
         rsds2 = shortwave_downwelling_radiation_from_clearness_index(ci)
         rsds2 = convert_units_to(rsds2, rsds)
         assert not ((rsds.isnull() ^ rsds2.isnull()).all())

@@ -20,6 +20,7 @@ Major changes
     * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
     * A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
 * Refactor of the ``xclim.core.indicator.Indicator`` class itself  (:pull:`2397`). Most breaking changes are:
+    * Indicators return ``Dataset`` by default, option ``as_dataset`` is now True by default (:issue:`2410`, :pull:`2414`).
     * Output attributes are stored in ``Indicator.attrs`` (renamed from ``cf_attrs``), which is a list of ``xclim.core.indicator.Output`` objects (not dictionaries).
     * Removal of ``Indicator.from_dict``. Renamed ``Indicator.translate_attrs`` to ``Indicator.translate``.
     * The ``xclim.core.indicator.registry`` now holds ``Indicator`` _instances_ (not classes) and is case-insensitive.
@@ -62,6 +63,7 @@ Breaking changes
 * Variable `q` has been renamed to `rivo` in hydrological indicators (``xclim.indicators.land``) to follow modern naming conventions. ``xclim.land.doy_q{min|max}`` are renamed to ``xclim.land.rivo_{min|max}_doy``. (:issue:`2407`, :pull:`2408`).
 * Translation: ``xclim.core.locales.get_local_attrs`` has been rewritten and only accepts a single "locale" now. Locale dictionaries are now case-insensitive. (:pull:`2397`).
 * Replace hard-coded length of period to actually use the length of the input in test `ipcc-ar6-c` of ``xclim.ensembles.robustness_fractions``. (:pull:`2411`, :issue:`2406`).
+* ``xclim.compute.fit`` now avoids adding an extra white space when there are more than one shape parameter, which changes the coordinate to be expected. (:pull:`2428`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -1852,11 +1854,13 @@ New features and enhancements
 * A convenience function (``xclim.core.dataflags.ecad_compliant``) is also offered as a method for asserting that data adheres to all relevant ECAD/ICCLIM checks. For more information on usage, consult the docstring/documentation.
 * A new utility "``dataflags``" is also available for performing fast quality control checks from the command-line (`xclim dataflags --help`). See the CLI documentation page for usage examples.
 * Added missing typed call signatures, expected returns and docstrings for many ``xclim.core.calendar`` functions.
+* Generic compute functions now accept `freq=None`: This simply performs the reduction on the full time series instead of resampling. This also applies to functions in ``xclim.compute.run_length``.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * All "ANUCLIM" indices and indicators have lost their `src_timestep` argument. Most of them were not using it and now every function infers the frequency from the data directly. This may add stricter constraints on the time coordinate, the same as for ``xarray.infer_freq``.
 * Many functions found within ``xclim.core.cfchecks`` (``generate_cfcheck`` and ``check_valid_*``) have been removed as existing indicator CF-standard checks and data checks rendered them redundant/obsolete.
+
 
 Bug fixes
 ^^^^^^^^^

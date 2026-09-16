@@ -171,7 +171,7 @@ class TestCFFWIS:
     def test_cffwis_indicator(self, open_dataset):
         fwi_data = open_dataset(self.fwi_test_dataset)
         fwi_data.lat.attrs["units"] = "degrees_north"
-        dc, dmc, ffmc, isi, bui, fwi = atmos.cffwis_indices(
+        out = atmos.cffwis_indices(
             tas=fwi_data.tas,
             pr=fwi_data.pr,
             hurs=fwi_data.rh,
@@ -179,28 +179,28 @@ class TestCFFWIS:
             lat=fwi_data.lat,
         )
 
-        dc2, dmc2, ffmc2, isi2, bui2, fwi2 = atmos.cffwis_indices(
+        out2 = atmos.cffwis_indices(
             tas=fwi_data.tas,
             pr=fwi_data.pr,
             hurs=fwi_data.rh,
             sfcWind=fwi_data.ws,
             lat=fwi_data.lat,
-            ffmc0=ffmc[-1],
-            dmc0=dmc[-1],
-            dc0=dc[-1],
+            ffmc0=out.ffmc[-1],
+            dmc0=out.dmc[-1],
+            dc0=out.dc[-1],
         )
-        xr.testing.assert_allclose(dc, fwi_data.dc.isel(test=0), rtol=1e-6)
-        xr.testing.assert_allclose(dmc, fwi_data.dmc.isel(test=0), rtol=1e-6)
-        xr.testing.assert_allclose(ffmc, fwi_data.ffmc.isel(test=0), rtol=1e-6)
-        xr.testing.assert_allclose(isi, fwi_data.isi.isel(test=0), rtol=1e-6)
-        xr.testing.assert_allclose(bui, fwi_data.bui.isel(test=0), rtol=1e-6)
-        xr.testing.assert_allclose(fwi, fwi_data.fwi.isel(test=0), rtol=1e-6)
-        xr.testing.assert_allclose(dc2, fwi_data.dc.isel(test=1), rtol=1e-6)
-        xr.testing.assert_allclose(dmc2, fwi_data.dmc.isel(test=1), rtol=1e-6)
-        xr.testing.assert_allclose(ffmc2, fwi_data.ffmc.isel(test=1), rtol=1e-6)
-        xr.testing.assert_allclose(isi2, fwi_data.isi.isel(test=1), rtol=1e-6)
-        xr.testing.assert_allclose(bui2, fwi_data.bui.isel(test=1), rtol=1e-6)
-        xr.testing.assert_allclose(fwi2, fwi_data.fwi.isel(test=1), rtol=1e-6)
+        xr.testing.assert_allclose(out.dc, fwi_data.dc.isel(test=0), rtol=1e-6)
+        xr.testing.assert_allclose(out.dmc, fwi_data.dmc.isel(test=0), rtol=1e-6)
+        xr.testing.assert_allclose(out.ffmc, fwi_data.ffmc.isel(test=0), rtol=1e-6)
+        xr.testing.assert_allclose(out.isi, fwi_data.isi.isel(test=0), rtol=1e-6)
+        xr.testing.assert_allclose(out.bui, fwi_data.bui.isel(test=0), rtol=1e-6)
+        xr.testing.assert_allclose(out.fwi, fwi_data.fwi.isel(test=0), rtol=1e-6)
+        xr.testing.assert_allclose(out2.dc, fwi_data.dc.isel(test=1), rtol=1e-6)
+        xr.testing.assert_allclose(out2.dmc, fwi_data.dmc.isel(test=1), rtol=1e-6)
+        xr.testing.assert_allclose(out2.ffmc, fwi_data.ffmc.isel(test=1), rtol=1e-6)
+        xr.testing.assert_allclose(out2.isi, fwi_data.isi.isel(test=1), rtol=1e-6)
+        xr.testing.assert_allclose(out2.bui, fwi_data.bui.isel(test=1), rtol=1e-6)
+        xr.testing.assert_allclose(out2.fwi, fwi_data.fwi.isel(test=1), rtol=1e-6)
 
     def test_fire_weather_ufunc_overwintering(self, atmosds):
         ds = atmosds.assign(
@@ -417,7 +417,7 @@ class TestCFFWIS:
         # Also tests passing parameters as quantity strings
         ds = open_dataset("FWI/GFWED_sample_2017.nc")
 
-        outs = atmos.cffwis_indices(
+        out = atmos.cffwis_indices(
             tas=ds.tas,
             pr=ds.prbc,
             snd=ds.snow_depth,
@@ -433,8 +433,10 @@ class TestCFFWIS:
             temp_end_thresh="6 degC",
         )
 
-        for exp, out in zip([ds.DC, ds.DMC, ds.FFMC, ds.ISI, ds.BUI, ds.FWI], outs, strict=False):
-            np.testing.assert_allclose(out.isel(loc=[0, 1]), exp.isel(loc=[0, 1]), rtol=0.03)
+        for vv in out.data_vars:
+            exp = ds[vv.upper()]
+            outda = out[vv]
+            np.testing.assert_allclose(outda.isel(loc=[0, 1]), exp.isel(loc=[0, 1]), rtol=0.03)
 
         ds2 = ds.isel(time=slice(1, None))
 
@@ -451,7 +453,7 @@ class TestCFFWIS:
             # 3 first days are false by default assume same as 4th day.
             mask = mask.where(mask.time > mask.time[2]).bfill("time")
 
-            outs = atmos.cffwis_indices(
+            out2 = atmos.cffwis_indices(
                 tas=ds2.tas,
                 pr=ds2.prbc,
                 snd=ds2.snow_depth,
@@ -461,14 +463,16 @@ class TestCFFWIS:
                 dc0=ds.DC.isel(time=0),
                 dmc0=ds.DMC.isel(time=0),
                 ffmc0=ds.FFMC.isel(time=0),
-                season_mask=mask,
+                season_mask=mask.fire_season,
                 overwintering=False,
                 dry_start="GFWED",
                 initial_start_up=False,
             )
 
-        for exp, out in zip([ds2.DC, ds2.DMC, ds2.FFMC, ds2.ISI, ds2.BUI, ds2.FWI], outs, strict=False):
-            np.testing.assert_allclose(out, exp, rtol=0.03)
+        for vv in out.data_vars:
+            exp = ds2[vv.upper()]
+            outda = out2[vv]
+            np.testing.assert_allclose(outda, exp, rtol=0.03)
 
     def test_gfwed_drought_code(self, open_dataset):
         # Also tests passing parameters as quantity strings
@@ -488,7 +492,7 @@ class TestCFFWIS:
             temp_end_thresh="6 degC",
         )
 
-        np.testing.assert_allclose(out.isel(loc=[0, 1]), ds.DC.isel(loc=[0, 1]), rtol=0.03)
+        np.testing.assert_allclose(out.dc.isel(loc=[0, 1]), ds.DC.isel(loc=[0, 1]), rtol=0.03)
 
     def test_gfwed_duff_moisture_code(self, open_dataset):
         # Also tests passing parameters as quantity strings
@@ -508,4 +512,4 @@ class TestCFFWIS:
             temp_end_thresh="6 degC",
         )
 
-        np.testing.assert_allclose(out.isel(loc=[0, 1]), ds.DMC.isel(loc=[0, 1]), rtol=0.03)
+        np.testing.assert_allclose(out.dmc.isel(loc=[0, 1]), ds.DMC.isel(loc=[0, 1]), rtol=0.03)
