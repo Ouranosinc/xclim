@@ -13,7 +13,7 @@ Indicators
 .. automodule:: xclim.core.collection
    :members:
 
-Compute functions
+Compute Functions
 =================
 
 .. note::
@@ -68,8 +68,8 @@ is implemented here.
    :undoc-members:
    :show-inheritance:
 
-Fire indices submodule
-^^^^^^^^^^^^^^^^^^^^^^
+Fire Indices
+^^^^^^^^^^^^
 Compute functions related to fire and fire weather. Currently, submodules exist for calculating indices from the Canadian Forest Fire Weather Index System and the McArthur Forest Fire Danger (Mark 5) System.
 
 .. automodule:: xclim.compute.fire._cffwis
@@ -140,8 +140,8 @@ Translation Tools
 
 See: :ref:`internationalization:Internationalization`
 
-Ensembles Module
-================
+Ensembles
+=========
 
 .. automodule:: xclim.ensembles
    :members: create_ensemble, ensemble_mean_std_max_min, ensemble_percentiles
@@ -169,8 +169,8 @@ Ensembles Module
 
 .. autofunction:: xclim.ensembles.lafferty_sriver
 
-Units Handling Submodule
-========================
+Units Handling
+==============
 
 .. automodule:: xclim.core.units
    :members:
@@ -179,8 +179,8 @@ Units Handling Submodule
 
 .. _spatial-analogues-api:
 
-Spatial Analogues Module
-========================
+Spatial Analogues
+=================
 
 .. autoclass:: xclim.analog.spatial_analogs
 
@@ -258,8 +258,8 @@ Modules for xclim Developers
    :members:
 
 
-Bootstrapping Algorithms for Indicators Submodule
--------------------------------------------------
+Bootstrapping Algorithms for Indicators
+---------------------------------------
 
 .. automodule:: xclim.core.bootstrapping
    :members:
@@ -274,8 +274,8 @@ Spatial Analogues Helpers
 
 .. autofunction:: xclim.analog.standardize
 
-Testing Module
---------------
+Testing
+-------
 
 .. automodule:: xclim.testing.utils
    :members:
