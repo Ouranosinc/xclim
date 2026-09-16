@@ -174,7 +174,7 @@ def fit(
             "Please pass an instance from the lmoments3 package."
         )
 
-    shape_params = [] if dist.shapes is None else dist.shapes.split(",")
+    shape_params = [] if dist.shapes is None else dist.shapes.split(", ")
     dist_params = shape_params + ["loc", "scale"]
 
     data = xr.apply_ufunc(

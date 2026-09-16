@@ -156,6 +156,12 @@ def test_genextreme_fit(genextreme):
     np.testing.assert_allclose(p, (0.20949, 297.954091, 75.7911863), 1e-5)
 
 
+def test_parameter_names_multi_shapes(genextreme):
+    """Check the parameters with multi-shape distribution are correctly split."""
+    p = stats.fit(genextreme, "gengamma")
+    assert all(p.dparams.values == ["a", "c", "loc", "scale"])
+
+
 def test_mse_fit(genextreme):
     """Check MSE fit with a series that leads to poor values without good initial conditions."""
     # Use fixed-seed rng to remove randomness of differential_evolution
