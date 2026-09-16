@@ -9,7 +9,7 @@ doc: |
   This repository aims to provide a platform for thinking about, and developing, a unified view of metadata
   elements required to describe climate indices (aka climate indicators).
 
-  All indicators defined here use generic functions defined in :py:mod:`xclim.indices.clix`.
+  All indicators defined here use generic functions defined in :py:mod:`xclim.compute.clix`.
   This module tries to follow the clix-meta definitions as closely, which meansit can have meaningful differences
   with the rest of xclim.
 

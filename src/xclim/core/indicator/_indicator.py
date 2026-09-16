@@ -1566,7 +1566,7 @@ class _Convenience(_InputChecker):
                 cls = data["base"]
 
         compute = data.get("compute", None)
-        # data.compute refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
+        # data.compute refers to a function in xclim.compute.generic or xclim.compute (in this order of priority).
         # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
         if isinstance(compute, str):
             from xclim import compute as _compute
