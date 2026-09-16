@@ -1817,7 +1817,16 @@ def _get_D_from_M(time):  # noqa: N802
     gamma="[pressure] [temperature]",
     G="[radiation]",
 )
-def fao_allen98(net_radiation, tas, wind, es, ea, delta_svp, gamma, G="0 MJ m-2 day-1"):
+def fao_allen98(
+    net_radiation: xr.DataArray,
+    tas: xr.DataArray,
+    wind: xr.DataArray,
+    es: xr.DataArray,
+    ea: xr.DataArray,
+    delta_svp: xr.DataArray,
+    gamma: xr.DataArray | str,
+    G: str | None = "0 MJ m-2 day-1",
+):
     r"""
     FAO-56 Penman-Monteith equation.
 

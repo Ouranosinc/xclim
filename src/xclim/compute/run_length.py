@@ -604,7 +604,7 @@ def _boundary_run(
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
     out: xr.DataArray
     if window == 1:
-        out: xr.DataArray = resample_map(
+        out = resample_map(
             da, dim, freq, find_boundary_run, map_kwargs={"position": position, "coord": coord, "dim": dim}
         )
 
@@ -622,7 +622,7 @@ def _boundary_run(
         d = _cumsum_reset(da, dim=dim, index=position)
         d = xr.where(d >= window, 1, 0)
         # for "first" run, return "first" element in the run (and conversely for "last" run)
-        out: xr.DataArray = resample_map(
+        out = resample_map(
             d, dim, freq, find_boundary_run, map_kwargs={"position": position, "coord": coord, "dim": dim}
         )
 

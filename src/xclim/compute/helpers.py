@@ -1134,7 +1134,7 @@ def _gather_lon(da: xr.DataArray) -> xr.DataArray:
 def resample_map(
     obj: DataType,
     dim: str,
-    freq: Freq,
+    freq: Freq | None,
     func: Callable | str,
     map_blocks: bool | Literal["from_context"] = "from_context",
     resample_kwargs: dict | None = None,
@@ -1151,7 +1151,7 @@ def resample_map(
         The xarray object to resample.
     dim : str
         Dimension over which to resample.
-    freq : str
+    freq : str, optional
         Resampling frequency along `dim`.
     func : callable or str
         Function to map on each resampled group.

@@ -86,7 +86,7 @@ __all__ = [
 def statistics(
     data: xr.DataArray,
     statistic: Reducer | Callable,
-    freq: Freq | str | None,
+    freq: Freq | None,
     out_units: str | None = None,
     **indexer,
 ) -> xr.DataArray:
@@ -614,7 +614,7 @@ def _spell_length_statistics(
     condition: Condition,
     thresh: float | xr.DataArray | Sequence[xr.DataArray] | Sequence[float],
     statistic: Reducer | Sequence[Reducer],
-    freq: Freq,
+    freq: Freq | None,
     constrain: Sequence[Condition] | None = None,
     min_gap: int = 1,
     resample_before_rl: bool = True,
@@ -849,7 +849,7 @@ def season(
     condition: Condition,
     thresh: Quantified,
     window: int,
-    aspect: Literal["start", "end", "length"] | Sequence[Literal["start", "end", "length"]],
+    aspect: Literal["start", "end", "length"],  # | Sequence[Literal["start", "end", "length"]],
     freq: Freq | None,
     mid_date: DayOfYearStr | None = None,
     constrain: Sequence[Condition] | None = None,
