@@ -1,5 +1,5 @@
 name: Generic issue template
-description: For detailing generic/uncategorized issues in Xclim
+description: For detailing generic/uncategorized issues in xclim
 
 body:
   - type: textarea

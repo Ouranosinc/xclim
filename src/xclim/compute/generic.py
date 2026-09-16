@@ -20,7 +20,7 @@ The vocabulary is strongly inspired from `clix-meta <https://github.com/clix-met
     index functions should also accept non-temporal DataArrays and pint Quantity objects.
 - ``freq: Freq`` : A frequency string referring to a pandas
     `date offset object <https://pandas.pydata.org/docs/user_guide/timeseries.html#dateoffset-objects>`_.
-    Xclim only officially supports the frequency strings that xarray's implementation of CFtime supports,
+    `xclim` only officially supports the frequency strings that xarray's implementation of CFtime supports,
     so the ones completely independent of a specific calendar.
 - ``**indexer`` : Time selection arguments as implemented by :py:func:`~xclim.core.calendar.select_time`.
 """
