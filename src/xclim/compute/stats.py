@@ -1064,7 +1064,7 @@ def standardized_index(
         freq, window, dist, indexer = (params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"])
         # Unpack attrs to None and {} if needed
         freq = None if freq == "" else freq
-        indexer = json.loads(**indexer)
+        indexer = json.loads(indexer)
         if cal_start or cal_end:
             warnings.warn(
                 "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."

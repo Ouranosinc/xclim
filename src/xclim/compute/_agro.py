@@ -705,8 +705,8 @@ def dryness_index(  # numpydoc ignore=SS05
         * (pr_masked / 5).clip(max=evspsblpot.time.dt.daysinmonth)
     )
 
-    di_north: xarray.DataArray  # | None = None
-    di_south: xarray.DataArray  # | None = None
+    di_north: xarray.DataArray
+    di_south: xarray.DataArray
     # Dryness index
     if has_north:
         di_north = _wo + (pr_masked - t_v - e_s).resample(time="YS-JAN").sum()
