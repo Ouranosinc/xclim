@@ -114,7 +114,7 @@ def test_xclim_translations(locale, official_indicators):
             continue
         # Both global attrs are present
         is_complete = {"title", "abstract"}.issubset(set(trans))
-        for _attrs, transattrs in zip(ind.attrs, trans["attrs"], strict=False):
+        for _outmeta, transattrs in zip(ind.outputs, trans["attrs"], strict=False):
             if {"long_name", "description"} - set(transattrs.keys()):
                 is_complete = False
 
@@ -133,7 +133,7 @@ def test_xclim_translations(locale, official_indicators):
     "initeng,expected",
     [
         (False, ""),
-        (True, atmos.tg_mean.attrs[0]["long_name"]),
+        (True, atmos.tg_mean.outputs[0].attrs["long_name"]),
     ],
 )
 def test_local_dict_generation(initeng, expected):

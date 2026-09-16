@@ -42,7 +42,7 @@ def uniindtemp_compute(
 uniIndTemp = Daily(
     realm="atmos",
     identifier="tmin",
-    attrs=[
+    outputs=[
         dict(
             var_name="tmin{thresh}",
             units="K",
@@ -67,7 +67,7 @@ def uniindpr_compute(da: xr.DataArray, freq: str):
 uniIndPr = Daily(
     realm="atmos",
     identifier="prmax",
-    attrs=[dict(units="mm/s")],
+    outputs=[dict(units="mm/s")],
     context="hydro",
     compute=uniindpr_compute,
     register=False,
@@ -84,7 +84,7 @@ uniClim = ResamplingIndicator(
     src_freq="D",
     realm="atmos",
     identifier="clim",
-    attrs=[dict(units="K")],
+    outputs=[dict(units="K")],
     compute=uniclim_compute,
     register=False,
 )
@@ -101,7 +101,7 @@ def multitemp_compute(tas: xr.DataArray, freq: str):
 multiTemp = Daily(
     realm="atmos",
     identifier="minmaxtemp",
-    attrs=[
+    outputs=[
         dict(
             var_name="tmin",
             units="K",
@@ -135,7 +135,7 @@ multiOptVar = Indicator(
     src_freq="D",
     realm="atmos",
     identifier="multiopt",
-    attrs=[dict(units="K")],
+    outputs=[dict(units="K")],
     compute=multioptvar_compute,
     register=False,
 )
@@ -147,7 +147,9 @@ def test_attrs(tas_series):
     out = uniIndTemp(a, thresh="5 degC", freq="YS")
     assert out.tmin5degC.cell_methods == "time: mean time: mean within years"
     assert uniIndTemp.standard_name == "{freq} mean temperature"
-    assert uniIndTemp.attrs[0]["another_attr"] == "With a value."
+    assert uniIndTemp.outputs[0].attrs["another_attr"] == "With a value."
+    # Output objects have convenience getitem
+    assert uniIndTemp.outputs[0]["another_attr"] == "With a value."
 
     thresh = xr.DataArray(
         [1],
@@ -270,7 +272,7 @@ def test_temp_unit_conversion(tas_series, as_da):
     with pytest.raises(AssertionError):
         np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
-    uniIndTemp.attrs[0].units = "degC"
+    uniIndTemp.outputs[0].units = "degC"
     txc = uniIndTemp(a, freq="YS")
     np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
@@ -282,7 +284,7 @@ def test_temp_diff_unit_conversion(tasmax_series, tasmin_series, as_da):
     tnC = convert_units_to(tn, "degC")
 
     ind = xclim.atmos.daily_temperature_range.copy(
-        identifier="test.dtr_degC", attrs=[{"units": "degC", "units_metadata": "temperature: difference"}]
+        identifier="test.dtr_degC", outputs=[{"units": "degC", "units_metadata": "temperature: difference"}]
     )
     out = ind(tasmax=txC, tasmin=tnC)
     assert out.attrs["units"] == "degC"
@@ -304,7 +306,7 @@ def test_multiindicator(tas_series):
     ind = Daily(
         realm="atmos",
         identifier="test.minmaxtemp2",
-        attrs=[
+        outputs=[
             dict(
                 var_name="tmin",
                 units="K",
@@ -330,7 +332,7 @@ def test_multiindicator(tas_series):
         ind = Daily(
             realm="atmos",
             identifier="minmaxtemp2",
-            attrs=[
+            outputs=[
                 dict(
                     var_name="tmin",
                     units="K",
@@ -388,7 +390,7 @@ def test_multiindicator(tas_series):
 def test_deriving_multiindicator():
     new = multiTemp.copy(identifier="minmaxtemp2", register=False)
 
-    assert new.attrs[0].var_name == "tmin"
+    assert new.outputs[0].var_name == "tmin"
 
 
 def test_missing(tas_series, as_da):
@@ -579,7 +581,7 @@ def test_IndexWrapper():
     assert doc.notes.startswith("Let")
     assert "math::" in doc.notes
     assert doc.references == ""
-    assert doc.attrs[0]["long_name"] == "The mean daily temperature at the given time frequency."
+    assert doc.outputs[0].attrs["long_name"] == "The mean daily temperature at the given time frequency."
 
     doc = IndexWrapper(compute=xclim.compute.converters.saturation_vapor_pressure)
     assert doc.parameters["ice_thresh"].description == (
@@ -675,7 +677,7 @@ def test_indicator_errors():
 
     d = dict(
         realm="atmos",
-        attrs=dict(
+        outputs=dict(
             var_name="tmean{threshold}",
             units="K",
             long_name="{freq} mean surface temperature",
@@ -716,7 +718,7 @@ def test_indicator_errors():
     func.__doc__ = "\n".join(doc[:10] + doc[12:])
     d = dict(
         realm="atmos",
-        attrs=dict(
+        outputs=dict(
             var_name="tmean{threshold}",
             units="K",
             long_name="{freq} mean surface temperature",
@@ -745,7 +747,7 @@ def test_indicator_call_errors(tas_series):
 def test_resamplingIndicator_new_error():
     with pytest.raises(ValueError, match="ResamplingIndicator require a 'freq'"):
         Daily(
-            realm="atmos", identifier="multiopt", attrs=[dict(units="K")], compute=multioptvar_compute, register=False
+            realm="atmos", identifier="multiopt", outputs=[dict(units="K")], compute=multioptvar_compute, register=False
         )
 
 
