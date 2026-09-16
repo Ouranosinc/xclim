@@ -541,7 +541,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
         """
         Method returning extra lines to the docstring, under the abstract.
 
-        Children classes can implemented this, appending to anything returned by super()._extra_doc().
+        Children classes can implement this, appending to anything returned by super()._extra_doc().
         """
         return []
 

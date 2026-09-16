@@ -2717,32 +2717,57 @@ class TestDrynessIndex:
         np.testing.assert_allclose(di_wet, di_plus_100)
 
 
-@pytest.mark.parametrize(
-    "tmin,meth,zone",
-    [
-        (-6, "usda", 16),
-        (19, "usda", 25),
-        (-47, "usda", 1),
-        (-6, "anbg", 1),
-        (19, "anbg", 6),
-        (-47, "anbg", np.nan),
-    ],
-    # There are 26 USDA zones: 1a -> 1, 1b -> 2, ... 13b -> 26
-    # There are 7 angb zones: 1,2, ..., 7
-    # Example for "angb":
-    # Zone 1 : -15 degC <= tmin < -10 degC
-    # Zone 2 : -10 degC <= tmin < -5 degC
-    # ...
-    # Zone 7 : 15 degC <= tmin <= 20 degC
-    # Below -15 degC or above 20 degC, this is NaN
-)
-def test_hardiness_zones(tasmin_series, tmin, meth, zone):
-    tasmin = tasmin_series(np.zeros(10957) + 20, start="1997-01-01", units="degC")
-    tasmin = tasmin.where(tasmin.time.dt.dayofyear != 1, tmin)
+class TestHardinessZones:
+    @pytest.mark.parametrize(
+        "tmin,meth,zone",
+        [
+            (-6, "usda", 16),
+            (19, "usda", 25),
+            (-47, "usda", 1),
+            (-6, "anbg", 1),
+            (19, "anbg", 6),
+            (-47, "anbg", np.nan),
+        ],
+        # There are 26 USDA zones: 1a -> 1, 1b -> 2, ... 13b -> 26
+        # There are 7 angb zones: 1,2, ..., 7
+        # Example for "angb":
+        # Zone 1 : -15 degC <= tmin < -10 degC
+        # Zone 2 : -10 degC <= tmin < -5 degC
+        # ...
+        # Zone 7 : 15 degC <= tmin <= 20 degC
+        # Below -15 degC or above 20 degC, this is NaN
+    )
+    def test_hardiness_zones(self, tasmin_series, tmin, meth, zone):
+        tasmin = tasmin_series(np.zeros(10957) + 20, start="1997-01-01", units="degC")
+        tasmin = tasmin.where(tasmin.time.dt.dayofyear != 1, tmin)
 
-    hz = xcc.hardiness_zones(tasmin=tasmin, method=meth)
-    np.testing.assert_array_equal(hz[-1], zone)
-    assert hz[:-1].isnull().all()
+        hz = xcc.hardiness_zones(tasmin=tasmin, method=meth)
+        np.testing.assert_array_equal(hz[-1], zone)
+        assert hz[:-1].isnull().all()
+
+    def test_canadian_hardiness_zones(self, atmosds):
+        ds = atmosds
+
+        tasmin = ds.tasmin
+        tasmax = ds.tasmax
+        pr = ds.pr
+        snd = ds.snd
+        wsgmax10m = generic.statistics(ds.sfcWind, statistic="max", freq="MS")
+
+        # Should be caulculated over 30 years, but only four years of data available
+        chz = xcc.canadian_hardiness_zones(
+            tasmin=tasmin,
+            tasmax=tasmax,
+            pr=pr,
+            snd=snd,
+            wsgmax10m=wsgmax10m,
+            freq="4YS",
+        )
+        np.testing.assert_array_equal(chz.values.ravel(), [11, 14, 0, 5, 19])
+        assert chz.attrs["flag_values"] == ("0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19")
+        assert chz.attrs["flag_meanings"] == (
+            "0a, 0b, 1a, 1b, 2a, 2b, 3a, 3b, 4a, 4b, 5a, 5b, 6a, 6b, 7a, 7b, 8a, 8b, 9a, 9b"
+        )
 
 
 class TestWindProfile:
