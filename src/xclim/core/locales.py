@@ -133,7 +133,7 @@ def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str,
         return locale, deepcopy(_LOCALES[locale])
 
     if isinstance(locale[1], dict):
-        trans = {k: v for k, v in CaseInsensitiveDict(locale[1]).items()}
+        trans = CaseInsensitiveDict(locale[1])  # {k: v for k, v in CaseInsensitiveDict(locale[1]).items()}
     else:
         # Thus, a string pointing to a json file
         trans = read_locale_file(locale[1])
@@ -275,7 +275,7 @@ def read_locale_file(filename, module: str | None = None, encoding: str = "UTF8"
 
     modstr = f"{module}." if module is not None else ""
     locdict = CaseInsensitiveDict({(k if k == "attrs_mapping" else f"{modstr}{k}"): v for k, v in data.items()})
-    return {k: v for k, v in locdict.items()}
+    return locdict  #{k: v for k, v in locdict.items()}
 
 
 def load_locale(locdata: str | Path | dict[str, dict], locale: str) -> None:

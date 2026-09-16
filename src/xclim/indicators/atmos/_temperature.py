@@ -1739,7 +1739,7 @@ class FireSeasonBase(Indicator):
         """
         self._cfcheck_impl(**das)
 
-    def _cfcheck(self, tas: DataArray | None = None, snd: DataArray | None = None) -> None:
+    def _cfcheck_impl(self, tas: DataArray | None = None, snd: DataArray | None = None) -> None:
         """
         Verify the CF-compliance of the input data.
 

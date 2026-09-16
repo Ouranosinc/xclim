@@ -829,8 +829,6 @@ def time_bnds(
 
     See the `relevant CF convention <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.13/cf-conventions.html#bounds-one-d>`.
     """
-    frequency: Freq
-    _frequency: Any | None = None
     if isinstance(time, xr.DataArray | xr.Dataset):
         time = time.indexes[time.name]
     # elif isinstance(time, DataArrayResample | DatasetResample):
@@ -838,7 +836,7 @@ def time_bnds(
         for grouper in time.groupers:  # ty: ignore[not-iterable]
             if "time" in grouper.codes.dims:
                 datetime = grouper.unique_coord.data
-                _frequency = freq or grouper.grouper.freq
+                freq = freq or grouper.grouper.freq
                 if datetime.dtype == "O":
                     time = xr.CFTimeIndex(datetime)
                 else:
@@ -849,20 +847,18 @@ def time_bnds(
             raise ValueError('Got object resampled along another dimension than "time".')
 
     if freq is None and hasattr(time, "freq"):
-        frequency = time.freq
+        freq = time.freq
     if freq is None:
-        frequency = xr.infer_freq(time)
+        freq = xr.infer_freq(time)
         if freq is None:
             raise NotImplementedError(
                 "Irregular time coordinates are not supported. Please pass a frequency explicitly."
             )
-    elif _frequency is not None:
+    elif hasattr(freq, "freqstr"):
         # When freq is an Offset
-        frequency = _frequency.freqstr
-    else:
-        frequency = freq
+        freq = freq.freqstr
 
-    freq_base, freq_is_start = parse_offset(frequency)[1:3]
+    freq_base, freq_is_start = parse_offset(freq)[1:3]
 
     # Normalizing without using `.normalize` because cftime doesn't have it
     floor = {"hour": 0, "minute": 0, "second": 0, "microsecond": 0, "nanosecond": 0}
@@ -878,12 +874,12 @@ def time_bnds(
         floor.pop("nanosecond")
 
     if isinstance(time, xr.CFTimeIndex):
-        period = cftime_offsets.to_offset(frequency)
+        period = cftime_offsets.to_offset(freq)
         is_on_offset = period.onOffset
         day = pd.Timedelta("1D").to_pytimedelta()
         floor.pop("nanosecond")  # unsupported by cftime
     else:
-        period = pd.tseries.frequencies.to_offset(frequency)
+        period = pd.tseries.frequencies.to_offset(freq)
         is_on_offset = period.is_on_offset
         day = pd.Timedelta("1D")
 
@@ -1217,6 +1213,9 @@ def select_between_doys(
     """
     if isinstance(include_bounds, bool):
         include_bounds = (include_bounds, include_bounds)
+        
+    if len(doy_bounds) != 2:
+        raise TypeError(f"length of doy_bounds: {doy_bounds} is not 2")
 
     if (isinstance(doy_bounds[0], int) or (doy_bounds[0] is None)) and (
         isinstance(doy_bounds[1], int) or (doy_bounds[1] is None)
