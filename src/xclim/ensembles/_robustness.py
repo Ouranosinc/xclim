@@ -119,7 +119,7 @@ def robustness_fractions(
         a distribution across the future period.
     dim : str or list of str, optional
         If str or list of length 1, the realization dimension along which to compute the fractions.
-        If list of length 2, the first element is the realization dimensionand the second element is the pool dimension.
+        If list of length 2, the first element is the realization dimension and the second element is the pool dimension.
         The fractions are computed for each realization, by pooling elements of the pool dimension.
         The deltas are computed for each realization, by averaging the values along the pool dimension.
         A typical example would be to have dim = [source_id, variant_id] when using CMIP vocabulary.
@@ -235,12 +235,6 @@ def robustness_fractions(
     """
     # unpack dims
     realization_dim, pool_dim = _unpack_dim(dim)
-    if "member" in fut.dims and pool_dim != "member":
-        warnings.warn(
-            'We noticed that the "member" dimension is present in fut,'
-            ' but not in the second element of "dim". Make sure to pass the correct '
-            'dimensions to "dim" if you want to pool members for each realization.'
-        )
 
     # Assign dummy realization_dim dimension if not present.
     if realization_dim not in fut.dims:
@@ -256,7 +250,8 @@ def robustness_fractions(
             raise ValueError(
                 f"Weights cannot have a {pool_dim} (second element of dim) dimension,"
                 f"only a {realization_dim} (first element of dim) dimension."
-            )
+                f"Weights cannot have the {pool_dim} (second element of dim) dimension,"
+                f"only the {realization_dim} (first element of dim) dimension."
         w = weights
     else:
         w = xr.DataArray(
@@ -312,12 +307,9 @@ def robustness_fractions(
     else:
         raise ValueError(f"Statistical test {test} must be one of {', '.join(SIGNIFICANCE_TESTS.keys())}.")
 
-    # at this point all member dimension should have been collapsed,
+    # at this point all pool dimension should have been collapsed,
     # so we can compute the fractions along realization_dim
 
-    # TODO: reviewer please confirm that changing the denominator makes sense.
-    # this change is not because of my new feature. I think it was an error in the past.
-    # as we do the weighted sum, we should divide by the sum of weights to get a fraction that make sense I think
     valid_frac = valid.weighted(w).sum(realization_dim) / w.sum(realization_dim)
     n_valid = valid.weighted(w).sum(realization_dim)
     change_frac = changed.where(valid).weighted(w).sum(realization_dim) / n_valid
@@ -786,10 +778,11 @@ def _ipcc_ar6_c(fut, ref, pool_dim, *, ref_pi=None):
     means computed from non-overlapping periods after detrending with a quadratic fit and
     1.645 is the z-score for the 90% confidence interval of the two-sided test .
     Otherwise, when such pre-industrial control data is not available, the threshold is defined in relation to
-    the historical data (`ref`) as :math:`\sqrt{\frac{2}{n}}*1.645*\sigma_{1yr}, where :math:`\sigma_{1yr}`
+    the historical data (`ref`) as :math:`\sqrt{\frac{2}{n}}*1.645*\sigma_{1yr}`, where :math:`\sigma_{1yr}`
     is the inter-annual standard deviation measured after linearly detrending the data
     and n is the number of years in the reference period.
-    This test is only for ensembles with a single dimension.
+
+    This test does not work with ensembles with a pool dimension.
     See notebook :ref:`notebooks/ensembles:Ensembles` for more details.
     """
     if pool_dim in fut.dims:
@@ -809,7 +802,7 @@ def _ipcc_ar6_c(fut, ref, pool_dim, *, ref_pi=None):
 
 
 @significance_test
-def _signal_to_noise(fut, ref, pool_dim, confidence=0.9):
+def _signal_to_noise(fut, ref, pool_dim, *, confidence=0.9):
     r"""
     Robustness test using the signal-to-noise ratio.
 
@@ -817,8 +810,8 @@ def _signal_to_noise(fut, ref, pool_dim, confidence=0.9):
     Change is considered significant if the delta exceeds a threshold related to the
     internal variability (noise).
     The threshold is defined as :math:`z*\sqrt{\frac{\tilde{\sigma}^2_{ref}}{n_{ref}}
-    + \frac{\tilde{\sigma}^2_{fut}}{n_{fut}}}, where :math:`\tilde{\sigma}}`
-    is the pooled interannual variance across members and time measured after linearly
+    + \frac{\tilde{\sigma}^2_{fut}}{n_{fut}}}`, where :math:`\tilde{\sigma}}`
+    is the pooled interannual variance across the pool dimension and time measured after linearly
     detrending the data, n is the number of years in the period and z is the z-score
     corresponding to the two-sided confidence level.
     (ex. A 90% confidence level gives a z-score of 1.645.)

@@ -61,7 +61,7 @@ Breaking changes
     * For array-like ``doy_bounds`` without ``time`` dimension, the start and end bounds must now be consecutive according to the frequency (default: ``freq="YS"``). Otherwise, the indexing is invalid and no data are selected.
 * Variable `q` has been renamed to `rivo` in hydrological indicators (``xclim.indicators.land``) to follow modern naming conventions. ``xclim.land.doy_q{min|max}`` are renamed to ``xclim.land.rivo_{min|max}_doy``. (:issue:`2407`, :pull:`2408`).
 * Translation: ``xclim.core.locales.get_local_attrs`` has been rewritten and only accepts a single "locale" now. Locale dictionaries are now case-insensitive. (:pull:`2397`).
-* Replace hard-coded length of period to actually use the length of the input in ``xclim.ensembles.robustness_fractions``. (:pull:`2411`, :issue:`2406`).
+* Replace hard-coded length of period to actually use the length of the input in test `ipcc-ar6-c` of ``xclim.ensembles.robustness_fractions``. (:pull:`2411`, :issue:`2406`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
