@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import sys
 import textwrap
-import warnings
 from collections.abc import Callable, Sequence
 from inspect import Parameter, signature
 from typing import cast
@@ -74,10 +73,10 @@ def _unpack_dim(dim):
     """Unpack the dim argument of robustness_fractions into realization_dim and pool_dim."""
     if isinstance(dim, str):
         realization_dim = dim
-        pool_dim = "doesnotexist"
+        pool_dim = None
     elif isinstance(dim, Sequence):
         realization_dim = dim[0]
-        pool_dim = "doesnotexist"
+        pool_dim = None
         if len(dim) == 2:
             pool_dim = dim[1]
         else:
@@ -119,7 +118,8 @@ def robustness_fractions(
         a distribution across the future period.
     dim : str or list of str, optional
         If str or list of length 1, the realization dimension along which to compute the fractions.
-        If list of length 2, the first element is the realization dimension and the second element is the pool dimension.
+        If list of length 2, the first element is the realization dimension and the second element
+        is the pool dimension.
         The fractions are computed for each realization, by pooling elements of the pool dimension.
         The deltas are computed for each realization, by averaging the values along the pool dimension.
         A typical example would be to have dim = [source_id, variant_id] when using CMIP vocabulary.
@@ -248,10 +248,9 @@ def robustness_fractions(
     if weights is not None:
         if pool_dim in weights.dims:
             raise ValueError(
-                f"Weights cannot have a {pool_dim} (second element of dim) dimension,"
-                f"only a {realization_dim} (first element of dim) dimension."
                 f"Weights cannot have the {pool_dim} (second element of dim) dimension,"
                 f"only the {realization_dim} (first element of dim) dimension."
+            )
         w = weights
     else:
         w = xr.DataArray(
@@ -785,7 +784,7 @@ def _ipcc_ar6_c(fut, ref, pool_dim, *, ref_pi=None):
     This test does not work with ensembles with a pool dimension.
     See notebook :ref:`notebooks/ensembles:Ensembles` for more details.
     """
-    if pool_dim in fut.dims:
+    if pool_dim is not None:
         raise ValueError("This test does not support a second dimension. Only give one element or a string to dim.")
     # Ensure annual
     refy = ref.resample(time="YS").mean()
