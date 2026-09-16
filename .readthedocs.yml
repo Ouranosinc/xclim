@@ -13,11 +13,9 @@ build:
     python: "miniforge3-25.11"
   jobs:
     pre_create_environment:
-      - sed -i "s/python >=3.11,<3.15/python >=3.11,<3.13/" environment.yml
+      - sed -i "s/python >=3.11,<3.15/python >=3.12,<3.13/" environment.yml
     pre_build:
-      - sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/testing/tests src/xclim/indicators src/xclim/indices
-      - rm docs/apidoc/xclim.rst
-      - env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/testing/tests
+      - env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim
       - sphinx-build -b linkcheck docs/ _build/linkcheck || true
 
 conda:
