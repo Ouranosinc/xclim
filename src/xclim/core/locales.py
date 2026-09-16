@@ -275,7 +275,7 @@ def read_locale_file(filename, module: str | None = None, encoding: str = "UTF8"
 
     modstr = f"{module}." if module is not None else ""
     locdict = CaseInsensitiveDict({(k if k == "attrs_mapping" else f"{modstr}{k}"): v for k, v in data.items()})
-    return locdict  #{k: v for k, v in locdict.items()}
+    return locdict  # {k: v for k, v in locdict.items()}
 
 
 def load_locale(locdata: str | Path | dict[str, dict], locale: str) -> None:

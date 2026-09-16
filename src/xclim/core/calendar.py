@@ -1213,7 +1213,7 @@ def select_between_doys(
     """
     if isinstance(include_bounds, bool):
         include_bounds = (include_bounds, include_bounds)
-        
+
     if len(doy_bounds) != 2:
         raise TypeError(f"length of doy_bounds: {doy_bounds} is not 2")
 
