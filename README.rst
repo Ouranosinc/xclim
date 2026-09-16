@@ -1,3 +1,5 @@
+Just to keep a version that works on sept 16  for a ARCHES project notebook before re-breaking everything.
+
 ===============================================================
 xclim: Climate services library |logo| |logo-dark| |logo-light|
 ===============================================================
