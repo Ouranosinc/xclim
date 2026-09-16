@@ -66,6 +66,8 @@ Breaking changes
 * Translation: ``xclim.core.locales.get_local_attrs`` has been rewritten and only accepts a single "locale" now. Locale dictionaries are now case-insensitive. (:pull:`2397`).
 * Replace hard-coded length of period to actually use the length of the input in test `ipcc-ar6-c` of ``xclim.ensembles.robustness_fractions``. (:pull:`2411`, :issue:`2406`).
 * ``xclim.compute.fit`` now avoids adding an extra white space when there are more than one shape parameter, which changes the coordinate to be expected. (:pull:`2428`)
+* Documentation targets for functions, classes, and variables no longer link to the `sphinx-autodoc` module mappings. All historical hyperlinks to `apidoc` will no longer function as expected. (:pull:`2424`).
+* ``xclim.core.indicator`` has been refactored into its own submodule. All publicly-documented members remain accessible via `xclim.core.indicator` imports. (:pull:`2424`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -82,6 +84,7 @@ Internal changes
 * Project metadata now compatible with `flit >=4.0` standards. (:pull:`2412`).
 * On `bump release`, the `CHANGELOG.rst` file is now automatically updated to set the version title and release date. (:pull:`2413`).
 * `AUTHORS.rst` is now bundled in the `license-files` of packaged wheels. (:pull:`2413`).
+* `make autodoc-custom-index` has been removed in favour of `make autodoc-noindex`. `make docs` and other `sphinx` targets now use the new 'noindex' variant. (:pull:`2424`).
 
 v0.62.0 (2026-08-17)
 --------------------
