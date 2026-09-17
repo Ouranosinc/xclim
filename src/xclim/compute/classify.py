@@ -25,7 +25,7 @@ def _get_zone_bins(
     zone_min: Quantity,
     zone_max: Quantity,
     zone_step: Quantity,
-):
+) -> xr.DataArray:
     """
     Bin boundary values as defined by zone parameters.
 
@@ -102,21 +102,23 @@ def get_zones(
         warnings.warn("Expected either `bins` or [`zone_min`, `zone_max`, `zone_step`], got both. `bins` will be used.")
 
     # Get zone bins (if necessary)
-    bins = bins if bins is not None else _get_zone_bins(zone_min, zone_max, zone_step)
-
-    if isinstance(bins, list):
-        bins = sorted([convert_units_to(b, da) for b in bins])
+    if bins is None:
+        zone_bins = _get_zone_bins(zone_min, zone_max, zone_step)
     else:
-        bins = convert_units_to(bins, da)
+        zone_bins = bins
+    if isinstance(zone_bins, list):
+        zone_bins = sorted([convert_units_to(b, da) for b in zone_bins])
+    else:
+        zone_bins = convert_units_to(zone_bins, da)
 
     def _get_zone(_da):
-        return np.digitize(_da, bins) - 1
+        return np.digitize(_da, zone_bins) - 1
 
     zones = xr.apply_ufunc(_get_zone, da, dask="parallelized")
 
     if close_last_zone_right_boundary:
-        zones = zones.where(da != bins[-1], _get_zone(bins[-2]))
+        zones = zones.where(da != zone_bins[-1], _get_zone(zone_bins[-2]))
     if exclude_boundary_zones:
-        zones = zones.where((zones != _get_zone(bins[0] - 1)) & (zones != _get_zone(bins[-1])))
+        zones = zones.where((zones != _get_zone(zone_bins[0] - 1)) & (zones != _get_zone(zone_bins[-1])))
 
     return zones

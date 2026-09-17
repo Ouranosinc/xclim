@@ -1524,7 +1524,7 @@ class _Convenience(_InputChecker):
         raise AttributeError(attr)
 
     @classmethod
-    def copy(cls, **kwargs) -> Indicator:
+    def copy(cls, **kwargs) -> _Convenience:
         """
         Create a new indicator by copying and modifying this indicator, similar to subclassing.
 
@@ -1540,7 +1540,7 @@ class _Convenience(_InputChecker):
         return cls(**kwargs)
 
     @classmethod
-    def from_dict(cls, data: dict, identifier: str, module: str | None = None) -> Indicator:
+    def from_dict(cls, data: dict, identifier: str, module: str | None = None) -> _Convenience:
         """
         Deprecated method to create an indicator, please use :py:meth:`Indicator.copy` directly on
         the base indicator instead.

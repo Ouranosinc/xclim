@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import operator
 import warnings
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from datetime import timedelta
 from inspect import stack
-from typing import Any, Literal, TypeVar, cast
+from typing import Literal, TypeVar, cast
 
 import cftime
 import numba as nb
@@ -533,9 +533,9 @@ def cosine_of_solar_zenith_angle(
     :cite:cts:`kalogirou_chapter_2014,di_napoli_mean_2020`
     """
     declination = convert_units_to(declination, "rad")
-    lat = _wrap_radians(convert_units_to(lat, "rad"))
-    lon = convert_units_to(lon, "rad")
-    declination, lat, lon = _chunk_like(declination, lat, lon, chunks=chunks)
+    _lat: xr.DataArray | float = _wrap_radians(convert_units_to(lat, "rad"))
+    _lon: xr.DataArray | float = convert_units_to(lon, "rad")
+    declination, _lat, _lon = _chunk_like(declination, _lat, _lon, chunks=chunks)
 
     S_IN_D = 24 * 3600
 
@@ -548,7 +548,7 @@ def cosine_of_solar_zenith_angle(
         else:  # numpy
             time_as_s = time.copy(data=time.astype(float) / 1e9)
         h_s_utc = (((time_as_s % S_IN_D) / S_IN_D) * 2 * np.pi + np.pi).assign_attrs(units="rad")
-        h_s = h_s_utc + lon
+        h_s = h_s_utc + _lon
 
         interval_as_s = time.diff("time").dt.seconds.reindex(time=time.time, method="bfill")
         h_e = h_s + 2 * np.pi * interval_as_s / S_IN_D
@@ -560,13 +560,13 @@ def cosine_of_solar_zenith_angle(
 
         return cast(
             xr.DataArray,
-            np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(lat) * np.cos(h_s),
+            np.sin(declination) * np.sin(_lat) + np.cos(declination) * np.cos(_lat) * np.cos(h_s),
         ).clip(0, None)
     if stat not in {"average", "integral"}:
         raise NotImplementedError("Argument 'stat' must be one of 'integral', 'average' or 'instant'.")
     if sunlit:
         # hour angle of sunset (eq. 2.15), with NaNs inside the polar day/night
-        tantan = cast(xr.DataArray, -np.tan(lat) * np.tan(declination))
+        tantan = cast(xr.DataArray, -np.tan(_lat) * np.tan(declination))
         h_ss = np.arccos(tantan.where(abs(tantan) <= 1))
     else:
         # Whole period, so we put sunset at midnight
@@ -575,7 +575,7 @@ def cosine_of_solar_zenith_angle(
     return xr.apply_ufunc(
         _sunlit_integral_of_cosine_of_solar_zenith_angle,
         declination,
-        lat,
+        _lat,
         _wrap_radians(h_ss),
         _wrap_radians(h_s),
         _wrap_radians(h_e),
@@ -637,7 +637,7 @@ def extraterrestrial_solar_radiation(
     lat: xr.DataArray,
     solar_constant: Quantified = "1361 W m-2",
     method: Literal["spencer", "simple"] = "spencer",
-    chunks: Mapping[Any, tuple] | None = None,
+    chunks: dict[str, int] | None = None,
 ) -> xr.DataArray:
     """
     Extraterrestrial solar radiation.
@@ -1135,7 +1135,7 @@ def resample_map(
     obj: DataType,
     dim: str,
     freq: Freq | None,
-    func: Callable | str,
+    func: Callable | Reducer,
     map_blocks: bool | Literal["from_context"] = "from_context",
     resample_kwargs: dict | None = None,
     map_kwargs: dict | None = None,

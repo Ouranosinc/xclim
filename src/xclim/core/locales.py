@@ -105,7 +105,7 @@ def _valid_locales(locales):
     )
 
 
-def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str, dict]:
+def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str, CaseInsensitiveDict]:
     """
     Return all translated metadata for a given locale.
 
@@ -136,7 +136,7 @@ def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str,
         return locale, deepcopy(_LOCALES[locale])
 
     if isinstance(locale[1], dict):
-        trans = CaseInsensitiveDict(locale[1])  # {k: v for k, v in CaseInsensitiveDict(locale[1]).items()}
+        trans = CaseInsensitiveDict(locale[1])
     else:
         # Thus, a string pointing to a json file
         trans = read_locale_file(locale[1])
@@ -253,7 +253,7 @@ class UnavailableLocaleError(ValueError):
         )
 
 
-def read_locale_file(filename, module: str | None = None, encoding: str = "UTF8") -> dict[str, dict]:
+def read_locale_file(filename, module: str | None = None, encoding: str = "UTF8") -> CaseInsensitiveDict:
     """
     Read a locale file (.json) and return its dictionary.
 
@@ -278,10 +278,10 @@ def read_locale_file(filename, module: str | None = None, encoding: str = "UTF8"
 
     modstr = f"{module}." if module is not None else ""
     locdict = CaseInsensitiveDict({(k if k == "attrs_mapping" else f"{modstr}{k}"): v for k, v in data.items()})
-    return locdict  # {k: v for k, v in locdict.items()}
+    return locdict
 
 
-def load_locale(locdata: str | Path | dict[str, dict], locale: str) -> None:
+def load_locale(locdata: str | Path | CaseInsensitiveDict, locale: str) -> None:
     """
     Load translations from a json file into xclim.
 
