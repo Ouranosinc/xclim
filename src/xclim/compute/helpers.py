@@ -172,8 +172,8 @@ def spell_mask(
         The comparison operator to use when finding spells. Comparison is done as ``rolled_data {condition} thresh``.
     thresh : float or sequence of floats or DataArray or sequence of DataArray
         The threshold(s) to compare the rolling statistics against.
-        If data is a list, this must be a list of the same length as ``data``,
-        with a threshold for each variable. This function does not handle units and can't accept Quantified objects.
+        If data is a list, this must be a list of the same length as ``data``, with a threshold for each variable.
+        This function does not handle units and can't accept Quantified objects.
     constrain : sequence of str, optional
         Optionally allowed conditions.
     min_gap : int

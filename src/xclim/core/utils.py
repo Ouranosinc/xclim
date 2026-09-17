@@ -12,7 +12,7 @@ import importlib.util
 import logging
 import os
 import warnings
-from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, ItemsView, Iterator, KeysView, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -74,10 +74,10 @@ class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
     def __iter__(self) -> Iterator[str]:
         return iter(self._data)
 
-    def items(self) -> Iterator[tuple[str, Any]]:  # numpydoc ignore=GL08
+    def items(self) -> ItemsView[str, Any]:  # numpydoc ignore=GL08
         return self._data.items()
 
-    def keys(self) -> Iterator[str]:  # numpydoc ignore=GL08
+    def keys(self) -> KeysView[str]:  # numpydoc ignore=GL08
         return self._data.keys()
 
     def __len__(self) -> int:
@@ -188,6 +188,8 @@ def load_module(path: os.PathLike, name: str | None = None) -> ModuleType:
     spec = importlib.util.spec_from_file_location(name or path.stem, path)
     if spec is None:
         raise ValueError("spec is not a valid ModuleSpec type but None.")
+    if spec.loader is None:
+        raise ValueError("spec.loader is not a valid ModuleSpec type but None.")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)  # This executes code, effectively loading the module
     return mod
@@ -349,7 +351,7 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: str | None = None)
 
 def calc_perc(
     arr: np.ndarray,
-    percentiles: Sequence[float] | None = None,
+    percentiles: list[float] | None = None,
     alpha: float = 1.0,
     beta: float = 1.0,
     copy: bool = True,
@@ -361,7 +363,7 @@ def calc_perc(
     ----------
     arr : array_like
         The input array.
-    percentiles : sequence of float, optional
+    percentiles : list of float, optional
         The percentiles to compute. If None, only the median is computed.
     alpha : float
         A constant used to correct the index computed.
@@ -396,12 +398,12 @@ def calc_perc(
 
 def nan_calc_percentiles(
     arr: np.ndarray,
-    percentiles: Sequence[float] | None = None,
+    percentiles: list[float] | None = None,
     axis: int = -1,
     alpha: float = 1.0,
     beta: float = 1.0,
     copy: bool = True,
-) -> np.ndarray:
+) -> float | np.ndarray:
     """
     Convert the percentiles to quantiles and compute them using _nan_quantile.
 
@@ -409,7 +411,7 @@ def nan_calc_percentiles(
     ----------
     arr : array_like
         The input array.
-    percentiles : sequence of float, optional
+    percentiles : list of float, optional
         The percentiles to compute. If None, only the median is computed.
     axis : int
         The axis along which to compute the percentiles.
@@ -422,7 +424,7 @@ def nan_calc_percentiles(
 
     Returns
     -------
-    np.ndarray
+    np.ndarray or float
         The percentiles along the specified axis.
     """
     if percentiles is None:
