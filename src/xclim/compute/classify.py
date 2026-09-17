@@ -107,7 +107,7 @@ def get_zones(
     if isinstance(bins, list):
         bins = sorted([convert_units_to(b, da) for b in bins])
     else:
-        bins = [convert_units_to(bins, da)]
+        bins = convert_units_to(bins, da)
 
     def _get_zone(_da):
         return np.digitize(_da, bins) - 1

@@ -1135,7 +1135,7 @@ def season_length(
 def run_end_after_date(
     da: xr.DataArray,
     window: int,
-    date: DayOfYearStr | None = None,
+    date: DayOfYearStr | Literal["default"] | None = "default",
     dim: str = "time",
     coord: bool | str | None = "dayofyear",
 ) -> xr.DataArray:
@@ -1165,7 +1165,8 @@ def run_end_after_date(
         Index (or coordinate if `coord` is not False) of last item in last valid run.
         Returns np.nan if there are no valid runs.
     """
-    date = date or DayOfYearStr("07-01")
+    if date == "default":
+        date = DayOfYearStr("07-01")
 
     mid_idx = index_of_date(da[dim], date, max_idxs=1, default=0)
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
@@ -1239,7 +1240,7 @@ def first_run_after_date(
 def last_run_before_date(
     da: xr.DataArray,
     window: int,
-    date: DayOfYearStr | None = None,
+    date: DayOfYearStr | Literal["default"] | None = "default",
     dim: str = "time",
     coord: bool | str | None = "dayofyear",
 ) -> xr.DataArray:
@@ -1267,7 +1268,8 @@ def last_run_before_date(
         Index (or coordinate if `coord` is not False) of last item in last valid run.
         Returns np.nan if there are no valid runs.
     """
-    date = date or DayOfYearStr("07-01")
+    if date == "default":
+        date = DayOfYearStr("07-01")
 
     mid_idx = index_of_date(da[dim], date, default=-1)
 
