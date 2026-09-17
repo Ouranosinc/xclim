@@ -149,8 +149,8 @@ import xclim.indicators
 from xclim.core import VARIABLES, raise_warn_or_log
 from xclim.core.indicator import Daily, Indicator, base_registry, registry
 from xclim.core.locales import load_locale, read_locale_file
-from xclim.core.utils import load_module
-from xclim.core.utils import CaseInsensitiveDict
+from xclim.core.utils import CaseInsensitiveDict, load_module
+
 
 class IndicatorCollection(dict):  # numpydoc ignore=PR01
     """A collection of indicators."""
@@ -302,14 +302,16 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
                 _translations[locale] = read_locale_file(loc_file, module=coll_name, encoding=encoding)
         elif translations is not None:
             # A mapping was passed, we read paths if any.
-            _translations = CaseInsensitiveDict({
-                lng: (
-                    read_locale_file(trans, module=coll_name, encoding=encoding)
-                    if isinstance(trans, str | Path)
-                    else trans
-                )
-                for lng, trans in translations.items()
-            })
+            _translations = CaseInsensitiveDict(
+                {
+                    lng: (
+                        read_locale_file(trans, module=coll_name, encoding=encoding)
+                        if isinstance(trans, str | Path)
+                        else trans
+                    )
+                    for lng, trans in translations.items()
+                }
+            )
 
         # Module-wide default values for some attributes
         defkwargs = {
