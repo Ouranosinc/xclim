@@ -256,6 +256,12 @@ def test_registering():
     uniIndTemp.copy(identifier="test.tmin", register=True)
     assert "test.tmin" in registry
 
+    with pytest.raises(ValueError, match="Can't create"):
+        uniIndTemp.copy()
+
+    with pytest.raises(ValueError, match="Can't create"):
+        uniIndTemp.__class__()
+
 
 def test_module():
     """Translations are keyed according to the module where the indicators are defined."""
@@ -399,7 +405,7 @@ def test_missing(tas_series, as_da):
     # By default, missing is set to "from_context", and the default missing option is "any"
     # Cannot set missing_options with "from_context"
     with pytest.raises(ValueError, match="Cannot set `missing_options`"):
-        uniClim.copy(missing_options={"tolerance": 0.01})
+        uniClim.copy(missing_options={"tolerance": 0.01}, register=False)
 
     # Null value
     a[5] = np.nan
@@ -704,7 +710,7 @@ def test_indicator_errors():
     with pytest.raises(ValueError, match="Compute argument data was mapped to"):
         Daily(**d)
 
-    d2 = dict(input={"tas": "sfcWind"})
+    d2 = dict(input={"tas": "sfcWind"}, register=False)
     with pytest.raises(ValueError, match="When changing the name of a variable by"):
         ind.copy(**d2)
 
@@ -870,7 +876,4 @@ def test_freq_doc():
 
 def test_no_rewrapping():
     with pytest.raises(TypeError, match="Can't change the compute"):
-        uniIndTemp.copy(
-            compute=uniindtemp_compute,
-            parameters={"thresh": "0 °C"},
-        )
+        uniIndTemp.copy(compute=uniindtemp_compute, parameters={"thresh": "0 °C"}, register=False)
