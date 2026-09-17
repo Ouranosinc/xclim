@@ -54,8 +54,9 @@ from xclim.core.units import check_units, convert_units_to, declare_units, units
 from xclim.core.utils import CaseInsensitiveDict, split_auxiliary_coordinates
 
 # Indicators registry
-registry = CaseInsensitiveDict()  # Main indicator registry
-base_registry = {}  # Base classes registry
+# These can't be documented directly here because of sphinx's https://github.com/sphinx-doc/sphinx/issues/6495
+registry = CaseInsensitiveDict()
+base_registry = {}
 
 
 __all__ = [
@@ -1524,22 +1525,6 @@ class _Convenience(_InputChecker):
         raise AttributeError(attr)
 
     @classmethod
-    def copy(cls, **kwargs) -> Indicator:
-        """
-        Create a new indicator by copying and modifying this indicator, similar to subclassing.
-
-        This accepts the same arguments as the indicator constructor, but parameters and attributes
-        will default to this indicator's data.
-
-        This is the same as calling ``obj.__class__(**kwargs)``.
-
-        See Also
-        --------
-        Indicator.__init__
-        """
-        return cls(**kwargs)
-
-    @classmethod
     def from_dict(cls, data: dict, identifier: str, module: str | None = None) -> Indicator:
         """
         Deprecated method to create an indicator, please use :py:meth:`Indicator.copy` directly on
@@ -1584,7 +1569,7 @@ class _Registrer(_Convenience):
     """Register the indicator in the xclim registry."""
 
     def __new__(cls, **kwargs):
-        if kwargs.get("identifier") is None and kwargs.get("register") is True:
+        if kwargs.get("identifier") is None and kwargs.get("register", True) is True:
             raise ValueError("Can't create an indicator without an identifier if register is True.")
         return super().__new__(cls, **kwargs)
 
@@ -1712,6 +1697,45 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
             src_freq=src_freq,
             register=register,
             **outputs_kwargs,
+        )
+
+    @classmethod
+    def copy(
+        cls,
+        identifier: str = None,
+        register: bool = True,
+        **kwargs,
+    ) -> Indicator:
+        """
+        Create a new indicator by copying and modifying this indicator, similar to subclassing.
+
+        This accepts the same arguments as the indicator constructor, but parameters and attributes
+        will default to this indicator's data.
+
+        Parameters
+        ----------
+        identifier : str
+            Unique ID for this indicator. Identifier are never inherited from their parent.
+            This must be set if `register` is True.
+        register : bool
+            Whether to register this new indicator in the :py:data:`registry`.
+            Must be set to False is `identifier` is not given.
+        **kwargs
+            All other arguments that :py:meth:`Indicator.__init__` accepts.
+
+        Returns
+        -------
+        Indicator
+            A new indicator instance derived from this one.
+
+        See Also
+        --------
+        Indicator.__init__ : Indicator constructor.
+        """
+        return cls(
+            identifier=identifier,
+            register=register,
+            **kwargs,
         )
 
 
