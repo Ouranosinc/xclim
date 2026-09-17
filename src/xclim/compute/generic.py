@@ -8,21 +8,23 @@ variable. The functions defined here are the building blocks for most xclim indi
 A generic index function should take in one or multiple variable in the form of :py:class:`xarray.DataArray`,
 as its first arguments. Almost all functions here should also take a `freq` argument, defining the resampling period.
 A specific vocabulary and annotations are used in this submodule to define arguments as clearly as possible.
-The vocabulary is strongly inspired from `clix-meta <https://github.com/clix-meta/clix-meta/>`_.
+The vocabulary is strongly inspired from `clix-meta`_.
 
 - ``data: xr.DataArray`` : The first(s) arguments of all index function. When multiple variables are required,
     an integer suffix is added.
 - ``statistic: Reducer`` : The name of a time-reducing operation, usually a built-in numpy/xarray method or a member of
-    :py:data:`~xclim.indices.reducers.XCLIM_OPS`.
+    :py:data:`~xclim.compute.reducers.XCLIM_OPS`.
 - ``condition: Condition`` : The string or symbol of a binary comparison operator. Should usually be a key or valid of
-    :py:data:`~xclim.indices.helpers.BINARY_OPS`.
+    :py:data:`~xclim.compute.helpers.BINARY_OPS`.
 - ``thresh: Quantified`` : A threshold for thresholded index. Usually a string with a value and units (``" 0 °C"``),
     index functions should also accept non-temporal DataArrays and pint Quantity objects.
 - ``freq: Freq`` : A frequency string referring to a pandas
     `date offset object <https://pandas.pydata.org/docs/user_guide/timeseries.html#dateoffset-objects>`_.
-    Xclim only officially supports the frequency strings that xarray's implementation of CFtime supports,
+    `xclim` only officially supports the frequency strings that xarray's implementation of CFtime supports,
     so the ones completely independent of a specific calendar.
 - ``**indexer`` : Time selection arguments as implemented by :py:func:`~xclim.core.calendar.select_time`.
+
+.. _clix-meta: https://github.com/clix-meta/clix-meta
 """
 
 from __future__ import annotations
@@ -710,7 +712,7 @@ def spell_length_statistics(
 
     See Also
     --------
-    xclim.indices.helpers.spell_mask : The lower level functions that finds spells.
+    xclim.compute.helpers.spell_mask : The lower level functions that finds spells.
     bivariate_spell_length_statistics : The bivariate version of this function.
 
     Examples
@@ -824,7 +826,7 @@ def bivariate_spell_length_statistics(
     See Also
     --------
     spell_length_statistics : The univariate version.
-    xclim.indices.helpers.spell_mask : The lower level functions that finds spells.
+    xclim.compute.helpers.spell_mask : The lower level functions that finds spells.
     """
     _thresh1 = convert_units_to(thresh1, data1, context="infer")
     _thresh2 = convert_units_to(thresh2, data2, context="infer")

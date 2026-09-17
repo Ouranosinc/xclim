@@ -3,9 +3,9 @@ Climate Indicators
 ==================
 
 :py:class:`xclim.core.indicator.Indicator` instances essentially perform the same computations as the functions
-found in the :mod:`xclim.compute` library, but also run a number of health checks on input data, assign attributes to the output arrays and return a :py:class:`xarray.Dataset`.
+found in the :py:mod:`xclim.compute` library, but also run a number of health checks on input data, assign attributes to the output arrays and return a :py:class:`xarray.Dataset`.
 For example, if there are missing values in a time series, compute functions will ignore them, but indicators will return `NaN` for periods with missing
-values (depending on the missing values algorithm selected, see :ref:`checks:Missing values identification`). Indicators also check that the input data has the expected frequency (e.g. daily) and that
+values (depending on the missing values algorithm selected, see module :py:mod:`xclim.core.missing`). Indicators also check that the input data has the expected frequency (e.g. daily) and that
 it is indeed the expected variable (e.g. a precipitation flux). The output is assigned attributes
 that conform as much as possible with the `CF-Convention`_.
 

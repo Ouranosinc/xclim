@@ -11,6 +11,7 @@ Announcements
 This release constitutes a major breaking change from the previous stable release (`v0.x`) and introduces several new features, enhancements, and API changes.
 Users are strongly encouraged to review the breaking changes section below to ensure compatibility with their existing codebases.
 Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version.
+See :ref:`transition_v1:Differences between v0 and v1` for a summary of the breaking changes and guidance on how to transition to xclim v1.
 The `xclim` library is now considered to be production-level stable.
 
 Major changes
@@ -21,10 +22,11 @@ Major changes
     * A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
 * Refactor of the ``xclim.core.indicator.Indicator`` class itself  (:pull:`2397`). Most breaking changes are:
     * Indicators return ``Dataset`` by default, option ``as_dataset`` is now True by default (:issue:`2410`, :pull:`2414`).
-    * Output attributes are stored in ``Indicator.attrs`` (renamed from ``cf_attrs``), which is a list of ``xclim.core.indicator.Output`` objects (not dictionaries).
-    * Removal of ``Indicator.from_dict``. Renamed ``Indicator.translate_attrs`` to ``Indicator.translate``.
+    * Output metadata are stored in ``Indicator.outputs`` (renamed from ``cf_attrs``), which is a list of ``xclim.core.indicator.Output`` objects (not dictionaries), which have a ``.attrs`` property holding the attributes (:pull:`2426`).
+    * Renamed ``Indicator.translate_attrs`` to ``Indicator.translate``.
     * The ``xclim.core.indicator.registry`` now holds ``Indicator`` _instances_ (not classes) and is case-insensitive.
     * "Virtual submodules" were transformed into ``xclim.core.collection.IndicatorCollection`` instances (and not actual python modules). Indicators created this way automatically have the collection's name prepended to their identifier. Indicators created in the context of a collection are not registered by default. (:pull:`2415`).
+    * Copying/Subclassing an existing indicator is now done through ``Indicator.copy``, method ``Indicator.from_dict`` is deprecated. (:pull:`2424`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -64,6 +66,8 @@ Breaking changes
 * Translation: ``xclim.core.locales.get_local_attrs`` has been rewritten and only accepts a single "locale" now. Locale dictionaries are now case-insensitive. (:pull:`2397`).
 * Replace hard-coded length of period to actually use the length of the input in test `ipcc-ar6-c` of ``xclim.ensembles.robustness_fractions``. (:pull:`2411`, :issue:`2406`).
 * ``xclim.compute.fit`` now avoids adding an extra white space when there are more than one shape parameter, which changes the coordinate to be expected. (:pull:`2428`)
+* Documentation targets for functions, classes, and variables no longer link to the `sphinx-autodoc` module mappings. All historical hyperlinks to `apidoc` will no longer function as expected. The user api pages have been refactored to help navigation. (:pull:`2424`).
+* ``xclim.core.indicator`` has been refactored into its own submodule. All publicly-documented members remain accessible via `xclim.core.indicator` imports. (:pull:`2424`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -80,6 +84,7 @@ Internal changes
 * Project metadata now compatible with `flit >=4.0` standards. (:pull:`2412`).
 * On `bump release`, the `CHANGELOG.rst` file is now automatically updated to set the version title and release date. (:pull:`2413`).
 * `AUTHORS.rst` is now bundled in the `license-files` of packaged wheels. (:pull:`2413`).
+* `make autodoc-custom-index` has been removed in favour of `make autodoc-noindex`. `make docs` and other `sphinx` targets now use the new 'noindex' variant. (:pull:`2424`).
 
 v0.62.0 (2026-08-17)
 --------------------

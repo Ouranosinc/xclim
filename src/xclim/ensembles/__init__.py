@@ -1,10 +1,10 @@
 """
-Ensemble tools
-==============
+Useful methods for dealing with ensembles of climate simulations.
 
-This submodule defines some useful methods for dealing with ensembles of climate simulations.
 In xclim, an "ensemble" is a `Dataset` or a `DataArray` where multiple climate realizations
-or models are concatenated along the `realization` dimension.
+or models are concatenated along a "realization" dimension. Some of the tools here also support
+multi-member ensembles, ones containing multiple members for each climate model, that are laid out
+in 2D with an additional "pool" dimension that gets treated differently when reducing the ensemble.
 """
 
 from __future__ import annotations

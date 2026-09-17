@@ -62,7 +62,7 @@ def test_collections(virtual_indicator, atmosds):
 
 @pytest.mark.requires_docs
 def test_custom_indices(open_dataset):
-    # Use the example data used in the Extending Xclim notebook for testing.
+    # Use the example data used in the Extending xclim notebook for testing.
     example_path = Path(__file__).parent.parent / "docs" / "notebooks" / "example"
 
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
@@ -109,7 +109,7 @@ def test_custom_indices(open_dataset):
 
 @pytest.mark.requires_docs
 def test_indicator_module_translations():
-    # Use the example data used in the Extending Xclim notebook for testing.
+    # Use the example data used in the Extending xclim notebook for testing.
     example_path = Path(__file__).parent.parent / "docs" / "notebooks" / "example"
 
     ex = IndicatorCollection.from_yaml(example_path / "example", name="ex_trans")
@@ -131,7 +131,7 @@ def test_indicator_module_input_mapping(atmosds):
 
 @pytest.mark.requires_docs
 def test_edge_cases():
-    # Use the example data used in the Extending Xclim notebook for testing.
+    # Use the example data used in the Extending xclim notebook for testing.
     example_path = Path(__file__).parent.parent / "docs" / "notebooks" / "example"
 
     # All from paths but one

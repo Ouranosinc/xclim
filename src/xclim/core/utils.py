@@ -660,7 +660,7 @@ def make_clix_meta_yaml(  # noqa: C901
       This repository aims to provide a platform for thinking about, and developing, a unified view of metadata
       elements required to describe climate indices (aka climate indicators).
 
-  All indicators defined here use generic functions defined in :py:mod:`xclim.indices.clix`. This module tries to
+  All indicators defined here use generic functions defined in :py:mod:`xclim.compute.clix`. This module tries to
   follow the clix-meta definitions closely, which means it can have meaningful differences with the rest of xclim.
 
   For example, indicators where a number of occurrences (usually days) is counted will use units "1", instead of
