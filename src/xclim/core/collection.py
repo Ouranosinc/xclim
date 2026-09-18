@@ -246,7 +246,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
 
         See Also
         --------
-        xclim.core.indicator : Indicator build logic.
+        xclim.core.indicator.Indicator : Indicator build logic.
 
         Notes
         -----
