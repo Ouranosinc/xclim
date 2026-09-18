@@ -463,9 +463,9 @@ def percentile_doy(
         rrr = rrr.chunk({"stack_dim": -1, "dayofyear": doy_chunk_size})
 
     if isinstance(per, (float, int, np.floating, np.integer)):
-        per_list = [float(per)]
+        per_list = [int(per)]
     else:
-        per_list = [float(p) for p in per]
+        per_list = [int(p) for p in per]
 
     p = xr.apply_ufunc(
         calc_perc,

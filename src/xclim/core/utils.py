@@ -15,7 +15,7 @@ import warnings
 from collections.abc import Callable, ItemsView, Iterator, KeysView, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
-from typing import Any, overload
+from typing import Any
 
 import numpy as np
 import xarray as xr
