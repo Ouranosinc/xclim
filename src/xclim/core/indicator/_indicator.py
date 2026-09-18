@@ -106,7 +106,7 @@ class Parameter:
     kind: InputKind
     default: Any = _empty_default
     # Name of the compute function's argument corresponding to this parameter.
-    compute_name: str  = _empty
+    compute_name: str = _empty
     description: str = ""
     units: str = _empty
     choices: set = _empty
