@@ -754,13 +754,13 @@ def runoff_ratio(
     ----------
     :cite:cts:'knoben_2024'
     """
-    q = convert_units_to(rivo, "mm3/hr")
-    area = convert_units_to(area, "mm2")
-    pr = convert_units_to(pr, "mm/hr")
+    _rivo: xarray.DataArray = convert_units_to(rivo, "mm3/hr")
+    _area: xarray.DataArray = convert_units_to(area, "mm2")
+    _pr: xarray.DataArray = convert_units_to(pr, "mm/hr")
 
-    runoff = q / area
+    runoff = _rivo / _area
     runoff_freq = runoff.resample(time=freq).mean()
-    pr_freq = pr.resample(time=freq).mean()
+    pr_freq = _pr.resample(time=freq).mean()
     out = runoff_freq / pr_freq
     out.attrs["units"] = ""
     return out
@@ -999,7 +999,7 @@ def sen_slope_ratio(
 @declare_units(rivo="[discharge]")
 def base_flow_index_seasonal_ratio(
     rivo: xarray.DataArray, freq: Freq = "QS-DEC", numerator: str = "DJF", denominator: str = "JJA"
-) -> tuple[DataArray, DataArray, DataArray, DataArray, DataArray]:
+) -> tuple[DataArray, DataArray]:
     """
     Seasonal Base flow index (bfi) and ratio of winter to summer base flow index.
 

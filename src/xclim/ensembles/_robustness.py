@@ -20,6 +20,7 @@ import scipy.stats as spstats
 import xarray as xr
 
 from xclim.compute.helpers import compare, detrend
+from xclim.core import Condition
 from xclim.core.formatting import gen_call_string, update_xclim_history
 from xclim.core.missing import MissingAny, MissingBase
 from xclim.core.utils import uses_dask
@@ -31,7 +32,7 @@ __all__ = [
 ]
 
 
-SIGNIFICANCE_TESTS = {}
+SIGNIFICANCE_TESTS: dict[str, Callable] = {}
 """Registry of change significance tests.
 
 New tests must be decorated with :py:func:`significance_test` and fulfill the following requirements:
@@ -129,7 +130,7 @@ def robustness_fractions(
         it will be expected that all realizations have the same number of pooled elements
         and if a pooled element is invalid, the whole associated realization will be invalid.
     test : {tests_list}, optional
-        Name of the statistical test used to determine if there was significant change. See notes.
+        Name of the statistical test used to determine if there was significant change. See Notes.
     weights : xr.DataArray
         Weights to apply along the realization dimension. This array cannot contain missing values.
     invalid : xc.core.missing.MissingBase instance
@@ -140,12 +141,12 @@ def robustness_fractions(
         is missing data, the realization is invalid.
         Not used if only deltas are passed as `fut`.
     strict_sign : bool
-        Whether to include zeros When determining the sign of change. True (default) does not include
+        Whether to include zeros when determining the sign of change. True (default) does not include
         them, the comparison is done with `>` and `<`, while false uses `>=`, `<=`.
         When True, the "agree" fraction is the largest of three : positive, negative, zero change.
         When False, it is the largest of two : zero-or-positive, zero-or-negative.
     **kwargs : dict
-        Other arguments specific to the statistical test. See notes.
+        Other arguments specific to the statistical test. See Notes.
 
     Returns
     -------
@@ -396,8 +397,8 @@ def robustness_categories(
     valid: xr.DataArray | None = None,
     *,
     categories: list[str] | None = None,
-    ops: list[tuple[str, str]] | None = None,
-    thresholds: list[tuple[float, float]] | None = None,
+    ops: list[tuple[Condition, Condition | None]] | None = None,
+    thresholds: list[tuple[float, float | None]] | None = None,
 ) -> xr.DataArray:
     """
     Create a categorical robustness map for mapping hatching patterns.
@@ -420,8 +421,8 @@ def robustness_categories(
         The fraction of members that were valid for the robustness calculation.
         Can also be passed as a variable of the first argument.
     categories : list of str, optional
-        The label of each robustness categories. They are stored in the semicolon separated flag_descriptions
-        attribute as well as in a compressed form in the flag_meanings attribute.
+        The label of each robustness categories. They are stored in the semicolon separated ``flag_descriptions``
+        attribute as well as in a compressed form in the ``flag_meanings`` attribute.
         If a point is mapped to two categories, priority is given to the first one in this list.
     ops : list of tuples of str, optional
         For each category, the comparison operators for `change_frac` and `agree_frac`.
@@ -465,7 +466,8 @@ def robustness_categories(
     ):
         if not agr_op:
             cond = compare(changed, chg_op, chg_thresh)
-        elif not chg_op:
+        # FIXME: Non-empty strings are always truthy. What is this testing exactly?
+        elif not chg_op:  # type: ignore[ty:redundant-condition]
             cond = compare(agree, agr_op, agr_thresh)
         else:
             cond = compare(changed, chg_op, chg_thresh) & compare(agree, agr_op, agr_thresh)
@@ -485,12 +487,12 @@ def robustness_categories(
 
 @update_xclim_history
 def robustness_coefficient(fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | xr.Dataset) -> xr.DataArray | xr.Dataset:
-    """
+    r"""
     Calculate the robustness coefficient quantifying the robustness of a climate change signal in an ensemble.
 
     Taken from :cite:ts:`knutti_robustness_2013`.
 
-    The robustness metric is defined as R = 1 − A1 / A2 , where A1 is defined as the integral of the squared area
+    The robustness metric is defined as R = 1 - A1 / A2 , where A1 is defined as the integral of the squared area
     between two cumulative density functions characterizing the individual model projections and the multimodel mean
     projection and A2 is the integral of the squared area between two cumulative density functions characterizing
     the multimodel mean projection and the historical climate.
@@ -510,7 +512,7 @@ def robustness_coefficient(fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | x
     Returns
     -------
     xr.DataArray or xr.Dataset
-        The robustness coefficient, ]-inf, 1], float. Same type as `fut` or `ref`.
+        The robustness coefficient, $(-\infty, 1]$, float. Same type as `fut` or `ref`.
 
     References
     ----------
@@ -564,8 +566,8 @@ def robustness_coefficient(fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | x
     R.attrs.update(
         name="R",
         long_name="Ensemble robustness coefficient",
-        description="Ensemble robustness coefficient as defined by Knutti and Sedláček (2013).",
-        reference="Knutti, R. and Sedláček, J. (2013) Robustness and uncertainties in the new CMIP5 climate "
+        description="Ensemble robustness coefficient as defined by Knutti and Sedlacek (2013).",
+        reference="Knutti, R. and Sedlacek, J. (2013) Robustness and uncertainties in the new CMIP5 climate "
         "model projections. Nat. Clim. Change.",
         units="",
     )
@@ -856,6 +858,9 @@ def _gen_test_entry(namefunc):
 
     return entry
 
+
+if robustness_fractions.__doc__ is None:
+    robustness_fractions.__doc__ = ""
 
 robustness_fractions.__doc__ = robustness_fractions.__doc__.format(
     tests_list="{" + ", ".join(list(SIGNIFICANCE_TESTS.keys()) + ["threshold"]) + "}",

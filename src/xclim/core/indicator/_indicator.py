@@ -106,12 +106,12 @@ class Parameter:
     kind: InputKind
     default: Any = _empty_default
     # Name of the compute function's argument corresponding to this parameter.
-    compute_name: str = _empty
+    compute_name: str = _empty  # type: ignore[assignment]
     description: str = ""
-    units: str = _empty
-    choices: set = _empty
-    value: Any = _empty
-    annotation: str = _empty
+    units: str = _empty  # type: ignore[assignment]
+    choices: set = _empty  # type: ignore[assignment]
+    value: Any = _empty  # type: ignore[assignment]
+    annotation: str = _empty  # type: ignore[assignment]
 
     def update(self, other: dict) -> None:
         """
@@ -174,7 +174,7 @@ class Parameter:
         """
         if self.injected:
             return deepcopy(self.value)
-        out = {
+        out: dict[str, Any] = {
             "kind": self.kind.value,  # Get the int.
             "description": self.description,
         }
@@ -220,10 +220,11 @@ class Parameter:
         name = name or self.compute_name
         if self.kind == InputKind.KWARGS:
             return inspect.Parameter(name, kind=inspect.Parameter.VAR_KEYWORD)
-        if self.kind in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]:
-            kind = inspect.Parameter.POSITIONAL_OR_KEYWORD
-        else:
-            kind = inspect.Parameter.KEYWORD_ONLY
+        kind = (
+            inspect.Parameter.POSITIONAL_OR_KEYWORD
+            if self.kind in (InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE)
+            else inspect.Parameter.KEYWORD_ONLY
+        )
         annot = self.annotation if self.annotation is not _empty else KIND_ANNOTATION[self.kind]
         return inspect.Parameter(name, kind=kind, default=self.default, annotation=annot)
 
@@ -589,7 +590,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
         bool
             True if the indicator is generic.
         """
-        return not hasattr(self.compute.__wrapped__, "in_units")
+        return not hasattr(self.compute.__wrapped__, "in_units")  # type: ignore[attr-defined]
 
     def _extra_doc(self) -> list[str]:
         """
@@ -649,13 +650,13 @@ class IndexWrapper:  # numpydoc ignore=PR01
 class IndicatorBase(IndexWrapper):
     """Extends IndexWrapper by allowing metadata overrides, adding non-parsable fields and orchestrating computation."""
 
-    identifier: str = None
+    identifier: str | None = None
     """Unique ID identifying this indicator. Mostly for registry purposes."""
 
-    realm: str = None
+    realm: str | None = None
     """General domain of validity of the indicator. Should use the same vocabulary as CMIP."""
 
-    keywords: tuple[str] = ()
+    keywords: list[str] = []
     """
     Keywords describing the indicator and its domains of application.
     Child classes append to the list when inheriting.
@@ -1056,7 +1057,11 @@ class IndicatorBase(IndexWrapper):
             return outs[0]
 
         # Return a NamedTuple for multiple outputs but not as dataset
-        NamedOuts = namedtuple((self.identifier or ".UnnamedIndicator").split(".")[-1], [o.name for o in outs])
+        name = (self.identifier or ".UnnamedIndicator").split(".")[-1]
+        NamedOuts = namedtuple(  # type: ignore[misc]
+            name,
+            [o.name for o in outs],
+        )
         return NamedOuts(*outs)
 
     @classmethod
@@ -1525,7 +1530,23 @@ class _Convenience(_InputChecker):
         raise AttributeError(attr)
 
     @classmethod
-    def from_dict(cls, data: dict, identifier: str, module: str | None = None) -> Indicator:
+    def copy(cls, **kwargs) -> _Convenience:
+        """
+        Create a new indicator by copying and modifying this indicator, similar to subclassing.
+
+        This accepts the same arguments as the indicator constructor, but parameters and attributes
+        will default to this indicator's data.
+
+        This is the same as calling ``obj.__class__(**kwargs)``.
+
+        See Also
+        --------
+        Indicator.__init__
+        """
+        return cls(**kwargs)
+
+    @classmethod
+    def from_dict(cls, data: dict, identifier: str, module: str | None = None) -> _Convenience:
         """
         Deprecated method to create an indicator, please use :py:meth:`Indicator.copy` directly on
         the base indicator instead.
@@ -1610,19 +1631,19 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
 
     def __init__(
         self,
-        identifier: str = None,
-        compute: Callable = None,
-        title: str = None,
-        abstract: str = None,
-        realm: str = None,
-        keywords: list[str] = None,
-        references: str = None,
-        notes: str = None,
-        input: dict = None,
-        parameters: dict = None,
-        outputs: dict = None,
+        identifier: str | None = None,
+        compute: Callable | None = None,
+        title: str | None = None,
+        abstract: str | None = None,
+        realm: str | None = None,
+        keywords: list[str] | None = None,
+        references: str | None = None,
+        notes: str | None = None,
+        input: dict | None = None,
+        parameters: dict | None = None,
+        outputs: dict | None = None,
         context: str = "none",
-        src_freq: str | list[str] = None,
+        src_freq: str | list[str] | None = None,
         register: bool = True,
         **outputs_kwargs,
     ):
@@ -1631,14 +1652,14 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
 
         Parameters
         ----------
-        identifier : str
+        identifier : str, optional
             Unique ID for this indicator. Single-output indicator will use this as their output variable
             name if no `var_name`is passed to the first element of `attrs`.
             Unless ``register`` is False, indicators are registered to :py:data:`xclim.core.indicator.registry`,
             using this ID. The registry is case-insensitive.
             When defining indicators in a python module, it can be helpful to use the same name in the code as the
             identifier, to avoid confusion between the two, especially for collections and translations.
-        compute : func
+        compute : func, optional
             The function computing the indicators. It should return one or more DataArray.
             Metadata will first be parsed from it as much as possible.
         title : str, optional
@@ -1702,7 +1723,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
     @classmethod
     def copy(
         cls,
-        identifier: str = None,
+        identifier: str | None = None,
         register: bool = True,
         **kwargs,
     ) -> Indicator:
@@ -1754,7 +1775,7 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02 # pylint: d
     The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods.
     If None, this will be determined by the global configuration (see `xclim.set_options`).
     """
-    missing_options: dict = None
+    missing_options: dict | None = None
     """
     Arguments to pass to the `missing` function.
     If None, this will be determined by the global configuration.
@@ -1836,7 +1857,7 @@ class ResamplingIndicator(CheckMissingIndicator):  # numpydoc ignore=PR02 # pyli
     and the check of allowed periods.
     """
 
-    allowed_periods: list[str] = None
+    allowed_periods: list[str] | None = None
     """
     A list of allowed periods, i.e. base parts of the `freq` parameter.
     For example, indicators meant to be computed annually only will have `allowed_periods=["Y"]`.
@@ -1928,9 +1949,9 @@ class StandardizedIndexes(ResamplingIndicator):
 
 
 base_registry["Indicator"] = Indicator
-base_registry["ReducingIndicator"] = ReducingIndicator
-base_registry["IndexingIndicator"] = IndexingIndicator
-base_registry["ResamplingIndicator"] = ResamplingIndicator
-base_registry["ResamplingIndicatorWithIndexing"] = ResamplingIndicatorWithIndexing
-base_registry["Hourly"] = Hourly
-base_registry["Daily"] = Daily
+base_registry["ReducingIndicator"] = ReducingIndicator  # type: ignore[assignment]
+base_registry["IndexingIndicator"] = IndexingIndicator  # type: ignore[assignment]
+base_registry["ResamplingIndicator"] = ResamplingIndicator  # type: ignore[assignment]
+base_registry["ResamplingIndicatorWithIndexing"] = ResamplingIndicatorWithIndexing  # type: ignore[assignment]
+base_registry["Hourly"] = Hourly  # type: ignore[assignment]
+base_registry["Daily"] = Daily  # type: ignore[assignment]

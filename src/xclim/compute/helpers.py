@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import operator
 import warnings
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from datetime import timedelta
 from inspect import stack
-from typing import Any, Literal, TypeVar, cast
+from typing import Literal, TypeVar, cast
 
 import cftime
 import numba as nb
@@ -172,8 +172,8 @@ def spell_mask(
         The comparison operator to use when finding spells. Comparison is done as ``rolled_data {condition} thresh``.
     thresh : float or sequence of floats or DataArray or sequence of DataArray
         The threshold(s) to compare the rolling statistics against.
-        If data is a list, this must be a list of the same length as ``data``,
-        with a threshold for each variable. This function does not handle units and can't accept Quantified objects.
+        If data is a list, this must be a list of the same length as ``data``, with a threshold for each variable.
+        This function does not handle units and can't accept Quantified objects.
     constrain : sequence of str, optional
         Optionally allowed conditions.
     min_gap : int
@@ -196,7 +196,9 @@ def spell_mask(
     # Checks
     if not isinstance(data, xr.DataArray):
         # thus a sequence
-        if np.isscalar(thresh) or isinstance(thresh, xr.DataArray) or len(data) != len(thresh):
+        if isinstance(thresh, (float, int)) or isinstance(thresh, xr.DataArray):
+            raise ValueError("When ``data`` is given as a list, ``thresh`` must be a sequence of the same length.")
+        if len(data) != len(thresh):
             raise ValueError("When ``data`` is given as a list, ``thresh`` must be a sequence of the same length.")
         data = xr.concat(data, "variable")
         if isinstance(thresh[0], xr.DataArray):
@@ -533,9 +535,9 @@ def cosine_of_solar_zenith_angle(
     :cite:cts:`kalogirou_chapter_2014,di_napoli_mean_2020`
     """
     declination = convert_units_to(declination, "rad")
-    lat = _wrap_radians(convert_units_to(lat, "rad"))
-    lon = convert_units_to(lon, "rad")
-    declination, lat, lon = _chunk_like(declination, lat, lon, chunks=chunks)
+    _lat: xr.DataArray | float = _wrap_radians(convert_units_to(lat, "rad"))
+    _lon: xr.DataArray | float = convert_units_to(lon, "rad")
+    declination, _lat, _lon = _chunk_like(declination, _lat, _lon, chunks=chunks)
 
     S_IN_D = 24 * 3600
 
@@ -548,7 +550,7 @@ def cosine_of_solar_zenith_angle(
         else:  # numpy
             time_as_s = time.copy(data=time.astype(float) / 1e9)
         h_s_utc = (((time_as_s % S_IN_D) / S_IN_D) * 2 * np.pi + np.pi).assign_attrs(units="rad")
-        h_s = h_s_utc + lon
+        h_s = h_s_utc + _lon
 
         interval_as_s = time.diff("time").dt.seconds.reindex(time=time.time, method="bfill")
         h_e = h_s + 2 * np.pi * interval_as_s / S_IN_D
@@ -560,13 +562,13 @@ def cosine_of_solar_zenith_angle(
 
         return cast(
             xr.DataArray,
-            np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(lat) * np.cos(h_s),
+            np.sin(declination) * np.sin(_lat) + np.cos(declination) * np.cos(_lat) * np.cos(h_s),
         ).clip(0, None)
     if stat not in {"average", "integral"}:
         raise NotImplementedError("Argument 'stat' must be one of 'integral', 'average' or 'instant'.")
     if sunlit:
         # hour angle of sunset (eq. 2.15), with NaNs inside the polar day/night
-        tantan = cast(xr.DataArray, -np.tan(lat) * np.tan(declination))
+        tantan = cast(xr.DataArray, -np.tan(_lat) * np.tan(declination))
         h_ss = np.arccos(tantan.where(abs(tantan) <= 1))
     else:
         # Whole period, so we put sunset at midnight
@@ -575,7 +577,7 @@ def cosine_of_solar_zenith_angle(
     return xr.apply_ufunc(
         _sunlit_integral_of_cosine_of_solar_zenith_angle,
         declination,
-        lat,
+        _lat,
         _wrap_radians(h_ss),
         _wrap_radians(h_s),
         _wrap_radians(h_e),
@@ -637,7 +639,7 @@ def extraterrestrial_solar_radiation(
     lat: xr.DataArray,
     solar_constant: Quantified = "1361 W m-2",
     method: Literal["spencer", "simple"] = "spencer",
-    chunks: Mapping[Any, tuple] | None = None,
+    chunks: dict[str, int] | None = None,
 ) -> xr.DataArray:
     """
     Extraterrestrial solar radiation.
@@ -1134,8 +1136,8 @@ def _gather_lon(da: xr.DataArray) -> xr.DataArray:
 def resample_map(
     obj: DataType,
     dim: str,
-    freq: Freq,
-    func: Callable | str,
+    freq: Freq | None,
+    func: Callable | Reducer,
     map_blocks: bool | Literal["from_context"] = "from_context",
     resample_kwargs: dict | None = None,
     map_kwargs: dict | None = None,
@@ -1151,7 +1153,7 @@ def resample_map(
         The xarray object to resample.
     dim : str
         Dimension over which to resample.
-    freq : str
+    freq : str, optional
         Resampling frequency along `dim`.
     func : callable or str
         Function to map on each resampled group.

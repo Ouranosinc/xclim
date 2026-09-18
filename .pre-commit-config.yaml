@@ -63,6 +63,12 @@ repos:
     rev: v2.16
     hooks:
       - id: vulture
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.3.0
+    hooks:
+      - id: mypy
+        exclude: ^tests/|^docs
+        additional_dependencies: [ 'numpy>=1.21' ]
   - repo: https://github.com/kynan/nbstripout
     rev: 0.9.1
     hooks:
