@@ -37,7 +37,7 @@ dependencies:
   - numpydoc >=1.10.0
   - pylint >=4.0
   - ruff >=0.13.3
-  - ty >=0.0.60
+  - ty >=0.0.79
   - vulture >=2.14
   - yamllint >=1.35.1
   # Testing and development dependencies
