@@ -1159,10 +1159,11 @@ def _get_doys(start: int, end: int, inclusive: tuple[bool, bool]):
         doys = np.arange(start, end + 1)
     else:
         doys = np.concatenate((np.arange(start, 367), np.arange(0, end + 1)))
+    # FIXME: Assignment issues
     if not inclusive[0]:
-        doys = doys[1:]
+        doys = doys[1:]  # type: ignore[assignment]
     if not inclusive[1]:
-        doys = doys[:-1]
+        doys = doys[:-1]  # type: ignore[assignment]
     return doys
 
 
