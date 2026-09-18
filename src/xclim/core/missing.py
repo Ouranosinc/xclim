@@ -25,9 +25,8 @@ To define another missing value algorithm, subclass :py:class:`MissingBase` and 
 
 from __future__ import annotations
 
-from typing import Any
-
 import textwrap
+from typing import Any
 
 import numpy as np
 import xarray as xr
@@ -431,12 +430,7 @@ class MissingWMO(MissingTwoSteps):
     def validate(**options: Any) -> bool:
         nm = options.get("nm")
         nc = options.get("nc")
-        return (
-          isinstance(nm, int)
-          and isinstance(nc, int)
-          and nm < 31 
-          and nc < 31
-        )
+        return isinstance(nm, int) and isinstance(nc, int) and nm < 31 and nc < 31
 
     def _validate_src_timestep(self, src_timestep: Freq | None) -> bool:
         return src_timestep is not None and src_timestep == "D"
@@ -482,10 +476,7 @@ class MissingPct(MissingTwoSteps):
     @staticmethod
     def validate(**options: Any) -> bool:
         tolerance = options.get("tolerance")
-        return (
-            isinstance(tolerance, (int, float))
-            and 0 <= tolerance <= 1
-        )
+        return isinstance(tolerance, (int, float)) and 0 <= tolerance <= 1
 
     def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: Freq | None) -> xr.DataArray:
         if freq is not None:

@@ -221,9 +221,9 @@ class Parameter:
         if self.kind == InputKind.KWARGS:
             return inspect.Parameter(name, kind=inspect.Parameter.VAR_KEYWORD)
         kind = (
-          inspect.Parameter.POSITIONAL_OR_KEYWORD
-          if self.kind in (InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE)
-          else inspect.Parameter.KEYWORD_ONLY
+            inspect.Parameter.POSITIONAL_OR_KEYWORD
+            if self.kind in (InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE)
+            else inspect.Parameter.KEYWORD_ONLY
         )
         annot = self.annotation if self.annotation is not _empty else KIND_ANNOTATION[self.kind]
         return inspect.Parameter(name, kind=kind, default=self.default, annotation=annot)
