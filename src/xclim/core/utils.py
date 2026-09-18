@@ -15,7 +15,7 @@ import warnings
 from collections.abc import Callable, ItemsView, Iterator, KeysView, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, overload
 
 import numpy as np
 import xarray as xr
@@ -61,16 +61,6 @@ class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
     def __delitem__(self, key: str):
         del self._data[self._casefold(key)]
 
-    def update(self, other: Mapping, **kwargs: Any) -> None:  # numpydoc ignore=GL08
-        if hasattr(other, "keys"):
-            for k in other.keys():
-                self[k] = other[k]
-        else:
-            for k, v in other:
-                self[k] = v
-        for k, v in kwargs.items():
-            self[k] = v
-
     def __iter__(self) -> Iterator[str]:
         return iter(self._data)
 
@@ -85,9 +75,6 @@ class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
 
     def __repr__(self) -> str:
         return repr(self._data)
-
-    def pop(self, key: str) -> Any:  # numpydoc ignore=GL08
-        return self._data.pop(self._casefold(key))
 
     def popitem(self) -> tuple[str, Any]:  # numpydoc ignore=GL08
         return self._data.popitem()

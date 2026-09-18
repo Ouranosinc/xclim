@@ -106,12 +106,12 @@ class Parameter:
     kind: InputKind
     default: Any = _empty_default
     # Name of the compute function's argument corresponding to this parameter.
-    compute_name: str = _empty
+    compute_name: str = _empty  # type: ignore[assignment]
     description: str = ""
-    units: str = _empty
-    choices: set = _empty
-    value: Any = _empty
-    annotation: str = _empty
+    units: str = _empty  # type: ignore[assignment]
+    choices: set = _empty  # type: ignore[assignment]
+    value: Any = _empty  # type: ignore[assignment]
+    annotation: str = _empty  # type: ignore[assignment]
 
     def update(self, other: dict) -> None:
         """
@@ -220,10 +220,11 @@ class Parameter:
         name = name or self.compute_name
         if self.kind == InputKind.KWARGS:
             return inspect.Parameter(name, kind=inspect.Parameter.VAR_KEYWORD)
-        if self.kind in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]:
-            kind = inspect.Parameter.POSITIONAL_OR_KEYWORD
-        else:
-            kind = inspect.Parameter.KEYWORD_ONLY
+        kind = (
+          inspect.Parameter.POSITIONAL_OR_KEYWORD
+          if self.kind in (InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE)
+          else inspect.Parameter.KEYWORD_ONLY
+        )
         annot = self.annotation if self.annotation is not _empty else KIND_ANNOTATION[self.kind]
         return inspect.Parameter(name, kind=kind, default=self.default, annotation=annot)
 
@@ -589,7 +590,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
         bool
             True if the indicator is generic.
         """
-        return not hasattr(self.compute.__wrapped__, "in_units")
+        return not hasattr(self.compute.__wrapped__, "in_units")  # type: ignore[attr-defined]
 
     def _extra_doc(self) -> list[str]:
         """
