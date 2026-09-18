@@ -2,17 +2,17 @@
 xclim: Climate services library |logo| |logo-dark| |logo-light|
 ===============================================================
 
-+----------------------------+-----------------------------------------------------+
-| Versions                   | |pypi| |conda| |versions|                           |
-+----------------------------+-----------------------------------------------------+
-| Documentation and Support  | |docs| |discussions|                                |
-+----------------------------+-----------------------------------------------------+
-| Open Source                | |license| |ossf-score| |zenodo| |pyOpenSci| |joss|  |
-+----------------------------+-----------------------------------------------------+
-| Coding Standards           | |ruff| |prek| |pre-commit-ci| |ossf-bp| |fossa|     |
-+----------------------------+-----------------------------------------------------+
-| Development Status         | |status| |build| |coveralls| |zizmor|               |
-+----------------------------+-----------------------------------------------------+
++----------------------------+---------------------------------------------------------+
+| Versions                   | |pypi| |conda| |versions|                               |
++----------------------------+---------------------------------------------------------+
+| Documentation and Support  | |docs| |discussions|                                    |
++----------------------------+---------------------------------------------------------+
+| Open Source                | |license| |ossf-score| |zenodo| |pyOpenSci| |joss|      |
++----------------------------+---------------------------------------------------------+
+| Coding Standards           | |ruff| |prek| |mypy| |pre-commit-ci| |ossf-bp| |fossa|  |
++----------------------------+---------------------------------------------------------+
+| Development Status         | |status| |build| |coveralls| |zizmor|                   |
++----------------------------+---------------------------------------------------------+
 
 .. warning::
     This branch of `xclim` is under active development and contains many breaking changes compared to v0.61+.
@@ -82,10 +82,13 @@ If your data uses another name (for example: "T"), you can rename the variable w
     ds = ds.rename(T="time")
 
 `xclim` employs a `black`_-compatible code formatting style (via a modified `ruff`_ configuration) and (mostly) adheres to the `NumPy docstring`_ style.
+The library is also fully compliant with `mypy`_ (`ty`_) for a coherent and consistent static- and duck-typed code base.
 For more information on coding and development conventions, see the `Contributing Guidelines`_.
 
 .. _black: https://black.readthedocs.io/en/stable/
+.. _mypy: https://www.mypy-lang.org/
 .. _ruff: https://docs.astral.sh/ruff/
+.. _ty: https://docs.astral.sh/ty/
 .. _CF Conventions: http://cfconventions.org/
 .. _CMIP6: https://clipc-services.ceda.ac.uk/dreq/mipVars.html
 .. _NumPy docstring: https://numpydoc.readthedocs.io/en/stable/format.html
@@ -221,6 +224,10 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://github.com/Ouranosinc/xclim
         :alt:
         :class: xclim-logo-small only-dark-inline
+
+.. |mypy| image:: https://www.mypy-lang.org/static/mypy_badge.svg
+        :target: https://mypy-lang.org/
+        :alt: mypy
 
 .. |pre-commit-ci| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/main.svg
         :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/main
