@@ -467,7 +467,7 @@ def robustness_categories(
         if not agr_op:
             cond = compare(changed, chg_op, chg_thresh)
         # FIXME: Non-empty strings are always truthy. What is this testing exactly?
-        elif not chg_op:  # ty: ignore[redundant-condition]
+        elif not chg_op:  # type: ignore[ty:redundant-condition]
             cond = compare(agree, agr_op, agr_thresh)
         else:
             cond = compare(changed, chg_op, chg_thresh) & compare(agree, agr_op, agr_thresh)
