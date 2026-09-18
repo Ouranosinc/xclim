@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Literal, cast
+from typing import Literal, TypeGuard, cast
 
 import numpy as np
 import xarray
@@ -227,6 +227,24 @@ def huglin_index(
     ----------
     :cite:cts:`huglin_nouveau_1978,hall_spatial_2010`
     """
+    Method = Literal["huglin", "interpolated", "jones"]
+
+    def is_valid_method(value: str) -> TypeGuard[Method]:
+        """
+        Check whether ``value`` is a supported method name.
+
+        Parameters
+        ----------
+        value : str
+            Method name to validate.
+
+        Returns
+        -------
+        bool
+            True if `value` is one of `"huglin"`, `"interpolated"`, or `"jones"`, otherwise ``False``.
+        """
+        return value in {"huglin", "interpolated", "jones"}
+
     if not isinstance(freq, str):
         raise TypeError("Freq must be a string.")
 
@@ -240,20 +258,20 @@ def huglin_index(
     k: int | xarray.DataArray = 1
     k_aggregated: xarray.DataArray | None = None
 
-    method = method.lower()
+    method_name = method.lower()
 
-    if method not in ["huglin", "interpolated", "jones"]:
+    if not is_valid_method(method_name):
         raise NotImplementedError(
             "Method is not implemented. Only 'huglin', 'interpolated', and 'jones' are supported."
         )
 
-    if method in ["huglin", "interpolated"]:
-        k = huglin_day_length_latitude_coefficient(lat, method=method, cap_value=cap_value)
-    elif method == "jones":
+    if method_name in ["huglin", "interpolated"]:
+        k = huglin_day_length_latitude_coefficient(lat, method=method_name, cap_value=cap_value)
+    elif method_name == "jones":
         k_aggregated = jones_day_length_latitude_coefficient(
             dates=tas.time,
             lat=lat,
-            method=method,
+            method=method_name,
             start_date=start_date,
             end_date=end_date,
             freq=freq,
@@ -667,13 +685,14 @@ def dryness_index(  # numpydoc ignore=SS05
     if lat is None:
         lat = _gather_lat(_pr)
     if isinstance(lat, xarray.DataArray):
-        if (lat >= 0).any():
+        lat_array = lat
+        if (lat_array >= 0).any():
             has_north = True
-        if (lat < 0).any():
+        if (lat_array < 0).any():
             has_south = True
 
         adjustment = xarray.where(
-            lat >= 0,
+            lat_array >= 0,
             adjustment_array_north,
             adjustment_array_south,
         )
@@ -718,7 +737,7 @@ def dryness_index(  # numpydoc ignore=SS05
 
     di: xarray.DataArray
     if has_north and has_south:
-        di = di_north.where(lat >= 0, di_south)
+        di = di_north.where(lat_array >= 0, di_south)
     elif has_north:
         di = di_north
     elif has_south:

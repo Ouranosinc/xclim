@@ -1236,7 +1236,7 @@ def statistics_between_dates(
     if freq is None:
         frequencies = []
         for bound in [start, end]:
-            if hasattr(bound, "time"):
+            if isinstance(bound, xr.DataArray) and hasattr(bound, "time"):
                 frequencies.append(xr.infer_freq(bound["time"]))
             else:
                 frequencies.append(None)

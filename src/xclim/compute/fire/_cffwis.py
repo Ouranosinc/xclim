@@ -1264,9 +1264,7 @@ def overwintering_drought_code(
     return wDC
 
 
-def _convert_parameters(
-    params: dict[str, int | float], funcname: str = "fire weather indices"
-) -> dict[str, int | float]:
+def _convert_parameters(params: dict[str, Any], funcname: str = "fire weather indices") -> dict[str, Any]:
     for param, value in params.copy().items():
         if param not in default_params:
             raise ValueError(

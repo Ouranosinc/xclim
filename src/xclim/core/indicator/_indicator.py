@@ -106,7 +106,7 @@ class Parameter:
     kind: InputKind
     default: Any = _empty_default
     # Name of the compute function's argument corresponding to this parameter.
-    compute_name: str = _empty
+    compute_name: str  = _empty
     description: str = ""
     units: str = _empty
     choices: set = _empty
@@ -1056,7 +1056,11 @@ class IndicatorBase(IndexWrapper):
             return outs[0]
 
         # Return a NamedTuple for multiple outputs but not as dataset
-        NamedOuts = namedtuple((self.identifier or ".UnnamedIndicator").split(".")[-1], [o.name for o in outs])
+        name = (self.identifier or ".UnnamedIndicator").split(".")[-1]
+        NamedOuts = namedtuple(  # type: ignore[misc]
+            name,
+            [o.name for o in outs],
+        )
         return NamedOuts(*outs)
 
     @classmethod
@@ -1718,7 +1722,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
     @classmethod
     def copy(
         cls,
-        identifier: str = None,
+        identifier: str | None = None,
         register: bool = True,
         **kwargs,
     ) -> Indicator:
@@ -1944,9 +1948,9 @@ class StandardizedIndexes(ResamplingIndicator):
 
 
 base_registry["Indicator"] = Indicator
-base_registry["ReducingIndicator"] = ReducingIndicator
-base_registry["IndexingIndicator"] = IndexingIndicator
-base_registry["ResamplingIndicator"] = ResamplingIndicator
-base_registry["ResamplingIndicatorWithIndexing"] = ResamplingIndicatorWithIndexing
-base_registry["Hourly"] = Hourly
-base_registry["Daily"] = Daily
+base_registry["ReducingIndicator"] = ReducingIndicator  # type: ignore[assignment]
+base_registry["IndexingIndicator"] = IndexingIndicator  # type: ignore[assignment]
+base_registry["ResamplingIndicator"] = ResamplingIndicator  # type: ignore[assignment]
+base_registry["ResamplingIndicatorWithIndexing"] = ResamplingIndicatorWithIndexing  # type: ignore[assignment]
+base_registry["Hourly"] = Hourly  # type: ignore[assignment]
+base_registry["Daily"] = Daily  # type: ignore[assignment]

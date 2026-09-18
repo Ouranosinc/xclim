@@ -219,7 +219,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
         return da
 
     all_chunks = dict(zip(da.dims, da.chunks, strict=False))
-    chunking = {}
+    chunking: dict[str, int | tuple[int, ...]] = {}
     for dim, minchunk in minchunks.items():
         chunks = all_chunks[dim]
         if minchunk == -1 and len(chunks) > 1:
@@ -382,15 +382,20 @@ def calc_perc(
     else:
         _percentiles = percentiles
 
+    percs = nan_calc_percentiles(
+        arr=arr,
+        percentiles=_percentiles,
+        axis=-1,
+        alpha=alpha,
+        beta=beta,
+        copy=copy,
+    )
+
+    if isinstance(percs, float):
+        return np.asarray(percs)
+
     return np.moveaxis(
-        nan_calc_percentiles(
-            arr=arr,
-            percentiles=_percentiles,
-            axis=-1,
-            alpha=alpha,
-            beta=beta,
-            copy=copy,
-        ),
+        percs,
         source=0,
         destination=-1,
     )
@@ -650,7 +655,7 @@ def make_clix_meta_yaml(  # noqa: C901
     with Path(raw).open(encoding="utf-8") as f:
         src = safe_load(f)
 
-    yml = {}
+    yml: dict[str, Any] = {}
     yml["realm"] = "atmos"
     yml["doc"] = """
   ===================

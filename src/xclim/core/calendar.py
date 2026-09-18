@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from packaging.version import Version
+from pandas.tseries.offsets import BaseOffset
 from xarray import CFTimeIndex
 from xarray.coding import cftime_offsets
 
@@ -793,7 +794,7 @@ def resample_doy(doy: DataType, arr: DataType) -> DataType:
 def time_bnds(
     time: (xr.DataArray | xr.Dataset | CFTimeIndex | pd.DatetimeIndex),
     freq: Freq | None = None,
-):
+) -> xr.DataArray:
     """
     Find the time bounds for a datetime index by assuming an uniform sampling frequency.
 
@@ -854,7 +855,8 @@ def time_bnds(
             raise NotImplementedError(
                 "Irregular time coordinates are not supported. Please pass a frequency explicitly."
             )
-    elif hasattr(freq, "freqstr"):
+    # elif hasattr(_freq, "freqstr"):
+    elif isinstance(freq, BaseOffset):
         # When freq is an Offset
         freq = freq.freqstr
 

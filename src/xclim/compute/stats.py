@@ -1061,16 +1061,18 @@ def standardized_index(
     if params is None and None in [window, dist, method, zero_inflated]:
         raise ValueError("If `params` is `None`, `window`, `dist`, `method` and `zero_inflated` must be given.")
     if params is not None:
-        freq, window, dist, indexer = (params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"])
+        freq, window, dist, tindexer = (params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"])
         # Unpack attrs to None and {} if needed
         freq = None if freq == "" else freq
-        indexer = json.loads(indexer)
+        indexer_dict = json.loads(tindexer)
         if cal_start or cal_end:
             warnings.warn(
                 "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
                 "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
             )
         zero_inflated = any(k in params.attrs for k in ["number_of_zeros"])
+    else:
+        indexer_dict = {**indexer}
 
     if window is None or dist is None or method is None or zero_inflated is None:
         raise ValueError(
@@ -1094,7 +1096,7 @@ def standardized_index(
             alpha_beta = plotting_position_zero
 
     # apply resampling and rolling operations
-    da, _ = preprocess_standardized_index(da, freq=freq, window=window, **indexer)
+    da, _ = preprocess_standardized_index(da, freq=freq, window=window, **indexer_dict)
     if params is None:
         params = standardized_index_fit_params(
             da.sel(time=slice(cal_start, cal_end)),
