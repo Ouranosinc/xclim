@@ -116,7 +116,7 @@ def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
 
     Parameters
     ----------
-    doy : str
+    doy : DayOfYearStr
         The day of year in the format "MM-DD".
     year : int
         The year.
@@ -1019,7 +1019,7 @@ def doy_to_days_since(
     da : xr.DataArray
         Array of "day-of-year", usually int dtype, must have a `time` dimension.
         Sampling frequency should be finer or similar to yearly and coarser than daily.
-    start : date of year str, optional
+    start : DayOfYearStr, optional
         A date in "MM-DD" format, the base day of the new array. If None (default), the `time` axis is used.
         Passing `start` only makes sense if `da` has a yearly sampling frequency.
     calendar : str, optional

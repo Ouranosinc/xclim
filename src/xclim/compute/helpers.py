@@ -928,8 +928,8 @@ def jones_day_length_latitude_coefficient(
     lat: xr.DataArray | xr.Dataset | xr.DataTree,
     method: Literal["gladstones", "jones"],
     floor: bool = False,
-    start_date: str | DayOfYearStr = "04-01",
-    end_date: str | DayOfYearStr = "11-01",
+    start_date: DayOfYearStr | Literal["default"] = "default",
+    end_date: DayOfYearStr | Literal["default"] = "default",
     freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
 ) -> xr.DataArray:
     r"""
@@ -952,9 +952,9 @@ def jones_day_length_latitude_coefficient(
     floor : bool, optional
         If True, latitudes where the day length latitude coefficient would be below '1.0', the value is set to '1.0'.
         if False, coefficient can be below '1.0' for latitudes where the day length is less than the reference latitude.
-    start_date : str or DayOfYearStr
+    start_date : DayOfYearStr, defaults to '04-01'
         The start date of the growing season.
-    end_date : str or DayOfYearStr
+    end_date : DayOfYearStr, defaults to '11-01'
         The end date of the growing season. Date is not included in the aggregation.
     freq : {"YS", "YS-JAN", "YS-JUL"}
         The frequency at which to aggregate the day lengths.
@@ -998,6 +998,11 @@ def jones_day_length_latitude_coefficient(
     For both of these methods, the :math:`k` coefficient must be calculated at the growing season frequency (yearly),
     starting from either January or July, depending on the hemisphere of interest.
     """
+    if start_date == "default":
+        start_date = DayOfYearStr("04-01")
+    if end_date == "default":
+        end_date = DayOfYearStr("11-01")
+
     if parse_offset(freq) not in [(1, "Y", True, "JAN"), (1, "Y", True, "JUL")]:
         msg = (
             f"Freq {freq} not supported. Must be 'YS'/'YS-JAN', or 'YS-JUL' for method 'jones'. "

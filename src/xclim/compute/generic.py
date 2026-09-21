@@ -881,6 +881,7 @@ def season(
         Resampling frequency. If None, time dimension is reduced completely.
     mid_date : DayOfYearStr, optional
         An optional middle date. The start must happen before and the end after for the season to be valid.
+        Setting `None` removes that constraint.
     constrain : Sequence of strings, optional
         A list of acceptable comparison operators. Optional, but indicators wrapping this function should inject it.
     **indexer : {dim: indexer, }, optional
@@ -1373,9 +1374,10 @@ def day_threshold_reached(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
-    date : str or None
+    date : DayOfYearStr, optional
         Date of the year after which to look for the first event, or before which to look for the last event.
         Should have the format '%m-%d'. None means there is no limit.
+        Setting `None` removes that constraint.
     which : {'first', 'last'}
         Whether to look for the first or the last event.
     window : int

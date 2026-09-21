@@ -1014,9 +1014,9 @@ def growing_season_start(
         Mean daily temperature.
     thresh : Quantified
         Threshold temperature on which to base evaluation.
-    mid_date : str, optional, defaults to '07-01'
+    mid_date : DayOfYearStr, optional, defaults to '07-01'
         Date of the year before which the season must start. Should have the format '%m-%d'.
-        ``None`` removes that constraint.
+        Setting `None` removes that constraint.
     window : int
         Minimum number of days with temperature above threshold needed for evaluation.
     freq : str
@@ -1071,9 +1071,9 @@ def growing_season_end(
         Mean daily temperature.
     thresh : Quantified
         Threshold temperature on which to base evaluation.
-    mid_date : str, optional, defaults to '07-01'
+    mid_date : DayOfYearStr, optional, defaults to '07-01'
         Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
-        ``None`` removes that constraint.
+        Setting `None` removes that constraint.
     window : int
         Minimum number of days with temperature below threshold needed for evaluation.
     freq : str
@@ -1145,7 +1145,7 @@ def growing_season_length(
         Threshold temperature on which to base evaluation.
     window : int
         Minimum number of days with temperature above the threshold to mark the beginning and end of growing season.
-    mid_date : str, optional, defaults to '07-01'
+    mid_date : DayOfYearStr, optional, defaults to '07-01'
         Date of the year before which the season must start and after which it can end. Should have the format '%m-%d'.
         Setting `None` removes that constraint.
     freq : str
@@ -1232,9 +1232,9 @@ def frost_season_length(
         Minimum daily temperature.
     window : int
         Minimum number of days with temperature below threshold to mark the beginning and end of frost season.
-    mid_date : str, optional, defaults to '01-01'
+    mid_date : DayOfYearStr, optional, defaults to '01-01'
         The date must be included in the season. It is the earliest the end of the season can be.
-        ``None`` removes that constraint.
+        Setting `None` removes that constraint.
     thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
@@ -1320,7 +1320,8 @@ def frost_free_season_start(
     window : int
         Minimum number of days with temperature above/under the threshold to start/end the season.
     mid_date : DayOfYearStr, optional, defaults to '07-01'
-        A date that must be included in the season. `None` removes that constraint.
+        A date that must be included in the season. It is the earliest the end of the season can be.
+        Setting `None` removes that constraint.
     op : {">", "gt", ">=", "ge"}
         How to compare tasmin and the threshold.
     freq : str
@@ -1384,7 +1385,8 @@ def frost_free_season_end(
     window : int
         Minimum number of days with temperature above/under the threshold to start/end the season.
     mid_date : DayOfYearStr, optional, defaults to '07-01'
-        A date what must be included in the season. `None` removes that constraint.
+        A date that must be included in the season. It is the earliest the end of the season can be.
+        Setting `None` removes that constraint.
     op : {">", "gt", ">=", "ge"}
         How to compare tasmin and the threshold.
     freq : str
@@ -1455,7 +1457,8 @@ def frost_free_season_length(
     window : int
         Minimum number of days with temperature above/under the threshold to start/end the season.
     mid_date : DayOfYearStr, optional, defaults to '07-01'
-        A date what must be included in the season. `None` removes that constraint.
+        A date that must be included in the season. It is the earliest the end of the season can be.
+        Setting `None` removes that constraint.
     op : {">", "gt", ">=", "ge"}
         How to compare tasmin and the threshold.
     freq : str
@@ -1586,8 +1589,9 @@ def last_spring_frost(
         Threshold temperature on which to base evaluation.
     op : {"<", "lt", "<=", "le"}
         Comparison operation. Default: "<".
-    before_date : str, optional, defaults to '07-01'
+    before_date : DayOfYearStr, optional, defaults to '07-01'
         Date of the year before which to look for the final frost event. Should have the format '%m-%d'.
+        Setting `None` removes that constraint.
     window : int
         Minimum number of days with temperature below the threshold needed for evaluation.
     freq : str
@@ -1649,8 +1653,9 @@ def first_day_temperature_below(
         Threshold temperature on which to base evaluation.
     op : {"<", "lt", "<=", "le"}
         Comparison operation. Default: ">".
-    after_date : str, optional, defaults to '07-01'
+    after_date : DayOfYearStr, optional, defaults to '07-01'
         Date of the year after which to look for the first event. Should have the format '%m-%d'.
+        Setting `None` removes that constraint.
     window : int
         Minimum number of days with temperature below the threshold needed for evaluation.
     freq : str
@@ -1705,8 +1710,9 @@ def first_day_temperature_above(
         Threshold temperature on which to base evaluation.
     op : {">", "gt", ">=", "ge"}
         Comparison operation. Default: ">".
-    after_date : str, optional, default to '01-01'
+    after_date : DayOfYearStr, optional, default to '01-01'
         Date of the year after which to look for the first event. Should have the format '%m-%d'.
+        Setting `None` removes that constraint.
     window : int
         Minimum number of days with temperature above the threshold needed for evaluation.
     freq : str
@@ -3095,10 +3101,10 @@ def degree_days_exceedance_date(
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         If equivalent to '>', degree days are computed as `tas - thresh` and if
         equivalent to '<', they are computed as `thresh - tas`.
-    after_date : str, optional
+    after_date : DayOfYearStr, optional
         Date at which to start the cumulative sum.
         In "MM-DD" format, defaults to the start of the sampling period.
-    never_reached : int, str, optional
+    never_reached : int, DayOfYearStr, optional
         What to do when `sum_thresh` is never exceeded.
         If an int, the value to assign as a day-of-year.
         If a string, must be in "MM-DD" format, the day-of-year of that date is assigned.

@@ -895,6 +895,7 @@ def season_start(
         Minimum duration of consecutive values to start and end the season.
     mid_date : DayOfYearStr, optional
         The date (in MM-DD format) that a season must include to be considered valid.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate the season (default: 'time').
     coord : Optional[str]
@@ -939,6 +940,7 @@ def season_end(
         Minimum duration of consecutive values to start and end the season.
     mid_date : DayOfYearStr, optional
         The date (in MM-DD format) that a run must include to be considered valid.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     coord : str, optional
@@ -1007,6 +1009,7 @@ def season(
         Minimum duration of consecutive values to start and end the season.
     mid_date : DayOfYearStr, optional
         The date (in MM-DD format) that a run must include to be considered valid.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     stat : str, optional
@@ -1114,6 +1117,7 @@ def season_length(
         Minimum duration of consecutive values to start and end the season.
     mid_date : DayOfYearStr, optional
         The date (in MM-DD format) that a run must include to be considered valid.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
 
@@ -1150,8 +1154,9 @@ def run_end_after_date(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive run to accumulate values.
-    date : str, optional, defaults to '07-01'
+    date : DayOfYearStr, optional, defaults to '07-01'
         The date after which to look for the end of a run.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     coord : Optional[Union[bool, str]]
@@ -1209,6 +1214,7 @@ def first_run_after_date(
         Minimum duration of consecutive run to accumulate values.
     date : DayOfYearStr, optional, defaults to '07-01'
         The date after which to look for the run.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     coord : bool or str, optional
@@ -1255,6 +1261,7 @@ def last_run_before_date(
         Minimum duration of consecutive run to accumulate values.
     date : DayOfYearStr, optional, defaults to '07-01'
         The date before which to look for the last event.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     coord : bool or str, optional
@@ -1296,8 +1303,9 @@ def first_run_before_date(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive run to accumulate values.
-    date : DayOfYearStr, optional
+    date : DayOfYearStr, optional, defaults to '07-01'
         The date before which to look for the run.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     coord : bool or str, optional
@@ -1631,7 +1639,7 @@ def index_of_date(
         An array of datetime values, any calendar.
     date : DayOfYearStr or DateStr, optional
         A string in the "yyyy-mm-dd" or "mm-dd" format.
-        If None, returns default.
+        Setting `None`` returns default.
     max_idxs : int, optional
         Maximum number of returned indexes.
     default : int
