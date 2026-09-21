@@ -116,6 +116,14 @@ CF_AMOUNTS, CF_RATES = list(zip(*CF_CONVERSIONS["amount2rate"]["valid_names"], s
 _CONVERSIONS = {}
 
 
+TEMPERATURE_DELTA_UNITS = {
+    units.delta_degree_Celsius: units.degree_Celsius,
+    units.delta_degree_Fahrenheit: units.degree_Fahrenheit,
+    units.delta_degree_Reaumur: units.degree_Reaumur,
+}
+"""Mapping from "delta_" difference temperature units to "on scale" units."""
+
+
 # FIXME: This needs to be properly annotated for mypy compliance.
 # See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
 def _register_conversion(conversion, direction):
@@ -233,8 +241,9 @@ def pint2cfattrs(value: pint.Quantity | pint.Unit, is_difference=None) -> dict[s
         Input unit.
     is_difference : bool
         Whether the value represent a difference in temperature, which is ambiguous in the case of absolute
-        temperature scales like Kelvin or Rankine. It will automatically be set to True if units are "delta_*"
-        units.
+        temperature scales like Kelvin or Rankine. Default is to set to True if units contains difference units,
+        or to False if the units are the on-scale units (°C, °F or °Re). Otherwise, if `value` has temperature
+        dimensions, "unknown" is given as the "units metadata" (this usually happens with K or °R).
 
     Returns
     -------
@@ -242,19 +251,22 @@ def pint2cfattrs(value: pint.Quantity | pint.Unit, is_difference=None) -> dict[s
         Units following CF-Convention, using symbols.
     """
     s = pint2cfunits(value)
-    if "delta_" in s:
-        is_difference = True
-        s = s.replace("delta_", "")
+    # Must support composed units
+    for diffu, scaleu in TEMPERATURE_DELTA_UNITS.items():
+        if pint2cfunits(diffu) in s:
+            if is_difference is None:
+                is_difference = True
+            s = s.replace(pint2cfunits(diffu), pint2cfunits(scaleu))
+        elif pint2cfunits(scaleu) in s and is_difference is None:
+            is_difference = False
 
     attrs = {"units": s}
     if "[temperature]" in value.dimensionality:
-        if is_difference:
-            attrs["units_metadata"] = "temperature: difference"
-        elif is_difference is False:
-            attrs["units_metadata"] = "temperature: on_scale"
+        if is_difference is not None:
+            metadata = "difference" if is_difference else "on_scale"
         else:
-            attrs["units_metadata"] = "temperature: unknown"
-
+            metadata = "unknown"
+        attrs["units_metadata"] = f"temperature: {metadata}"
     return attrs
 
 
@@ -408,6 +420,8 @@ def convert_units_to(
     if isinstance(source, xr.DataArray):
         source_unit = units2pint(source)
         target_cf_attrs = pint2cfattrs(target_unit)
+        if "units_metadata" in source.attrs and target_cf_attrs.get("units_metadata", "") == "temperature: unknown":
+            target_cf_attrs["units_metadata"] = source.attrs["units_metadata"]
 
         # Automatic pre-conversions based on the dimensionalities and CF standard names
         standard_name = source.attrs.get("standard_name")
@@ -697,7 +711,9 @@ def to_agg_units(
         statistic = statistic.__name__
 
     is_difference = (
-        True if statistic in ["std", "var"] or "difference" in orig.attrs.get("units_metadata", "") else None
+        True
+        if statistic in ["std", "var", "integral"] or "difference" in orig.attrs.get("units_metadata", "")
+        else None
     )
 
     if statistic in ["min", "max", "mean", "sum", "std"]:

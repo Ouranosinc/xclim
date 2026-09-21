@@ -117,7 +117,12 @@ class TestConvertUnitsTo:
         delta = xr.DataArray([2], attrs={"units": "K", "units_metadata": "temperature: difference"})
         out = convert_units_to(source=delta, target="delta_degC")
         assert out == 2
-        assert out.attrs["units"] == "degC"
+        assert out.attrs["units"] == "°C"
+
+        out = convert_units_to(source=delta, target="K")
+        assert out == 2
+        assert out.attrs["units"] == "K"
+        assert out.attrs["units_metadata"] == "temperature: difference"
 
     def test_dataset(self, open_dataset):
         ds = open_dataset(self.test_data)
@@ -382,9 +387,9 @@ def test_declare_relative_units():
             "sum",
             "integral",
             365,
-            ("degC d", "d degC"),
+            ("°C d", "d °C"),
         ),  # dependent on numpy/pint version
-        ("°F", "sum", "integral", 365, "d degF"),  # not sure why the order is different
+        ("°F", "sum", "integral", 365, "d °F"),  # not sure why the order is different
     ],
 )
 def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
@@ -423,7 +428,7 @@ def test_pint2cfattrs():
     assert "units_metadata" not in attrs
 
     attrs = pint2cfattrs(units.delta_degC)
-    assert attrs == {"units": "degC", "units_metadata": "temperature: difference"}
+    assert attrs == {"units": "°C", "units_metadata": "temperature: difference"}
 
 
 def test_temp_difference_rountrip():
@@ -436,7 +441,7 @@ def test_temp_difference_rountrip():
 
     # and that converting those back to cf attrs gives the same result
     attrs = pint2cfattrs(pu)
-    assert attrs == {"units": "degC", "units_metadata": "temperature: difference"}
+    assert attrs == {"units": "°C", "units_metadata": "temperature: difference"}
 
 
 @pytest.mark.parametrize(
