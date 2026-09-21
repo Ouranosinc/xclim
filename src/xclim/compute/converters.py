@@ -1825,7 +1825,7 @@ def fao_allen98(
     ea: xr.DataArray,
     delta_svp: xr.DataArray,
     gamma: xr.DataArray | str,
-    G: str | None = "0 MJ m-2 day-1",
+    G: str = "0 MJ m-2 day-1",
 ):
     r"""
     FAO-56 Penman-Monteith equation.
@@ -1851,8 +1851,8 @@ def fao_allen98(
         Slope of saturation vapour pressure curve [kPa degC-1].
     gamma : xarray.DataArray or str
         Psychrometric constant [kPa deg C].
-    G : float, optional
-        Soil heat flux (G) [MJ m-2 day-1] (For daily default to 0).
+    G : str, defaults to '0 MJ m-2 day-1'
+        Soil heat flux (G) [MJ m-2 day-1].
 
     Returns
     -------
