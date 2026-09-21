@@ -196,7 +196,7 @@ def spell_mask(
     # Checks
     if not isinstance(data, xr.DataArray):
         # thus a sequence
-        if isinstance(thresh, (float, int, xr.DataArray)) or (len(data) >= len(thresh)):
+        if isinstance(thresh, (float, int, xr.DataArray)) or (len(data) != len(thresh)):
             raise ValueError("When ``data`` is given as a list, ``thresh`` must be a sequence of the same length.")
         data = xr.concat(data, "variable")
         if isinstance(thresh[0], xr.DataArray):
