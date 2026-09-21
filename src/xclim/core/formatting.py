@@ -420,7 +420,7 @@ def gen_call_string(funcname: str, *args: Any, **kwargs: Any) -> str:
     chain = itertools.chain(zip([None] * len(args), args, strict=False), kwargs.items())
     for name, val in chain:
         if isinstance(val, xr.DataArray):
-            rep = val.name or "<array>"
+            rep = f"<{val.name or 'unnamed'} array>"
         elif isinstance(val, int | float | str | bool) or val is None:
             rep = repr(val)
         else:
