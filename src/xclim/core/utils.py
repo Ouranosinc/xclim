@@ -174,9 +174,9 @@ def load_module(path: os.PathLike, name: str | None = None) -> ModuleType:
     path = Path(path)
     spec = importlib.util.spec_from_file_location(name or path.stem, path)
     if spec is None:
-        raise ValueError("spec is not a valid ModuleSpec type but None.")
+        raise ValueError("'spec' is not a valid ModuleSpec type but 'None'.")
     if spec.loader is None:
-        raise ValueError("spec.loader is not a valid ModuleSpec type but None.")
+        raise ValueError("'spec.loader' is not a valid ModuleSpec type but 'None'.")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)  # This executes code, effectively loading the module
     return mod

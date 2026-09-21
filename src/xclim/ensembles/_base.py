@@ -398,9 +398,9 @@ def _ens_align_datasets(
     resample_freq : str, optional
         If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
         If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
-    calendar : str
-        The calendar of the time coordinate of the ensemble. For conversions involving '360_day',
-        the align_on='date' option is used.
+    calendar : str, optional
+        The calendar of the time coordinate of the ensemble.
+        For conversions involving '360_day', the align_on='date' option is used.
         See :py:func:`xclim.core.calendar.convert_calendar`.
         'default' is the standard calendar using np.datetime64 objects.
     cal_kwargs : dict, optional

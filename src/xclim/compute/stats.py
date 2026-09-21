@@ -232,7 +232,7 @@ def parametric_quantile(
         Distribution parameters returned by the `fit` function.
         The array should have dimension `dparams` storing the distribution parameters,
         and attribute `scipy_dist`, storing the name of the distribution.
-    q : float, Sequence of float or np.ndarray of float
+    q : float or Sequence of float or np.ndarray of float
         Quantile to compute, which must be between `0` and `1`, inclusive.
     dist : str or rv_continuous distribution object, optional
         The distribution name or instance if the `scipy_dist` attribute is not available on `p`.
