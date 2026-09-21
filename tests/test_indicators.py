@@ -146,6 +146,8 @@ def test_attrs(tas_series):
     a = tas_series(np.arange(360.0))
     out = uniIndTemp(a, thresh="5 degC", freq="YS")
     assert out.tmin5degC.cell_methods == "time: mean time: mean within years"
+    assert "tmin(" in out.history
+    assert "history" not in out.tmin5degC.attrs
     assert uniIndTemp.standard_name == "{freq} mean temperature"
     assert uniIndTemp.outputs[0].attrs["another_attr"] == "With a value."
     # Output objects have convenience getitem
@@ -161,6 +163,7 @@ def test_attrs(tas_series):
     with xclim.set_options(as_dataset=False):
         txm = uniIndTemp(a, thresh=thresh, freq="YS")
     assert txm.attrs["long_name"].endswith("with <an array> threshold.")
+    assert "tmin(" in txm.attrs["history"]
 
 
 @pytest.mark.parametrize(

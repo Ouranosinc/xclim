@@ -1133,26 +1133,9 @@ class _DatasetIO(IndicatorBase):
             out = Dataset({o.name: o for o in outs})
             if xarray.get_options()["keep_attrs"] is not False:
                 out.attrs.update(meta.get("dsattrs", {}))
-
-            out.attrs["history"] = update_history(
-                self._history_string(das, params, meta),
-                out,
-                new_name=self.identifier,
-            )
             return out
-        return super()._finalize(outs, das, params, meta)
 
-    def _history_string(self, das, params, meta):
-        """Return a string for history. It will be prefixed by a timestamp and suffixed by xclim's version."""
-        kwargs = {**das}
-        for k, v in params.items():
-            if self._all_parameters[k].injected:
-                continue
-            if self._all_parameters[k].kind == InputKind.KWARGS:
-                kwargs.update(**v)
-            elif self._all_parameters[k].kind != InputKind.DATASET:
-                kwargs[k] = v
-        return gen_call_string(self.identifier, **kwargs)
+        return super()._finalize(outs, das, params, meta)
 
 
 class _DataTreeIterator(_DatasetIO):
@@ -1303,6 +1286,36 @@ class _MetadataFormatter(_DataTreeIterator):
         fmtargs = self._get_formatter_args(args, {})
         out["outputs"] = [self._format_attrs(outmeta.attrs, fmtargs) | outmeta.meta for outmeta in self.outputs]
         out["parameters"] = {k: p.json() for k, p in self._all_parameters.items()}
+        return out
+
+    def _history_string(self, das, params, meta):
+        """Return a string for history. It will be prefixed by a timestamp and suffixed by xclim's version."""
+        kwargs = {**das}
+        for k, v in params.items():
+            if self._all_parameters[k].injected:
+                continue
+            if self._all_parameters[k].kind == InputKind.KWARGS:
+                kwargs.update(**v)
+            elif self._all_parameters[k].kind != InputKind.DATASET:
+                kwargs[k] = v
+        return gen_call_string(self.identifier, **kwargs)
+
+    def _finalize(self, outs, das, params, meta):
+        history = self._history_string(das, params, meta)
+        out = super()._finalize(outs, das, params, meta)
+        if isinstance(out, Dataset):
+            out.attrs["history"] = update_history(
+                history,
+                out,
+                new_name=self.identifier,
+            )
+            return out
+
+        if isinstance(out, DataArray):
+            return out.assign_attrs(history=history)
+
+        for o in out:
+            o.attrs["history"] = history
         return out
 
 
