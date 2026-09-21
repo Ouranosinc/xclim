@@ -27,6 +27,7 @@ Major changes
     * The ``xclim.core.indicator.registry`` now holds ``Indicator`` _instances_ (not classes) and is case-insensitive.
     * "Virtual submodules" were transformed into ``xclim.core.collection.IndicatorCollection`` instances (and not actual python modules). Indicators created this way automatically have the collection's name prepended to their identifier. Indicators created in the context of a collection are not registered by default. (:pull:`2415`).
     * Copying/Subclassing an existing indicator is now done through ``Indicator.copy``, method ``Indicator.from_dict`` is deprecated. (:pull:`2424`).
+    * Indicators will now add a ``xclim_description`` attribute to all their outputs, This is similar to the ``history`` that is now only put on output datasets, but excludes datetime, xclim's version and does not append any input metadata. (:pull:`2431`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -39,7 +40,12 @@ New indicators and features
 * `IndicatorCollection` yaml specifications updates:
     * New ``bases`` section for defining indicator classes to reuse in defining the ones in the ``indicators`` section (:pull:`2415`).
     * Fields ``base`` and ``compute`` can now be a "qualified name" of an object to be imported dynamically, or the qualified name of an indicator with its submodule/realm. Ex: ``atmos.precip_accumulation``, which was previously referred by its identifier ``prcptot`` (:pull:`2415`).
-* Indicators will now add a ``input_variables`` attribute to all outputs, listing (space-separated) the input arguments, both their signature name and the name of the provided `DataArray` (:pull:`2431`).
+
+Bug fixes
+^^^^^^^^^
+* Handling of ``units_metadata`` has been updated (:pull:`2431`).
+    * In ``convert_units_to``, if the source is known to be "on-scale" or "difference" but the target is ambiguous, the source's metadata is preserved.
+    * When "difference" units are formatted to string, CF symbols are more consistently used.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
