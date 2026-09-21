@@ -147,6 +147,7 @@ def test_attrs(tas_series):
     out = uniIndTemp(a, thresh="5 degC", freq="YS")
     assert out.tmin5degC.cell_methods == "time: mean time: mean within years"
     assert "tmin(" in out.history
+    assert out.tmin5degC.base_variables == "da"
     assert "history" not in out.tmin5degC.attrs
     assert uniIndTemp.standard_name == "{freq} mean temperature"
     assert uniIndTemp.outputs[0].attrs["another_attr"] == "With a value."
@@ -186,6 +187,7 @@ def test_keep_attrs(tasmin_series, tasmax_series, xropt, exp):
     assert (tg.attrs.get("something") == "blabla") is exp
     assert (tg.attrs.get("foo") == "bar") is exp
     assert "bing" not in tg.attrs
+    assert tg.attrs["base_variables"] == "tasmax tasmin"
 
 
 @pytest.mark.parametrize("xrkeep", [True, False])
@@ -310,6 +312,7 @@ def test_multiindicator(tas_series):
     assert out.tmin.attrs["description"] == "Grouped computation of tmax and tmin"
     assert out.tmax.attrs["description"] == "Grouped computation of tmax and tmin"
     assert multiTemp.units == ["K", "K"]
+    assert out.tmin.attrs["base_variables"] == "tas"
 
     # Attrs passed as keywords - together
     ind = Daily(

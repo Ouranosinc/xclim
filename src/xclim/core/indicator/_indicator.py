@@ -887,6 +887,7 @@ class IndicatorBase(IndexWrapper):
         for i, atts in enumerate(outputs, 1):
             if atts.var_name is None:
                 raise ValueError(f"Output #{i} of {identifier} is missing a var_name.")
+
         return outputs
 
     def __call__(self, *args, **kwargs):
@@ -1177,6 +1178,8 @@ class _MetadataFormatter(_DataTreeIterator):
         if xarray.get_options()["keep_attrs"] is not False and len(das) == 1:
             parent_attrs = {k: v for k, v in list(das.values())[0].attrs.items() if k not in self._drop_attrs}
 
+        base_variables = " ".join(das.keys())
+
         fmtargs = self._get_formatter_args(das | params, meta)
         for out, outmeta in zip(outs, self.outputs, strict=False):
             out.attrs.update(parent_attrs)
@@ -1187,6 +1190,10 @@ class _MetadataFormatter(_DataTreeIterator):
 
             if "{" in outmeta.var_name:
                 out.name = default_formatter.format(outmeta.var_name, **fmtargs).replace(" ", "")
+
+            # Add a "base_variables" attribute listing inputs
+            out.attrs.update(base_variables=base_variables)
+
         return outs, meta
 
     def _get_formatter_args(self, args, meta):
@@ -1606,7 +1613,9 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
     in :py:data:`xclim.core.indicator.registry`.
 
     Metadata and attributes in `Indicator.outputs` will be formatted and added to the output variable(s).
-    This attribute is a list of :py:class:`Output` objects.
+    This attribute is a list of :py:class:`Output` objects. An history attribute is also created an added
+    to the output, merging with a parent's dataset history if possible. Finally a ``base_variables`` attribute
+    is added to each output variable, listing (space-separated) the input variables used to compute the indicator.
 
     A lot of the Indicator's metadata is parsed from the underlying `compute` function's
     docstring and signature. Input variables and parameters are listed in
