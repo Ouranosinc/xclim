@@ -239,16 +239,22 @@ def pint2cfattrs(value: pint.Quantity | pint.Unit, is_difference=None) -> dict[s
     ----------
     value : pint.Unit
         Input unit.
-    is_difference : bool
+    is_difference : bool, optional
         Whether the value represent a difference in temperature, which is ambiguous in the case of absolute
-        temperature scales like Kelvin or Rankine. Default is to set to True if units contains difference units,
-        or to False if the units are the on-scale units (°C, °F or °Re). Otherwise, if `value` has temperature
-        dimensions, "unknown" is given as the "units metadata" (this usually happens with K or °R).
+        temperature scales like Kelvin or Rankine. Default is to guess, see notes.
 
     Returns
     -------
     dict
         Units following CF-Convention, using symbols.
+
+    Notes
+    -----
+    Temperatures are understood as differences if the input unit contains any of the known difference units
+    (see :py:data:`TEMPERATURE_DELTA_UNITS`). They are understood as on-scale if the input unit is exactly one of the
+    known on-scale units (°C, °F or °Re). Otherwise, "unknown" is given as the "units metadata" (this usually happens
+    with K or °R, or with composed units like `°C d`). Of course, ``units_metadata`` is not added if the input
+    has no temperature dimension.
     """
     s = pint2cfunits(value)
     # Must support composed units
