@@ -27,7 +27,7 @@ Major changes
     * The ``xclim.core.indicator.registry`` now holds ``Indicator`` _instances_ (not classes) and is case-insensitive.
     * "Virtual submodules" were transformed into ``xclim.core.collection.IndicatorCollection`` instances (and not actual python modules). Indicators created this way automatically have the collection's name prepended to their identifier. Indicators created in the context of a collection are not registered by default. (:pull:`2415`).
     * Copying/Subclassing an existing indicator is now done through ``Indicator.copy``, method ``Indicator.from_dict`` is deprecated. (:pull:`2424`).
-    * Indicators will now add a ``xclim_description`` attribute to all their outputs, This is similar to the ``history`` that is now only put on output datasets, but excludes datetime, xclim's version and does not append any input metadata. (:pull:`2431`).
+    * Indicators will now add an ``xclim_description`` attribute to all their outputs, This is similar to the ``history`` that is now only appended to output datasets, but excludes datetime and `xclim`'s version. It does not append any input metadata. (:pull:`2431`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -43,7 +43,7 @@ New indicators and features
 
 Bug fixes
 ^^^^^^^^^
-* Handling of ``units_metadata`` has been updated (:pull:`2431`).
+* Handling of ``units_metadata`` has been updated. (:pull:`2431`).
     * In ``convert_units_to``, if the source is known to be "on-scale" or "difference" but the target is ambiguous, the source's metadata is preserved.
     * When "difference" units are formatted to string, CF symbols are more consistently used.
 
