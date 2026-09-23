@@ -2396,7 +2396,9 @@ def universal_thermal_climate_index(
     rlus: xr.DataArray | None = None,
     stat: str = "sunlit",
     mask_invalid: bool = True,
-    wind_cap_min: bool = False,
+    validity_ranges: dict = None,
+    hurs_cap_min: bool = True,
+    wind_cap_min: bool = True,
 ) -> xr.DataArray:
     r"""
     Universal thermal climate index (UTCI).
@@ -2416,26 +2418,36 @@ def universal_thermal_climate_index(
         Mean Radiant Temperature.
     rsds : xr.DataArray, optional
         Surface Downwelling Shortwave Radiation.
-        This is necessary if `mrt` is not `None`.
+        This is necessary if `mrt` is `None`.
     rsus : xr.DataArray, optional
         Surface Upwelling Shortwave Radiation.
-        This is necessary if `mrt` is not `None`.
+        This is necessary if `mrt` is `None`.
     rlds : xr.DataArray, optional
         Surface Downwelling Longwave Radiation.
-        This is necessary if `mrt` is not `None`.
+        This is necessary if `mrt` is `None`.
     rlus : xr.DataArray, optional
         Surface Upwelling Longwave Radiation.
-        This is necessary if `mrt` is not `None`.
+        This is necessary if `mrt` is `None`.
     stat : {'instant', 'sunlit'}
         Which statistic to apply.
         If "instant", the instantaneous cosine of the solar zenith angle is calculated.
         If "sunlit", the cosine of the solar zenith angle is calculated during the sunlit period of each interval.
         This is necessary if `mrt` is not `None`.
     mask_invalid : bool
-        If True (default), UTCI values are NaN where any of the inputs are outside their validity ranges:
-        - -50°C < tas < 50°C.
-        - -30°C < tas - mrt < 30°C.
-        - 0.5 m/s < sfcWind < 17.0 m/s.
+        If True (default), UTCI values are NaN where any of the inputs are outside the ranges given by the
+        `validity_ranges` argument.
+    validity_ranges : dict, optional
+        A dictionary giving the validity ranges (as length-2 tuples) for three variables : `tas`, `delta`, `sfcWind`
+        and `hurs`. `delta` is the difference between air temperature and radiant temperature : `tas - mrt`.
+        Values should be given as quantity strings (ex: ``"50 °C"``). All entries are not required, they will be filled
+        by the defaults. Bounds are inclusive. The default is :
+        - -50°C <= tas <= 50°C.
+        - -30°C <= tas - mrt <= 70°C.
+        - 0.5 m/s <= sfcWind <= 30.3 m/s.
+        - 5 % <=  hurs <= 100 %.
+    hurs_cap_min : bool
+        If True, relative humidities are capped to a minimum of 5 % following :cite:t:`brode_utci_2012`
+        usage guidelines. This ensures UTCI calculation for dry weathers. Default value False.
     wind_cap_min : bool
         If True, wind velocities are capped to a minimum of 0.5 m/s following :cite:t:`brode_utci_2012`
         usage guidelines. This ensures UTCI calculation for low winds. Default value False.
@@ -2463,11 +2475,14 @@ def universal_thermal_climate_index(
     sfcWind = convert_units_to(sfcWind, "m/s")
     if wind_cap_min:
         sfcWind = sfcWind.clip(0.5, None)
+    hurs = convert_units_to(hurs, "1")
+    if hurs_cap_min:
+        hurs = hurs.clip(0.05, None)
     if mrt is None:
         mrt = mean_radiant_temperature(rsds=rsds, rsus=rsus, rlds=rlds, rlus=rlus, stat=stat)
     mrt = convert_units_to(mrt, "degC")
     delta = mrt - tas
-    pa = convert_units_to(e_sat, "kPa") * convert_units_to(hurs, "1")
+    pa = convert_units_to(e_sat, "kPa") * hurs
 
     utci: xr.DataArray = xr.apply_ufunc(
         _utci,
@@ -2482,9 +2497,23 @@ def universal_thermal_climate_index(
 
     utci = utci.assign_attrs({"units": "degC"})
     if mask_invalid:
-        utci = utci.where(
-            (-50.0 < tas) & (tas < 50.0) & (-30 < delta) & (delta < 30) & (0.5 <= sfcWind) & (sfcWind < 17.0)
-        )
+        default_validity_ranges = {
+            "tas": ("-50 °C", "50 °C"),
+            "delta": ("-30 °C", "70 °C"),
+            "sfcWind": ("0.5 m s-1", "30.3 m s-1"),
+            "hurs": ("5 %", "100 %"),
+        }
+        if validity_ranges is None:
+            validity_ranges = default_validity_ranges
+        else:
+            validity_ranges = default_validity_ranges | validity_ranges
+        mask = xr.full_like(utci, True, bool)
+        for key, da in [("tas", tas), ("delta", delta), ("sfcWind", sfcWind), ("hurs", hurs)]:
+            low, high = validity_ranges[key]
+            low = convert_units_to(low, da)
+            high = convert_units_to(high, da)
+            mask = mask & (low <= da) & (da <= high)
+        utci = utci.where(mask)
     return utci
 
 
