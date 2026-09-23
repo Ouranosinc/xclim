@@ -299,7 +299,7 @@ def infer_kind_from_parameter(param) -> InputKind:
     if annot == {"bool"}:
         return InputKind.BOOL
 
-    if annot == {"dict"}:
+    if all(a.startswith("dict[") for a in annot) or annot == {"dict"}:
         return InputKind.DICT
 
     if annot == {"Dataset"}:

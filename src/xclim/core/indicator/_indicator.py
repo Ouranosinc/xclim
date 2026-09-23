@@ -605,7 +605,15 @@ class IndexWrapper:  # numpydoc ignore=PR01
 
         source = []
         if hasattr(self.compute, "__module__"):
-            source.append(f"Based on function :py:func:`~{self.compute.__module__}.{self.compute.__name__}`.")
+            mod = self.compute.__module__
+            # Special case for compute functions that are imported directly in `compute` and documented that way,
+            # so that autodoc can create a working link
+            if mod.startswith("xclim.compute") and (
+                mod.split(".")[2] == "converters" or mod.split(".")[2].startswith("_")
+            ):
+                source.append(f"Based on function :py:func:`~xclim.compute.{self.compute.__name__}`.")
+            else:
+                source.append(f"Based on function :py:func:`~{mod}.{self.compute.__name__}`.")
         else:
             source.append(f"Based on function {self.compute.__name__}.")
         if self.injected_parameters:
