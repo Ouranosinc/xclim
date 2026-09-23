@@ -2481,8 +2481,8 @@ def universal_thermal_climate_index(
         hurs = hurs.clip(0.05, None)
     if mrt is None:
         mrt = mean_radiant_temperature(rsds=rsds, rsus=rsus, rlds=rlds, rlus=rlus, stat=stat)
-    mrt: xr.DataArray = convert_units_to(mrt, "degC")
-    delta = mrt - tas
+    _mrt: xr.DataArray = convert_units_to(mrt, "degC")
+    delta = _mrt - tas
     pa: xr.DataArray = convert_units_to(e_sat, "kPa") * hurs
 
     utci: xr.DataArray = xr.apply_ufunc(
