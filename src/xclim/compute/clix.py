@@ -301,7 +301,7 @@ def first_occurrence(
     threshold: Quantified,
     condition: Condition,
     freq: Freq,
-    after_date: DayOfYearStr = None,
+    after_date: DayOfYearStr | None = None,
 ) -> xr.DataArray:
     """
     Calculate the first time during the specified time period when a threshold is exceeded.
@@ -320,9 +320,10 @@ def first_occurrence(
         Logical comparison operator.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-    after_date : Day of year str (MM-DD)
-        Earliest day the occurrence can be found. Added to definition
-        to support "faf" without indexing.
+    after_date : DayOfYearStr, optional
+        Earliest day the occurrence can be found.
+        Added to definition to support "faf" without indexing.
+        Setting `None` removes that constraint.
 
     Returns
     -------
@@ -376,7 +377,7 @@ def last_occurrence(
     threshold: Quantified,
     condition: Condition,
     freq: Freq,
-    before_date: DayOfYearStr = None,
+    before_date: DayOfYearStr | None = None,
 ) -> xr.DataArray:
     """
     Calculate the last time during the specified time period when a threshold exceeded.
@@ -395,9 +396,10 @@ def last_occurrence(
         Logical comparison operator.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-    before_date : Day of year str (MM-DD)
-        Latest day the occurrence can be found. Added to definition
-        to support "lsf" without indexing.
+    before_date : DayOfYearStr, optional
+        Latest day the occurrence can be found.
+        Added to definition to support "lsf" without indexing.
+        Setting `None` removes that constraint.
 
     Returns
     -------

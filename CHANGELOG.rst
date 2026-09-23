@@ -4,7 +4,7 @@ Changelog
 
 `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
 ------------------------------------------------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`), Juliette Lavoie (:user:`juliettelavoie`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -92,6 +92,7 @@ Internal changes
 * On `bump release`, the `CHANGELOG.rst` file is now automatically updated to set the version title and release date. (:pull:`2413`).
 * `AUTHORS.rst` is now bundled in the `license-files` of packaged wheels. (:pull:`2413`).
 * `make autodoc-custom-index` has been removed in favour of `make autodoc-noindex`. `make docs` and other `sphinx` targets now use the new 'noindex' variant. (:pull:`2424`).
+* The mypy type checking has been added to the pre-commit configurations (:issue:`1719`, :pull:`2425`).
 
 v0.62.0 (2026-08-17)
 --------------------

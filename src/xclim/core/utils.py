@@ -12,7 +12,7 @@ import importlib.util
 import logging
 import os
 import warnings
-from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, ItemsView, Iterator, KeysView, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -30,8 +30,8 @@ class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
 
     # ruff: disable[D102, D105]
 
-    def __init__(self, data: Mapping = None):
-        self._data = {}
+    def __init__(self, data: Mapping | None = None):
+        self._data: dict[Any, Any] = {}
         if data:
             self.update(data)
 
@@ -55,29 +55,19 @@ class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
     def setdefault(self, key: str, default: Any = None) -> Any:  # numpydoc ignore=GL08
         return self._data.setdefault(self._casefold(key), default)
 
-    def __contains__(self, key: str) -> bool:
-        return self._casefold(key) in self._data
+    def __contains__(self, key: object) -> bool:
+        return isinstance(key, str) and self._casefold(key) in self._data
 
     def __delitem__(self, key: str):
         del self._data[self._casefold(key)]
 
-    def update(self, other: Mapping, **kwargs):  # numpydoc ignore=GL08
-        if hasattr(other, "keys"):
-            for k in other.keys():
-                self[k] = other[k]
-        else:
-            for k, v in other:
-                self[k] = v
-        for k, v in kwargs.items():
-            self[k] = v
-
     def __iter__(self) -> Iterator[str]:
         return iter(self._data)
 
-    def items(self) -> Iterator[tuple[str, Any]]:  # numpydoc ignore=GL08
+    def items(self) -> ItemsView[str, Any]:  # numpydoc ignore=GL08
         return self._data.items()
 
-    def keys(self) -> Iterator[str]:  # numpydoc ignore=GL08
+    def keys(self) -> KeysView[str]:  # numpydoc ignore=GL08
         return self._data.keys()
 
     def __len__(self) -> int:
@@ -85,9 +75,6 @@ class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
 
     def __repr__(self) -> str:
         return repr(self._data)
-
-    def pop(self, key: str) -> Any:  # numpydoc ignore=GL08
-        return self._data.pop(self._casefold(key))
 
     def popitem(self) -> tuple[str, Any]:  # numpydoc ignore=GL08
         return self._data.popitem()
@@ -186,6 +173,10 @@ def load_module(path: os.PathLike, name: str | None = None) -> ModuleType:
     """
     path = Path(path)
     spec = importlib.util.spec_from_file_location(name or path.stem, path)
+    if spec is None:
+        raise ValueError("'spec' is not a valid ModuleSpec type but 'None'.")
+    if spec.loader is None:
+        raise ValueError("'spec.loader' is not a valid ModuleSpec type but 'None'.")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)  # This executes code, effectively loading the module
     return mod
@@ -215,7 +206,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
         return da
 
     all_chunks = dict(zip(da.dims, da.chunks, strict=False))
-    chunking = {}
+    chunking: dict[str, int | tuple[int, ...]] = {}
     for dim, minchunk in minchunks.items():
         chunks = all_chunks[dim]
         if minchunk == -1 and len(chunks) > 1:
@@ -347,7 +338,7 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: str | None = None)
 
 def calc_perc(
     arr: np.ndarray,
-    percentiles: Sequence[float] | None = None,
+    percentiles: list[float] | None = None,
     alpha: float = 1.0,
     beta: float = 1.0,
     copy: bool = True,
@@ -359,7 +350,7 @@ def calc_perc(
     ----------
     arr : array_like
         The input array.
-    percentiles : sequence of float, optional
+    percentiles : list of float, optional
         The percentiles to compute. If None, only the median is computed.
     alpha : float
         A constant used to correct the index computed.
@@ -378,15 +369,20 @@ def calc_perc(
     else:
         _percentiles = percentiles
 
+    percs = nan_calc_percentiles(
+        arr=arr,
+        percentiles=_percentiles,
+        axis=-1,
+        alpha=alpha,
+        beta=beta,
+        copy=copy,
+    )
+
+    if isinstance(percs, float):
+        return np.asarray(percs)
+
     return np.moveaxis(
-        nan_calc_percentiles(
-            arr=arr,
-            percentiles=_percentiles,
-            axis=-1,
-            alpha=alpha,
-            beta=beta,
-            copy=copy,
-        ),
+        percs,
         source=0,
         destination=-1,
     )
@@ -394,12 +390,12 @@ def calc_perc(
 
 def nan_calc_percentiles(
     arr: np.ndarray,
-    percentiles: Sequence[float] | None = None,
+    percentiles: list[float] | None = None,
     axis: int = -1,
     alpha: float = 1.0,
     beta: float = 1.0,
     copy: bool = True,
-) -> np.ndarray:
+) -> float | np.ndarray:
     """
     Convert the percentiles to quantiles and compute them using _nan_quantile.
 
@@ -407,7 +403,7 @@ def nan_calc_percentiles(
     ----------
     arr : array_like
         The input array.
-    percentiles : sequence of float, optional
+    percentiles : list of float, optional
         The percentiles to compute. If None, only the median is computed.
     axis : int
         The axis along which to compute the percentiles.
@@ -420,7 +416,7 @@ def nan_calc_percentiles(
 
     Returns
     -------
-    np.ndarray
+    np.ndarray or float
         The percentiles along the specified axis.
     """
     if percentiles is None:
@@ -646,7 +642,7 @@ def make_clix_meta_yaml(  # noqa: C901
     with Path(raw).open(encoding="utf-8") as f:
         src = safe_load(f)
 
-    yml = {}
+    yml: dict[str, Any] = {}
     yml["realm"] = "atmos"
     yml["doc"] = """
   ===================
