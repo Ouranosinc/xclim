@@ -116,6 +116,14 @@ CF_AMOUNTS, CF_RATES = list(zip(*CF_CONVERSIONS["amount2rate"]["valid_names"], s
 _CONVERSIONS: dict[Any, Any] = {}
 
 
+TEMPERATURE_DELTA_UNITS = {
+    units.delta_degree_Celsius: units.degree_Celsius,
+    units.delta_degree_Fahrenheit: units.degree_Fahrenheit,
+    units.delta_degree_Reaumur: units.degree_Reaumur,
+}
+"""Mapping from "delta_" difference temperature units to "on scale" units."""
+
+
 # FIXME: This needs to be properly annotated for mypy compliance.
 # See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
 def _register_conversion(conversion, direction):
@@ -231,30 +239,40 @@ def pint2cfattrs(value: pint.Quantity | pint.Unit, is_difference=None) -> dict[s
     ----------
     value : pint.Unit
         Input unit.
-    is_difference : bool
+    is_difference : bool, optional
         Whether the value represent a difference in temperature, which is ambiguous in the case of absolute
-        temperature scales like Kelvin or Rankine. It will automatically be set to True if units are "delta_*"
-        units.
+        temperature scales like Kelvin or Rankine. Default is to guess, see notes.
 
     Returns
     -------
     dict
         Units following CF-Convention, using symbols.
+
+    Notes
+    -----
+    Temperatures are understood as differences if the input unit contains any of the known difference units
+    (see :py:data:`TEMPERATURE_DELTA_UNITS`). They are understood as on-scale if the input unit is exactly one of the
+    known on-scale units (°C, °F or °Re). Otherwise, "unknown" is given as the "units metadata" (this usually happens
+    with K or °R, or with composed units like `°C d`). Of course, ``units_metadata`` is not added if the input
+    has no temperature dimension.
     """
     s = pint2cfunits(value)
-    if "delta_" in s:
-        is_difference = True
-        s = s.replace("delta_", "")
+    # Must support composed units
+    for diffu, scaleu in TEMPERATURE_DELTA_UNITS.items():
+        if pint2cfunits(diffu) in s:
+            if is_difference is None:
+                is_difference = True
+            s = s.replace(pint2cfunits(diffu), pint2cfunits(scaleu))
+        elif pint2cfunits(scaleu) in s and is_difference is None:
+            is_difference = False
 
     attrs = {"units": s}
     if "[temperature]" in value.dimensionality:
-        if is_difference:
-            attrs["units_metadata"] = "temperature: difference"
-        elif is_difference is False:
-            attrs["units_metadata"] = "temperature: on_scale"
+        if is_difference is not None:
+            metadata = "difference" if is_difference else "on_scale"
         else:
-            attrs["units_metadata"] = "temperature: unknown"
-
+            metadata = "unknown"
+        attrs["units_metadata"] = f"temperature: {metadata}"
     return attrs
 
 
@@ -408,6 +426,8 @@ def convert_units_to(
     if isinstance(source, xr.DataArray):
         source_unit = units2pint(source)
         target_cf_attrs = pint2cfattrs(target_unit)
+        if "units_metadata" in source.attrs and target_cf_attrs.get("units_metadata", "") == "temperature: unknown":
+            target_cf_attrs["units_metadata"] = source.attrs["units_metadata"]
 
         # Automatic pre-conversions based on the dimensionalities and CF standard names
         standard_name = source.attrs.get("standard_name")
@@ -689,7 +709,7 @@ def to_agg_units(
     >>> degdays = dt.clip(0).sum("time")  # Integral of temperature above a threshold
     >>> degdays = to_agg_units(degdays, dt, statistic="integral")
     >>> degdays.units
-    'degC week'
+    '°C week'
 
     Which we can always convert to the more common "K days":
 
@@ -704,7 +724,9 @@ def to_agg_units(
         _statistic = statistic
 
     is_difference = (
-        True if _statistic in ["std", "var"] or "difference" in orig.attrs.get("units_metadata", "") else None
+        True
+        if _statistic in ["std", "var", "integral"] or "difference" in orig.attrs.get("units_metadata", "")
+        else None
     )
 
     if _statistic in ["min", "max", "mean", "sum", "std"]:

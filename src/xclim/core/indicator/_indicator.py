@@ -888,6 +888,7 @@ class IndicatorBase(IndexWrapper):
         for i, atts in enumerate(outputs, 1):
             if atts.var_name is None:
                 raise ValueError(f"Output #{i} of {identifier} is missing a var_name.")
+
         return outputs
 
     def __call__(self, *args, **kwargs):
@@ -1138,26 +1139,9 @@ class _DatasetIO(IndicatorBase):
             out = Dataset({o.name: o for o in outs})
             if xarray.get_options()["keep_attrs"] is not False:
                 out.attrs.update(meta.get("dsattrs", {}))
-
-            out.attrs["history"] = update_history(
-                self._history_string(das, params, meta),
-                out,
-                new_name=self.identifier,
-            )
             return out
-        return super()._finalize(outs, das, params, meta)
 
-    def _history_string(self, das, params, meta):
-        """Return a string for history. It will be prefixed by a timestamp and suffixed by xclim's version."""
-        kwargs = {**das}
-        for k, v in params.items():
-            if self._all_parameters[k].injected:
-                continue
-            if self._all_parameters[k].kind == InputKind.KWARGS:
-                kwargs.update(**v)
-            elif self._all_parameters[k].kind != InputKind.DATASET:
-                kwargs[k] = v
-        return gen_call_string(self.identifier, **kwargs)
+        return super()._finalize(outs, das, params, meta)
 
 
 class _DataTreeIterator(_DatasetIO):
@@ -1199,6 +1183,8 @@ class _MetadataFormatter(_DataTreeIterator):
         if xarray.get_options()["keep_attrs"] is not False and len(das) == 1:
             parent_attrs = {k: v for k, v in list(das.values())[0].attrs.items() if k not in self._drop_attrs}
 
+        history = self._gen_xclim_description(das, params, meta)
+
         fmtargs = self._get_formatter_args(das | params, meta)
         for out, outmeta in zip(outs, self.outputs, strict=False):
             out.attrs.update(parent_attrs)
@@ -1209,6 +1195,10 @@ class _MetadataFormatter(_DataTreeIterator):
 
             if "{" in outmeta.var_name:
                 out.name = default_formatter.format(outmeta.var_name, **fmtargs).replace(" ", "")
+
+            # Add an history-like attribute summarizing computation
+            out.attrs.update(xclim_description=history)
+
         return outs, meta
 
     def _get_formatter_args(self, args, meta):
@@ -1237,7 +1227,7 @@ class _MetadataFormatter(_DataTreeIterator):
             elif is_percentile_dataarray(v):
                 mba.update(get_percentile_metadata(v, k))
             elif isinstance(v, DataArray):
-                mba[k] = "<an array>"
+                mba[k] = f"<{v.name or 'unnamed'} array>"
             else:
                 mba[k] = v
 
@@ -1308,6 +1298,30 @@ class _MetadataFormatter(_DataTreeIterator):
         fmtargs = self._get_formatter_args(args, {})
         out["outputs"] = [self._format_attrs(outmeta.attrs, fmtargs) | outmeta.meta for outmeta in self.outputs]
         out["parameters"] = {k: p.json() for k, p in self._all_parameters.items()}
+        return out
+
+    def _gen_xclim_description(self, das, params, meta):
+        """Return a string for history. It will be prefixed by a timestamp and suffixed by xclim's version."""
+        kwargs = {**das}
+        for k, v in params.items():
+            if self._all_parameters[k].injected:
+                continue
+            if self._all_parameters[k].kind == InputKind.KWARGS:
+                kwargs.update(**v)
+            elif self._all_parameters[k].kind != InputKind.DATASET:
+                kwargs[k] = v
+        return gen_call_string(self.identifier, **kwargs)
+
+    def _finalize(self, outs, das, params, meta):
+        out = super()._finalize(outs, das, params, meta)
+        if isinstance(out, Dataset):
+            history = self._gen_xclim_description(das, params, meta)
+            out.attrs["history"] = update_history(
+                history,
+                out,
+                new_name=self.identifier,
+            )
+            return out
         return out
 
 
@@ -1614,7 +1628,9 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
     in :py:data:`xclim.core.indicator.registry`.
 
     Metadata and attributes in `Indicator.outputs` will be formatted and added to the output variable(s).
-    This attribute is a list of :py:class:`Output` objects.
+    This attribute is a list of :py:class:`Output` objects. An history attribute is also created an added
+    to the output, merging with a parent's dataset history if possible. Finally a ``xclim_description`` attribute
+    is added to each output variable, summarizing the xclim call done.
 
     A lot of the Indicator's metadata is parsed from the underlying `compute` function's
     docstring and signature. Input variables and parameters are listed in
@@ -1791,7 +1807,7 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02 # pylint: d
         extra.append(f'This indicator will check for missing values according to the method "{self.missing}".')
         return extra
 
-    def _history_string(self, das, params, meta):
+    def _gen_xclim_description(self, das, params, meta):
         if self.missing == "from_context":
             missing = OPTIONS[CHECK_MISSING]
         else:
@@ -1805,7 +1821,7 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02 # pylint: d
             if mopts:
                 opt_str += f", missing_options={mopts}"
 
-        return super()._history_string(das, params, meta) + opt_str
+        return super()._gen_xclim_description(das, params, meta) + opt_str
 
     def _get_missing_freq(self, params):
         """Return the resampling frequency to be used in the missing values check."""

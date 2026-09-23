@@ -124,7 +124,8 @@ def statistics(
     if out_units is not None:
         return out.assign_attrs(units=out_units)
     statistic = "integral" if (statistic == "sum" and is_temporal_rate(data)) else statistic
-    return to_agg_units(out, data, statistic)
+    out = to_agg_units(out, data, statistic)
+    return out
 
 
 def running_statistics(
