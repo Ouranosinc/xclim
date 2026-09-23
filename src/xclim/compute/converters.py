@@ -2441,10 +2441,11 @@ def universal_thermal_climate_index(
         and `hurs`. `delta` is the difference between air temperature and radiant temperature : `tas - mrt`.
         Values should be given as quantity strings (ex: ``"50 °C"``). All entries are not required, they will be filled
         by the defaults. Bounds are inclusive. The default is :
-        - -50°C <= tas <= 50°C.
-        - -30°C <= tas - mrt <= 70°C.
-        - 0.5 m/s <= sfcWind <= 30.3 m/s.
-        - 5 % <=  hurs <= 100 %.
+
+        * -50°C <= tas <= 50°C
+        * -30°C <= tas - mrt <= 70°C
+        * 0.5 m/s <= sfcWind <= 30.3 m/s
+        * 5 % <=  hurs <= 100 %
     hurs_cap_min : bool
         If True, relative humidities are capped to a minimum of 5 % following :cite:t:`brode_utci_2012`
         usage guidelines. This ensures UTCI calculation for dry weathers. Default value False.
