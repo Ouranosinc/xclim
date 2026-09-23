@@ -2396,7 +2396,7 @@ def universal_thermal_climate_index(
     rlus: xr.DataArray | None = None,
     stat: str = "sunlit",
     mask_invalid: bool = True,
-    validity_ranges: dict = None,
+    validity_ranges: dict[str, tuple[str, str]] | None = None,
     hurs_cap_min: bool = True,
     wind_cap_min: bool = True,
 ) -> xr.DataArray:
@@ -2437,10 +2437,10 @@ def universal_thermal_climate_index(
         If True (default), UTCI values are NaN where any of the inputs are outside the ranges given by the
         `validity_ranges` argument.
     validity_ranges : dict, optional
-        A dictionary giving the validity ranges (as length-2 tuples) for three variables : `tas`, `delta`, `sfcWind`
-        and `hurs`. `delta` is the difference between air temperature and radiant temperature : `tas - mrt`.
+        A dictionary giving the validity ranges (as length-2 tuples) for four variables: `tas`, `delta`, `sfcWind`,
+        and `hurs`. `delta` is the difference between air temperature and radiant temperature: `tas - mrt`.
         Values should be given as quantity strings (ex: ``"50 °C"``). All entries are not required, they will be filled
-        by the defaults. Bounds are inclusive. The default is :
+        by the defaults. Bounds are inclusive. The default is:
 
         * -50°C <= tas <= 50°C
         * -30°C <= tas - mrt <= 70°C
