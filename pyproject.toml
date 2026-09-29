@@ -220,10 +220,10 @@ replace = "__version__ = \"{new_version}\""
 independent = false
 
 [tool.bumpversion.parts.release]
-optional_value = "release"
+optional_value = "rc"
 values = [
   "dev",
-  "release"
+  "rc"
 ]
 
 [tool.codespell]
