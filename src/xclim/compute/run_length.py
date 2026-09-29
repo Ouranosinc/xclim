@@ -813,6 +813,15 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: Freq | None = No
     rls = rle(da, dim)
 
     def _get_out(_rls, dim):  # numpydoc ignore=GL08
+        if da.dtype == bool:
+            # For boolean input, the maximum run length defines its exclusive end.
+            # Avoid forward-filling a full-sized floating-point array to mark it.
+            start = _rls.argmax(dim)
+            # Keep the existing single-position result when all run lengths are zero.
+            length = _rls.max(dim).clip(min=1)
+            position = _rls[dim].copy(data=np.arange(_rls.sizes[dim]))
+            return (position >= start) & (position < start + length)
+
         _out = xr.where(
             # Construct an integer array and find the max
             _rls[dim].copy(data=np.arange(_rls[dim].size)) == _rls.argmax(dim),

@@ -454,6 +454,64 @@ def test_keep_longest_run_synthetic():
     np.testing.assert_array_equal(lrun, np.array([0, 1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool))
 
 
+@pytest.mark.parametrize(
+    "values,expected",
+    [
+        ([1], [1]),
+        ([1, 1, 1], [1, 1, 1]),
+        ([1, 1, 0, 1], [1, 1, 0, 0]),
+        ([1, 0, 1, 1], [0, 0, 1, 1]),
+        ([0, 1, 1, 0, 1, 1], [0, 1, 1, 0, 0, 0]),
+    ],
+)
+def test_keep_longest_run_endpoints_and_ties(values: list[int], expected: list[int]) -> None:
+    runs = xr.DataArray(values, dims="time").astype(bool)
+    np.testing.assert_array_equal(rl.keep_longest_run(runs), np.array(expected, dtype=bool))
+
+
+@pytest.mark.parametrize("length", range(1, 9))
+def test_keep_longest_run_boolean_matches_numeric(length: int) -> None:
+    # Exhaust all short boolean sequences, including the existing all-False behavior.
+    values = (np.arange(2**length)[:, None] >> np.arange(length)) & 1
+    runs = xr.DataArray(values, dims=("site", "day"))
+    expected = rl.keep_longest_run(runs, dim="day")
+    actual = rl.keep_longest_run(runs.astype(bool), dim="day")
+    xr.testing.assert_identical(actual, expected)
+
+
+@pytest.mark.parametrize("freq", [None, "MS", "YS"])
+@pytest.mark.parametrize("chunks", [None, {"time": -1, "site": 2}, {"time": 31, "site": 2}])
+@pytest.mark.parametrize("transpose", [False, True])
+def test_keep_longest_run_boolean_resampling_and_chunks(
+    freq: str | None, chunks: dict[str, int] | None, transpose: bool
+) -> None:
+    values = np.random.default_rng(42).random((400, 3)) > 0.4
+    # Include a run crossing a year boundary and one crossing a month boundary.
+    values[10:35, 0] = True
+    values[50:70, 1] = True
+    runs = xr.DataArray(
+        values,
+        dims=("time", "site"),
+        coords={"time": pd.date_range("2000-12-15", periods=400), "site": [10, 20, 30]},
+        name="condition",
+        attrs={"description": "Synthetic daily event mask"},
+    )
+    runs.encoding = {"dtype": "bool"}
+    if transpose:
+        runs = runs.transpose("site", "time")
+    expected = rl.keep_longest_run(runs.astype(int), freq=freq)
+    if chunks:
+        runs = runs.chunk(chunks)
+
+    with assert_lazy:
+        actual = rl.keep_longest_run(runs, freq=freq)
+
+    if chunks:
+        assert actual.chunks is not None
+    xr.testing.assert_identical(actual.compute(), expected)
+    assert actual.encoding == runs.encoding
+
+
 def test_keep_longest_run_data(open_dataset):
     era5 = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     cond = era5.swe > 0.002
