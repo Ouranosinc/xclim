@@ -169,7 +169,7 @@ dev = [
 [tool]
 
 [tool.bumpversion]
-current_version = "0.99.0-dev.34"
+current_version = "0.99.0-beta.34"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -222,7 +222,7 @@ independent = false
 [tool.bumpversion.parts.release]
 optional_value = "rc"
 values = [
-  "dev",
+  "beta",
   "rc"
 ]
 
