@@ -306,12 +306,7 @@ def kmeans_reduce_ensemble(
             data=crit, method={"rsq_optimize": None}, random_state=42, make_graph=True
         )
     """
-    if make_graph:
-        fig_data: dict[str, Any] = {}
-        if max_clusters is not None:
-            fig_data["max_clusters"] = max_clusters
-    else:
-        fig_data = {}
+    fig_max_clusters = max_clusters
 
     data = data.transpose("realization", "criteria")
     # initialize the variables
@@ -346,7 +341,11 @@ def kmeans_reduce_ensemble(
 
     n_clusters = _get_nclust(method=method, n_sim=n_sim, rsq=rsq, max_clusters=max_clusters)
 
+    fig_data: dict[str, Any] = {}
     if make_graph:
+        if fig_max_clusters is not None:
+            fig_data["max_clusters"] = fig_max_clusters
+
         fig_data["method"] = method
         fig_data["rsq"] = rsq
         fig_data["n_clusters"] = n_clusters
