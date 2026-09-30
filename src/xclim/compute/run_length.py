@@ -813,15 +813,13 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: Freq | None = No
     # Get run lengths
     rls = rle(da, dim)
 
-    def _get_out(_rls, dim):  # numpydoc ignore=GL08
-        _out = xr.where(
-            # Construct an integer array and find the max
-            _rls[dim].copy(data=np.arange(_rls[dim].size)) == _rls.argmax(dim),
-            _rls + 1,  # Add one to the First longest run
-            _rls,
-        )
-        _out = _out.ffill(dim) == _out.max(dim)
-        return _out
+    def _get_out(_rls: xr.DataArray, dim: str) -> xr.DataArray:  # numpydoc ignore=GL08
+        # Avoid forward-filling a full-sized floating-point array to mark the run.
+        start = _rls.argmax(dim)
+        # Keep the existing single-position result when all run lengths are zero.
+        length = _rls.max(dim).clip(min=1)
+        position = _rls[dim].copy(data=np.arange(_rls.sizes[dim]))
+        return (position >= start) & (position < start + length)
 
     out = resample_map(rls, dim, freq, _get_out, map_kwargs={"dim": dim})
 

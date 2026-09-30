@@ -4,7 +4,7 @@ Changelog
 
 `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
 ------------------------------------------------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`), Juliette Lavoie (:user:`juliettelavoie`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`), Juliette Lavoie (:user:`juliettelavoie`), Charles Lu (:user:`Lu-Charles`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -78,6 +78,7 @@ Breaking changes
 
 Internal changes
 ^^^^^^^^^^^^^^^^
+* ``xclim.compute.run_length.keep_longest_run`` uses run boundaries to select the longest run for boolean and numeric 0/1 inputs, avoiding intermediate floating-point arrays while preserving existing results. (:issue:`2131`, :pull:`2433`).
 * The `Makefile` has been adjusted to install libraries in advance (via ``python -m pip install --silent --group ...``) when attempting to run commands reliant on specific Python tools. (:pull:`2316`).
 * `tox.toml` has been updated to use ``dependency-groups`` to determine necessary libraries needed for environments, and relies entirely on the `Makefile` for running checks. (:pull:`2316`).
 * Documentation has been adjusted to reflect changes to environment setup required by developers/contributors. (:pull:`2316`).
