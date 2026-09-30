@@ -80,7 +80,7 @@ def generate_atmos(
 
 def add_ensemble_dataset_objects() -> dict[str, list[str]]:
     """
-    Create a dictionary of xclim ensemble-related datasets to be patched into the xdoctest namespace.
+    Create a dictionary of xclim ensemble-related datasets to be patched into the doctest namespace.
 
     Returns
     -------
@@ -104,7 +104,7 @@ def add_ensemble_dataset_objects() -> dict[str, list[str]]:
 
 def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
     """
-    Create a dictionary of doctest-relevant datasets to be patched into the xdoctest namespace.
+    Create a dictionary of doctest-relevant datasets to be patched into the doctest namespace.
 
     Returns
     -------
@@ -144,12 +144,12 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
 
 def add_doctest_filepaths() -> dict[str, Any]:
     """
-    Overload some libraries directly into the xdoctest namespace.
+    Overload some libraries directly into the doctest namespace.
 
     Returns
     -------
     dict[str, Any]
-        A dictionary of xdoctest namespace objects.
+        A dictionary of doctest namespace objects.
     """
     namespace = {
         "np": np,
