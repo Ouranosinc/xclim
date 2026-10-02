@@ -41,6 +41,7 @@ DayOfYearStr = NewType("DayOfYearStr", str)
 
 #: Type annotation for frequency strings
 Freq = Literal[
+    "7D",
     "D",
     "ME",
     "MS",
@@ -70,6 +71,7 @@ Freq = Literal[
     "QS-NOV",
     "QS-OCT",
     "QS-SEP",
+    "W",
     "YE",
     "YE-APR",
     "YE-AUG",
@@ -107,10 +109,10 @@ Freq = Literal[
 Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
 
 #: Type annotation of the condition/comparison operators
-Condition = Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le"]
+Condition = Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"]
 
 #: Type annotation for reducing/resampling function names, or a function that reduces the "time" dimension.
-Reducer = Literal["min", "max", "mean", "std", "var", "count", "sum", "integral", "doymin", "doymax"]
+Reducer = Literal["min", "max", "mean", "std", "var", "count", "sum", "integral", "doymin", "doymax", "quantile"]
 # FIXME : I want to do Literal[...] | Callable, but pylint won't allow it
 
 with as_file(files("xclim.data")) as data_dir:

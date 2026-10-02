@@ -4,7 +4,7 @@
 # This must be run using the following statements from Python:
 # python -c "from xclim.testing.utils import run_doctests; run_doctests()"
 # Alternatively, doctests can be run from the command line via the following command:
-# python -m pytest --rootdir=tests/ --xdoctest src/xclim
+# python -m pytest --rootdir=tests/ --doctest src/xclim
 
 from __future__ import annotations
 

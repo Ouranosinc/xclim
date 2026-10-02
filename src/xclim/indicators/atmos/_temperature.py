@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from xarray import DataArray
 
 from xclim import compute
@@ -1720,8 +1722,25 @@ class FireSeasonBase(Indicator):
 
     keywords = ["fire"]
 
-    def cfcheck(self, tas: DataArray, snd: DataArray = None):
+    def cfcheck(self, **das: Any) -> None:
         r"""
+        Compare metadata attributes to CF-Convention standards.
+
+        Default cfchecks use the specifications in `xclim.core.VARIABLES`,
+        assuming the indicator's inputs are using the CMIP6/xclim variable names correctly.
+        Variables absent from these default specs are silently ignored.
+
+        When subclassing this method, use functions decorated using `xclim.core.options.cfcheck`.
+
+        Parameters
+        ----------
+        **das : dict
+            A dictionary of DataArrays to check.
+        """
+        self._cfcheck_impl(**das)
+
+    def _cfcheck_impl(self, tas: DataArray | None = None, snd: DataArray | None = None) -> None:
+        """
         Verify the CF-compliance of the input data.
 
         Parameters

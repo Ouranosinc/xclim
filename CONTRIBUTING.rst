@@ -109,130 +109,138 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
 #. Clone your fork locally:
 
-    .. code-block:: shell
+   .. code-block:: shell
 
-        git clone git@github.com:{my_github_username}/xclim.git
-        cd xclim/
+       $ git clone git@github.com:{my_github_username}/xclim.git
+       $ cd xclim/
 
 #. Create a development environment. We recommend using ``conda``:
 
-    .. code-block:: shell
+   .. code-block:: shell
 
-        conda env create --file environment.yml
-        conda activate xclim
-        python -m pip install -e . --no-deps
+       $ conda env create --file environment.yml
+       $ conda activate xclim
+       $ python -m pip install -e . --no-deps
 
 #. Create a branch for local development:
 
-    .. code-block:: shell
+   .. code-block:: shell
 
-        git checkout -b name-of-your-bugfix-or-feature
+       $ git checkout -b name-of-your-bugfix-or-feature
 
-    Now you can make your changes locally!
+   Now you can make your changes locally!
 
 #. Before committing your changes, we ask that you install ``pre-commit`` in your development environment in order to run linting checks when committing code changes.
    Pre-commit runs git hooks that ensure that your code adheres to the standards of the project and catches and corrects small errors or inconsistencies when you ``git commit``:
 
-    .. code-block:: shell
+   .. code-block:: shell
 
-        # To install the necessary pre-commit hooks:
-        pre-commit install
-        # To run pre-commit hooks manually:
-        pre-commit run --all-files
+       # To install the necessary pre-commit hooks:
+       $ pre-commit install
+       # To run pre-commit hooks manually:
+       $ pre-commit run --all-files
 
-    Instead of ``pre-commit``, you can also verify your changes using the `Make` recipe for code linting checks:
+   Instead of ``pre-commit``, you can also verify your changes using the `Make` recipe for code linting checks:
 
-        .. code-block:: shell
+   .. code-block:: shell
 
-            make lint
+       $ make lint
 
-    Or, alternatively, you can check individual hooks manually with  `ruff`, `flake8`, `flake8-rst-docstrings`, `vulture`, `codespell`, `numpydoc`, `deptry`, and `yamllint`:
+   Or, alternatively, you can check individual hooks manually with  `ruff`, `flake8`, `flake8-rst-docstrings`, `vulture`, `codespell`, `numpydoc`, `deptry`, and `yamllint`:
 
-        .. code-block:: shell
+   .. code-block:: shell
 
-            # To install the necessary dependencies:
-            python -m pip install --group lint
-            # To run individual checks
-            ruff check --quiet .
-            flake8 --config=.flake8 src/xclim tests
-            vulture src/xclim tests
-            codespell src/xclim tests docs
-            numpydoc lint src/xclim/*.py src/xclim/ensembles/*.py src/xclim/indices/*.py src/xclim/indicators/*.py src/xclim/testing/*.py
-            deptry src
-            yamllint --config-file=.yamllint.yaml src/xclim
+       # To install the necessary dependencies:
+       $ python -m pip install --group lint
+       # To run individual checks
+       $ ruff check --quiet .
+       $ flake8 --config=.flake8 src/xclim tests
+       $ vulture src/xclim tests
+       $ codespell src/xclim tests docs
+       $ numpydoc lint src/xclim/*.py src/xclim/ensembles/*.py src/xclim/indices/*.py src/xclim/indicators/*.py src/xclim/testing/*.py
+       $ deptry src
+       $ yamllint --config-file=.yamllint.yaml src/xclim
+
+   .. note::
+
+       `xclim` is fully type-checked with `mypy`_ (`ty`_). If your contributions are failing this check, it means that the type definitions could be better defined.
+       For some guidance on how to do this, check the `mypy cheat sheet <https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html#cheat-sheet-py3>`_ for examples.
+       If you are adding a new but similar compute function or indicator, following typing conventions of other similar objects will usually address these issues.
+
+       When in doubt, feel free to ping the `xclim` maintainers (`@xclim-core`) if you would like their input on how best to type something.
 
 #. When features or bug fixes have been contributed, unit tests and doctests have been added, or notebooks have been updated, use ``$ pytest`` to test them:
 
-    .. code-block:: shell
+   .. code-block:: shell
 
-        pytest --no-cov --nbval --dist=loadscope --rootdir=tests/ docs/notebooks --ignore=docs/notebooks/example.ipynb  # for notebooks, exclusively.
-        pytest --no-cov --rootdir=tests/ --xdoctest src/xclim  # for doctests, exclusively.
-        pytest  # for all unit tests, excluding doctests and notebooks.
-        pytest -m "not slow"  # for all unit tests, excluding doctests, notebooks, and "slow" marked tests.
+       $ pytest --no-cov --nbval --dist=loadscope --rootdir=tests/ docs/notebooks --ignore=docs/notebooks/example.ipynb  # for notebooks, exclusively.
+       $ pytest --no-cov --rootdir=tests/ --doctest src/xclim  # for doctests, exclusively.
+       $ pytest  # for all unit tests, excluding doctests and notebooks.
+       $ pytest -m "not slow"  # for all unit tests, excluding doctests, notebooks, and "slow" marked tests.
 
-    Alternatively, one can use ``$ tox`` to run very specific testing configurations, as GitHub Workflows would do when a Pull Request is submitted and new commits are pushed:
+   Alternatively, one can use ``$ tox`` to run very specific testing configurations, as GitHub Workflows would do when a Pull Request is submitted and new commits are pushed:
 
-    .. code-block:: shell
+   .. code-block:: shell
 
-        tox -e py3.10 # run tests on Python 3.10
-        tox -e upstream  # run tests with upstream dependencies
-        tox -e prefetch -- -m "not slow"  # run tests and force download of testing data, ensure tests are all offline, exclude "slow" marked tests
-        tox -e py3.12 -- -m "not slow"  # run tests on Python 3.12 excluding "slow" marked tests
-        tox -e notebooks,doctests  # run the notebook-based tests, then run the doctests
+       $ tox -e py3.11 # run tests on Python 3.11
+       $ tox -e upstream  # run tests with upstream dependencies
+       $ tox -e prefetch -- -m "not slow"  # run tests and force download of testing data, ensure tests are all offline, exclude "slow" marked tests
+       $ tox -e py3.12 -- -m "not slow"  # run tests on Python 3.12 excluding "slow" marked tests
+       $ tox -e notebooks,doctests  # run the notebook-based tests, then run the doctests
 
-        tox -m test  # run the standard tests used in GitHub Workflows
+       $ tox -m test  # run the standard tests used in GitHub Workflows
 
-    .. warning::
+   .. warning::
 
-        Starting from `xclim` v0.46.0, when running tests with `tox`, any `pytest` markers passed to `pyXX` builds (e.g. `-m "not slow"`) must be passed to `tox` directly. This can be done as follows:
+       When running tests with `tox`, any `pytest` markers passed to `pyXX` builds (e.g. `-m "not slow"`) must be passed to `tox` directly. This can be done as follows:
 
-    .. code-block:: shell
+       .. code-block:: shell
 
-        $ tox -e py3.10 -- -m "not slow"
+           $ tox -e py3.11 -- -m "not slow"
 
-    The exceptions to this rule are:
-      `notebooks` and `doctests`: these configurations do not pass test markers to its `pytest` call.
-      `offline`: this configuration runs by default with the `-m "not requires_internet"` test marker. Be aware that running `tox` and manually setting a `pytest` marker will override this default.
+       The exceptions to this rule are:
+         - `notebooks` and `doctests`: these configurations do not pass test markers to its `pytest` call.
+         - `offline`: this configuration runs by default with the `-m "not requires_internet"` test marker. Be aware that running `tox` and manually setting a `pytest` marker will override this default.
 
-    .. note::
+   .. note::
 
-        `xclim` tests are organized to support the `pytest-xdist`_ plugin for distributed testing across workers or CPUs.
-        In order to benefit from multiple processes, add the flag `--numprocesses=auto` or `-n auto` to your `pytest` calls.
+       `xclim` tests are organized to support the `pytest-xdist`_ plugin for distributed testing across workers or CPUs.
+       In order to benefit from multiple processes, add the flag `--numprocesses=auto` or `-n auto` to your `pytest` calls.
 
-        When running tests via `tox`, `numprocesses` is set to the number of logical cores available (`numprocesses=logical`), with a maximum amount of `8`.
+       When running tests via `tox`, `numprocesses` is set to the number of logical cores available (`numprocesses=logical`), with a maximum amount of `8`.
 
 #. Docs should also be tested to ensure that the documentation will build correctly on ReadTheDocs. This can be performed in a number of ways:
 
-    .. code-block:: shell
+   .. code-block:: shell
 
-        # To run in a contained virtualenv environment
-        $ tox -e docs
-        # or, alternatively, to build the docs directly
-        $ make docs
+       # To run in a contained virtualenv environment
+       $ tox -e docs
+       # or, alternatively, to build the docs directly
+       $ make docs
 
-    .. note::
+   .. note::
 
-        When building the documentation, the default behaviour is to evaluate notebooks ('`nbsphinx_execute = "auto"`'), rather than simply parse the content ('`nbsphinx_execute = "never"`').
-        Due to their complexity, this is a very computationally demanding task and should only be performed when necessary (i.e.: when the notebooks have been modified).
+       When building the documentation, the default behaviour is to evaluate notebooks ('`nbsphinx_execute = "auto"`'), rather than simply parse the content ('`nbsphinx_execute = "never"`').
+       Due to their complexity, this is a very computationally demanding task and should only be performed when necessary (i.e.: when the notebooks have been modified).
 
-        In order to speed up documentation builds, setting a value for the environment variable "`SKIP_NOTEBOOKS`" (e.g. "`$ export SKIP_NOTEBOOKS=1`") will prevent the notebooks from being evaluated on all subsequent "`$ tox -e docs`" or "`$ make docs`" invocations.
+       In order to speed up documentation builds, setting a value for the environment variable "`SKIP_NOTEBOOKS`" (e.g. "`$ export SKIP_NOTEBOOKS=1`") will prevent the notebooks from being evaluated on all subsequent "`$ tox -e docs`" or "`$ make docs`" invocations.
 
 #. After clearing the previous checks, commit your changes and push your branch to GitHub:
 
-    .. code-block:: shell
+   .. code-block:: shell
 
-        git add *
-        git commit -m "Your detailed description of your changes."
+       $ git add *
+       $ git commit -m "Your detailed description of your changes."
 
-    If installed, `pre-commit` will run checks at this point:
+   If installed, `pre-commit` will run checks at this point:
 
-    * If no errors are found, changes will be committed.
-    * If errors are found, modifications will be made and warnings will be raised if intervention is needed.
-    * After addressing errors and effecting changes, simply `git commit` again:
+   * If no errors are found, changes will be committed.
+   * If errors are found, modifications will be made and warnings will be raised if intervention is needed.
+   * After addressing errors and effecting changes, simply `git commit` again:
 
-    .. code-block:: shell
+   .. code-block:: shell
 
-        git push origin name-of-your-bugfix-or-feature
+       $ git push origin name-of-your-bugfix-or-feature
 
 #. Submit a pull request through the GitHub website.
 
@@ -245,19 +253,19 @@ Before you submit a pull request, please follow these guidelines:
 
 #. Perform the changes, commit and push them either to new a branch within `Ouranosinc/xclim` or to your personal fork of xclim.
 
-    .. warning::
+   .. warning::
 
-        Try to keep your contributions within the scope of the issue that you are addressing.
-        While it might be tempting to fix other aspects of the library as it comes up,
-        it's better to simply to flag the problems in case others are already working on it.
+       Try to keep your contributions within the scope of the issue that you are addressing.
+       While it might be tempting to fix other aspects of the library as it comes up,
+       it's better to simply to flag the problems in case others are already working on it.
 
-        Consider adding a "**# TODO:**" or "**# FIXME:**" comment if the need arises.
+       Consider adding a "**# TODO:**" or "**# FIXME:**" comment if the need arises.
 
 #. Pull requests should raise test coverage for the xclim library. Code coverage is an indicator of how extensively tested the library is.
 
-    .. note::
+   .. note::
 
-        If you are adding a new set of functions, they **must be tested** and **coverage percentage should not significantly decrease.**
+       If you are adding a new set of functions, they **must be tested** and **coverage percentage should not significantly decrease.**
 
 #. If the pull request adds functionality, your functions should include docstring explanations.
    So long as the docstrings are syntactically correct, sphinx-autodoc will be able to automatically parse the information.
@@ -275,29 +283,29 @@ Before you submit a pull request, please follow these guidelines:
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
    The build statuses and build errors for pull requests can be found at: https://github.com/Ouranosinc/xclim/actions
 
-    .. note::
+   .. note::
 
-        The currently-supported Python versions are loosely based on the Scientific Python Ecosystem's `SPEC 0` schedule.
-        Generally, when `numpy` and `xarray` drop support for a dependency, `xclim` will follow suit in a subsequent release.
-        For more information, see the `SPEC 0 Schedule <https://scientific-python.org/specs/spec-0000/>`_
+       The currently-supported Python versions are loosely based on the Scientific Python Ecosystem's `SPEC 0` schedule.
+       Generally, when `numpy` and `xarray` drop support for a dependency, `xclim` will follow suit in a subsequent release.
+       For more information, see the `SPEC 0 Schedule <https://scientific-python.org/specs/spec-0000/>`_
 
-    .. warning::
+   .. warning::
 
-        PEP8, black, pytest (with xdoctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
-        Ensure that your changes pass all tests prior to pushing your final commits to your branch.
-        Code formatting errors are treated as build errors and will block your pull request from being accepted.
+       PEP8, black, pytest (with doctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
+       Ensure that your changes pass all tests prior to pushing your final commits to your branch.
+       Code formatting errors are treated as build errors and will block your pull request from being accepted.
 
 #. The version changes (CHANGELOG.rst) should briefly describe changes introduced in the Pull request.
    Changes should be organized by type (ie: `New indicators`, `New features and enhancements`, `Breaking changes`, `Bug fixes`, `Internal changes`) and the GitHub Pull Request, GitHub Issue.
    Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows:
 
-    .. code-block:: restructuredtext
+   .. code-block:: restructuredtext
 
-        Contributors to this version: John Jacob Jingleheimer Schmidt (:user:`username`).
+       Contributors to this version: John Jacob Jingleheimer Schmidt (:user:`username`).
 
-        Internal changes
-        ^^^^^^^^^^^^^^^^
-        * Updated the contribution guidelines. (:issue:`868`, :pull:`869`).
+       Internal changes
+       ^^^^^^^^^^^^^^^^
+       * Updated the contribution guidelines. (:issue:`868`, :pull:`869`).
 
 If this is your first contribution to `Ouranosinc/xclim`, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/main/AUTHORS.rst>`_, under *Contributors* as well as to the `.zenodo.json <https://github.com/Ouranosinc/xclim/blob/main/.zenodo.json>`_, at the end of the *creators* block.
 
@@ -310,20 +318,20 @@ If your code changes require changes to the testing data of `xclim` (i.e.: modif
 
 .. code-block:: shell
 
-    export XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data"
-    export XCLIM_TESTDATA_REPO="https://github.com/my_username/xclim-testdata"
+    $ export XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data"
+    $ export XCLIM_TESTDATA_REPO="https://github.com/my_username/xclim-testdata"
 
-    pytest
+    $ pytest
     # or, alternatively:
-    tox
+    $ tox
 
 or by setting the variable at runtime:
 
 .. code-block:: shell
 
-    env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" XCLIM_TESTDATA_REPO="https://github.com/my_username/xclim-testdata" pytest
+    $ env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" XCLIM_TESTDATA_REPO="https://github.com/my_username/xclim-testdata" pytest
     # or, alternatively:
-    env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" XCLIM_TESTDATA_REPO="https://github.com/my_username/xclim-testdata" tox
+    $ env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" XCLIM_TESTDATA_REPO="https://github.com/my_username/xclim-testdata" tox
 
 This will ensure that tests load the appropriate testing data from this branch or repository before running.
 
@@ -331,20 +339,20 @@ If you anticipate not having internet access, we suggest prefetching the testing
 
 .. code-block:: shell
 
-    xclim prefetch_testing_data
+    $ xclim prefetch_testing_data
 
 If your development branch relies on a specific branch of `Ouranosinc/xclim-testdata`, you can specify this using environment variables:
 
 .. code-block:: shell
 
-    export XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data"
-    xclim prefetch_testing_data
+    $ export XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data"
+    $ xclim prefetch_testing_data
 
 or, alternatively, with the `--branch` option:
 
 .. code-block:: shell
 
-    xclim prefetch_testing_data --branch my_new_branch_of_testing_data --repo "https://github.com/my_username/xclim-testdata"
+    $ xclim prefetch_testing_data --branch my_new_branch_of_testing_data --repo "https://github.com/my_username/xclim-testdata"
 
 If you wish to test a specific branch using GitHub CI, this can be set in `.github/workflows/main.yml`:
 
@@ -368,13 +376,13 @@ If you wish to ensure that your feature or bugfix can be developed without inter
 
 .. code-block:: shell
 
-    pytest --disable-socket --allow-unix-socket -m "not requires_internet"
+    $ pytest --disable-socket --allow-unix-socket -m "not requires_internet"
 
 or, alternatively, using `tox` :
 
 .. code-block:: shell
 
-    tox -e offline
+    $ tox -e offline
 
 These options will disable all network calls and skip tests marked with the ``requires_internet`` marker.
 The ``--allow-unix-socket`` option is required to allow the `pytest-xdist`_ plugin to function properly.
@@ -457,19 +465,19 @@ To run a subset of tests, we suggest a few approaches. For running only a test f
 
 .. code-block:: shell
 
-    pytest tests/test_xclim.py
+    $ pytest tests/test_xclim.py
 
 To skip all slow tests:
 
 .. code-block:: shell
 
-    pytest -m "not slow"
+    $ pytest -m "not slow"
 
 To run all conventions tests at once:
 
 .. code-block:: shell
 
-    pre-commit run --all-files
+    $ prek run --all-files
 
 Versioning
 ----------
@@ -504,7 +512,7 @@ From a new branch (e.g. `prepare-v123`), open a Pull Request and make sure all y
 
 .. code-block:: shell
 
-    bump-my-version bump <option>  # possible options: major / minor / patch / release / build
+    $ bump-my-version bump <option>  # possible options: major / minor / patch / release / build
 
 These commands will increment the version and create a commit with an autogenerated message.
 
@@ -512,14 +520,14 @@ For PyPI releases/stable versions, ensure that the last version bumping command 
 
 .. code-block:: shell
 
-    git push origin prepare-v123
+    $ git push origin prepare-v123
 
 With this performed, we can tag a version that will act as the GitHub-provided stable source archive. **Be sure to only tag from the `main` branch when all changes from PRs have been merged!** The commands needed are:
 
 .. code-block:: shell
 
-    git tag v1.2.3
-    git push --tags
+    $ git tag v1.2.3
+    $ git push --tags
 
 .. note::
 
@@ -536,9 +544,9 @@ The `xclim` CLI offers a helper function for performing this action:
 .. code-block:: shell
 
     # For Markdown format (needed when publishing a new version on GitHub):
-    xclim release_notes -m
+    $ xclim release_notes -m
     # For ReStructuredText format (offered for convenience):
-    xclim release_notes -r
+    $ xclim release_notes -r
 
 .. note::
 
@@ -558,10 +566,10 @@ From the command line on your Linux distribution, simply run the following from 
 .. code-block:: shell
 
     # To build the packages (sources and wheel)
-    flit build
+    $ python -m flit build
 
     # To upload to PyPI
-    flit publish
+    $ python -m flit publish
 
 The new version based off of the version checked out will now be available via `pip` (`$ pip install xclim`).
 
@@ -589,12 +597,14 @@ Before updating the main conda-forge recipe, we *strongly* suggest performing th
 .. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
 .. _`PEP8`: https://peps.python.org/pep-0008/
 .. _`flit`: https://flit.pypa.io/en/stable/index.html
+.. _`mypy`: https://www.mypy-lang.org/
 .. _`numpydoc`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 .. _`pytest-socket`: https://github.com/miketheman/pytest-socket
 .. _`pytest-xdist`: https://pytest-xdist.readthedocs.io/en/latest/
 .. _`reStructuredText (ReST)`: https://www.jetbrains.com/help/pycharm/using-docstrings-to-specify-types.html
 .. _`reStructuredText Primer`: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _`sphinxcontrib-bibtex`: https://sphinxcontrib-bibtex.readthedocs.io
+.. _`ty`: https://docs.astral.sh/ty/
 .. _`xclim on TestPyPI`: https://test.pypi.org/project/xclim/
 .. _`xclim Discussions page`: https://github.com/Ouranosinc/xclim/discussions
 .. _`xclim-testdata repository`: https://github.com/Ouranosinc/xclim-testdata
