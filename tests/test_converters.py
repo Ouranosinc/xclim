@@ -598,6 +598,22 @@ class TestUTCI:
 
         np.testing.assert_allclose(utci.utci.isel(time=0), utci_exp, rtol=1e-03)
 
+        # Validity ranges and capping
+        utci = convert.universal_thermal_climate_index(
+            tas=tas,
+            hurs=hurs - 0.29,  # 0.29 is the minimum value in hurs
+            sfcWind=sfcWind,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            stat="sunlit",
+            validity_ranges={"sfcWind": ("1 m s-1", "15 m s-1")},
+            hurs_cap_min=True,
+        )
+        # capping hurs means no null values come from small hurs
+        assert utci.isnull().sum() == (sfcWind < 1).sum()
+
 
 class TestMeanRadiantTemperature:
     def test_mean_radiant_temperature(self, atmosds):
