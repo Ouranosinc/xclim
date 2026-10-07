@@ -169,7 +169,7 @@ dev = [
 [tool]
 
 [tool.bumpversion]
-current_version = "0.99.0-dev.35"
+current_version = "0.99.0-beta.35"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -220,10 +220,11 @@ replace = "__version__ = \"{new_version}\""
 independent = false
 
 [tool.bumpversion.parts.release]
-optional_value = "release"
+optional_value = "final"
 values = [
-  "dev",
-  "release"
+  "beta",
+  "rc",
+  "final"
 ]
 
 [tool.codespell]
