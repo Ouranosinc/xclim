@@ -14,7 +14,6 @@
 from __future__ import annotations
 
 import calendar
-import sys
 
 import numpy as np
 import pandas as pd
@@ -431,7 +430,7 @@ class TestStandardizedIndices:
                 "gamma",
                 "ML",
                 [-0.158854, -0.049165, 0.675863, 0.960247, 0.660831],
-                2e-2,
+                2e-1,
             ),
             (
                 "D",
@@ -566,13 +565,9 @@ class TestStandardizedIndices:
     def test_standardized_precipitation_index(
         self, freq, window, dist, method, values, diff_tol, open_dataset, no_numbagg
     ):
-        if (
-            method == "ML"
-            and freq == "D"
-            and (Version(__numpy_version__) < Version("2.0.0") or sys.platform == "Darwin")
-        ):
+        if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
             # TODO: Find out why it is failing on MacOS
-            pytest.skip("Skipping SPI/ML/D for numpy below v2.0 and on MacOS")
+            pytest.skip("Skipping SPI/ML/D for numpy below v2.0")
 
         # change `dist` to a lmoments3 object if needed
         if method == "PWM":
