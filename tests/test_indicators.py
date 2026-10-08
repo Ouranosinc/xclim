@@ -262,14 +262,17 @@ def test_opt_vars(tasmin_series, tasmax_series):
 
 def test_registering():
     assert "tmin" not in registry
-    uniIndTemp.copy(identifier="test.tmin", register=True)
+    # register this one with a new identifier
+    indreg = uniIndTemp.copy(identifier="test.tmin", register=True)
     assert "test.tmin" in registry
 
+    # explicit copying must change the indicator
     with pytest.raises(ValueError, match="Can't create"):
         uniIndTemp.copy()
 
-    with pytest.raises(ValueError, match="Can't create"):
-        uniIndTemp.__class__()
+    # implicit copying can give a identical copy, but should not overwrite the previous entry
+    new = indreg.__class__()
+    assert registry[new.identifier] is not new
 
 
 def test_module():
