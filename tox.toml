@@ -1,5 +1,5 @@
 env_list = [
-  {product = [{prefix = "py3.", start = 11, stop = 14}]},
+  { product = [{ prefix = "py3.", start = 11, stop = 14 }] },
   "docs",
   "doctests",
   "lint",
@@ -15,7 +15,7 @@ extras = ["performance", "plot", "stats", "types"]
 [env.docs]
 labels = ["docs"]
 description = "Build the documentation with makefile under {basepython}"
-setenv = {PYTHONPATH = "{toxinidir}", READTHEDOCS = "1"}
+setenv = { PYTHONPATH = "{toxinidir}", READTHEDOCS = "1" }
 allowlist_externals = ["env", "make"]
 dependency_groups = ["docs"]
 commands = [
@@ -63,7 +63,7 @@ commands = [
   ["xclim", "prefetch_testing_data"],
   ["python", "-c", "print('Running offline tests with positional arguments: --disable-socket --allow-unix-socket --m \"not requires_internet\"')"],
   ["python", "-c", "print('These can be overwritten with: tox -e offline -- -m \"some other marker statement\"')"],
-  ["pytest", "--disable-socket", "--allow-unix-socket", {replace = "posargs", default = ["-m", "not requires_internet"], extend = true}]
+  ["pytest", "--disable-socket", "--allow-unix-socket", { replace = "posargs", default = ["-m", "not requires_internet"], extend = true }]
 ]
 
 [env.prefetch]
@@ -83,7 +83,7 @@ deps = ["-r CI{/}requirements_upstream.txt"]
 
 [env_run_base]
 description = "Run tests with pytest under {basepython}"
-set_env = {COV_CORE_SOURCE = "", PYTEST_ADDOPTS = "--numprocesses=logical --durations=10 --cov=xclim --cov-report=lcov", Xfrozen_modules = "off"}
+set_env = { COV_CORE_SOURCE = "", PYTEST_ADDOPTS = "--numprocesses=logical --durations=10 --cov=xclim --cov-report=lcov", Xfrozen_modules = "off" }
 passenv = [
   "CI",
   "COVERALLS_*",
