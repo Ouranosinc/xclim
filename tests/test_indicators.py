@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from inspect import signature
 
 import dask
@@ -409,6 +410,12 @@ def test_deriving_multiindicator():
     new = multiTemp.copy(identifier="minmaxtemp2", register=False)
 
     assert new.outputs[0].var_name == "tmin"
+
+
+def test_deepcopying_indicator():
+    new = deepcopy(multiTemp)
+    assert new.__class__ is multiTemp.__class__
+    assert new is not multiTemp
 
 
 def test_missing(tas_series, as_da):
