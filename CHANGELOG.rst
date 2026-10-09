@@ -40,6 +40,8 @@ New indicators and features
 * `IndicatorCollection` yaml specifications updates:
     * New ``bases`` section for defining indicator classes to reuse in defining the ones in the ``indicators`` section (:pull:`2415`).
     * Fields ``base`` and ``compute`` can now be a "qualified name" of an object to be imported dynamically, or the qualified name of an indicator with its submodule/realm. Ex: ``atmos.precip_accumulation``, which was previously referred by its identifier ``prcptot`` (:pull:`2415`).
+* New arguments ``validity_ranges`` and ``hurs_cap_min`` in indicator ``universal_thermal_climate_index`` (UTCI).
+  In accordance with recommendations from Bröde et al. (2012), default validity upper bounds were increased for ``tas - mrt`` (from 30°C to 70°C) and ``sfcWind`` (from 17 to 30.3 m/s) and capping is now enabled by default (``sfcWind`` to a minimum of 0.5 ms and of ``hurs`` to a minimum of 5 %). (:issue:`2400`, :pull:`2432`).
 
 Bug fixes
 ^^^^^^^^^
