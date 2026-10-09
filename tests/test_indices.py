@@ -352,6 +352,7 @@ class TestStandardizedIndices:
     # Using the method `APP` in XClim matches the method from monocongo, hence the very low tolerance possible.
     # Repeated tests with lower tolerance means we want a more precise comparison, so we compare
     # the current version of XClim with the version where the test was implemented.
+    # bottleneck was used when writing these tests, it needs enabling since xarray 2026.09
     # Additionally, xarray does not yet access "week" or "weekofyear"
     # with groupby in a pandas-compatible way for cftime objects.
     # See: https://github.com/pydata/xarray/discussions/6375
