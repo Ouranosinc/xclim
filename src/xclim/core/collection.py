@@ -149,7 +149,7 @@ import xclim.indicators
 from xclim.core import VARIABLES, raise_warn_or_log
 from xclim.core.indicator import Daily, Indicator, base_registry, registry
 from xclim.core.locales import load_locale, read_locale_file
-from xclim.core.utils import load_module
+from xclim.core.utils import CaseInsensitiveDict, load_module
 
 
 class IndicatorCollection(dict):  # numpydoc ignore=PR01
@@ -159,7 +159,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         self,
         indicators: dict[str, Indicator],
         name: str | None = None,
-        bases: dict[str, type] = None,
+        bases: dict[str, type] | None = None,
         doc: str | None = None,
     ):
         """
@@ -178,6 +178,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         """
         self.name = name
         self.bases = bases or {}
+        name = str(name)
         self.__doc__ = doc or f"{name.capitalize()} indicators\n" + "=" * (len(name) + 11)
         super().__init__(**indicators)
 
@@ -293,7 +294,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         if isinstance(computes, str | Path):
             computes = load_module(computes, name=coll_name)
 
-        _translations: dict[str, dict] = {}
+        _translations: CaseInsensitiveDict = CaseInsensitiveDict({})
         if is_stem and translations is None:
             # No suffix mean we try to automatically detect the json files.
             for loc_file in filepath.parent.glob(f"{filepath.stem}.*.json"):
@@ -301,14 +302,16 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
                 _translations[locale] = read_locale_file(loc_file, module=coll_name, encoding=encoding)
         elif translations is not None:
             # A mapping was passed, we read paths if any.
-            _translations = {
-                lng: (
-                    read_locale_file(trans, module=coll_name, encoding=encoding)
-                    if isinstance(trans, str | Path)
-                    else trans
-                )
-                for lng, trans in translations.items()
-            }
+            _translations = CaseInsensitiveDict(
+                {
+                    lng: (
+                        read_locale_file(trans, module=coll_name, encoding=encoding)
+                        if isinstance(trans, str | Path)
+                        else trans
+                    )
+                    for lng, trans in translations.items()
+                }
+            )
 
         # Module-wide default values for some attributes
         defkwargs = {
@@ -330,8 +333,8 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
             VARIABLES[varname] = vardata.copy()
 
         # Parse the indicators:
-        mapping = {}
-        bases = {}
+        mapping: dict[str, Indicator] = {}
+        bases: dict[str, type] = {}
         # This because we enforce indicators being required and bases being optional
         for section, sectiondata in [("bases", yml.get("bases", {})), ("indicators", yml["indicators"])]:
             for identifier, data in sectiondata.items():

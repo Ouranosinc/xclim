@@ -54,17 +54,17 @@ class AttrFormatter(string.Formatter):
 
     def __init__(
         self,
-        mapping: dict[str, Sequence[str]],
-        modifiers: Sequence[str],
+        mapping: dict[str, list[str]],
+        modifiers: list[str],
     ) -> None:
         """
         Initialize the formatter.
 
         Parameters
         ----------
-        mapping : dict[str, Sequence[str]]
+        mapping : dict
             A mapping from values to their possible variations.
-        modifiers : Sequence[str]
+        modifiers : list of str
             The list of modifiers.
             Must at least match the length of the longest value of `mapping`.
             Cannot include reserved modifier 'r'.

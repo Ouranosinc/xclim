@@ -26,6 +26,7 @@ To define another missing value algorithm, subclass :py:class:`MissingBase` and 
 from __future__ import annotations
 
 import textwrap
+from typing import Any
 
 import numpy as np
 import xarray as xr
@@ -65,7 +66,7 @@ _freq_to_timedelta = {"min": "m"}
 def expected_count(
     time: xr.DataArray,
     freq: Freq | None = None,
-    src_timestep: str | None = None,
+    src_timestep: Freq | None = None,
     **indexer,
 ) -> xr.DataArray:
     """
@@ -176,13 +177,13 @@ class MissingBase:
     to the registry before using them in an Indicator.
     """
 
-    def __init__(self, **options):
+    def __init__(self, **options: Any) -> None:
         if not self.validate(**options):
             raise ValueError(f"Options {options} are not valid for {self.__class__.__name__}.")
         self.options = options
 
     @staticmethod
-    def validate(**options):
+    def validate(**options: Any) -> bool:
         r"""
         Validate optional arguments.
 
@@ -220,7 +221,7 @@ class MissingBase:
         selected = select_time(da, **indexer)
         return selected.notnull()
 
-    def _validate_src_timestep(self, src_timestep):
+    def _validate_src_timestep(self, src_timestep: Freq | None) -> bool:
         return True
 
     def is_missing(
@@ -255,7 +256,7 @@ class MissingBase:
         self,
         da: xr.DataArray,
         freq: Freq | None = None,
-        src_timestep: str | None = None,
+        src_timestep: Freq | None = None,
         **indexer,
     ) -> xr.DataArray:
         """
@@ -312,7 +313,7 @@ class MissingBase:
 class MissingAny(MissingBase):
     """Mask periods as missing if any of its elements is missing or invalid."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Create a MissingAny object."""
         super().__init__()
 
@@ -354,7 +355,7 @@ class MissingTwoSteps(MissingBase):
         self,
         da: xr.DataArray,
         freq: Freq | None = None,
-        src_timestep: str | None = None,
+        src_timestep: Freq | None = None,
         **indexer,
     ) -> xr.DataArray:
         """
@@ -412,7 +413,7 @@ class MissingWMO(MissingTwoSteps):
     True if any month within a period is masked.
     """
 
-    def __init__(self, nm: int = 11, nc: int = 5):
+    def __init__(self, nm: int = 11, nc: int = 5) -> None:
         """
         Create a MissingWMO object.
 
@@ -426,13 +427,15 @@ class MissingWMO(MissingTwoSteps):
         super().__init__(nm=nm, nc=nc, subfreq="MS")
 
     @staticmethod
-    def validate(nm: int, nc: int, subfreq: Freq | None = None):
-        return nm < 31 and nc < 31
+    def validate(**options: Any) -> bool:
+        nm = options.get("nm")
+        nc = options.get("nc")
+        return isinstance(nm, int) and isinstance(nc, int) and nm < 31 and nc < 31
 
-    def _validate_src_timestep(self, src_timestep):
-        return src_timestep == "D"
+    def _validate_src_timestep(self, src_timestep: Freq | None) -> bool:
+        return src_timestep is not None and src_timestep == "D"
 
-    def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: Freq) -> xr.DataArray:
+    def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: Freq | None) -> xr.DataArray:
         from xclim.compute import run_length as rl
         from xclim.compute.helpers import resample_map
 
@@ -471,8 +474,9 @@ class MissingPct(MissingTwoSteps):
         super().__init__(tolerance=tolerance, subfreq=subfreq)
 
     @staticmethod
-    def validate(tolerance: float, subfreq: Freq | None = None):
-        return 0 <= tolerance <= 1
+    def validate(**options: Any) -> bool:
+        tolerance = options.get("tolerance")
+        return isinstance(tolerance, (int, float)) and 0 <= tolerance <= 1
 
     def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: Freq | None) -> xr.DataArray:
         if freq is not None:
@@ -506,8 +510,9 @@ class AtLeastNValid(MissingTwoSteps):
         super().__init__(n=n, subfreq=subfreq)
 
     @staticmethod
-    def validate(n: int, subfreq: Freq | None = None):
-        return n > 0
+    def validate(**options: Any) -> bool:
+        n = options.get("n")
+        return isinstance(n, int) and n > 0
 
     def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: Freq | None) -> xr.DataArray:
         if freq is not None:
@@ -524,14 +529,14 @@ class AtLeastNValid(MissingTwoSteps):
 
 
 def missing_any(  # noqa: D103 # numpydoc ignore=GL08
-    da: xr.DataArray, freq: Freq, src_timestep: str | None = None, **indexer
+    da: xr.DataArray, freq: Freq, src_timestep: Freq | None = None, **indexer
 ) -> xr.DataArray:
     """Return whether there are missing days in the array."""
     return MissingAny()(da, freq, src_timestep, **indexer)
 
 
 def missing_some_but_not_all(  # noqa: D103 # numpydoc ignore=GL08
-    da: xr.DataArray, freq: Freq, src_timestep: str | None = None, **indexer
+    da: xr.DataArray, freq: Freq, src_timestep: Freq | None = None, **indexer
 ) -> xr.DataArray:
     """Return whether there are some missing days in the array, but not all are missing."""
     return MissingSomeButNotAll()(da, freq, src_timestep, **indexer)
@@ -540,7 +545,7 @@ def missing_some_but_not_all(  # noqa: D103 # numpydoc ignore=GL08
 def missing_wmo(  # noqa: D103 # numpydoc ignore=GL08
     da: xr.DataArray,
     freq: Freq,
-    src_timestep: str | None = None,
+    src_timestep: Freq | None = None,
     nm: int = 11,
     nc: int = 5,
     **indexer,
@@ -551,7 +556,7 @@ def missing_wmo(  # noqa: D103 # numpydoc ignore=GL08
 def missing_pct(  # noqa: D103 # numpydoc ignore=GL08
     da: xr.DataArray,
     freq: Freq,
-    src_timestep: str | None = None,
+    src_timestep: Freq | None = None,
     tolerance: float = 0.1,
     subfreq: Freq | None = None,
     **indexer,
@@ -562,7 +567,7 @@ def missing_pct(  # noqa: D103 # numpydoc ignore=GL08
 def at_least_n_valid(  # noqa: D103 # numpydoc ignore=GL08
     da: xr.DataArray,
     freq: Freq,
-    src_timestep: str | None = None,
+    src_timestep: Freq | None = None,
     n: int = 20,
     subfreq: Freq | None = None,
     **indexer,
@@ -570,7 +575,7 @@ def at_least_n_valid(  # noqa: D103 # numpydoc ignore=GL08
     return AtLeastNValid(n=n, subfreq=subfreq)(da, freq, src_timestep, **indexer)
 
 
-def missing_from_context(da: xr.DataArray, freq: Freq, src_timestep: str | None = None, **indexer) -> xr.DataArray:
+def missing_from_context(da: xr.DataArray, freq: Freq, src_timestep: Freq | None = None, **indexer) -> xr.DataArray:
     """
     Mask periods as missing according to the algorithm and options set in xclim's global options.
 

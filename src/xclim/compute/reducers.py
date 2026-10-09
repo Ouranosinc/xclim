@@ -17,6 +17,8 @@ from collections.abc import Callable
 
 import xarray as xr
 
+from xclim.core import Reducer
+
 __all__ = ["XCLIM_OPS", "doymax", "doymin"]
 
 
@@ -62,5 +64,5 @@ def doymin(da: xr.DataArray) -> xr.DataArray:
     return tmax.dt.dayofyear
 
 
-XCLIM_OPS: dict[str, Callable] = {"doymin": doymin, "doymax": doymax}
+XCLIM_OPS: dict[Reducer, Callable] = {"doymin": doymin, "doymax": doymax}
 """A dictionary of additional time-reducing operations known to xclim."""

@@ -152,7 +152,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
             " has to handle.",
             stacklevel=2,
         )
-        chunking = {d: "auto" for d in da.dims}
+        chunking: dict[str, Any] = {d: "auto" for d in da.dims}
         chunking["time"] = -1  # no chunking on time to use map_block
         da = da.chunk(chunking)
     # overlap of studied `da` and the reference period used to compute percentile
@@ -193,7 +193,8 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
                     }
                     per_template = per_template.chunk(chunking)
             per = xarray.map_blocks(
-                percentile_doy.__wrapped__,  # strip history update from percentile_doy
+                # strip history update from percentile_doy
+                percentile_doy.__wrapped__,  # type: ignore[attr-defined]
                 obj=bda,
                 kwargs={**pdoy_args, "copy": False},
                 template=per_template,
