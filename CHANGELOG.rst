@@ -95,6 +95,7 @@ Internal changes
 * On `bump release`, the `CHANGELOG.rst` file is now automatically updated to set the version title and release date. (:pull:`2413`).
 * `AUTHORS.rst` is now bundled in the `license-files` of packaged wheels. (:pull:`2413`).
 * `make autodoc-custom-index` has been removed in favour of `make autodoc-noindex`. `make docs` and other `sphinx` targets now use the new 'noindex' variant. (:pull:`2424`).
+* Testing of ``standardized_precipitation_index`` (SPI) was adjusted to re-enable bottleneck, which was disabled by xarray 2026.09. (:pull:`2446`).
 
 v0.62.0 (2026-08-17)
 --------------------

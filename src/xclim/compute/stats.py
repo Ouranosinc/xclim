@@ -892,6 +892,9 @@ def standardized_index_fit_params(
     * Otherwise, generic `rv_continuous` methods can be used. This includes distributions from `lmoments3`
     which should be used with `method="PWM"`.
 
+    Method "ML" results will vary depending on the numerical options enabled in xarray.
+    see ``use_bottleneck``, ``use_numbagg``, for example, in :py:func:`xarray.set_options`.
+
     When using the zero inflated option, : A probability density function :math:`\texttt{pdf}_0(X)` is fitted
     for :math:`X \neq 0` and a supplementary parameter :math:`\pi` takes into account the probability of
     :math:`X = 0`. The full probability density function is a piecewise function:

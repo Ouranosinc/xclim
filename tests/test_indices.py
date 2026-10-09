@@ -346,12 +346,14 @@ class TestAgroclimaticIndices:
         np.testing.assert_array_equal(out, np.array([np.nan, expected]))
 
 
+@pytest.mark.usefixtures("use_bottleneck")
 class TestStandardizedIndices:
     # gamma/APP reference results: Obtained with `monocongo/climate_indices` library
     # MS/fisk/ML reference results: Obtained with R package `SPEI`
     # Using the method `APP` in XClim matches the method from monocongo, hence the very low tolerance possible.
     # Repeated tests with lower tolerance means we want a more precise comparison, so we compare
     # the current version of XClim with the version where the test was implemented.
+    # bottleneck was used when writing these tests, it needs enabling since xarray 2026.09
     # Additionally, xarray does not yet access "week" or "weekofyear"
     # with groupby in a pandas-compatible way for cftime objects.
     # See: https://github.com/pydata/xarray/discussions/6375
@@ -430,7 +432,7 @@ class TestStandardizedIndices:
                 "gamma",
                 "ML",
                 [-0.158854, -0.049165, 0.675863, 0.960247, 0.660831],
-                2e-1,
+                2e-2,
             ),
             (
                 "D",
@@ -566,8 +568,7 @@ class TestStandardizedIndices:
         self, freq, window, dist, method, values, diff_tol, open_dataset, no_numbagg
     ):
         if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
-            # TODO: Find out why it is failing on MacOS
-            pytest.skip("Skipping SPI/ML/D for numpy below v2.0")
+            pytest.skip("Skipping SPI/ML/D for numpy below v2.0.")
 
         # change `dist` to a lmoments3 object if needed
         if method == "PWM":
