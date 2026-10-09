@@ -489,7 +489,7 @@ exclude = ["docs", "tests"]
 exclude = []
 ignore_decorators = ["@pytest.fixture"]
 # both are simple fixtures that activates an option, they have no value
-ignore_names = ['no_numbagg', 'as_da']
+ignore_names = ['no_numbagg', 'use_bottleneck', 'as_da']
 min_confidence = 90
 paths = ["src/xclim", "tests"]
 sort_by_size = true
