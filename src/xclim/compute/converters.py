@@ -2447,11 +2447,11 @@ def universal_thermal_climate_index(
         * 0.5 m/s <= sfcWind <= 30.3 m/s
         * 5 % <=  hurs <= 100 %
     hurs_cap_min : bool
-        If True, relative humidities are capped to a minimum of 5 % following :cite:t:`brode_utci_2012`
-        usage guidelines. This ensures UTCI calculation for dry weathers. Default value False.
+        If True (default), relative humidities are capped to a minimum of 5 % following :cite:t:`brode_utci_2012`
+        usage guidelines. This ensures UTCI calculation for dry weathers.
     wind_cap_min : bool
-        If True, wind velocities are capped to a minimum of 0.5 m/s following :cite:t:`brode_utci_2012`
-        usage guidelines. This ensures UTCI calculation for low winds. Default value False.
+        If True (default), wind velocities are capped to a minimum of 0.5 m/s following :cite:t:`brode_utci_2012`
+        usage guidelines. This ensures UTCI calculation for low winds.
 
     Returns
     -------
