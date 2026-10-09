@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from itertools import groupby
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -452,6 +454,77 @@ def test_keep_longest_run_synthetic():
     runs = xr.DataArray([0, 1, 1, 1, 0, 0, 1, 1, 1, 0], dims="time").astype(bool)
     lrun = rl.keep_longest_run(runs, "time")
     np.testing.assert_array_equal(lrun, np.array([0, 1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool))
+
+
+@pytest.mark.parametrize("dtype", ["bool", "int8", "int64", "float32", "float64"])
+@pytest.mark.parametrize(
+    "values,expected",
+    [
+        ([0], [1]),
+        ([0, 0, 0], [1, 0, 0]),
+        ([1], [1]),
+        ([1, 1, 1], [1, 1, 1]),
+        ([1, 1, 0, 1], [1, 1, 0, 0]),
+        ([1, 0, 1, 1], [0, 0, 1, 1]),
+        ([0, 1, 1, 0, 1, 1], [0, 1, 1, 0, 0, 0]),
+    ],
+)
+def test_keep_longest_run_endpoints_and_ties(values: list[int], expected: list[int], dtype: str) -> None:
+    runs = xr.DataArray(values, dims="time").astype(dtype)
+    np.testing.assert_array_equal(rl.keep_longest_run(runs), np.array(expected, dtype=bool))
+
+
+@pytest.mark.parametrize("length", range(1, 9))
+@pytest.mark.parametrize("dtype", ["bool", "int8", "int64", "float32", "float64"])
+def test_keep_longest_run_exhaustive(length: int, dtype: str) -> None:
+    # Use Python grouping as an independent reference for all short binary sequences.
+    values = (np.arange(2**length)[:, None] >> np.arange(length)) & 1
+    expected_values = np.zeros(values.shape, dtype=bool)
+    for row, sequence in enumerate(values):
+        groups = [list(group) for value, group in groupby(enumerate(sequence), key=lambda item: item[1]) if value]
+        # Preserve the existing first-position result when there are no runs.
+        longest = max(groups, key=len, default=[(0, 0)])
+        expected_values[row, [index for index, _ in longest]] = True
+    runs = xr.DataArray(values, dims=("site", "day")).astype(dtype)
+    expected = runs.copy(data=expected_values)
+    actual = rl.keep_longest_run(runs, dim="day")
+    xr.testing.assert_identical(actual, expected)
+
+
+@pytest.mark.parametrize("freq", [None, "MS", "YS"])
+@pytest.mark.parametrize("chunks", [None, {"time": -1, "site": 2}, {"time": 31, "site": 2}])
+@pytest.mark.parametrize("transpose", [False, True])
+@pytest.mark.parametrize("dtype", ["bool", "int8", "int64", "float32", "float64"])
+def test_keep_longest_run_resampling_and_chunks(
+    freq: str | None, chunks: dict[str, int] | None, transpose: bool, dtype: str
+) -> None:
+    values = np.random.default_rng(42).random((400, 3)) > 0.4
+    # Include a run crossing a year boundary and one crossing a month boundary.
+    values[10:35, 0] = True
+    values[50:70, 1] = True
+    runs = xr.DataArray(
+        values,
+        dims=("time", "site"),
+        coords={"time": pd.date_range("2000-12-15", periods=400), "site": [10, 20, 30]},
+        name="condition",
+        attrs={"description": "Synthetic daily event mask"},
+    )
+    runs.encoding = {"dtype": "bool"}
+    if transpose:
+        runs = runs.transpose("site", "time")
+    expected = rl.keep_longest_run(runs, freq=freq)
+    runs = runs.astype(dtype)
+    runs.encoding = {"dtype": dtype}
+    if chunks:
+        runs = runs.chunk(chunks)
+
+    with assert_lazy:
+        actual = rl.keep_longest_run(runs, freq=freq)
+
+    if chunks:
+        assert actual.chunks is not None
+    xr.testing.assert_identical(actual.compute(), expected)
+    assert actual.encoding == runs.encoding
 
 
 def test_keep_longest_run_data(open_dataset):

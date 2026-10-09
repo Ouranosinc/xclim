@@ -5,13 +5,13 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "xclim"
 authors = [
-  {name = "Travis Logan", email = "logan.travis@ouranos.ca"}
+  { name = "Travis Logan", email = "logan.travis@ouranos.ca" }
 ]
 maintainers = [
-  {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"},
-  {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
+  { name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca" },
+  { name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca" }
 ]
-readme = {file = "README.rst", content-type = "text/x-rst"}
+readme = { file = "README.rst", content-type = "text/x-rst" }
 requires-python = ">=3.11.0"
 keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
 license = "Apache-2.0"
@@ -121,7 +121,7 @@ test = [
   "pytest-socket >=0.6.0",
   "pytest-timeout >=2.4.0",
   "pytest-xdist[psutil] >=3.2",
-  {include-group = "io"}
+  { include-group = "io" }
 ]
 docs = [
   # Documentation and example support
@@ -144,11 +144,11 @@ docs = [
   "sphinx-mdinclude  >=0.6.2",
   "sphinxcontrib-bibtex >=2.7.0",
   "sphinxcontrib-svg2pdfconverter",
-  {include-group = "notebooks"}
+  { include-group = "notebooks" }
 ]
 test-notebooks = [
-  {include-group = "notebooks"},
-  {include-group = "test"}
+  { include-group = "notebooks" },
+  { include-group = "test" }
 ]
 tox = [
   "tox >=4.52.0",
@@ -160,16 +160,16 @@ dev = [
   "flit >=4.0,<5.0",
   "pip >=26.1",
   "prek >=0.5.0",
-  {include-group = "docs"},
-  {include-group = "lint"},
-  {include-group = "test-notebooks"},
-  {include-group = "tox"}
+  { include-group = "docs" },
+  { include-group = "lint" },
+  { include-group = "test-notebooks" },
+  { include-group = "tox" }
 ]
 
 [tool]
 
 [tool.bumpversion]
-current_version = "0.99.0-dev.34"
+current_version = "0.99.0-dev.36"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
