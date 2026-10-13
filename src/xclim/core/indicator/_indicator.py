@@ -606,7 +606,15 @@ class IndexWrapper:  # numpydoc ignore=PR01
 
         source = []
         if hasattr(self.compute, "__module__"):
-            source.append(f"Based on function :py:func:`~{self.compute.__module__}.{self.compute.__name__}`.")
+            mod = self.compute.__module__
+            # Special case for compute functions that are imported directly in `compute` and documented that way,
+            # so that autodoc can create a working link
+            if mod.startswith("xclim.compute") and (
+                mod.split(".")[2] == "converters" or mod.split(".")[2].startswith("_")
+            ):
+                source.append(f"Based on function :py:func:`~xclim.compute.{self.compute.__name__}`.")
+            else:
+                source.append(f"Based on function :py:func:`~{mod}.{self.compute.__name__}`.")
         else:
             source.append(f"Based on function {self.compute.__name__}.")
         if self.injected_parameters:
@@ -666,6 +674,10 @@ class IndicatorBase(IndexWrapper):
 
     def __new__(cls, **kwds):
         """Create a new indicator but also a new class."""
+        if not kwds:
+            # fast track for copying an indicator with no changes
+            return object.__new__(cls)
+
         identifier = kwds.get("identifier")
 
         # Need to get this before the IndexWrapper twist
@@ -1497,6 +1509,10 @@ class _Convenience(_InputChecker):
     """Attribute names that can be passed directly to the constructor."""
 
     def __new__(cls, **kwargs):
+        if not kwargs:
+            # fast-track for copying indicators without changes
+            return super().__new__(cls)
+
         if "cf_attrs" in kwargs:
             warnings.warn(
                 "Indicator argument `cf_attrs` has been renamed to `outputs` in xclim v1.", FutureWarning, stacklevel=2
@@ -1604,16 +1620,19 @@ class _Registrer(_Convenience):
     """Register the indicator in the xclim registry."""
 
     def __new__(cls, **kwargs):
-        if kwargs.get("identifier") is None and kwargs.get("register", True) is True:
-            raise ValueError("Can't create an indicator without an identifier if register is True.")
+        # if kwargs is empty, then this call is a pure copy, not a "new" indicator
+        if kwargs and kwargs.get("identifier") is None and kwargs.get("register", True) is True:
+            raise ValueError("Can't create a new indicator without an identifier if register is True.")
         return super().__new__(cls, **kwargs)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if kwargs.get("register", True):
-            if self.identifier in registry:
+            if self.identifier not in registry:
+                registry[self.identifier] = self
+            elif registry[self.identifier].__class__ is not self.__class__:
                 warnings.warn(f"Indicator {self.identifier} already exists and will be overwritten.", stacklevel=4)
-            registry[self.identifier] = self
+                registry[self.identifier] = self
 
 
 class Indicator(_Registrer):  # numpydoc ignore=PR01
