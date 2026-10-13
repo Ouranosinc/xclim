@@ -135,7 +135,7 @@ A mapping from variable name to a dict with the following keys:
 
 class InputKind(IntEnum):
     """
-    Constants for input parameter kinds.
+    Constants for defining types or kinds of indicator parameters.
 
     For use by external parsers to determine what kind of data the indicator expects.
     On the creation of an indicator, the appropriate constant is stored in
@@ -299,7 +299,7 @@ def infer_kind_from_parameter(param) -> InputKind:
     if annot == {"bool"}:
         return InputKind.BOOL
 
-    if annot == {"dict"}:
+    if all(a.startswith("dict[") for a in annot) or annot == {"dict"}:
         return InputKind.DICT
 
     if annot == {"Dataset"}:

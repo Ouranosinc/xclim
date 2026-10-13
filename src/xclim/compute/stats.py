@@ -174,7 +174,7 @@ def fit(
             "Please pass an instance from the lmoments3 package."
         )
 
-    shape_params = [] if dist.shapes is None else dist.shapes.split(",")
+    shape_params = [] if dist.shapes is None else dist.shapes.split(", ")
     dist_params = shape_params + ["loc", "scale"]
 
     data = xr.apply_ufunc(
@@ -891,6 +891,9 @@ def standardized_index_fit_params(
     through `floc=0` in `fitkwargs`.
     * Otherwise, generic `rv_continuous` methods can be used. This includes distributions from `lmoments3`
     which should be used with `method="PWM"`.
+
+    Method "ML" results will vary depending on the numerical options enabled in xarray.
+    see ``use_bottleneck``, ``use_numbagg``, for example, in :py:func:`xarray.set_options`.
 
     When using the zero inflated option, : A probability density function :math:`\texttt{pdf}_0(X)` is fitted
     for :math:`X \neq 0` and a supplementary parameter :math:`\pi` takes into account the probability of

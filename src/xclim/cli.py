@@ -310,9 +310,9 @@ def indicators(info):  # numpydoc ignore=PR01
     rows = []
     for name, ind in indicator.registry.items():
         left = click.style(name.lower(), fg="yellow")
-        right = ", ".join([var.get("long_name", var.var_name) for var in ind.attrs])
-        if ind.attrs[0].var_name.lower() != name:
-            right += " (" + ", ".join([var.var_name for var in ind.attrs]) + ")"
+        right = ", ".join([outmeta.attrs.get("long_name", outmeta.var_name) for outmeta in ind.outputs])
+        if ind.outputs[0].var_name.lower() != name:
+            right += " (" + ", ".join([outmeta.var_name for outmeta in ind.outputs]) + ")"
         if info:
             right += "\n" + ind.abstract
         rows.append((left, right))

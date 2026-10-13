@@ -14,7 +14,7 @@ body:
       description: |
         What xclim version are you running?
       value: |
-        * Xclim version:
+        * xclim version:
   - type: textarea
     id: description
     attributes:

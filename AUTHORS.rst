@@ -34,6 +34,7 @@ Contributors
 * Marie-Pier Labonté <labonte.marie-pier@ouranos.ca> `@marielabonte <https://github.com/marielabonte>`_
 * Ludwig Lierhammer <ludwig.lierhammer@dwd.de> `@ludwiglierhammer <https://github.com/ludwiglierhammer>`_
 * Jwen Fai Low `@jwenfai <https://github.com/jwenfai>`_
+* Charles Lu `@Lu-Charles <https://github.com/Lu-Charles>`_
 * Jamie Quinn <jamiejquinn@jamiejquinn.com> `@JamieJQuinn <https://github.com/JamieJQuinn>`_
 * Yannick Rousseau
 * Philippe Roy `@Balinus <https://github.com/Balinus>`_

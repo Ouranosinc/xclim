@@ -1,3 +1,4 @@
+============================
 xclim Official Documentation
 ============================
 
@@ -11,6 +12,10 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
 
 .. _xarray: https://docs.xarray.dev/
 .. _dask: https://docs.dask.org/
+
+.. warning::
+
+   This version of xclim brings major changes compared to the v0.x series. See :ref:`transition_v1:Differences between v0 and v1` for guidance on how to transition to xclim v1.
 
 .. toctree::
    :hidden:
@@ -27,9 +32,7 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
    notebooks/usage
    notebooks/index
    indicators
-   checks
    notebooks/units
-   internationalization
    notebooks/cli
    analogues
    contributing
@@ -39,16 +42,23 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
 
    authors
    changelog
+   transition_v1
    support
    governance
    security
    references
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: User API
 
-   api
+   user_api/indicator
+   user_api/compute
+   user_api/ensemble
+   user_api/analog
+   user_api/units_calendar
+   user_api/checks
+   user_api/developers
 
 .. toctree::
    :maxdepth: 1

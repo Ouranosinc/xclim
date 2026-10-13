@@ -5,13 +5,13 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "xclim"
 authors = [
-  {name = "Travis Logan", email = "logan.travis@ouranos.ca"}
+  { name = "Travis Logan", email = "logan.travis@ouranos.ca" }
 ]
 maintainers = [
-  {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"},
-  {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
+  { name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca" },
+  { name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca" }
 ]
-readme = {file = "README.rst", content-type = "text/x-rst"}
+readme = { file = "README.rst", content-type = "text/x-rst" }
 requires-python = ">=3.11.0"
 keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
 license = "Apache-2.0"
@@ -121,7 +121,7 @@ test = [
   "pytest-socket >=0.6.0",
   "pytest-timeout >=2.4.0",
   "pytest-xdist[psutil] >=3.2",
-  {include-group = "io"}
+  { include-group = "io" }
 ]
 docs = [
   # Documentation and example support
@@ -144,11 +144,11 @@ docs = [
   "sphinx-mdinclude  >=0.6.2",
   "sphinxcontrib-bibtex >=2.7.0",
   "sphinxcontrib-svg2pdfconverter",
-  {include-group = "notebooks"}
+  { include-group = "notebooks" }
 ]
 test-notebooks = [
-  {include-group = "notebooks"},
-  {include-group = "test"}
+  { include-group = "notebooks" },
+  { include-group = "test" }
 ]
 tox = [
   "tox >=4.52.0",
@@ -156,20 +156,20 @@ tox = [
 ]
 dev = [
   # Development and testing tools
-  "bump-my-version >=1.5.1",
+  "bump-my-version >=1.6.0",
   "flit >=4.0,<5.0",
   "pip >=26.1",
   "prek >=0.5.0",
-  {include-group = "docs"},
-  {include-group = "lint"},
-  {include-group = "test-notebooks"},
-  {include-group = "tox"}
+  { include-group = "docs" },
+  { include-group = "lint" },
+  { include-group = "test-notebooks" },
+  { include-group = "tox" }
 ]
 
 [tool]
 
 [tool.bumpversion]
-current_version = "0.99.0-dev.28"
+current_version = "0.99.1-beta.0"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -220,10 +220,11 @@ replace = "__version__ = \"{new_version}\""
 independent = false
 
 [tool.bumpversion.parts.release]
-optional_value = "release"
+optional_value = "final"
 values = [
-  "dev",
-  "release"
+  "beta",
+  "rc",
+  "final"
 ]
 
 [tool.codespell]
@@ -450,7 +451,7 @@ max-complexity = 20
 "docs/notebooks/*.ipynb" = ["E225", "E226", "E231", "E501"]
 "src/xclim/**/__init__.py" = ["F401", "F403"]
 "src/xclim/analog.py" = ["E501"]
-"src/xclim/core/indicator.py" = ["D214", "D405", "D406", "D407", "D411"]
+"src/xclim/core/indicator/_indicator.py" = ["D214", "D405", "D406", "D407", "D411"]
 "src/xclim/core/locales.py" = ["E501", "W505"]
 "src/xclim/core/missing" = ["D103"]
 "src/xclim/compute/_agro.py" = ["E501"]
@@ -489,7 +490,7 @@ exclude = ["docs", "tests"]
 exclude = []
 ignore_decorators = ["@pytest.fixture"]
 # both are simple fixtures that activates an option, they have no value
-ignore_names = ['no_numbagg', 'as_da']
+ignore_names = ['no_numbagg', 'use_bottleneck', 'as_da']
 min_confidence = 90
 paths = ["src/xclim", "tests"]
 sort_by_size = true

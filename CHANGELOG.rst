@@ -4,13 +4,14 @@ Changelog
 
 `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
 ------------------------------------------------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`), Juliette Lavoie (:user:`juliettelavoie`), Charles Lu (:user:`Lu-Charles`).
 
 Announcements
 ^^^^^^^^^^^^^
 This release constitutes a major breaking change from the previous stable release (`v0.x`) and introduces several new features, enhancements, and API changes.
 Users are strongly encouraged to review the breaking changes section below to ensure compatibility with their existing codebases.
 Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version.
+See :ref:`transition_v1:Differences between v0 and v1` for a summary of the breaking changes and guidance on how to transition to xclim v1.
 The `xclim` library is now considered to be production-level stable.
 
 Major changes
@@ -21,10 +22,12 @@ Major changes
     * A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
 * Refactor of the ``xclim.core.indicator.Indicator`` class itself  (:pull:`2397`). Most breaking changes are:
     * Indicators return ``Dataset`` by default, option ``as_dataset`` is now True by default (:issue:`2410`, :pull:`2414`).
-    * Output attributes are stored in ``Indicator.attrs`` (renamed from ``cf_attrs``), which is a list of ``xclim.core.indicator.Output`` objects (not dictionaries).
-    * Removal of ``Indicator.from_dict``. Renamed ``Indicator.translate_attrs`` to ``Indicator.translate``.
+    * Output metadata are stored in ``Indicator.outputs`` (renamed from ``cf_attrs``), which is a list of ``xclim.core.indicator.Output`` objects (not dictionaries), which have a ``.attrs`` property holding the attributes (:pull:`2426`).
+    * Renamed ``Indicator.translate_attrs`` to ``Indicator.translate``.
     * The ``xclim.core.indicator.registry`` now holds ``Indicator`` _instances_ (not classes) and is case-insensitive.
     * "Virtual submodules" were transformed into ``xclim.core.collection.IndicatorCollection`` instances (and not actual python modules). Indicators created this way automatically have the collection's name prepended to their identifier. Indicators created in the context of a collection are not registered by default. (:pull:`2415`).
+    * Copying/Subclassing an existing indicator is now done through ``Indicator.copy``, method ``Indicator.from_dict`` is deprecated. (:pull:`2424`).
+    * Indicators will now add an ``xclim_description`` attribute to all their outputs, This is similar to the ``history`` that is now only appended to output datasets, but excludes datetime and `xclim`'s version. It does not append any input metadata. (:pull:`2431`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -33,10 +36,19 @@ New indicators and features
     * Open `date_bounds` and `doy_bounds` are now supported (i.e., `None` as start or end).
     * The `include_doy_bounds_nans` argument has been added to control whether NaN values in the bounds should be filled or not. When set to `True`, missing values in the start or end bounds are replaced by the start and end of the period, respectively.
     * The `bounds_freq` argument has been added to allow users to specify the frequency to use when using open `date_bounds`.
+* Add multimember support through new argument 'dim' and new test 'signal-to-noise' for ``xclim.ensembles.robustness_fractions`` (:pull:`2411`).
 * `IndicatorCollection` yaml specifications updates:
     * New ``bases`` section for defining indicator classes to reuse in defining the ones in the ``indicators`` section (:pull:`2415`).
     * Fields ``base`` and ``compute`` can now be a "qualified name" of an object to be imported dynamically, or the qualified name of an indicator with its submodule/realm. Ex: ``atmos.precip_accumulation``, which was previously referred by its identifier ``prcptot`` (:pull:`2415`).
+* New arguments ``validity_ranges`` and ``hurs_cap_min`` in indicator ``universal_thermal_climate_index`` (UTCI).
+  In accordance with recommendations from Bröde et al. (2012), default validity upper bounds were increased for ``tas - mrt`` (from 30°C to 70°C) and ``sfcWind`` (from 17 to 30.3 m/s) and capping is now enabled by default (``sfcWind`` to a minimum of 0.5 ms and of ``hurs`` to a minimum of 5 %). (:issue:`2400`, :pull:`2432`).
 * New indicator ``canadian_hardiness_zones`` for calculating climate hardiness suitability index of regions according to Canadian categorization standards has been added. (:issue:`1290`, :pull:`2398`).
+
+Bug fixes
+^^^^^^^^^
+* Handling of ``units_metadata`` has been updated. (:pull:`2431`).
+    * In ``convert_units_to``, if the source is known to be "on-scale" or "difference" but the target is ambiguous, the source's metadata is preserved.
+    * When "difference" units are formatted to string, CF symbols are more consistently used.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -62,9 +74,14 @@ Breaking changes
     * For array-like ``doy_bounds`` without ``time`` dimension, the start and end bounds must now be consecutive according to the frequency (default: ``freq="YS"``). Otherwise, the indexing is invalid and no data are selected.
 * Variable `q` has been renamed to `rivo` in hydrological indicators (``xclim.indicators.land``) to follow modern naming conventions. ``xclim.land.doy_q{min|max}`` are renamed to ``xclim.land.rivo_{min|max}_doy``. (:issue:`2407`, :pull:`2408`).
 * Translation: ``xclim.core.locales.get_local_attrs`` has been rewritten and only accepts a single "locale" now. Locale dictionaries are now case-insensitive. (:pull:`2397`).
+* Replace hard-coded length of period to actually use the length of the input in test `ipcc-ar6-c` of ``xclim.ensembles.robustness_fractions``. (:pull:`2411`, :issue:`2406`).
+* ``xclim.compute.fit`` now avoids adding an extra white space when there are more than one shape parameter, which changes the coordinate to be expected. (:pull:`2428`)
+* Documentation targets for functions, classes, and variables no longer link to the `sphinx-autodoc` module mappings. All historical hyperlinks to `apidoc` will no longer function as expected. The user api pages have been refactored to help navigation. (:pull:`2424`).
+* ``xclim.core.indicator`` has been refactored into its own submodule. All publicly-documented members remain accessible via `xclim.core.indicator` imports. (:pull:`2424`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
+* ``xclim.compute.run_length.keep_longest_run`` uses run boundaries to select the longest run for boolean and numeric 0/1 inputs, avoiding intermediate floating-point arrays while preserving existing results. (:issue:`2131`, :pull:`2433`).
 * The `Makefile` has been adjusted to install libraries in advance (via ``python -m pip install --silent --group ...``) when attempting to run commands reliant on specific Python tools. (:pull:`2316`).
 * `tox.toml` has been updated to use ``dependency-groups`` to determine necessary libraries needed for environments, and relies entirely on the `Makefile` for running checks. (:pull:`2316`).
 * Documentation has been adjusted to reflect changes to environment setup required by developers/contributors. (:pull:`2316`).
@@ -78,6 +95,10 @@ Internal changes
 * Project metadata now compatible with `flit >=4.0` standards. (:pull:`2412`).
 * On `bump release`, the `CHANGELOG.rst` file is now automatically updated to set the version title and release date. (:pull:`2413`).
 * `AUTHORS.rst` is now bundled in the `license-files` of packaged wheels. (:pull:`2413`).
+* `make autodoc-custom-index` has been removed in favour of `make autodoc-noindex`. `make docs` and other `sphinx` targets now use the new 'noindex' variant. (:pull:`2424`).
+* Testing of ``standardized_precipitation_index`` (SPI) was adjusted to re-enable bottleneck, which was disabled by xarray 2026.09. (:pull:`2446`).
+* `xclim` is now fully compliant with Semantic Versioning v2.0. The `dev` tag has been retired while `-beta` and `-rc` version tags will be used moving forward. (:pull:`2434`):
+    * `bump-my-version` has been updated to `>=1.6.0` to make use of the `bump version --to` flag.
 
 v0.62.0 (2026-08-17)
 --------------------
@@ -1852,11 +1873,13 @@ New features and enhancements
 * A convenience function (``xclim.core.dataflags.ecad_compliant``) is also offered as a method for asserting that data adheres to all relevant ECAD/ICCLIM checks. For more information on usage, consult the docstring/documentation.
 * A new utility "``dataflags``" is also available for performing fast quality control checks from the command-line (`xclim dataflags --help`). See the CLI documentation page for usage examples.
 * Added missing typed call signatures, expected returns and docstrings for many ``xclim.core.calendar`` functions.
+* Generic compute functions now accept `freq=None`: This simply performs the reduction on the full time series instead of resampling. This also applies to functions in ``xclim.compute.run_length``.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * All "ANUCLIM" indices and indicators have lost their `src_timestep` argument. Most of them were not using it and now every function infers the frequency from the data directly. This may add stricter constraints on the time coordinate, the same as for ``xarray.infer_freq``.
 * Many functions found within ``xclim.core.cfchecks`` (``generate_cfcheck`` and ``check_valid_*``) have been removed as existing indicator CF-standard checks and data checks rendered them redundant/obsolete.
+
 
 Bug fixes
 ^^^^^^^^^
