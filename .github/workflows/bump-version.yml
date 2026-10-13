@@ -38,7 +38,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        python-version: [ "3.13" ]
+        python-version: ["3.13"]
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -86,8 +86,8 @@ jobs:
       - name: Conditional Bump
         run: |
           CURRENT_VERSION=$(bump-my-version show current_version)
-          if [[ ${CURRENT_VERSION} =~ -dev(\.\d+)? ]]; then
-            echo "Development version (ends in 'dev(\.\d+)?'), bumping 'build' version"
+          if [[ ${CURRENT_VERSION} =~ -beta(\.\d+)? ]] || [[ ${CURRENT_VERSION} =~ -rc(\.\d+)? ]]; then
+            echo "Development version (ends in 'beta(\.\d+)?' or '-rc(\.\d+)?'), bumping 'build' version"
             bump-my-version bump build
           else
             echo "Version is stable, bumping 'patch' version"
