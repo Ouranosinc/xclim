@@ -1605,7 +1605,9 @@ def canadian_hardiness_zones(
     pr: xarray.DataArray,
     snd: xarray.DataArray,
     wsgmax10m: xarray.DataArray,
-    freq: str = "30YS",
+    freq: Literal["30YS", "30YS-JAN", "30YS-JUL"] | str = "30YS",
+    # overlapping_periods: str = "10YS",
+    # start_year: int | None = None
 ) -> xarray.DataArray:
     """
     Canadian hardiness zones.
@@ -1622,7 +1624,7 @@ def canadian_hardiness_zones(
         Snow depth.
     wsgmax10m : xarray.DataArray
         Maximum wind gust.
-    freq : str
+    freq : {"30YS", "30YS-JAN", "30YS-JUL"} or str
         Resampling frequency for the climatology. Default is ``"30YS"`` (30-years).
 
     Returns
@@ -1637,10 +1639,16 @@ def canadian_hardiness_zones(
     snow depth, and wind speed data. The formula is adapted from the Canadian hardiness zones index as described in
     :cite:t:`ouellet_hardiness_1967b` and :cite:t:`ouellet_hardiness_1967c`.
 
+    For a more recent evaluation of this indicator, consult :cite:t:`mckenney_updated_2025`.
+
     References
     ----------
     :cite:cts:`ouellet_hardiness_1967b,ouellet_hardiness_1967c,mckenney_updated_2025`
     """
+    if parse_offset(freq) in [(30, "Y", True, "JAN"), (30, "Y", True, "JUL")]:
+        # FIXME: Should we support any period so long as annual?
+        raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `YS-JAN` or `YS-JUL`")
+
     _tasmin = convert_units_to(tasmin, "degC")
     _tasmax = convert_units_to(tasmax, "degC")
     _pr = convert_units_to(pr, "mm")
@@ -1665,14 +1673,12 @@ def canadian_hardiness_zones(
         .mean()
     )
 
-    # Precipitation in the period from June to November, inclusive
-    _pr_constrained = (
-        select_time(_pr, date_bounds=("06-01", "12-01"), include_bounds=(True, False))
-        .resample(time="YS")
-        .sum()
-        .resample(time=freq)
-        .mean()
-    )
+    # Precipitation in the period from June to November in Northern Hemisphere or December to May in Southern Hemisphere, inclusive
+    if freq in ["YS", "YS-JAN"]:
+        months = (6, 7, 8, 9, 10, 11)
+    else:
+        months = (12, 1, 2, 3, 4, 5)
+    _pr_constrained = select_time(_pr, month=months).resample(time="YS").sum().resample(time=freq).mean()
     # Empirical adjustment for millimeters of precipitation
     x3 = _pr_constrained / (_pr_constrained + 25.4)
 
