@@ -156,7 +156,7 @@ tox = [
 ]
 dev = [
   # Development and testing tools
-  "bump-my-version >=1.5.1",
+  "bump-my-version >=1.6.0",
   "flit >=4.0,<5.0",
   "pip >=26.1",
   "prek >=0.5.0",

@@ -506,6 +506,17 @@ From a new branch (e.g. `prepare-v123`), open a Pull Request and make sure all y
 .. code-block:: shell
 
     $ bump-my-version bump <option>  # possible options: major / minor / patch
+
+To bump directly to a release:
+
+.. code-block:: shell
+
+    $ bump-my-version bump release --to final  # --> Production version ('{version}')
+
+To bump to a release candidate:
+
+.. code-block:: shell
+
     $ bump-my-version bump release  # --> Release Candidate version ('{version}-rc.0')
     $ bump-my-version bump release  # --> Production version ('{version}')
 
@@ -517,7 +528,7 @@ These commands will increment the version and create a commit with an autogenera
     These builds are available for developer convenience and are likely to contain more bugs than a stable version.
     Release candidate versions should **never** be used in a production environment.
 
-For PyPI releases/stable versions, ensure that the last version bumping command run is `$ bump-my-version bump release` to remove the `-rc.0` suffix. These changes can now be merged to the `prepare-v123` branch:
+For PyPI releases/stable versions, ensure that the last version bumping command run is stable (no `-rc.0` suffix). These changes can now be merged to the `prepare-v123` branch:
 
 .. code-block:: shell
 
