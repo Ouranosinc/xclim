@@ -40,6 +40,8 @@ New indicators and features
 * `IndicatorCollection` yaml specifications updates:
     * New ``bases`` section for defining indicator classes to reuse in defining the ones in the ``indicators`` section (:pull:`2415`).
     * Fields ``base`` and ``compute`` can now be a "qualified name" of an object to be imported dynamically, or the qualified name of an indicator with its submodule/realm. Ex: ``atmos.precip_accumulation``, which was previously referred by its identifier ``prcptot`` (:pull:`2415`).
+* New arguments ``validity_ranges`` and ``hurs_cap_min`` in indicator ``universal_thermal_climate_index`` (UTCI).
+  In accordance with recommendations from Bröde et al. (2012), default validity upper bounds were increased for ``tas - mrt`` (from 30°C to 70°C) and ``sfcWind`` (from 17 to 30.3 m/s) and capping is now enabled by default (``sfcWind`` to a minimum of 0.5 ms and of ``hurs`` to a minimum of 5 %). (:issue:`2400`, :pull:`2432`).
 
 Bug fixes
 ^^^^^^^^^
@@ -93,6 +95,7 @@ Internal changes
 * On `bump release`, the `CHANGELOG.rst` file is now automatically updated to set the version title and release date. (:pull:`2413`).
 * `AUTHORS.rst` is now bundled in the `license-files` of packaged wheels. (:pull:`2413`).
 * `make autodoc-custom-index` has been removed in favour of `make autodoc-noindex`. `make docs` and other `sphinx` targets now use the new 'noindex' variant. (:pull:`2424`).
+* Testing of ``standardized_precipitation_index`` (SPI) was adjusted to re-enable bottleneck, which was disabled by xarray 2026.09. (:pull:`2446`).
 
 v0.62.0 (2026-08-17)
 --------------------

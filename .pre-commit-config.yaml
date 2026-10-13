@@ -32,7 +32,7 @@ repos:
         exclude: '.ipynb'
       - id: trailing-whitespace
   - repo: https://github.com/pappasam/toml-sort
-    rev: v0.24.4
+    rev: v0.25.0
     hooks:
       - id: toml-sort-fix
         exclude: '.pylintrc.toml'
@@ -42,19 +42,19 @@ repos:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.5
+    rev: v0.16.10
     hooks:
       - id: ruff-format
         exclude: '(src/xclim/compute/__init__.py|docs/installation.rst)'
       - id: ruff-check
         args: [ '--fix', '--show-fixes' ]
   - repo: https://github.com/pylint-dev/pylint
-    rev: v4.0.8
+    rev: v4.1.2
     hooks:
       - id: pylint
         args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=E0015,E0401' ]
   - repo: https://github.com/pycqa/flake8
-    rev: 7.3.0
+    rev: 7.4.1
     hooks:
       - id: flake8
         additional_dependencies: [ 'flake8-rst-docstrings==0.4.0' ]
@@ -93,7 +93,7 @@ repos:
         additional_dependencies: [ 'tomli' ]
         args: [ '--toml=pyproject.toml' ]
   - repo: https://github.com/numpy/numpydoc
-    rev: v1.11.0rc0
+    rev: v1.11.0
     hooks:
       - id: numpydoc-validation
         # Exclude the missing submodule from the xclim.core, see:
@@ -109,16 +109,16 @@ repos:
       - id: bibtex-tidy
         args: [ '--v2', '--modify', '--wrap' ]
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.30.1
+    rev: v8.30.0
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.38.0
+    rev: 0.38.2
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.30.0
+    rev: v1.30.1
     hooks:
       - id: zizmor
         args: [ '--config=.zizmor.yml' ]
