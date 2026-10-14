@@ -462,6 +462,12 @@ def no_numbagg():
 
 
 @pytest.fixture
+def use_bottleneck():
+    with xr.set_options(use_bottleneck=True):
+        yield
+
+
+@pytest.fixture
 def as_da():
     with set_options(as_dataset=False):
         yield

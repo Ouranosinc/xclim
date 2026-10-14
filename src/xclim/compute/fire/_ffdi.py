@@ -150,7 +150,7 @@ def _griffiths_drought_factor(
                 # N = 0 defines a rainfall event since 9am today,
                 # so doesn't apply here, where p is the rainfall
                 # over previous 24 hours.
-                x_ = N**1.3 / (N**1.3 + P - 2.0)  # pylint: disable=used-before-assignment
+                x_ = N**1.3 / (N**1.3 + P - 2.0)  # pylint: disable=possibly-used-before-assignment
                 x = min(x_, x)
 
                 conseq = 0
