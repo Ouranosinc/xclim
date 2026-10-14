@@ -1103,10 +1103,10 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
         raise ValueError("'dry_start' must be one of None, 'CFS' or 'GFWED'.")
 
     # Always pass the previous codes.
-    _dc0 = xr.full_like(tas.isel(time=0), np.nan) if dc0 is None else dc0
-    _dmc0 = xr.full_like(tas.isel(time=0), np.nan) if dmc0 is None else dmc0
-    _ffmc0 = xr.full_like(tas.isel(time=0), np.nan) if ffmc0 is None else ffmc0
-    args[8:11] = [_dc0, _dmc0, _ffmc0]
+    dc0_array = xr.full_like(tas.isel(time=0), np.nan) if dc0 is None else dc0
+    dmc0_array = xr.full_like(tas.isel(time=0), np.nan) if dmc0 is None else dmc0
+    ffmc0_array = xr.full_like(tas.isel(time=0), np.nan) if ffmc0 is None else ffmc0
+    args[8:11] = [dc0_array, dmc0_array, ffmc0_array]
 
     # Output config from the current indexes list
     outputs = indexes
@@ -1152,7 +1152,10 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
     )
 
     if tas.ndim == 1:
-        dummy_dim = get_temp_dimname(tas.dims, "dummy")
+        dummy_dim = get_temp_dimname(
+            [str(dim) for dim in tas.dims],
+            "dummy",
+        )
         # When arrays only have the 'time' dimension, non-temporal inputs of the wrapped ufunc
         # become scalars. We add a dummy dimension so that we don't have to deal with that.
         for i, arg in enumerate(args):

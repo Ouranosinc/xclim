@@ -288,6 +288,7 @@ def ensemble_percentiles(
     if min_members is None:
         min_members = ens.realization.size
 
+    out: xr.DataArray | xr.Dataset
     if isinstance(ens, xr.Dataset):
         out = xr.merge(
             [
@@ -361,6 +362,7 @@ def ensemble_percentiles(
     if split:
         out = out.to_dataset(dim="percentiles")
         for p, perc in out.data_vars.items():
+            p = str(p)
             perc.attrs.update(ens.attrs)
             perc.attrs["description"] = perc.attrs.get("description", "") + f" {p}th percentile of ensemble."
             out[p] = perc
@@ -415,7 +417,7 @@ def _ens_align_datasets(
     xr_kwargs.setdefault("chunks", "auto")
     xr_kwargs.setdefault("decode_times", False)
 
-    _datasets: Sequence[Path | str | list[Path | str]]
+    _datasets: Sequence[xr.Dataset | Path | str | list[Path | str]]
     if isinstance(datasets, str):
         _datasets = glob(datasets)
     else:
@@ -432,6 +434,8 @@ def _ens_align_datasets(
                 ds = n
             elif isinstance(n, xr.DataArray):
                 ds = n.to_dataset()
+            elif isinstance(n, list):
+                raise TypeError("'multifile' is set to False but 'n' is of type list. Provide a single file path.")
             else:
                 ds = xr.open_dataset(n, **xr_kwargs)
 
@@ -460,4 +464,4 @@ def _ens_align_datasets(
         calendar = common_calendar(calendars, join="outer")
     cal_kwargs = cal_kwargs or {}
     cal_kwargs.setdefault("align_on", "date")
-    return [ds.convert_calendar(calendar, **cal_kwargs) for ds in ds_all]
+    return [ds.convert_calendar(calendar, **cal_kwargs) for ds in ds_all]  # type: ignore[arg-type]

@@ -470,6 +470,10 @@ def robustness_categories(
         elif not chg_op:  # type: ignore[ty:redundant-condition]
             cond = compare(agree, agr_op, agr_thresh)
         else:
+            if agree is None:
+                raise ValueError("'agree' must be provided.")
+            if agr_thresh is None or chg_thresh is None:
+                raise ValueError(f"Invalid threshold parameters: {thresholds}.")
             cond = compare(changed, chg_op, chg_thresh) & compare(agree, agr_op, agr_thresh)
         robustness = xr.where(~cond, robustness, i, keep_attrs=True)
 

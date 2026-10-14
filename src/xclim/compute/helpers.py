@@ -19,9 +19,7 @@ import cftime
 import numba as nb
 import numpy as np
 import xarray as xr
-from packaging.version import Version
 from xarray import CFTimeIndex
-from xarray import __version__ as __xr_version__
 
 from xclim.compute import run_length as rl
 from xclim.compute.reducers import XCLIM_OPS
@@ -31,10 +29,10 @@ from xclim.core.options import MAP_BLOCKS, OPTIONS
 from xclim.core.units import convert_units_to
 from xclim.core.utils import _chunk_like, uses_dask
 
-if Version(__xr_version__) >= Version("24.9.0"):
-    XR2409 = True
-else:
-    XR2409 = False
+try:
+    from xarray.coding.calendar_ops import _datetime_to_decimal_year  # type: ignore[attr-defined]
+except ImportError:
+    _datetime_to_decimal_year = None
 
 try:
     from flox.xarray import rechunk_for_blockwise
@@ -151,7 +149,7 @@ def spell_mask(
     thresh: float | Sequence[float] | xr.DataArray | Sequence[xr.DataArray],
     constrain: Sequence[Condition] | None = None,
     min_gap: int = 1,
-    weights: Sequence[float] | None = None,
+    weights: Sequence[float] | xr.DataArray | None = None,
     var_reducer: Literal["any", "all"] = "all",
 ) -> xr.DataArray:
     """
@@ -200,7 +198,7 @@ def spell_mask(
             raise ValueError("When ``data`` is given as a list, ``thresh`` must be a sequence of the same length.")
         data = xr.concat(data, "variable")
         if isinstance(thresh[0], xr.DataArray):
-            thresh = xr.concat(thresh, "variable")
+            thresh = xr.concat(thresh, "variable")  # type: ignore[assignment, arg-type]
         else:
             thresh = xr.DataArray(thresh, dims=("variable",))
         _singlevar = False
@@ -213,6 +211,11 @@ def spell_mask(
         if len(weights) != window:
             raise ValueError(f"Weights have a different length ({len(weights)}) than the window ({window}).")
         weights = xr.DataArray(weights, dims=("window",))
+
+    if isinstance(thresh, Sequence):
+        raise TypeError(
+            f"'thresh' can only be a sequence if 'data' is one. Got {thresh} but 'data' is of type  {type(data)}"
+        )
 
     if window == 1:  # Fast path
         is_in_spell = compare(data, condition, thresh, constrain=constrain)
@@ -338,13 +341,9 @@ def day_angle(time: xr.DataArray) -> xr.DataArray:
     xr.DataArray, [rad]
         Day angle.
     """
-    if XR2409:
+    if _datetime_to_decimal_year is None:
         decimal_year = time.dt.decimal_year
     else:
-        from xarray.coding.calendar_ops import (  # pylint: disable=import-outside-toplevel
-            _datetime_to_decimal_year,  # ty: ignore[unresolved-import]
-        )
-
         decimal_year = _datetime_to_decimal_year(times=time, calendar=time.dt.calendar)
     return ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
 
@@ -418,8 +417,8 @@ def time_correction_for_solar_angle(time: xr.DataArray) -> xr.DataArray:
     :cite:cts:`di_napoli_mean_2020`
     """
     da = convert_units_to(day_angle(time), "rad")
-    tc = (
-        0.004297 + 0.107029 * np.cos(da) - 1.837877 * np.sin(da) - 0.837378 * np.cos(2 * da) - 2.340475 * np.sin(2 * da)
+    tc: xr.DataArray = (
+        0.004297 + 0.107029 * np.cos(da) - 1.837877 * np.sin(da) - 0.837378 * np.cos(2 * da) - 2.340475 * np.sin(2 * da)  # type: ignore[assignment]
     )
     tc = tc.assign_attrs(units="degrees")
     return _wrap_radians(convert_units_to(tc, "rad"))
@@ -533,12 +532,14 @@ def cosine_of_solar_zenith_angle(
     :cite:cts:`kalogirou_chapter_2014,di_napoli_mean_2020`
     """
     declination = convert_units_to(declination, "rad")
-    _lat: xr.DataArray | float = _wrap_radians(convert_units_to(lat, "rad"))
-    _lon: xr.DataArray | float = convert_units_to(lon, "rad")
-    declination, _lat, _lon = _chunk_like(declination, _lat, _lon, chunks=chunks)
+    lat = _wrap_radians(convert_units_to(lat, "rad"))
+    lon = convert_units_to(lon, "rad")
+    declination, lat, lon = _chunk_like(declination, lat, lon, chunks=chunks)
 
     S_IN_D = 24 * 3600
 
+    h_s: xr.DataArray | float
+    h_e: xr.DataArray | float
     if len(time) < 3 or xr.infer_freq(time) == "D":
         h_s = -np.pi if stat != "instant" else 0.0
         h_e = np.pi - 1e-9  # just below pi
@@ -548,7 +549,7 @@ def cosine_of_solar_zenith_angle(
         else:  # numpy
             time_as_s = time.copy(data=time.astype(float) / 1e9)
         h_s_utc = (((time_as_s % S_IN_D) / S_IN_D) * 2 * np.pi + np.pi).assign_attrs(units="rad")
-        h_s = h_s_utc + _lon
+        h_s = h_s_utc + lon
 
         interval_as_s = time.diff("time").dt.seconds.reindex(time=time.time, method="bfill")
         h_e = h_s + 2 * np.pi * interval_as_s / S_IN_D
@@ -560,13 +561,15 @@ def cosine_of_solar_zenith_angle(
 
         return cast(
             xr.DataArray,
-            np.sin(declination) * np.sin(_lat) + np.cos(declination) * np.cos(_lat) * np.cos(h_s),
+            np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(lat) * np.cos(h_s),
         ).clip(0, None)
     if stat not in {"average", "integral"}:
         raise NotImplementedError("Argument 'stat' must be one of 'integral', 'average' or 'instant'.")
+
+    h_ss: np.ndarray | float
     if sunlit:
         # hour angle of sunset (eq. 2.15), with NaNs inside the polar day/night
-        tantan = cast(xr.DataArray, -np.tan(_lat) * np.tan(declination))
+        tantan = cast(xr.DataArray, -np.tan(lat) * np.tan(declination))
         h_ss = np.arccos(tantan.where(abs(tantan) <= 1))
     else:
         # Whole period, so we put sunset at midnight
@@ -575,7 +578,7 @@ def cosine_of_solar_zenith_angle(
     return xr.apply_ufunc(
         _sunlit_integral_of_cosine_of_solar_zenith_angle,
         declination,
-        _lat,
+        lat,
         _wrap_radians(h_ss),
         _wrap_radians(h_s),
         _wrap_radians(h_e),
@@ -744,7 +747,8 @@ def day_lengths(
         day_length_hours = ((24 / np.pi) * np.arccos(-np.tan(radians) * np.tan(declination))).assign_attrs(units="h")
 
     if infill_polar_days:
-        lat_broadcast, decl_broadcast = xr.broadcast(lat_deg, declination)
+        lat_da = lat_deg if isinstance(lat_deg, xr.DataArray) else xr.DataArray(lat_deg)
+        lat_broadcast, decl_broadcast = xr.broadcast(lat_da, declination)
         # Polar day: sun never sets; Polar night: sun never rises.
         polar_day = ((lat_broadcast > 66.5) & (decl_broadcast > 0)) | ((lat_broadcast < -66.5) & (decl_broadcast < 0))
         polar_night = ((lat_broadcast > 66.5) & (decl_broadcast < 0)) | ((lat_broadcast < -66.5) & (decl_broadcast > 0))
@@ -1185,7 +1189,7 @@ def resample_map(
     if isinstance(func, str):
         map_kwargs["dim"] = dim
         if freq is not None:
-            obj = obj.resample({dim: freq})
+            obj = obj.resample({dim: freq})  # type: ignore[assignment]
         return getattr(obj, func)(*map_args, **map_kwargs)
     else:
         if freq is None:
@@ -1308,7 +1312,7 @@ def _add_one_day(time: xr.DataArray) -> xr.DataArray:
         Next day.
     """
     if time.dtype == "O":
-        return time + timedelta(days=1)
+        return time + timedelta(days=1)  # type: ignore[operator]
     return time + np.timedelta64(1, "D")
 
 

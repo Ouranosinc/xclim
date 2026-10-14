@@ -14,7 +14,7 @@ from collections.abc import Callable
 from copy import deepcopy
 from importlib.resources import files
 from inspect import signature
-from typing import Any, Literal, cast
+from typing import Any, Literal, cast, overload
 
 import cf_xarray.units
 import numpy as np
@@ -22,17 +22,13 @@ import pandas as pd
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
+from xarray import DataTree
 from xarray.coding import cftime_offsets
 from yaml import safe_load
 
 from xclim.core import Freq, InputKind, Quantified, Reducer, ValidationError, infer_kind_from_parameter
 from xclim.core.calendar import get_calendar, parse_offset
 from xclim.core.options import datacheck
-
-try:
-    from xarray import DataTree  # pylint: disable=ungrouped-imports
-except ImportError:
-    DataTree = False
 
 logging.getLogger("pint").setLevel(logging.ERROR)
 
@@ -348,12 +344,52 @@ def str2pint(val: str) -> pint.Quantity:
         return units.Quantity(1, units2pint(val))
 
 
+@overload
+def convert_units_to(  # numpydoc ignore=GL08
+    source: DataTree,
+    target: dict[str, Quantified | pint.Unit],
+    context: Literal["infer", "hydro", "none"] | None = None,
+) -> DataTree: ...
+
+
+@overload
+def convert_units_to(  # numpydoc ignore=GL08
+    source: xr.Dataset,
+    target: dict[str, Quantified | pint.Unit],
+    context: Literal["infer", "hydro", "none"] | None = None,
+) -> xr.Dataset: ...
+
+
+@overload
+def convert_units_to(  # numpydoc ignore=GL08
+    source: xr.DataArray,
+    target: Quantified | pint.Unit,
+    context: Literal["infer", "hydro", "none"] | None = None,
+) -> xr.DataArray: ...
+
+
+@overload
+def convert_units_to(  # numpydoc ignore=GL08
+    source: str,
+    target: Quantified | pint.Unit,
+    context: Literal["infer", "hydro", "none"] | None = None,
+) -> float: ...
+
+
+@overload
+def convert_units_to(  # numpydoc ignore=GL08
+    source: pint.Quantity,
+    target: Quantified | pint.Unit,
+    context: Literal["infer", "hydro", "none"] | None = None,
+) -> float: ...
+
+
 # FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(
     source: Quantified | xr.Dataset | DataTree,  # ty: ignore[invalid-type-form]
-    target: Quantified | pint.Unit | dict,
+    target: Quantified | pint.Unit | dict[str, Quantified | pint.Unit],
     context: Literal["infer", "hydro", "none"] | None = None,
-) -> xr.DataArray | float | xr.Dataset:
+) -> xr.DataArray | float | xr.Dataset | DataTree:
     """
     Convert a mathematical expression into a value with the same units as a DataArray.
 
@@ -368,7 +404,8 @@ def convert_units_to(
         If a DataTree, this function will be applied over nodes with :py:func:`xarray.DataTree.map_over_datasets`.
     target : str or xr.DataArray or units.Quantity or units.Unit or dict
         Target array of values to which units must conform.
-        If `source` is a Dataset, it must be mapping from variable name to target units.
+        An object representing units to convert the source too, anything :py:func:`units2pint` understands.
+        If `source` is a Dataset or a DataTree, it must be mapping from variable name to target units.
     context : {"infer", "hydro", "none"}, optional
         The unit definition context. Default: None.
         If "infer", it will be inferred with :py:func:`xclim.core.units.infer_context` using
@@ -391,10 +428,10 @@ def convert_units_to(
     amount2lwethickness : Convert an amount to a liquid water equivalent thickness.
     lwethickness2amount : Convert a liquid water equivalent thickness to an amount.
     """
-    if DataTree and isinstance(source, DataTree):
+    if isinstance(source, DataTree):
         return source.map_over_datasets(convert_units_to, target, kwargs={"context": context})
-    if isinstance(source, xr.Dataset) and hasattr(target, "items"):
-        return source.assign({var: convert_units_to(source[var], tgt, context=context) for var, tgt in target.items()})
+    if isinstance(source, xr.Dataset):
+        return source.assign({var: convert_units_to(source[var], tgt, context=context) for var, tgt in target.items()})  # type: ignore[union-attr]
 
     context = context or "none"
 
@@ -457,14 +494,19 @@ def convert_units_to(
                             ) from err
                         source_unit = units2pint(source)
 
-        out: xr.DataArray
         if source_unit == target_unit:
             # The units are the same, but the symbol may not be.
             out = source.assign_attrs(**target_cf_attrs)
             return out
 
         with units.context(context or "none"):
-            out = source.copy(data=units.convert(source.data, source_unit, target_unit))
+            out = xr.DataArray(
+                units.convert(source.data, source_unit, target_unit),
+                coords=source.coords,
+                dims=source.dims,
+                name=source.name,
+                attrs=source.attrs,
+            )
             out = out.assign_attrs(**target_cf_attrs)
             return out
 
@@ -525,7 +567,7 @@ Mapping from offset base to CF-compliant unit.
 
 
 def infer_sampling_units(
-    da: xr.DataArray,
+    da: xr.Dataset | xr.DataArray,
     deffreq: Freq | None = None,
     dim: str = "time",
 ) -> tuple[int, str]:
@@ -824,7 +866,7 @@ def _rate_and_amount_converter(
         time = da[dim]
     else:
         time = dim
-        dim = time.name
+        dim = str(time.name)
 
     # We accept str, Quantity or DataArray
     # Ensure the code below has a DataArray, so its simpler
@@ -1362,7 +1404,7 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None =
 
 
 def _check_output_has_units(
-    out: xr.DataArray | tuple[xr.DataArray] | xr.Dataset,
+    out: xr.DataArray | tuple[xr.DataArray, ...] | xr.Dataset,
 ) -> None:
     """
     Perform very basic sanity check on the output.
@@ -1370,7 +1412,7 @@ def _check_output_has_units(
     Compute functions are responsible for unit management. If this fails, it's a developer's error.
     """
     if isinstance(out, xr.Dataset):
-        out = out.data_vars.values()
+        out = tuple(out.data_vars.values())
     elif not isinstance(out, tuple):
         out = (out,)
 

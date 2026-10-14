@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import IntEnum
 from importlib.resources import as_file, files
 from inspect import _empty
-from typing import Literal, NewType, TypeVar
+from typing import Literal, NewType, TypeAlias, TypeVar
 
 import xarray as xr
 from pint import Quantity
@@ -106,7 +106,7 @@ Freq = Literal[
 ]
 
 #: Type annotation for thresholds and other not-exactly-a-variable quantities
-Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
+Quantified: TypeAlias = str | xr.DataArray | Quantity
 
 #: Type annotation of the condition/comparison operators
 Condition = Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"]

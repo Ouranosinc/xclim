@@ -244,24 +244,24 @@ def keetch_byram_drought_index(
         """
         return _keetch_byram_drought_index(_pr, _tasmax, _pr_annual, _kbdi0)
 
-    _pr: xr.DataArray = convert_units_to(pr, "mm/day", context="hydro")
-    _tasmax: xr.DataArray = convert_units_to(tasmax, "C")
-    _pr_annual: xr.DataArray = convert_units_to(pr_annual, "mm/year", context="hydro")
+    pr = convert_units_to(pr, "mm/day", context="hydro")
+    tasmax = convert_units_to(tasmax, "C")
+    pr_annual = convert_units_to(pr_annual, "mm/year", context="hydro")
     if kbdi0 is not None:
         kbdi0 = convert_units_to(kbdi0, "mm/day", context="hydro")
     else:
-        kbdi0 = xr.full_like(_pr.isel(time=0), 0)
+        kbdi0 = xr.full_like(pr.isel(time=0), 0)
 
     kbdi: xr.DataArray = xr.apply_ufunc(
         _keetch_byram_drought_index_pass,
-        _pr,
-        _tasmax,
-        _pr_annual,
+        pr,
+        tasmax,
+        pr_annual,
         kbdi0,
         input_core_dims=[["time"], ["time"], [], []],
         output_core_dims=[["time"]],
         dask="parallelized",
-        output_dtypes=[_pr.dtype],
+        output_dtypes=[pr.dtype],
     )
     kbdi = kbdi.assign_attrs(units="mm/day")
     return kbdi
@@ -324,8 +324,8 @@ def griffiths_drought_factor(
         """
         return _griffiths_drought_factor(_pr, _smd, _lim)
 
-    _pr: xr.DataArray = convert_units_to(pr, "mm/day", context="hydro")
-    _smd: xr.DataArray = convert_units_to(smd, "mm/day")
+    pr = convert_units_to(pr, "mm/day", context="hydro")
+    smd = convert_units_to(smd, "mm/day")
 
     if limiting_func == "xlim":
         lim = 0
@@ -336,13 +336,13 @@ def griffiths_drought_factor(
 
     df: xr.DataArray = xr.apply_ufunc(
         _griffiths_drought_factor_pass,
-        _pr,
-        _smd,
+        pr,
+        smd,
         kwargs={"_lim": lim},
         input_core_dims=[["time"], ["time"]],
         output_core_dims=[["time"]],
         dask="parallelized",
-        output_dtypes=[_pr.dtype],
+        output_dtypes=[pr.dtype],
     )
     df = df.assign_attrs(units="")
 

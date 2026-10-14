@@ -319,7 +319,7 @@ class MissingAny(MissingBase):
 
     def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: Freq | None) -> xr.DataArray:
         if freq is not None:
-            valid = valid.resample(time=freq)
+            valid = valid.resample(time=freq)  # type:ignore[assignment]
         # The number of valid values should fit the expected count.
         return valid.sum(dim="time") != count
 
@@ -330,7 +330,7 @@ class MissingSomeButNotAll(MissingBase):
 
     def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: Freq | None) -> xr.DataArray:
         if freq is not None:
-            valid = valid.resample(time=freq)
+            valid = valid.resample(time=freq)  # type:ignore[assignment]
         # The number of valid values should fit the expected count or be zero.
         summation = valid.sum(dim="time")
         return ~((summation == count) | (summation == 0))
@@ -480,7 +480,7 @@ class MissingPct(MissingTwoSteps):
 
     def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: Freq | None) -> xr.DataArray:
         if freq is not None:
-            valid = valid.resample(time=freq)
+            valid = valid.resample(time=freq)  # type: ignore[assignment]
 
         # Total number of missing or invalid days
         missing_days = (count - valid.sum(dim="time")).fillna(count)
@@ -516,7 +516,7 @@ class AtLeastNValid(MissingTwoSteps):
 
     def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: Freq | None) -> xr.DataArray:
         if freq is not None:
-            valid = valid.resample(time=freq)
+            valid = valid.resample(time=freq)  # type:ignore[assignment]
         nvalid = valid.sum(dim="time")
         return nvalid < self.options["n"]
 

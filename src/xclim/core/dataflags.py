@@ -412,9 +412,9 @@ def values_op_thresh_repeating_for_n_or_more_days(
     >>> comparison = "eq"
     >>> flagged = values_op_thresh_repeating_for_n_or_more_days(ds.pr, n=days, thresh=units, op=comparison)
     """
-    _thresh = convert_units_to(thresh, da, context=infer_context(standard_name=da.attrs.get("standard_name")))
+    thresh = convert_units_to(thresh, da, context=infer_context(standard_name=da.attrs.get("standard_name")))
 
-    repetitions = _sanitize_attrs(suspicious_run(da, window=n, op=op, thresh=_thresh))
+    repetitions = _sanitize_attrs(suspicious_run(da, window=n, op=op, thresh=thresh))
     description = f"Repetitive values at {thresh} for at least {n} days found for {da.name}."
     repetitions.attrs["description"] = description
     repetitions.attrs["units"] = ""
@@ -455,8 +455,8 @@ def wind_values_outside_of_bounds(
     >>> ceiling, floor = "46 m s-1", "0 m s-1"
     >>> flagged = wind_values_outside_of_bounds(sfcWind_dataset, upper=ceiling, lower=floor)
     """
-    _lower, _upper = convert_units_to(lower, da), convert_units_to(upper, da)
-    unbounded_percentages = _sanitize_attrs((da < _lower) | (da > _upper))
+    lower, upper = convert_units_to(lower, da), convert_units_to(upper, da)
+    unbounded_percentages = _sanitize_attrs((da < lower) | (da > upper))
     description = f"Percentage values exceeding bounds of {lower} and {upper} found for {da.name}."
     unbounded_percentages.attrs["description"] = description
     unbounded_percentages.attrs["units"] = ""
@@ -688,7 +688,7 @@ def data_flags(  # noqa: C901
 
     var = str(da.name)
     if dims == "all":
-        dims = da.dims
+        dims = tuple(str(dim) for dim in da.dims)
     elif isinstance(dims, str):
         # Thus, a single dimension name, we allow this option to mirror xarray.
         dims = {dims}
@@ -716,14 +716,14 @@ def data_flags(  # noqa: C901
         for name, kwargs in flag_func.items():
             func = _REGISTRY[name]
             variable_name = _get_variable_name(func, kwargs)
-            named_da_variable = None
+            named_da_variable: dict[str, xarray.DataArray] | None = None
 
             try:
                 extras = _missing_vars(func, ds, str(da.name))
                 # Entries in extras implies that there are two variables being compared
                 # Both variables will be sent in as dict entries
                 if extras:
-                    named_da_variable = {da.name: da}
+                    named_da_variable = {str(da.name): da}
 
             except MissingVariableError:
                 flags[variable_name] = None
@@ -806,12 +806,10 @@ def ecad_compliant(
             raise DataQualityException(flags)
         return None
 
+    bool_flags = filter(lambda x: x.dtype == bool, flags.data_vars.values())
     ecad_flag = xarray.DataArray(
         # TODO: Test for this change concerning data of type None in dataflag variables
-        ~reduce(
-            np.logical_or,
-            filter(lambda x: x.dtype == bool, flags.data_vars.values()),
-        ),
+        ~reduce(lambda x, y: x | y, bool_flags),
         name="ecad_qc_flag",
         attrs={
             "comment": "Adheres to ECAD quality control checks.",

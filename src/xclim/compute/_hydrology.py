@@ -121,7 +121,7 @@ def rb_flashiness_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.Dat
     ----------
     :cite:cts:`baker_new_2004`
     """
-    d = np.abs(rivo.diff(dim="time")).resample(time=freq)
+    d = np.abs(rivo.diff(dim="time")).resample(time=freq)  # type: ignore[attr-defined]
     mq = rivo.resample(time=freq)
     out = d.sum(dim="time") / mq.sum(dim="time")
     out.attrs["units"] = ""
@@ -141,7 +141,7 @@ def standardized_streamflow_index(
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
-    params: Quantified | None = None,
+    params: xarray.DataArray | None = None,
     **indexer,
 ) -> xarray.DataArray:
     r"""
@@ -452,7 +452,7 @@ def standardized_groundwater_index(
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
-    params: Quantified | None = None,
+    params: xarray.DataArray | None = None,
     **indexer,
 ) -> xarray.DataArray:
     r"""
@@ -754,13 +754,13 @@ def runoff_ratio(
     ----------
     :cite:cts:'knoben_2024'
     """
-    _rivo: xarray.DataArray = convert_units_to(rivo, "mm3/hr")
-    _area: xarray.DataArray = convert_units_to(area, "mm2")
-    _pr: xarray.DataArray = convert_units_to(pr, "mm/hr")
+    rivo = convert_units_to(rivo, "mm3/hr")
+    area = convert_units_to(area, "mm2")
+    pr = convert_units_to(pr, "mm/hr")
 
-    runoff = _rivo / _area
+    runoff = rivo / area
     runoff_freq = runoff.resample(time=freq).mean()
-    pr_freq = _pr.resample(time=freq).mean()
+    pr_freq = pr.resample(time=freq).mean()
     out = runoff_freq / pr_freq
     out.attrs["units"] = ""
     return out

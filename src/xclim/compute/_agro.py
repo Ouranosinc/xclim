@@ -121,19 +121,19 @@ def corn_heat_units(
     ----------
     :cite:cts:`audet_atlas_2012,bootsma_risk_1999`
     """
-    _tasmin = convert_units_to(tasmin, "degC")
-    _tasmax = convert_units_to(tasmax, "degC")
-    _thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
-    _thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
+    tasmin = convert_units_to(tasmin, "degC")
+    tasmax = convert_units_to(tasmax, "degC")
+    thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
+    thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
 
-    mask_tasmin = _tasmin > _thresh_tasmin
-    mask_tasmax = _tasmax > _thresh_tasmax
+    mask_tasmin = tasmin > thresh_tasmin
+    mask_tasmax = tasmax > thresh_tasmax
 
     chu: xarray.DataArray = (
-        xarray.where(mask_tasmin, 1.8 * (_tasmin - _thresh_tasmin), 0)
+        xarray.where(mask_tasmin, 1.8 * (tasmin - thresh_tasmin), 0)
         + xarray.where(
             mask_tasmax,
-            (3.33 * (_tasmax - _thresh_tasmax) - 0.084 * (_tasmax - _thresh_tasmax) ** 2),
+            (3.33 * (tasmax - thresh_tasmax) - 0.084 * (tasmax - thresh_tasmax) ** 2),
             0,
         )
     ) / 2
@@ -248,9 +248,9 @@ def huglin_index(
     if not isinstance(freq, str):
         raise TypeError("Freq must be a string.")
 
-    _tas: xarray.DataArray = convert_units_to(tas, "degC")
-    _tasmax: xarray.DataArray = convert_units_to(tasmax, "degC")
-    _thresh: float = convert_units_to(thresh, "degC")
+    tas = convert_units_to(tas, "degC")
+    tasmax = convert_units_to(tasmax, "degC")
+    thresh = convert_units_to(thresh, "degC")
 
     if lat is None:
         lat = _gather_lat(tas)
@@ -282,7 +282,7 @@ def huglin_index(
             freq=freq,
         )
 
-    hi: xarray.DataArray = (((_tas + _tasmax) / 2) - _thresh).clip(min=0) * k
+    hi: xarray.DataArray = (((tas + tasmax) / 2) - thresh).clip(min=0) * k
     hi = select_time(hi, date_bounds=(start_date, end_date), include_bounds=(True, False)).resample(time=freq).sum()
     if k_aggregated is not None:
         hi = hi * k_aggregated
@@ -418,10 +418,10 @@ def biologically_effective_degree_days(
     if not isinstance(freq, str):
         raise TypeError("Freq must be a string.")
 
-    _tasmin: xarray.DataArray = convert_units_to(tasmin, "degC")
-    _tasmax: xarray.DataArray = convert_units_to(tasmax, "degC")
-    _thresh_tasmin: float = convert_units_to(thresh_tasmin, "degC")
-    _max_daily_degree_days: float = convert_units_to(max_daily_degree_days, "degC")
+    tasmin = convert_units_to(tasmin, "degC")
+    tasmax = convert_units_to(tasmax, "degC")
+    thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
+    max_daily_degree_days = convert_units_to(max_daily_degree_days, "degC")
 
     if start_date == "default":
         start_date = DayOfYearStr("04-01")
@@ -439,13 +439,13 @@ def biologically_effective_degree_days(
         tr_adj = 0
     elif method in ["gladstones", "huglin", "interpolated", "jones"]:
         # Temperature range adjustment
-        _low_dtr = convert_units_to(low_dtr, "degC")
-        _high_dtr = convert_units_to(high_dtr, "degC")
-        dtr = _tasmax - _tasmin
+        low_dtr = convert_units_to(low_dtr, "degC")
+        high_dtr = convert_units_to(high_dtr, "degC")
+        dtr = tasmax - tasmin
         tr_adj = 0.25 * xarray.where(
-            dtr > _high_dtr,
-            dtr - _high_dtr,
-            xarray.where(dtr < _low_dtr, dtr - _low_dtr, 0),
+            dtr > high_dtr,
+            dtr - high_dtr,
+            xarray.where(dtr < low_dtr, dtr - low_dtr, 0),
         )
 
         if lat is None:
@@ -470,8 +470,8 @@ def biologically_effective_degree_days(
             "Method is not implemented. Only 'gladstones', 'huglin', 'icclim', 'interpolated', and 'jones' are supported."
         )
 
-    bedd: xarray.DataArray = ((((_tasmin + _tasmax) / 2) - _thresh_tasmin).clip(min=0) * k + tr_adj).clip(
-        max=_max_daily_degree_days
+    bedd: xarray.DataArray = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(
+        max=max_daily_degree_days
     )
     bedd = select_time(bedd, date_bounds=(start_date, end_date), include_bounds=(True, False)).resample(time=freq).sum()
     if k_aggregated is not None:
@@ -559,7 +559,7 @@ def cool_night_index(
 
     tasmin = tasmin.where(months == month, drop=True)
 
-    cni: xarray.DataArray = tasmin.resample(time=freq).mean(keep_attrs=True)
+    cni = tasmin.resample(time=freq).mean(keep_attrs=True)
     cni = cni.assign_attrs(units="degC")
     return cni
 
@@ -675,8 +675,8 @@ def dryness_index(  # numpydoc ignore=SS05
 
     # Resample all variables to monthly totals in mm units.
     evspsblpot = amount2lwethickness(rate2amount(evspsblpot), out_units="mm").resample(time="MS").sum()
-    _pr: xarray.DataArray = amount2lwethickness(rate2amount(pr), out_units="mm").resample(time="MS").sum()
-    _wo: float = convert_units_to(wo, "mm")
+    pr = amount2lwethickness(rate2amount(pr), out_units="mm").resample(time="MS").sum()
+    wo = convert_units_to(wo, "mm")
 
     # Different potential evapotranspiration rates for northern hemisphere and southern hemisphere.
     # wo_adjustment is the initial soil moisture rate at beginning of season.
@@ -693,7 +693,7 @@ def dryness_index(  # numpydoc ignore=SS05
 
     has_north, has_south = False, False
     if lat is None:
-        lat = _gather_lat(_pr)
+        lat = _gather_lat(pr)
     if isinstance(lat, xarray.DataArray):
         lat_array = lat
         if (lat_array >= 0).any():
@@ -722,7 +722,7 @@ def dryness_index(  # numpydoc ignore=SS05
     k = adjustment.sel(month=evspsblpot.time.dt.month)
 
     # Drop all pr outside seasonal bounds
-    pr_masked = (k > 0) * _pr
+    pr_masked = (k > 0) * pr
 
     # Potential transpiration of the vineyard
     t_v = evspsblpot * k
@@ -738,9 +738,9 @@ def dryness_index(  # numpydoc ignore=SS05
     di_south: xarray.DataArray
     # Dryness index
     if has_north:
-        di_north = _wo + (pr_masked - t_v - e_s).resample(time="YS-JAN").sum()
+        di_north = wo + (pr_masked - t_v - e_s).resample(time="YS-JAN").sum()
     if has_south:
-        di_south = _wo + (pr_masked - t_v - e_s).resample(time="YS-JUL").sum()
+        di_south = wo + (pr_masked - t_v - e_s).resample(time="YS-JUL").sum()
         # Shift time for Southern Hemisphere to allow for concatenation with Northern Hemisphere
         di_south = di_south.shift(time=1).isel(time=slice(1, None))
         di_south["time"] = di_south.indexes["time"].shift(-6, "MS")
@@ -938,9 +938,9 @@ def rain_season(
         date_max_end = DayOfYearStr("12-31")
     # Unit conversion.
     pram = rate2amount(pr, out_units="mm")
-    _thresh_wet_start: float = convert_units_to(thresh_wet_start, pram)
-    _thresh_dry_start: float = convert_units_to(thresh_dry_start, pram)
-    _thresh_dry_end: float = convert_units_to(thresh_dry_end, pram)
+    thresh_wet_start = convert_units_to(thresh_wet_start, pram)
+    thresh_dry_start = convert_units_to(thresh_dry_start, pram)
+    thresh_dry_end = convert_units_to(thresh_dry_end, pram)
 
     # should we flag date_min_end  < date_max_start?
     def _get_first_run(run_positions, start_date, end_date):
@@ -954,14 +954,14 @@ def rain_season(
         _pram = select_time(_pram, date_bounds=(date_min_start, last_doy))
 
         # First condition: Start with enough precipitation
-        da_start = _pram.rolling({"time": window_wet_start}).sum() >= _thresh_wet_start
+        da_start = _pram.rolling({"time": window_wet_start}).sum() >= thresh_wet_start
 
         # Second condition: No dry period after
         if method_dry_start == "per_day":
-            da_stop = _pram <= _thresh_dry_start
+            da_stop = _pram <= thresh_dry_start
             window_dry = window_dry_start
         elif method_dry_start == "total":
-            da_stop = _pram.rolling({"time": window_dry_start}).sum() <= _thresh_dry_start
+            da_stop = _pram.rolling({"time": window_dry_start}).sum() <= thresh_dry_start
             # equivalent to rolling forward in time instead, i.e. end date will be at beginning of dry run
             da_stop = da_stop.shift({"time": -(window_dry_start - 1)}, fill_value=False)
             window_dry = 1
@@ -978,10 +978,10 @@ def rain_season(
     # FIXME: This function mixes local and parent-level variables. It should be refactored.
     def _get_first_run_end(_pram):
         if method_dry_end == "per_day":
-            da_stop = _pram <= _thresh_dry_end
+            da_stop = _pram <= thresh_dry_end
             run_positions = rl.rle(da_stop) >= window_dry_end
         elif method_dry_end == "total":
-            run_positions = _pram.rolling({"time": window_dry_end}).sum() <= _thresh_dry_end
+            run_positions = _pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
         else:
             raise ValueError(f"Unknown method_dry_end: {method_dry_end}.")
         return _get_first_run(run_positions, date_min_end, date_max_end)
@@ -1041,7 +1041,7 @@ def standardized_precipitation_index(
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
-    params: Quantified | None = None,
+    params: xarray.DataArray | None = None,
     prob_zero_interpolation: Literal["center", "upper"] | float = "upper",
     plotting_position_zero: Literal["ecdf", "weibull"] | tuple[float, float] = "ecdf",
     **indexer,
@@ -1201,7 +1201,7 @@ def standardized_precipitation_evapotranspiration_index(
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
-    params: Quantified | None = None,
+    params: xarray.DataArray | None = None,
     **indexer,
 ) -> xarray.DataArray:
     r"""
@@ -1400,11 +1400,10 @@ def effective_growing_degree_days(
     if after_date == "default":
         after_date = DayOfYearStr("07-01")
 
-    _tasmax: xarray.DataArray = convert_units_to(tasmax, "degC")
-    _tasmin: xarray.DataArray = convert_units_to(tasmin, "degC")
-    _thresh: float = convert_units_to(thresh, "degC")
+    tasmax = convert_units_to(tasmax, "degC")
+    tasmin = convert_units_to(tasmin, "degC")
 
-    tas = (_tasmin + _tasmax) / 2
+    tas = (tasmin + tasmax) / 2
     tas.attrs["units"] = "degC"
 
     if method.lower() == "bootsma":
@@ -1419,7 +1418,7 @@ def effective_growing_degree_days(
     # The day before the first day below 0 degC
     end = (
         day_threshold_reached(
-            _tasmin,
+            tasmin,
             condition="<",
             thresh="0 degC",
             date=after_date,
@@ -1430,7 +1429,8 @@ def effective_growing_degree_days(
         - 1
     )
 
-    deg_days = (tas - _thresh).clip(min=0).assign_attrs(**tas.attrs)
+    thresh = convert_units_to(thresh, "degC")
+    deg_days = (tas - thresh).clip(min=0).assign_attrs(**tas.attrs)
     return statistics_between_dates(deg_days, start=start, end=end, statistic="integral", freq=freq)
 
 

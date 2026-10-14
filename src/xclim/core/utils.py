@@ -12,7 +12,7 @@ import importlib.util
 import logging
 import os
 import warnings
-from collections.abc import Callable, ItemsView, Iterator, KeysView, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Hashable, ItemsView, Iterator, KeysView, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -21,6 +21,8 @@ import numpy as np
 import xarray as xr
 from dask import array as dsk
 from yaml import safe_dump, safe_load
+
+from xclim.core._types import DataType
 
 logger = logging.getLogger("xclim")
 
@@ -205,7 +207,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     if not uses_dask(da):
         return da
 
-    all_chunks = dict(zip(da.dims, da.chunks, strict=False))
+    all_chunks = dict(zip(da.dims, da.chunks or (), strict=False))
     chunking: dict[str, int | tuple[int, ...]] = {}
     for dim, minchunk in minchunks.items():
         chunks = all_chunks[dim]
@@ -217,9 +219,9 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
         if toosmall.sum() > 1:
             # Many chunks are too small, merge them by groups
             fac = np.ceil(minchunk / min(chunks)).astype(int)
-            chunking[dim] = tuple(sum(chunks[i : i + fac]) for i in range(0, len(chunks), fac))
+            chunks = tuple(sum(chunks[i : i + fac]) for i in range(0, len(chunks), fac))
+            chunking[dim] = chunks
             # Reset counter is case the last chunks are still too small
-            chunks = chunking[dim]
             toosmall = np.array(chunks) < minchunk
         if toosmall.sum() == 1:
             # Only one, merge it with adjacent chunk
@@ -259,7 +261,7 @@ def uses_dask(*das) -> bool:
     return any(_is_dask_array(da) for da in das)
 
 
-def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: str | None = None) -> xr.DataArray:
+def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: Hashable | None = None) -> xr.DataArray:
     """
     Get values of `da` at indices `index` in a NaN-aware and lazy manner.
 
@@ -286,7 +288,7 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: str | None = None)
         idx_ndim = index.ndim
         if idx_ndim == 0:
             # The 0-D index case, we add a dummy dimension to help dask
-            dim = get_temp_dimname(da.dims, "x")
+            dim = get_temp_dimname([str(dim) for dim in da.dims], "x")
             index = index.expand_dims(dim)
         # Which indexes to mask.
         invalid = index.isnull()
@@ -295,7 +297,7 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: str | None = None)
 
         # No need for coords, we extract by integer index.
         # Renaming with no name to fix bug in xr 2024.01.0
-        tmpname = get_temp_dimname(da.dims, "temp")
+        tmpname = get_temp_dimname([str(dim) for dim in da.dims], "temp")
         da2 = xr.DataArray(da.data, dims=(tmpname,), name=None)
         # Map blocks chunks aux coords. Remove them to avoid the alignment check load in `where`
         index, auxcrd = split_auxiliary_coordinates(index)
@@ -766,13 +768,13 @@ def _chunk_like(*inputs, chunks: dict[str, int] | None):  # *inputs : xr.DataArr
         if not isinstance(da, xr.DataArray | xr.Dataset):
             outputs.append(da)
         else:
-            outputs.append(da.chunk(**{d: c for d, c in chunks.items() if d in da.dims}))
+            outputs.append(da.chunk({d: c for d, c in chunks.items() if d in da.dims}))
     return tuple(outputs)
 
 
 def split_auxiliary_coordinates(
-    obj: xr.DataArray | xr.Dataset,
-) -> tuple[xr.DataArray | xr.Dataset, xr.DataArray]:
+    obj: DataType,
+) -> tuple[DataType, xr.Dataset]:
     """
     Split auxiliary coords from the dataset.
 

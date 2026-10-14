@@ -1183,6 +1183,7 @@ def run_end_after_date(
     )
     beg = first_run(da.where(da[dim] < da[dim][mid_idx][0]), window=window, dim=dim)
 
+    last: xr.DataArray | int
     if coord:
         last = da[dim][-1]
         if isinstance(coord, str):
@@ -1345,7 +1346,7 @@ def _rle_1d(ia) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 
 
 def rle_1d(
-    arr: int | float | bool | Sequence[int | float | bool] | xr.DataArray,
+    arr: int | float | bool | Sequence[int | float | bool] | xr.DataArray | np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Return the length, starting position and value of consecutive identical values.
@@ -1354,7 +1355,7 @@ def rle_1d(
 
     Parameters
     ----------
-    arr : int or float or bool or Sequence[Union[int, float, bool]] or xr.DataArray
+    arr : int or float or bool or Sequence[Union[int, float, bool]] or xr.DataArray or np.ndarray
         Array of values to be parsed.
 
     Returns
@@ -1655,6 +1656,8 @@ def index_of_date(
     """
     if date is None:
         return np.array([default])
+
+    year_cond: xr.DataArray | bool
     if len(date.split("-")) == 2:
         date = DayOfYearStr(f"1840-{date}")
         date_obj = datetime.strptime(date, "%Y-%m-%d")

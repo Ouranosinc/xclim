@@ -222,9 +222,9 @@ def thresholded_statistics(
     xr.DataArray
         {statistic} of data where it is {condition} {thresh}.
     """
-    _thresh = convert_units_to(thresh, data, context="infer")
+    thresh = convert_units_to(thresh, data, context="infer")
 
-    cond = compare(data, condition, _thresh, constrain)
+    cond = compare(data, condition, thresh, constrain)
     return statistics(data.where(cond), statistic, freq, out_units=out_units, **indexer)
 
 
@@ -280,8 +280,8 @@ def thresholded_running_statistics(
     xr.DataArray
         {statistic} of the {window}-day {window_statistic} of the data, where it is {condition} {thresh}.
     """
-    _thresh = convert_units_to(thresh, data, context="infer")
-    cond = compare(data, condition, _thresh, constrain)
+    thresh = convert_units_to(thresh, data, context="infer")
+    cond = compare(data, condition, thresh, constrain)
     return running_statistics(
         data.where(cond),
         window=window,
@@ -330,8 +330,8 @@ def count_occurrences(
     xr.DataArray
         Number of timesteps where data {condition} {thresh}.
     """
-    _thresh = convert_units_to(thresh, data, context="infer")
-    cond = compare(select_time(data, **indexer), condition, _thresh, constrain)
+    thresh = convert_units_to(thresh, data, context="infer")
+    cond = compare(select_time(data, **indexer), condition, thresh, constrain)
     out = resample_map(cond, "time", freq, "sum", map_kwargs={"dim": "time"})
     return to_agg_units(out, data, "count")
 
@@ -449,14 +449,14 @@ def bivariate_count_occurrences(
     """
     if thresh2 is None:
         thresh2 = thresh1
-    _thresh1 = convert_units_to(thresh1, data1, context="infer")
-    _thresh2 = convert_units_to(thresh2, data2, context="infer")
+    thresh1 = convert_units_to(thresh1, data1, context="infer")
+    thresh2 = convert_units_to(thresh2, data2, context="infer")
 
     if condition2 is None:
         condition2 = condition1
         constrain2 = constrain1
-    cond1 = compare(data1, condition1, _thresh1, constrain1)
-    cond2 = compare(data2, condition2, _thresh2, constrain2)
+    cond1 = compare(data1, condition1, thresh1, constrain1)
+    cond2 = compare(data2, condition2, thresh2, constrain2)
 
     if var_reducer == "all":
         cond = cond1 & cond2
@@ -595,8 +595,8 @@ def count_thresholded_percentile_occurrences(
         Number of timesteps where data is {condition} the {per}th percentile computed over {reference_period}.
         Only data {data_condition} {thresh} is considered.
     """
-    _thresh = convert_units_to(thresh, data, context="infer")
-    data = data.where(compare(data, data_condition, _thresh, constrain))
+    thresh = convert_units_to(thresh, data, context="infer")
+    data = data.where(compare(data, data_condition, thresh, constrain))
     return count_percentile_occurrences(
         data,
         per,
@@ -745,13 +745,13 @@ def spell_length_statistics(
     Here, a day is part of a spell if it is in any five (5) day period where the total accumulated precipitation
     reaches or exceeds 20 mm. We then return the length of the longest of such spells.
     """
-    _thresh = convert_units_to(thresh, data, context="infer")
+    thresh = convert_units_to(thresh, data, context="infer")
     return _spell_length_statistics(
         data,
         window,
         window_statistic,
         condition,
-        _thresh,
+        thresh,
         statistic,
         freq,
         constrain=constrain,
@@ -829,14 +829,14 @@ def bivariate_spell_length_statistics(
     spell_length_statistics : The univariate version.
     xclim.compute.helpers.spell_mask : The lower level functions that finds spells.
     """
-    _thresh1 = convert_units_to(thresh1, data1, context="infer")
-    _thresh2 = convert_units_to(thresh2, data2, context="infer")
+    thresh1 = convert_units_to(thresh1, data1, context="infer")
+    thresh2 = convert_units_to(thresh2, data2, context="infer")
     return _spell_length_statistics(
         [data1, data2],
         window,
         window_statistic,
         condition,
-        [_thresh1, _thresh2],
+        [thresh1, thresh2],
         statistic,
         freq,
         constrain=constrain,
@@ -923,8 +923,8 @@ def season(
     the season is invalid. If a start is found but no end, the end is set to the last day of the period
     (December 31st if the dataset is complete).
     """
-    _thresh = convert_units_to(thresh, data, context="infer")
-    cond = compare(data, condition, _thresh, constrain=constrain)
+    thresh = convert_units_to(thresh, data, context="infer")
+    cond = compare(data, condition, thresh, constrain=constrain)
     cond = select_time(cond, **indexer)
     func = {"start": rl.season_start, "end": rl.season_end, "length": rl.season_length}
     map_kwargs: dict[str, Any] = {"window": window, "mid_date": mid_date, "dim": "time"}
@@ -1181,8 +1181,8 @@ def thresholded_percentile(
     xr.DataArray
         {per}th percentile of the data where it is {condition} {thresh}.
     """
-    _thresh = convert_units_to(thresh, data, context="infer")
-    cond = compare(data, condition, _thresh, constrain)
+    thresh = convert_units_to(thresh, data, context="infer")
+    cond = compare(data, condition, thresh, constrain)
     # FIXME: Call signature variable shadows existing function name
     return percentile(data.where(cond), per, freq, **indexer)  # ty: ignore[call-non-callable]
 
@@ -1333,12 +1333,12 @@ def integrated_difference(
     xr.DataArray, [data][time]
         Integral of the differences when {data} {condition} {thresh}.
     """
-    _thresh = convert_units_to(thresh, data, context="infer")
+    thresh = convert_units_to(thresh, data, context="infer")
 
     if condition in ["<", "<=", "lt", "le"]:
-        diff = (_thresh - data).clip(0)
+        diff = (thresh - data).clip(0)
     elif condition in [">", ">=", "gt", "ge"]:
-        diff = (data - _thresh).clip(0)
+        diff = (data - thresh).clip(0)
     else:
         raise NotImplementedError(f"Condition not supported: '{condition}'.")
 
@@ -1393,9 +1393,9 @@ def day_threshold_reached(
     xr.DataArray, [dimensionless]
         Day-of-year of the {which} time where data {condition} {thresh}.
     """
-    _thresh = convert_units_to(thresh, data, context="infer")
+    thresh = convert_units_to(thresh, data, context="infer")
 
-    cond = compare(data, condition, _thresh, constrain=constrain)
+    cond = compare(data, condition, thresh, constrain=constrain)
 
     if which == "first":
         func = rl.first_run_after_date
@@ -1471,18 +1471,18 @@ def thresholded_events(
             event_sum: The sum within each event, only considering the steps where start condition is true.
             event_start: The datetime of the start of the run.
     """
-    _thresh = convert_units_to(thresh, data)
+    thresh = convert_units_to(thresh, data)
 
     # Start and end conditions
-    da_start = compare(data, condition, _thresh)
+    da_start = compare(data, condition, thresh)
     if thresh_stop is None and condition_stop is None:
         da_stop = ~da_start
     else:
-        _thresh_stop = convert_units_to(thresh_stop or _thresh, data)
+        thresh_stop = convert_units_to(thresh_stop or thresh, data)
         if condition_stop is not None:
-            da_stop = compare(data, condition_stop, _thresh_stop)
+            da_stop = compare(data, condition_stop, thresh_stop)
         else:
-            da_stop = ~compare(data, condition, _thresh_stop)
+            da_stop = ~compare(data, condition, thresh_stop)
 
     return rl.find_events(da_start, window, da_stop, window_stop or window, data, freq)
 

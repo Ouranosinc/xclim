@@ -1073,7 +1073,7 @@ class IndicatorBase(IndexWrapper):
         name = (self.identifier or ".UnnamedIndicator").split(".")[-1]
         NamedOuts = namedtuple(  # type: ignore[misc]
             name,
-            [o.name for o in outs],
+            [str(o.name) for o in outs],
         )
         return NamedOuts(*outs)
 

@@ -144,7 +144,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
         raise KeyError("`bootstrap` can only be used with percentiles computed using `percentile_doy`")
     # Boundary years of reference period
     clim = per_da.attrs["climatology_bounds"]
-    if xclim.core.utils.uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
+    if xclim.core.utils.uses_dask(da) and da.chunks is not None and len(da.chunks[da.get_axis_num("time")]) > 1:
         warnings.warn(
             "The input data is chunked on time dimension and must be fully re-chunked to"
             " run percentile bootstrapping."
@@ -152,7 +152,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
             " has to handle.",
             stacklevel=2,
         )
-        chunking: dict[str, Any] = {d: "auto" for d in da.dims}
+        chunking: dict[str, Any] = {str(d): "auto" for d in da.dims}
         chunking["time"] = -1  # no chunking on time to use map_block
         da = da.chunk(chunking)
     # overlap of studied `da` and the reference period used to compute percentile
@@ -188,8 +188,11 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
             if BOOTSTRAP_DIM not in per_template.dims:
                 per_template = per_template.expand_dims({BOOTSTRAP_DIM: np.arange(len(bda._bootstrap))})
                 if xclim.core.utils.uses_dask(bda):
+                    chunks = bda.chunks
+                    if chunks is None:
+                        raise ValueError("bda must be chunked")
                     chunking = {
-                        d: bda.chunks[bda.get_axis_num(d)] for d in set(bda.dims).intersection(set(per_template.dims))
+                        str(d): chunks[bda.get_axis_num(d)] for d in set(bda.dims).intersection(set(per_template.dims))
                     }
                     per_template = per_template.chunk(chunking)
             per = xarray.map_blocks(
@@ -234,7 +237,9 @@ def _get_year_label(year_dt) -> str:
 
 
 # TODO: Return a generator instead and assess performance
-def build_bootstrap_year_da(da: DataArray, groups: dict[Any, slice], label: Any, dim: str = "time") -> DataArray:
+def build_bootstrap_year_da(
+    da: DataArray, groups: dict[Any, slice | list[int]], label: Any, dim: str = "time"
+) -> DataArray:
     """
     Return an array where every other group replaces a group in the original along a new dimension.
 

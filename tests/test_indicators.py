@@ -873,6 +873,7 @@ def test_all_inputs_known():
             "dmc0",
             "kbdi0",
             "drought_factor",
+            "params",
         }  # FWI optional inputs
         - {var for var in var_and_inds.keys() if var.endswith("_per")}  # percentiles
         - {"pr_annual", "pr_cal", "wb_cal"}  # other optional or uncommon
