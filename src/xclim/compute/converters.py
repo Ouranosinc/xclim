@@ -147,7 +147,7 @@ def humidex(
     if tdps is not None:
         # Convert dewpoint temperature to Kelvins
         tdps_K = convert_units_to(tdps, "kelvin")
-        e = xr.DataArray(6.112 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / tdps_K)))
+        e: xr.DataArray = 6.112 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / tdps_K))
 
     elif hurs is not None:
         # Convert dry bulb temperature to Celsius
