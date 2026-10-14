@@ -121,8 +121,7 @@ def rb_flashiness_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.Dat
     ----------
     :cite:cts:`baker_new_2004`
     """
-    d = xarray.apply_ufunc(np.abs, rivo.diff(dim="time"))
-    d = d.resample(time=freq)
+    d = np.abs(rivo.diff(dim="time")).resample(time=freq)  # type: ignore[attr-defined]
     mq = rivo.resample(time=freq)
     out = d.sum(dim="time") / mq.sum(dim="time")
     out.attrs["units"] = ""
