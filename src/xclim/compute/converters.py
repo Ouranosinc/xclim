@@ -451,7 +451,7 @@ def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str) -> xr.
         )
     elif method in ESAT_FORMULAS_COEFFICIENTS:
         A, B, C = ESAT_FORMULAS_COEFFICIENTS[method]["water"]
-        e_sat = xr.DataArray(A * np.exp(B * (tas - 273.16) / (tas + C)))
+        e_sat : xr.DataArray = A * np.exp(B * (tas - 273.16) / (tas + C))
     else:
         valid = ["sonntag90", "goffgratch46", "its90", "ecmwf"] + list(ESAT_FORMULAS_COEFFICIENTS.keys())
         raise ValueError(f"Method {method} is not in {valid}")
