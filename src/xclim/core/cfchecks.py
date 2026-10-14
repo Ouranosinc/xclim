@@ -50,7 +50,7 @@ def check_valid(var: xr.DataArray, key: str, expected: str | Sequence[str]) -> N
         )
 
 
-def cfcheck_from_name(varname: str, vardata: xr.DataArray, attrs: list[str] | None = None) -> None:
+def cfcheck_from_name(varname: str, vardata: xr.DataArray | None, attrs: list[str] | None = None) -> None:
     """
     Perform cfchecks on a DataArray using specifications from xclim's default variables.
 

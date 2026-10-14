@@ -429,9 +429,9 @@ def prcptot(pr: xarray.DataArray, thresh: Quantified = "0 mm/d", freq: Freq = "Y
     xarray.DataArray, [length]
        Total {freq} precipitation.
     """
-    _thresh: float = convert_units_to(thresh, pr, context="hydro")
-    _pr: xarray.DataArray = rate2amount(pr.where(pr >= _thresh, 0))
-    pram = _pr.resample(time=freq).sum().assign_attrs(units=_pr.units)
+    thresh = convert_units_to(thresh, pr, context="hydro")
+    pr = rate2amount(pr.where(pr >= thresh, 0))
+    pram = pr.resample(time=freq).sum().assign_attrs(units=pr.units)
     return pram
 
 

@@ -102,7 +102,7 @@ def add_ensemble_dataset_objects() -> dict[str, list[str]]:
     return namespace
 
 
-def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
+def add_example_file_paths() -> dict[str, str | xr.DataArray | xr.Dataset | list[xr.DataArray | xr.Dataset]]:
     """
     Create a dictionary of doctest-relevant datasets to be patched into the doctest namespace.
 
@@ -111,7 +111,7 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
     dict of str or dict of list of xr.DataArray
         A dictionary of doctest-relevant datasets.
     """
-    namespace: dict[str, str | list[xr.DataArray]] = {
+    namespace: dict[str, str | xr.DataArray | xr.Dataset | list[xr.DataArray | xr.Dataset]] = {
         "path_to_ensemble_file": "EnsembleReduce/TestEnsReduceCriteria.nc",
         "path_to_gwl_file": "Raven/gwl_obs.nc",
         "path_to_pr_file": "NRCANdaily/nrcan_canada_daily_pr_1990.nc",
@@ -127,10 +127,9 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
 
     # For core.utils.load_module example
     sixty_years = xr.date_range("1990-01-01", "2049-12-31", freq="D")
-    namespace["temperature_datasets"] = [
-        test_timeseries(12 * np.random.random_sample(sixty_years.size) + 273, variable="tas"),
-        test_timeseries(12 * np.random.random_sample(sixty_years.size) + 273, variable="tas"),
-    ]
+    tas1 = test_timeseries(12 * np.random.random_sample(sixty_years.size) + 273, variable="tas")
+    tas2 = test_timeseries(12 * np.random.random_sample(sixty_years.size) + 273, variable="tas")
+    namespace["temperature_datasets"] = [tas1, tas2]
 
     # dataset with one year of daily flow data
     flow_dataset = test_timeseries(np.ones(365, dtype=float) / 1000, variable="qspec", as_dataset=True)

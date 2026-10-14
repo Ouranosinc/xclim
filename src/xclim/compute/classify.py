@@ -102,6 +102,7 @@ def get_zones(
         warnings.warn("Expected either `bins` or [`zone_min`, `zone_max`, `zone_step`], got both. `bins` will be used.")
 
     # Get zone bins (if necessary)
+    zone_bins: xr.DataArray | list[Quantity]
     if bins is None:
         zone_bins = _get_zone_bins(zone_min, zone_max, zone_step)
     else:

@@ -196,8 +196,8 @@ def cold_spell_days(
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
-    t = convert_units_to(thresh, tas)
-    over = compare(tas, op, t, constrain=("<", "<="))
+    thresh = convert_units_to(thresh, tas)
+    over = compare(tas, op, float(thresh), constrain=("<", "<="))
 
     out = rl.resample_and_rl(
         over,
@@ -250,8 +250,8 @@ def cold_spell_frequency(
     --------
     The default `freq` is valid for the Northern Hemisphere.
     """
-    t = convert_units_to(thresh, tas)
-    over = compare(tas, op, t, constrain=("<", "<="))
+    thresh = convert_units_to(thresh, tas)
+    over = compare(tas, op, thresh, constrain=("<", "<="))
 
     out = rl.resample_and_rl(
         over,
@@ -307,9 +307,9 @@ def cold_spell_max_length(
     --------
     The default `freq` is valid for the Northern Hemisphere.
     """
-    _thresh: float = convert_units_to(thresh, tas)
+    thresh = convert_units_to(thresh, tas)
 
-    cond = compare(tas, op, _thresh, constrain=("<", "<="))
+    cond = compare(tas, op, thresh, constrain=("<", "<="))
     max_l = rl.resample_and_rl(
         cond,
         resample_before_rl,
@@ -364,9 +364,9 @@ def cold_spell_total_length(
     --------
     The default `freq` is valid for the Northern Hemisphere.
     """
-    _thresh: float = convert_units_to(thresh, tas)
+    thresh = convert_units_to(thresh, tas)
 
-    cond = compare(tas, op, _thresh, constrain=("<", "<="))
+    cond = compare(tas, op, thresh, constrain=("<", "<="))
     out = rl.resample_and_rl(
         cond,
         resample_before_rl,
@@ -914,21 +914,21 @@ def degree_days_above_approximation(
     ----------
     :cite:cts:`spinoni_2018`
     """
-    _thresh: float = convert_units_to(thresh, tas)
-    _tasmax: xarray.DataArray = convert_units_to(tasmax, tas)
-    _tasmin: xarray.DataArray = convert_units_to(tasmin, tas)
+    thresh = convert_units_to(thresh, tas)
+    tasmax = convert_units_to(tasmax, tas)
+    tasmin = convert_units_to(tasmin, tas)
 
     cdd = xarray.where(
-        _tasmax < _thresh,
+        tasmax < thresh,
         0,
         xarray.where(
-            _tasmin < _thresh,
+            tasmin < thresh,
             xarray.where(
-                tas <= _thresh,
-                (_tasmax - _thresh) / 4,
-                (_tasmax - _thresh) / 2 - (_thresh - _tasmin) / 4,
+                tas <= thresh,
+                (tasmax - thresh) / 4,
+                (tasmax - thresh) / 2 - (thresh - tasmin) / 4,
             ),
-            tas - _thresh,
+            tas - thresh,
         ),
     )
     cdd = cdd.resample(time=freq).sum(dim="time")
@@ -1633,9 +1633,9 @@ def frost_free_spell_max_length(
     --------
     The default `freq` is valid for the Northern Hemisphere.
     """
-    _thresh: float = convert_units_to(thresh, tasmin)
+    thresh = convert_units_to(thresh, tasmin)
 
-    cond = compare(tasmin, op, _thresh, constrain=(">", ">="))
+    cond = compare(tasmin, op, thresh, constrain=(">", ">="))
     max_l = rl.resample_and_rl(
         cond,
         resample_before_rl,
@@ -1694,8 +1694,8 @@ def last_spring_frost(
     if before_date == "default":
         before_date = DayOfYearStr("07-01")
 
-    _thresh = convert_units_to(thresh, tasmin)
-    cond = compare(tasmin, op, _thresh, constrain=("<", "<="))
+    thresh = convert_units_to(thresh, tasmin)
+    cond = compare(tasmin, op, thresh, constrain=("<", "<="))
 
     out: xarray.DataArray = resample_map(
         cond,
@@ -1889,8 +1889,8 @@ def first_snowfall(
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
-    _thresh = convert_units_to(thresh, prsn, context="hydro")
-    cond = prsn >= _thresh
+    thresh = convert_units_to(thresh, prsn, context="hydro")
+    cond = prsn >= thresh
 
     out: xarray.DataArray = resample_map(
         cond,
@@ -1947,8 +1947,8 @@ def last_snowfall(
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
-    _thresh = convert_units_to(thresh, prsn, context="hydro")
-    cond = prsn >= _thresh
+    thresh = convert_units_to(thresh, prsn, context="hydro")
+    cond = prsn >= thresh
 
     out: xarray.DataArray = resample_map(
         cond,
@@ -2106,10 +2106,10 @@ def snowfall_intensity(
     ----------
     :cite:cts:`frei_snowfall_2018`.
     """
-    _thresh: float = convert_units_to(thresh, "mm/day", context="hydro")
+    thresh = convert_units_to(thresh, "mm/day", context="hydro")
     lwe_prsn: xarray.DataArray = convert_units_to(prsn, "mm/day", context="hydro")
 
-    cond = lwe_prsn >= _thresh
+    cond = lwe_prsn >= thresh
     mean = lwe_prsn.where(cond).resample(time=freq).mean(dim="time")
     snow_int: xarray.DataArray = mean.fillna(0)
     snow_int = snow_int.assign_attrs(units=lwe_prsn.units)
@@ -2156,8 +2156,8 @@ def hot_spell_max_magnitude(
     ----------
     :cite:cts:`russo_magnitude_2014,zhang_high_2022`.
     """
-    _thresh: float = convert_units_to(thresh, tasmax)
-    over_values = (tasmax - _thresh).clip(0)
+    thresh = convert_units_to(thresh, tasmax)
+    over_values = (tasmax - thresh).clip(0)
 
     out = rl.resample_and_rl(
         over_values,
@@ -2215,17 +2215,17 @@ def degree_days_below_approximation(
     ----------
     :cite:cts:`spinoni_2018`
     """
-    _thresh = convert_units_to(thresh, tasmax)
-    _tasmax = convert_units_to(tasmax, tas)
-    _tasmin = convert_units_to(tasmin, tas)
+    thresh = convert_units_to(thresh, tasmax)
+    tasmax = convert_units_to(tasmax, tas)
+    tasmin = convert_units_to(tasmin, tas)
 
     hdd = xarray.where(
-        _tasmax <= _thresh,
-        _thresh - tas,
+        tasmax <= thresh,
+        thresh - tas,
         xarray.where(
-            tas <= _thresh,
-            (_thresh - _tasmin) / 2 - (_tasmax - _thresh) / 4,
-            xarray.where(_tasmin <= _thresh, (_thresh - _tasmin) / 4, 0),
+            tas <= thresh,
+            (thresh - tasmin) / 2 - (tasmax - thresh) / 4,
+            xarray.where(tasmin <= thresh, (thresh - tasmin) / 4, 0),
         ),
     )
     hdd = hdd.resample(time=freq).sum(dim="time")
@@ -2367,9 +2367,9 @@ def hot_spell_max_length(
     ----------
     :cite:cts:`casati_regional_2013,robinson_definition_2001`
     """
-    _thresh: float = convert_units_to(thresh, tasmax)
+    thresh = convert_units_to(thresh, tasmax)
 
-    cond = compare(tasmax, op, _thresh, constrain=(">", ">="))
+    cond = compare(tasmax, op, thresh, constrain=(">", ">="))
     max_l = rl.resample_and_rl(
         cond,
         resample_before_rl,
@@ -2429,9 +2429,9 @@ def hot_spell_total_length(
     In :cite:t:`robinson_definition_2001` where heat waves are also considered, the corresponding parameters would
     be `thresh=39.44, window=2` (103F).
     """
-    _thresh: float = convert_units_to(thresh, tasmax)
+    thresh = convert_units_to(thresh, tasmax)
 
-    cond = compare(tasmax, op, _thresh, constrain=(">", ">="))
+    cond = compare(tasmax, op, thresh, constrain=(">", ">="))
     out = rl.resample_and_rl(
         cond,
         resample_before_rl,
@@ -2494,9 +2494,9 @@ def hot_spell_frequency(
     ----------
     :cite:cts:`casati_regional_2013,robinson_definition_2001`
     """
-    _thresh: float = convert_units_to(thresh, tasmax)
+    thresh = convert_units_to(thresh, tasmax)
 
-    cond = compare(tasmax, op, _thresh, constrain=(">", ">="))
+    cond = compare(tasmax, op, thresh, constrain=(">", ">="))
     out = rl.resample_and_rl(
         cond,
         resample_before_rl,
@@ -2980,8 +2980,8 @@ def wetdays_prop(
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> wd = wetdays_prop(pr, thresh="5 mm/day", freq="QS-DEC")
     """
-    _thresh: float = convert_units_to(thresh, pr, context="hydro")
-    wd = compare(pr, condition, _thresh, constrain=(">", ">="))
+    thresh = convert_units_to(thresh, pr, context="hydro")
+    wd = compare(pr, condition, thresh, constrain=(">", ">="))
     fwd = wd.resample(time=freq).mean(dim="time").assign_attrs(units="1")
     return fwd
 
@@ -3065,9 +3065,9 @@ def sea_ice_area(
     ----------
     "What is the difference between sea ice area and extent?" - :cite:cts:`nsidc_frequently_2008`
     """
-    t = convert_units_to(thresh, siconc)
+    thresh = convert_units_to(thresh, siconc)
     factor = convert_units_to("100 %", siconc)
-    sia = xarray.dot(siconc.where(siconc >= t, 0), areacello) / factor
+    sia = xarray.dot(siconc.where(siconc >= thresh, 0), areacello) / factor
     sia = sia.assign_attrs(units=areacello.units)
     return sia
 
@@ -3104,8 +3104,8 @@ def sea_ice_extent(
     ----------
     "What is the difference between sea ice area and extent?" - :cite:cts:`nsidc_frequently_2008`
     """
-    t = convert_units_to(thresh, siconc)
-    sie = xarray.dot(siconc >= t, areacello)
+    thresh = convert_units_to(thresh, siconc)
+    sie = xarray.dot(siconc >= thresh, areacello)
     sie = sie.assign_attrs(units=areacello.units)
     return sie
 
@@ -3175,10 +3175,10 @@ def rprctot(
     xarray.DataArray, [dimensionless]
         The proportion of the total precipitation accounted for by convective precipitation for each period.
     """
-    _thresh: float = convert_units_to(thresh, pr, context="hydro")
+    thresh = convert_units_to(thresh, pr, context="hydro")
     prc = convert_units_to(prc, pr)
 
-    wd = compare(pr, op, _thresh, constrain=(">", ">="))
+    wd = compare(pr, op, thresh, constrain=(">", ">="))
     pr_tot = rate2amount(pr).where(wd).resample(time=freq).sum(dim="time")
     prc_tot = rate2amount(prc).where(wd).resample(time=freq).sum(dim="time")
 
@@ -3250,14 +3250,14 @@ def degree_days_exceedance_date(
     Cumulated degree days have numerous applications including plant and insect phenology.
     See: https://en.wikipedia.org/wiki/Growing_degree-day for examples (:cite:t:`wikipedia_contributors_growing_2021`).
     """
-    _thresh: float = convert_units_to(thresh, "K")
-    _tas: xarray.DataArray = convert_units_to(tas, "K")
-    _sum_thresh: float = convert_units_to(sum_thresh, "K days")
+    thresh = convert_units_to(thresh, "K")
+    tas = convert_units_to(tas, "K")
+    sum_thresh = convert_units_to(sum_thresh, "K days")
 
     if condition in ["<", "lt", "<=", "le"]:
-        c = _thresh - _tas
+        c = thresh - tas
     elif condition in [">", "gt", ">=", "ge"]:
-        c = _tas - _thresh
+        c = tas - thresh
     else:
         raise NotImplementedError(f"condition: {condition}.")
 
@@ -3268,7 +3268,7 @@ def degree_days_exceedance_date(
         cumsum = grp.where(grp.time >= grp.time[strt_idx][0]).cumsum("time")
 
         out = rl.first_run_after_date(
-            cumsum > _sum_thresh,
+            cumsum > sum_thresh,
             window=1,
             date=None,
         )
@@ -3279,10 +3279,10 @@ def degree_days_exceedance_date(
             never_reached_val = doy_from_string(DayOfYearStr(never_reached), grp.time.dt.year[0], grp.time.dt.calendar)
         else:
             never_reached_val = never_reached
-        return xarray.where((cumsum <= _sum_thresh).all("time"), never_reached_val, out)
+        return xarray.where((cumsum <= sum_thresh).all("time"), never_reached_val, out)
 
     dded: xarray.DataArray = resample_map(c.clip(0), "time", freq, _exceedance_date)
-    dded = dded.assign_attrs(units="", is_dayofyear=np.int32(1), calendar=get_calendar(_tas))
+    dded = dded.assign_attrs(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return dded
 
 

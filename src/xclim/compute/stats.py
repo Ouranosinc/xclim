@@ -295,7 +295,7 @@ def parametric_quantile(
 
 def parametric_cdf(
     p: xr.DataArray,
-    v: xr.DataArray | float | Sequence[float],
+    v: xr.DataArray | np.ndarray | float | Sequence[float],
     dist: str | rv_continuous | None = None,
 ) -> xr.DataArray:
     """
@@ -307,7 +307,7 @@ def parametric_cdf(
         Distribution parameters returned by the `fit` function.
         The array should have dimension `dparams` storing the distribution parameters,
         and attribute `scipy_dist`, storing the name of the distribution.
-    v : xr.DataArray or float or Sequence of float
+    v : xr.DataArray or np.ndarray or float or Sequence of float
         Value to compute the CDF.
     dist : str or scipy.stats.rv_continuous, optional
         The distribution name or instance is the `scipy_dist` attribute is not available on `p`.
@@ -328,7 +328,7 @@ def parametric_cdf(
     distribution = get_dist(dist or p.attrs["scipy_dist"])
 
     data = xr.apply_ufunc(
-        lambda v, p: distribution.cdf(v, *p),
+        lambda values, params: distribution.cdf(values, *params),
         da_v,
         p,
         input_core_dims=[["v"], ["dparams"]],
@@ -361,7 +361,7 @@ def parametric_cdf(
 
 def parametric_pdf(
     p: xr.DataArray,
-    v: xr.DataArray | float | Sequence[float],
+    v: xr.DataArray | np.ndarray | float | Sequence[float],
     dist: str | rv_continuous | None = None,
 ) -> xr.DataArray:
     """
@@ -373,7 +373,7 @@ def parametric_pdf(
         Distribution parameters returned by the `fit` function.
         The array should have dimension `dparams` storing the distribution parameters,
         and attribute `scipy_dist`, storing the name of the distribution.
-    v : xr.DataArray or float or Sequence of float
+    v : xr.DataArray or np.ndarray or float or Sequence of float
         Value to compute the PDF.
     dist : str or scipy.stats.rv_continuous, optional
         The distribution name or instance is the `scipy_dist` attribute is not available on `p`.
@@ -394,7 +394,7 @@ def parametric_pdf(
     distribution = get_dist(dist or p.attrs["scipy_dist"])
 
     data = xr.apply_ufunc(
-        lambda v, p: distribution.pdf(v, *p),
+        lambda values, params: distribution.pdf(values, *params),
         da_v,
         p,
         input_core_dims=[["v"], ["dparams"]],
@@ -753,12 +753,12 @@ def dist_method(
     scipy.stats.rv_continuous : For all available functions and their arguments.
     """
     # Typically the data to be transformed
-    arg = [arg] if arg is not None else []
+    args = [arg] if arg is not None else []
     if function == "nnlf":
         raise ValueError("This method is not supported because it reduces the dimensionality of the data.")
 
     # We don't need to set `input_core_dims` because we're explicitly splitting the parameters here.
-    args = arg + [fit_params.sel(dparams=dp) for dp in fit_params.dparams.values]
+    args = args + [fit_params.sel(dparams=dp) for dp in fit_params.dparams.values]
 
     return xr.apply_ufunc(
         _dist_method_1D,
@@ -824,7 +824,7 @@ def preprocess_standardized_index(da: xr.DataArray, freq: Freq | None, window: i
     if freq is not None and xr.infer_freq(da.time) != freq:
         da = da.resample(time=freq).mean(keep_attrs=True)
 
-    if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
+    if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:  # type: ignore[index]
         warnings.warn(
             "The input data is chunked on time dimension and must be fully rechunked to"
             " run `fit` on groups ."
