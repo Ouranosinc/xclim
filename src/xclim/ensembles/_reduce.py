@@ -306,12 +306,7 @@ def kmeans_reduce_ensemble(
             data=crit, method={"rsq_optimize": None}, random_state=42, make_graph=True
         )
     """
-    if make_graph:
-        fig_data = {}
-        if max_clusters is not None:
-            fig_data["max_clusters"] = max_clusters
-    else:
-        fig_data = None
+    fig_max_clusters = max_clusters
 
     data = data.transpose("realization", "criteria")
     # initialize the variables
@@ -346,7 +341,11 @@ def kmeans_reduce_ensemble(
 
     n_clusters = _get_nclust(method=method, n_sim=n_sim, rsq=rsq, max_clusters=max_clusters)
 
+    fig_data: dict[str, Any] = {}
     if make_graph:
+        if fig_max_clusters is not None:
+            fig_data["max_clusters"] = fig_max_clusters
+
         fig_data["method"] = method
         fig_data["rsq"] = rsq
         fig_data["n_clusters"] = n_clusters
@@ -379,16 +378,16 @@ def kmeans_reduce_ensemble(
             argmax = np.argmax(like)  # index of the maximum likelihood
 
         else:
-            argmax = 0
+            argmax = np.argmax(0)
 
         r_clust = r[clusters == i]  # index of the cluster simulations within the full ensemble
 
         out[i] = r_clust[argmax]
 
-    out = sorted(out.astype(int))
+    output = sorted(out.astype(int))
     # display graph - don't block code execution
 
-    return out, clusters, fig_data
+    return output, clusters, fig_data
 
 
 def _calc_rsq(z, method: dict, make_graph: bool, n_sim: np.ndarray | int, random_state, sample_weights):
@@ -444,7 +443,7 @@ def _get_nclust(method: dict, n_sim: int, rsq: float, max_clusters: int):
             UserWarning,
             stacklevel=2,
         )
-        n_clusters = max_clusters
+        return max_clusters
     return n_clusters
 
 

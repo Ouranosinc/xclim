@@ -127,7 +127,7 @@ def create_ensemble(
     )
 
     if realizations is None:
-        realizations = np.arange(len(ds))
+        realizations = list(np.arange(len(ds)))
 
     dim = xr.IndexVariable("realization", list(realizations), attrs={"axis": "E"})
 
@@ -288,6 +288,7 @@ def ensemble_percentiles(
     if min_members is None:
         min_members = ens.realization.size
 
+    out: xr.DataArray | xr.Dataset
     if isinstance(ens, xr.Dataset):
         out = xr.merge(
             [
@@ -361,6 +362,7 @@ def ensemble_percentiles(
     if split:
         out = out.to_dataset(dim="percentiles")
         for p, perc in out.data_vars.items():
+            p = str(p)
             perc.attrs.update(ens.attrs)
             perc.attrs["description"] = perc.attrs.get("description", "") + f" {p}th percentile of ensemble."
             out[p] = perc
@@ -378,7 +380,7 @@ def _ens_align_datasets(
     datasets: list[xr.Dataset | Path | str | list[Path | str]] | str,
     multifile: bool = False,
     resample_freq: Freq | None = None,
-    calendar: str = "default",
+    calendar: str | None = "default",
     cal_kwargs: dict | None = None,
     **xr_kwargs,
 ) -> list[xr.Dataset]:
@@ -398,9 +400,9 @@ def _ens_align_datasets(
     resample_freq : str, optional
         If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
         If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
-    calendar : str
-        The calendar of the time coordinate of the ensemble. For conversions involving '360_day',
-        the align_on='date' option is used.
+    calendar : str, optional
+        The calendar of the time coordinate of the ensemble.
+        For conversions involving '360_day', the align_on='date' option is used.
         See :py:func:`xclim.core.calendar.convert_calendar`.
         'default' is the standard calendar using np.datetime64 objects.
     cal_kwargs : dict, optional
@@ -415,12 +417,15 @@ def _ens_align_datasets(
     xr_kwargs.setdefault("chunks", "auto")
     xr_kwargs.setdefault("decode_times", False)
 
+    _datasets: Sequence[xr.Dataset | Path | str | list[Path | str]]
     if isinstance(datasets, str):
-        datasets = glob(datasets)
+        _datasets = glob(datasets)
+    else:
+        _datasets = [d for d in datasets]
 
     ds_all: list[xr.Dataset] = []
     calendars = []
-    for i, n in enumerate(datasets):
+    for i, n in enumerate(_datasets):
         ds: xr.Dataset
         if multifile:
             ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)
@@ -429,6 +434,8 @@ def _ens_align_datasets(
                 ds = n
             elif isinstance(n, xr.DataArray):
                 ds = n.to_dataset()
+            elif isinstance(n, list):
+                raise TypeError("'multifile' is set to False but 'n' is of type list. Provide a single file path.")
             else:
                 ds = xr.open_dataset(n, **xr_kwargs)
 
@@ -455,5 +462,6 @@ def _ens_align_datasets(
 
     if calendar is None:
         calendar = common_calendar(calendars, join="outer")
+    cal_kwargs = cal_kwargs or {}
     cal_kwargs.setdefault("align_on", "date")
-    return [ds.convert_calendar(calendar, **cal_kwargs) for ds in ds_all]
+    return [ds.convert_calendar(calendar, **cal_kwargs) for ds in ds_all]  # type: ignore[arg-type]

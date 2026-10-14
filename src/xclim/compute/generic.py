@@ -30,8 +30,8 @@ The vocabulary is strongly inspired from `clix-meta`_.
 from __future__ import annotations
 
 import ast
-from collections.abc import Sequence
-from typing import Literal
+from collections.abc import Callable, Sequence
+from typing import Any, Literal
 
 import numpy as np
 import xarray as xr
@@ -87,8 +87,8 @@ __all__ = [
 
 def statistics(
     data: xr.DataArray,
-    statistic: Reducer,
-    freq: Freq | str | None,
+    statistic: Reducer | Callable,
+    freq: Freq | None,
     out_units: str | None = None,
     **indexer,
 ) -> xr.DataArray:
@@ -617,7 +617,7 @@ def _spell_length_statistics(
     condition: Condition,
     thresh: float | xr.DataArray | Sequence[xr.DataArray] | Sequence[float],
     statistic: Reducer | Sequence[Reducer],
-    freq: Freq,
+    freq: Freq | None,
     constrain: Sequence[Condition] | None = None,
     min_gap: int = 1,
     resample_before_rl: bool = True,
@@ -852,7 +852,7 @@ def season(
     condition: Condition,
     thresh: Quantified,
     window: int,
-    aspect: Literal["start", "end", "length"] | Sequence[Literal["start", "end", "length"]],
+    aspect: Literal["start", "end", "length"],  # | Sequence[Literal["start", "end", "length"]],
     freq: Freq | None,
     mid_date: DayOfYearStr | None = None,
     constrain: Sequence[Condition] | None = None,
@@ -882,6 +882,7 @@ def season(
         Resampling frequency. If None, time dimension is reduced completely.
     mid_date : DayOfYearStr, optional
         An optional middle date. The start must happen before and the end after for the season to be valid.
+        Setting `None` removes that constraint.
     constrain : Sequence of strings, optional
         A list of acceptable comparison operators. Optional, but indicators wrapping this function should inject it.
     **indexer : {dim: indexer, }, optional
@@ -922,11 +923,11 @@ def season(
     the season is invalid. If a start is found but no end, the end is set to the last day of the period
     (December 31st if the dataset is complete).
     """
-    _thresh = convert_units_to(thresh, data, context="infer")
-    cond = compare(data, condition, _thresh, constrain=constrain)
+    thresh = convert_units_to(thresh, data, context="infer")
+    cond = compare(data, condition, thresh, constrain=constrain)
     cond = select_time(cond, **indexer)
     func = {"start": rl.season_start, "end": rl.season_end, "length": rl.season_length}
-    map_kwargs = {"window": window, "mid_date": mid_date, "dim": "time"}
+    map_kwargs: dict[str, Any] = {"window": window, "mid_date": mid_date, "dim": "time"}
 
     if aspect in ["start", "end"]:
         map_kwargs["coord"] = "dayofyear"
@@ -1190,7 +1191,7 @@ def statistics_between_dates(
     data: xr.DataArray,
     start: xr.DataArray | DayOfYearStr,
     end: xr.DataArray | DayOfYearStr,
-    statistic: Reducer,
+    statistic: Reducer | Callable,
     freq: Freq | None = None,
 ) -> xr.DataArray:
     """
@@ -1237,7 +1238,7 @@ def statistics_between_dates(
     if freq is None:
         frequencies = []
         for bound in [start, end]:
-            if isinstance(bound, xr.DataArray) and "time" in bound.coords:
+            if isinstance(bound, xr.DataArray) and hasattr(bound, "time"):
                 frequencies.append(xr.infer_freq(bound["time"]))
             else:
                 frequencies.append(None)
@@ -1374,9 +1375,10 @@ def day_threshold_reached(
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
-    date : str or None
+    date : DayOfYearStr, optional
         Date of the year after which to look for the first event, or before which to look for the last event.
         Should have the format '%m-%d'. None means there is no limit.
+        Setting `None` removes that constraint.
     which : {'first', 'last'}
         Whether to look for the first or the last event.
     window : int
@@ -1469,18 +1471,18 @@ def thresholded_events(
             event_sum: The sum within each event, only considering the steps where start condition is true.
             event_start: The datetime of the start of the run.
     """
-    _thresh = convert_units_to(thresh, data)
+    thresh = convert_units_to(thresh, data)
 
     # Start and end conditions
-    da_start = compare(data, condition, _thresh)
+    da_start = compare(data, condition, thresh)
     if thresh_stop is None and condition_stop is None:
         da_stop = ~da_start
     else:
-        _thresh_stop = convert_units_to(thresh_stop or _thresh, data)
+        thresh_stop = convert_units_to(thresh_stop or thresh, data)
         if condition_stop is not None:
-            da_stop = compare(data, condition_stop, _thresh_stop)
+            da_stop = compare(data, condition_stop, thresh_stop)
         else:
-            da_stop = ~compare(data, condition, _thresh_stop)
+            da_stop = ~compare(data, condition, thresh_stop)
 
     return rl.find_events(da_start, window, da_stop, window_stop or window, data, freq)
 

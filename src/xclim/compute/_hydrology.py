@@ -121,7 +121,7 @@ def rb_flashiness_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.Dat
     ----------
     :cite:cts:`baker_new_2004`
     """
-    d = np.abs(rivo.diff(dim="time")).resample(time=freq)
+    d = np.abs(rivo.diff(dim="time")).resample(time=freq)  # type: ignore[attr-defined]
     mq = rivo.resample(time=freq)
     out = d.sum(dim="time") / mq.sum(dim="time")
     out.attrs["units"] = ""
@@ -141,7 +141,7 @@ def standardized_streamflow_index(
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
-    params: Quantified | None = None,
+    params: xarray.DataArray | None = None,
     **indexer,
 ) -> xarray.DataArray:
     r"""
@@ -452,7 +452,7 @@ def standardized_groundwater_index(
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
-    params: Quantified | None = None,
+    params: xarray.DataArray | None = None,
     **indexer,
 ) -> xarray.DataArray:
     r"""
@@ -754,11 +754,11 @@ def runoff_ratio(
     ----------
     :cite:cts:'knoben_2024'
     """
-    q = convert_units_to(rivo, "mm3/hr")
+    rivo = convert_units_to(rivo, "mm3/hr")
     area = convert_units_to(area, "mm2")
     pr = convert_units_to(pr, "mm/hr")
 
-    runoff = q / area
+    runoff = rivo / area
     runoff_freq = runoff.resample(time=freq).mean()
     pr_freq = pr.resample(time=freq).mean()
     out = runoff_freq / pr_freq
@@ -999,7 +999,7 @@ def sen_slope_ratio(
 @declare_units(rivo="[discharge]")
 def base_flow_index_seasonal_ratio(
     rivo: xarray.DataArray, freq: Freq = "QS-DEC", numerator: str = "DJF", denominator: str = "JJA"
-) -> tuple[DataArray, DataArray, DataArray, DataArray, DataArray]:
+) -> tuple[DataArray, DataArray]:
     """
     Seasonal Base flow index (bfi) and ratio of winter to summer base flow index.
 

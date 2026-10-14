@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from packaging.version import Version
+from pandas.tseries.offsets import BaseOffset
 from xarray import CFTimeIndex
 from xarray.coding import cftime_offsets
 
@@ -115,7 +116,7 @@ def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
 
     Parameters
     ----------
-    doy : str
+    doy : DayOfYearStr
         The day of year in the format "MM-DD".
     year : int
         The year.
@@ -222,7 +223,7 @@ def common_calendar(calendars: Sequence[str], join: Literal["inner", "outer"] = 
         "julian": "standard",
     }
     ranks = {"360_day": 0, "noleap": 1, "standard": 2, "all_leap": 3}
-    calendars = sorted([trans.get(cal, cal) for cal in calendars], key=ranks.get)
+    calendars = sorted([trans.get(cal, cal) for cal in calendars], key=ranks.__getitem__)
 
     if join == "outer":
         return calendars[-1]
@@ -357,7 +358,9 @@ def convert_doy(
     return new_doy.assign_attrs(is_dayofyear=np.int32(1), calendar=target_cal)
 
 
-def ensure_cftime_array(time: Sequence) -> np.ndarray | Sequence[cftime.datetime]:
+def ensure_cftime_array(
+    time: xr.DataArray | np.ndarray | xr.CFTimeIndex | Sequence[cftime.datetime] | Sequence[pydt.datetime],
+) -> np.ndarray:
     """
     Convert an input 1D array to a numpy array of cftime objects.
 
@@ -384,7 +387,7 @@ def ensure_cftime_array(time: Sequence) -> np.ndarray | Sequence[cftime.datetime
     if isinstance(time, xr.CFTimeIndex):
         return time.values
     if isinstance(time[0], cftime.datetime):
-        return time
+        return np.asarray(time)
     if isinstance(time[0], pydt.datetime):
         return np.array([cftime.DatetimeGregorian(*ele.timetuple()[:6]) for ele in time])
     raise ValueError("Unable to cast array to cftime dtype")
@@ -455,14 +458,15 @@ def percentile_doy(
     rr = rr.drop_vars("time").assign_coords(crd)
     rrr = rr.unstack("time").stack(stack_dim=("year", "window"))
 
-    if rrr.chunks is not None and len(rrr.chunks[rrr.get_axis_num("stack_dim")]) > 1:
-        # Preserve chunk size
+    if rrr.chunks is not None and len(rrr.chunks[rrr.get_axis_num("stack_dim")]) > 1 and arr.chunks is not None:
         time_chunks_count = len(arr.chunks[arr.get_axis_num("time")])
         doy_chunk_size = np.ceil(len(rrr.dayofyear) / (window * time_chunks_count))
         rrr = rrr.chunk({"stack_dim": -1, "dayofyear": doy_chunk_size})
 
-    if np.isscalar(per):
-        per = [per]
+    if isinstance(per, (float, int, np.floating, np.integer)):
+        per_list = [int(per)]
+    else:
+        per_list = [int(p) for p in per]
 
     p = xr.apply_ufunc(
         calc_perc,
@@ -470,12 +474,12 @@ def percentile_doy(
         input_core_dims=[["stack_dim"]],
         output_core_dims=[["percentiles"]],
         keep_attrs=True,
-        kwargs={"percentiles": per, "alpha": alpha, "beta": beta, "copy": copy},
+        kwargs={"percentiles": per_list, "alpha": alpha, "beta": beta, "copy": copy},
         dask="parallelized",
         output_dtypes=[rrr.dtype],
-        dask_gufunc_kwargs={"output_sizes": {"percentiles": len(per)}},
+        dask_gufunc_kwargs={"output_sizes": {"percentiles": len(per_list)}},
     )
-    p = p.assign_coords(percentiles=xr.DataArray(per, dims=("percentiles",)))
+    p = p.assign_coords(percentiles=xr.DataArray(per_list, dims=("percentiles",)))
 
     # The percentile for the 366th day has a sample size of 1/4 of the other days.
     # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
@@ -512,7 +516,7 @@ def build_climatology_bounds(da: xr.DataArray) -> list[str]:
 
 
 def compare_offsets(
-    freqA: str, op: Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"], freqB: str
+    freqA: Freq, op: Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"], freqB: Freq
 ) -> bool:
     """
     Compare offsets string based on their approximate length, according to a given operator.
@@ -624,7 +628,7 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     return f"{mult if mult > 1 else ''}{base}{start}{'-' if anchor else ''}{anchor or ''}"
 
 
-def is_offset_divisor(divisor: str, offset: str):
+def is_offset_divisor(divisor: Freq, offset: Freq):
     """
     Check that divisor is a divisor of offset.
 
@@ -791,7 +795,7 @@ def resample_doy(doy: DataType, arr: DataType) -> DataType:
 def time_bnds(
     time: (xr.DataArray | xr.Dataset | CFTimeIndex | pd.DatetimeIndex),
     freq: Freq | None = None,
-):
+) -> xr.DataArray:
     """
     Find the time bounds for a datetime index by assuming an uniform sampling frequency.
 
@@ -852,7 +856,8 @@ def time_bnds(
             raise NotImplementedError(
                 "Irregular time coordinates are not supported. Please pass a frequency explicitly."
             )
-    elif hasattr(freq, "freqstr"):
+    # elif hasattr(_freq, "freqstr"):
+    elif isinstance(freq, BaseOffset):
         # When freq is an Offset
         freq = freq.freqstr
 
@@ -1015,7 +1020,7 @@ def doy_to_days_since(
     da : xr.DataArray
         Array of "day-of-year", usually int dtype, must have a `time` dimension.
         Sampling frequency should be finer or similar to yearly and coarser than daily.
-    start : date of year str, optional
+    start : DayOfYearStr, optional
         A date in "MM-DD" format, the base day of the new array. If None (default), the `time` axis is used.
         Passing `start` only makes sense if `da` has a yearly sampling frequency.
     calendar : str, optional
@@ -1155,6 +1160,7 @@ def _get_doys(start: int, end: int, inclusive: tuple[bool, bool]):
         doys = np.arange(start, end + 1)
     else:
         doys = np.concatenate((np.arange(start, 367), np.arange(0, end + 1)))
+    # FIXME: Assignment issues
     if not inclusive[0]:
         doys = doys[1:]
     if not inclusive[1]:
@@ -1212,37 +1218,38 @@ def select_between_doys(
     if isinstance(include_bounds, bool):
         include_bounds = (include_bounds, include_bounds)
 
+    if len(doy_bounds) != 2:
+        raise TypeError(f"length of doy_bounds: {doy_bounds} is not 2")
+
     if (isinstance(doy_bounds[0], int) or (doy_bounds[0] is None)) and (
         isinstance(doy_bounds[1], int) or (doy_bounds[1] is None)
     ):  # Simple case
-        if doy_bounds[0] is None:
-            doy_bounds = (1, doy_bounds[1])
-        if doy_bounds[1] is None:
-            doy_bounds = (doy_bounds[0], 366)
-        mask = da.time.dt.dayofyear.isin(_get_doys(*doy_bounds, include_bounds))
+        doy_bound_l = doy_bounds[0] or 1
+        doy_bound_r = doy_bounds[1] or 366
+        mask = da.time.dt.dayofyear.isin(_get_doys(doy_bound_l, doy_bound_r, include_bounds))
     else:
         if drop:
             # At least one of the bounds is an array, drop won't work
             raise ValueError("Passing array-like `doy_bounds` is incompatible with `drop=True`.")
 
         start, end = doy_bounds
+
         # store whether the bounds are None for later evaluation
         _is_start_none = start is None
         _is_end_none = end is None
 
         # Convert None to DataArrays with nans
         if start is None:
-            start = xr.full_like(end, np.nan, dtype="float64")
+            start = xr.full_like(end, np.nan, dtype="float64")  # type: ignore[arg-type]
         if end is None:
-            end = xr.full_like(start, np.nan, dtype="float64")
+            end = xr.full_like(start, np.nan, dtype="float64")  # type: ignore[arg-type]
         # convert ints to DataArrays
         if isinstance(start, int):
-            start = xr.full_like(end, start)
+            start = xr.full_like(end, start)  # type: ignore[arg-type]
         elif isinstance(end, int):
-            end = xr.full_like(start, end)
-        # Ensure they both have the same dims
-        # align join='exact' will fail on common but different coords, broadcast will add missing coords
-        start, end = xr.broadcast(*xr.align(start, end, join="exact"))
+            end = xr.full_like(start, end)  # type: ignore[arg-type]
+
+        start, end = xr.broadcast(*xr.align(start, end, join="exact"))  # type: ignore[call-overload]
 
         if not include_bounds[0]:
             start += 1
@@ -1449,6 +1456,9 @@ def select_time(
             end = _doys_from_string(date_bounds[1], bnds.time, cal) if date_bounds[1] is not None else None
             doy_bounds = (start, end)
 
+        if doy_bounds is None:
+            raise ValueError("doy_bounds is not defined")
+
         return select_between_doys(da, doy_bounds, include_bounds, include_doy_bounds_nans, bounds_freq, drop=drop)
 
     else:
@@ -1579,10 +1589,10 @@ def stack_periods(
         )
 
     # Convert integer inputs to freq strings
-    mult, *args = parse_offset(freq)
-    win_frq = construct_offset(mult * window, *args)
-    strd_frq = construct_offset(mult * stride, *args)
-    minl_frq = construct_offset(mult * min_length, *args)
+    mult, abase, astart, aanchor = parse_offset(freq)
+    win_frq = construct_offset(mult * window, abase, astart, aanchor)
+    strd_frq = construct_offset(mult * stride, abase, astart, aanchor)
+    minl_frq = construct_offset(mult * min_length, abase, astart, aanchor)
 
     # The same time coord as da, but with one extra element.
     # This way, the last window's last index is not returned as None by xarray's grouper.
@@ -1602,23 +1612,23 @@ def stack_periods(
     # longest = 0
     # Iterate over strides, but recompute the full window for each stride start
     for _, strd_slc in da.resample(time=strd_frq).groups.items():
-        win_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(time=win_frq)
+        win_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(time=win_frq)  # type: ignore[union-attr]
         # Get slice for first group
         win_slc = list(win_resamp.groups.values())[0]
         if min_length < window:
             # If we ask for a min_length period instead is it complete ?
-            min_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(time=minl_frq)
+            min_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(time=minl_frq)  # type: ignore[union-attr]
             min_slc = list(min_resamp.groups.values())[0]
-            open_ended = min_slc.stop is None
+            open_ended = min_slc.stop is None  # type: ignore[union-attr]
         else:
             # The end of the group slice is None if no outside-group value was found after the last element
             # As we added an extra step to time2, we avoid the case where a group ends exactly on the last element of ds
-            open_ended = win_slc.stop is None
+            open_ended = win_slc.stop is None  # type: ignore[union-attr]
         if open_ended:
             # Too short, we got to the end
             break
         if (
-            strd_slc.start == 0
+            strd_slc.start == 0  # type: ignore[union-attr]
             and parse_offset(freq)[1] in "YAQ"
             and min_length == window
             and not _month_is_first_period_month(da.time[0].item(), freq)
@@ -1629,8 +1639,8 @@ def stack_periods(
             continue
         periods.append(
             slice(
-                strd_slc.start + win_slc.start,
-                ((strd_slc.start + win_slc.stop) if win_slc.stop is not None else da.time.size),
+                strd_slc.start + win_slc.start,  # type: ignore[union-attr]
+                ((strd_slc.start + win_slc.stop) if win_slc.stop is not None else da.time.size),  # type: ignore[union-attr]
             )
         )
 
@@ -1668,10 +1678,13 @@ def stack_periods(
         join="outer",
         **kwargs,
     )
-    out = out.assign_coords(
-        time=(("time",), fake_time, da.time.attrs.copy()),
-        **{f"{dim}_length": lengths, dim: starts},
-    )
+    coords = {
+        "time": (("time",), fake_time, da.time.attrs.copy()),
+        f"{dim}_length": lengths,
+        dim: starts,
+    }
+
+    out = out.assign_coords(coords)
     out.time.attrs.update(long_name="Placeholder time axis")
     return out
 
@@ -1775,7 +1788,7 @@ def unstack_periods(da: DataType, dim: str = "period") -> DataType:
         for i, (start, length) in enumerate(zip(starts.values, lengths.values, strict=False)):
             real_time = _reconstruct_time(time_as_delta, start)
             periods.append(
-                da.isel(**{dim: i}, drop=True)
+                da.isel({dim: i}, drop=True)
                 .isel(time=slice(0, length))
                 .assign_coords(time=real_time.isel(time=slice(0, length)))
             )
@@ -1792,8 +1805,8 @@ def unstack_periods(da: DataType, dim: str = "period") -> DataType:
     Nwin = window // stride
     mid = (Nwin - 1) // 2  # index of the center window
 
-    mult, *args = parse_offset(freq)
-    strd_frq = construct_offset(mult * stride, *args)
+    mult, base, start, anchor = parse_offset(freq)
+    strd_frq = construct_offset(mult * stride, base, start, anchor)
 
     periods = []
     for i, (start, length) in enumerate(zip(starts.values, lengths.values, strict=False)):
@@ -1805,7 +1818,7 @@ def unstack_periods(da: DataType, dim: str = "period") -> DataType:
             slc = slice(slices[mid].start, min(slices[Nwin - 1].stop or length, length))
         else:
             slc = slice(slices[mid].start, min(slices[mid].stop, length))
-        periods.append(da.isel(**{dim: i}, drop=True).isel(time=slc).assign_coords(time=real_time.isel(time=slc)))
+        periods.append(da.isel({dim: i}, drop=True).isel(time=slc).assign_coords(time=real_time.isel(time=slc)))
 
     return xr.concat(periods, "time")
 

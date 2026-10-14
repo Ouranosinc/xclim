@@ -279,7 +279,7 @@ def rle_statistics(
     window: int,
     dim: str = "time",
     freq: Freq | None = None,
-    ufunc_1dim: str | bool = "from_context",
+    ufunc_1dim: Literal["from_context", "auto"] | bool = "from_context",
     index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
     """
@@ -337,8 +337,8 @@ def longest_run(
     da: xr.DataArray,
     dim: str = "time",
     freq: Freq | None = None,
-    ufunc_1dim: str | bool = "from_context",
-    index: str = "first",
+    ufunc_1dim: Literal["from_context", "auto"] | bool = "from_context",
+    index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
     """
     Return the length of the longest consecutive run of True values.
@@ -602,8 +602,9 @@ def _boundary_run(
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, freq=freq)
 
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
+    out: xr.DataArray
     if window == 1:
-        out: xr.DataArray = resample_map(
+        out = resample_map(
             da, dim, freq, find_boundary_run, map_kwargs={"position": position, "coord": coord, "dim": dim}
         )
 
@@ -621,7 +622,7 @@ def _boundary_run(
         d = _cumsum_reset(da, dim=dim, index=position)
         d = xr.where(d >= window, 1, 0)
         # for "first" run, return "first" element in the run (and conversely for "last" run)
-        out: xr.DataArray = resample_map(
+        out = resample_map(
             d, dim, freq, find_boundary_run, map_kwargs={"position": position, "coord": coord, "dim": dim}
         )
 
@@ -892,6 +893,7 @@ def season_start(
         Minimum duration of consecutive values to start and end the season.
     mid_date : DayOfYearStr, optional
         The date (in MM-DD format) that a season must include to be considered valid.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate the season (default: 'time').
     coord : Optional[str]
@@ -936,6 +938,7 @@ def season_end(
         Minimum duration of consecutive values to start and end the season.
     mid_date : DayOfYearStr, optional
         The date (in MM-DD format) that a run must include to be considered valid.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     coord : str, optional
@@ -1004,6 +1007,7 @@ def season(
         Minimum duration of consecutive values to start and end the season.
     mid_date : DayOfYearStr, optional
         The date (in MM-DD format) that a run must include to be considered valid.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     stat : str, optional
@@ -1111,6 +1115,7 @@ def season_length(
         Minimum duration of consecutive values to start and end the season.
     mid_date : DayOfYearStr, optional
         The date (in MM-DD format) that a run must include to be considered valid.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
 
@@ -1132,7 +1137,7 @@ def season_length(
 def run_end_after_date(
     da: xr.DataArray,
     window: int,
-    date: DayOfYearStr = "07-01",
+    date: DayOfYearStr | Literal["default"] | None = "default",
     dim: str = "time",
     coord: bool | str | None = "dayofyear",
 ) -> xr.DataArray:
@@ -1147,8 +1152,9 @@ def run_end_after_date(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive run to accumulate values.
-    date : str
+    date : DayOfYearStr, optional, defaults to '07-01'
         The date after which to look for the end of a run.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     coord : Optional[Union[bool, str]]
@@ -1162,6 +1168,9 @@ def run_end_after_date(
         Index (or coordinate if `coord` is not False) of last item in last valid run.
         Returns np.nan if there are no valid runs.
     """
+    if date == "default":
+        date = DayOfYearStr("07-01")
+
     mid_idx = index_of_date(da[dim], date, max_idxs=1, default=0)
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
         return xr.full_like(da.isel({dim: 0}), np.nan, float).drop_vars(dim)
@@ -1174,6 +1183,7 @@ def run_end_after_date(
     )
     beg = first_run(da.where(da[dim] < da[dim][mid_idx][0]), window=window, dim=dim)
 
+    last: xr.DataArray | int
     if coord:
         last = da[dim][-1]
         if isinstance(coord, str):
@@ -1188,7 +1198,7 @@ def run_end_after_date(
 def first_run_after_date(
     da: xr.DataArray,
     window: int,
-    date: DayOfYearStr | None = "07-01",
+    date: DayOfYearStr | Literal["default"] | None = "default",
     dim: str = "time",
     coord: bool | str | None = "dayofyear",
 ) -> xr.DataArray:
@@ -1201,8 +1211,9 @@ def first_run_after_date(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive run to accumulate values.
-    date : DayOfYearStr, optional
+    date : DayOfYearStr, optional, defaults to '07-01'
         The date after which to look for the run.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     coord : bool or str, optional
@@ -1216,6 +1227,9 @@ def first_run_after_date(
         Index (or coordinate if `coord` is not False) of first item in the first valid run.
         Returns np.nan if there are no valid runs.
     """
+    if date == "default":
+        date = DayOfYearStr("07-01")
+
     mid_idx = index_of_date(da[dim], date, max_idxs=1, default=0)
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
         return xr.full_like(da.isel({dim: 0}), np.nan, float).drop_vars(dim)
@@ -1231,7 +1245,7 @@ def first_run_after_date(
 def last_run_before_date(
     da: xr.DataArray,
     window: int,
-    date: DayOfYearStr = "07-01",
+    date: DayOfYearStr | Literal["default"] | None = "default",
     dim: str = "time",
     coord: bool | str | None = "dayofyear",
 ) -> xr.DataArray:
@@ -1244,8 +1258,9 @@ def last_run_before_date(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive run to accumulate values.
-    date : DayOfYearStr
+    date : DayOfYearStr, optional, defaults to '07-01'
         The date before which to look for the last event.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     coord : bool or str, optional
@@ -1259,6 +1274,9 @@ def last_run_before_date(
         Index (or coordinate if `coord` is not False) of last item in last valid run.
         Returns np.nan if there are no valid runs.
     """
+    if date == "default":
+        date = DayOfYearStr("07-01")
+
     mid_idx = index_of_date(da[dim], date, default=-1)
 
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
@@ -1271,7 +1289,7 @@ def last_run_before_date(
 def first_run_before_date(
     da: xr.DataArray,
     window: int,
-    date: DayOfYearStr | None = "07-01",
+    date: DayOfYearStr | Literal["default"] | None = "default",
     dim: str = "time",
     coord: bool | str | None = "dayofyear",
 ) -> xr.DataArray:
@@ -1284,8 +1302,9 @@ def first_run_before_date(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive run to accumulate values.
-    date : DayOfYearStr, optional
+    date : DayOfYearStr, optional, defaults to '07-01'
         The date before which to look for the run.
+        Setting `None` removes that constraint.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
     coord : bool or str, optional
@@ -1299,6 +1318,8 @@ def first_run_before_date(
         Index (or coordinate if `coord` is not False) of first item in the first valid run.
         Returns np.nan if there are no valid runs.
     """
+    if date == "default":
+        date = DayOfYearStr("07-01")
     if date is not None:
         mid_idx = index_of_date(da[dim], date, max_idxs=1, default=0)
         if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
@@ -1325,7 +1346,7 @@ def _rle_1d(ia) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 
 
 def rle_1d(
-    arr: int | float | bool | Sequence[int | float | bool] | xr.DataArray,
+    arr: int | float | bool | Sequence[int | float | bool] | xr.DataArray | np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Return the length, starting position and value of consecutive identical values.
@@ -1334,7 +1355,7 @@ def rle_1d(
 
     Parameters
     ----------
-    arr : int or float or bool or Sequence[Union[int, float, bool]] or xr.DataArray
+    arr : int or float or bool or Sequence[Union[int, float, bool]] or xr.DataArray or np.ndarray
         Array of values to be parsed.
 
     Returns
@@ -1617,7 +1638,7 @@ def index_of_date(
         An array of datetime values, any calendar.
     date : DayOfYearStr or DateStr, optional
         A string in the "yyyy-mm-dd" or "mm-dd" format.
-        If None, returns default.
+        Setting `None`` returns default.
     max_idxs : int, optional
         Maximum number of returned indexes.
     default : int
@@ -1635,8 +1656,10 @@ def index_of_date(
     """
     if date is None:
         return np.array([default])
+
+    year_cond: xr.DataArray | bool
     if len(date.split("-")) == 2:
-        date = f"1840-{date}"
+        date = DayOfYearStr(f"1840-{date}")
         date_obj = datetime.strptime(date, "%Y-%m-%d")
         year_cond = True
     else:

@@ -55,6 +55,7 @@ import warnings
 from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
+from typing import Any
 
 from xclim.core.formatting import AttrFormatter, default_formatter
 from xclim.core.utils import CaseInsensitiveDict
@@ -70,7 +71,7 @@ TRANSLATABLE_ATTRS = [
 List of attributes to consider translatable when generating locale dictionaries.
 """
 
-_LOCALES = {}
+_LOCALES: dict[Any, Any] = {}
 
 
 def list_locales() -> list:
@@ -104,7 +105,7 @@ def _valid_locales(locales):
     )
 
 
-def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str, dict]:
+def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str, CaseInsensitiveDict]:
     """
     Return all translated metadata for a given locale.
 
@@ -151,7 +152,7 @@ def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str,
 def get_local_attrs(
     indicator: str | Sequence[str],
     locale: str,
-    var_name: str = None,
+    var_name: str | None = None,
     names: Sequence[str] | None = None,
     append_locale_name: bool = True,
 ) -> dict:
@@ -191,7 +192,7 @@ def get_local_attrs(
     loc_name, loc_dict = get_local_dict(locale)
     loc_name = f"_{loc_name}" if append_locale_name else ""
 
-    local_attrs = {}
+    local_attrs: dict[str, str] = {}
     for ind in reversed(indicator):
         local_attrs = local_attrs | loc_dict.get(ind.lower(), {})
         if var_name:
@@ -252,7 +253,7 @@ class UnavailableLocaleError(ValueError):
         )
 
 
-def read_locale_file(filename, module: str | None = None, encoding: str = "UTF8") -> dict[str, dict]:
+def read_locale_file(filename, module: str | None = None, encoding: str = "UTF8") -> CaseInsensitiveDict:
     """
     Read a locale file (.json) and return its dictionary.
 
@@ -280,7 +281,7 @@ def read_locale_file(filename, module: str | None = None, encoding: str = "UTF8"
     return locdict
 
 
-def load_locale(locdata: str | Path | dict[str, dict], locale: str) -> None:
+def load_locale(locdata: str | Path | CaseInsensitiveDict, locale: str) -> None:
     """
     Load translations from a json file into xclim.
 
@@ -320,7 +321,8 @@ def generate_local_dict(locale: str, init_english: bool = False) -> CaseInsensit
     from ..core.indicator import registry  # pylint: disable=import-outside-toplevel
 
     if locale in _LOCALES:
-        _, attrs = get_local_dict(locale)
+        _, _attrs = get_local_dict(locale)
+        attrs = CaseInsensitiveDict(_attrs)
         for ind_name in attrs.copy().keys():
             if ind_name != "attrs_mapping" and ind_name not in registry:
                 attrs.pop(ind_name)

@@ -10,18 +10,16 @@ from __future__ import annotations
 
 import operator
 import warnings
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from datetime import timedelta
 from inspect import stack
-from typing import Any, Literal, TypeVar, cast
+from typing import Literal, TypeVar, cast
 
 import cftime
 import numba as nb
 import numpy as np
 import xarray as xr
-from packaging.version import Version
 from xarray import CFTimeIndex
-from xarray import __version__ as __xr_version__
 
 from xclim.compute import run_length as rl
 from xclim.compute.reducers import XCLIM_OPS
@@ -31,10 +29,10 @@ from xclim.core.options import MAP_BLOCKS, OPTIONS
 from xclim.core.units import convert_units_to
 from xclim.core.utils import _chunk_like, uses_dask
 
-if Version(__xr_version__) >= Version("24.9.0"):
-    XR2409 = True
-else:
-    XR2409 = False
+try:
+    from xarray.coding.calendar_ops import _datetime_to_decimal_year  # type: ignore[attr-defined]
+except ImportError:
+    _datetime_to_decimal_year = None
 
 try:
     from flox.xarray import rechunk_for_blockwise
@@ -151,7 +149,7 @@ def spell_mask(
     thresh: float | Sequence[float] | xr.DataArray | Sequence[xr.DataArray],
     constrain: Sequence[Condition] | None = None,
     min_gap: int = 1,
-    weights: Sequence[float] | None = None,
+    weights: Sequence[float] | xr.DataArray | None = None,
     var_reducer: Literal["any", "all"] = "all",
 ) -> xr.DataArray:
     """
@@ -172,8 +170,8 @@ def spell_mask(
         The comparison operator to use when finding spells. Comparison is done as ``rolled_data {condition} thresh``.
     thresh : float or sequence of floats or DataArray or sequence of DataArray
         The threshold(s) to compare the rolling statistics against.
-        If data is a list, this must be a list of the same length as ``data``,
-        with a threshold for each variable. This function does not handle units and can't accept Quantified objects.
+        If data is a list, this must be a list of the same length as ``data``, with a threshold for each variable.
+        This function does not handle units and can't accept Quantified objects.
     constrain : sequence of str, optional
         Optionally allowed conditions.
     min_gap : int
@@ -196,11 +194,11 @@ def spell_mask(
     # Checks
     if not isinstance(data, xr.DataArray):
         # thus a sequence
-        if np.isscalar(thresh) or isinstance(thresh, xr.DataArray) or len(data) != len(thresh):
+        if isinstance(thresh, (float, int, xr.DataArray)) or (len(data) != len(thresh)):
             raise ValueError("When ``data`` is given as a list, ``thresh`` must be a sequence of the same length.")
         data = xr.concat(data, "variable")
         if isinstance(thresh[0], xr.DataArray):
-            thresh = xr.concat(thresh, "variable")
+            thresh = xr.concat(thresh, "variable")  # type: ignore[assignment, arg-type]
         else:
             thresh = xr.DataArray(thresh, dims=("variable",))
         _singlevar = False
@@ -213,6 +211,11 @@ def spell_mask(
         if len(weights) != window:
             raise ValueError(f"Weights have a different length ({len(weights)}) than the window ({window}).")
         weights = xr.DataArray(weights, dims=("window",))
+
+    if isinstance(thresh, Sequence):
+        raise TypeError(
+            f"'thresh' can only be a sequence if 'data' is one. Got {thresh} but 'data' is of type  {type(data)}"
+        )
 
     if window == 1:  # Fast path
         is_in_spell = compare(data, condition, thresh, constrain=constrain)
@@ -338,13 +341,9 @@ def day_angle(time: xr.DataArray) -> xr.DataArray:
     xr.DataArray, [rad]
         Day angle.
     """
-    if XR2409:
+    if _datetime_to_decimal_year is None:
         decimal_year = time.dt.decimal_year
     else:
-        from xarray.coding.calendar_ops import (  # pylint: disable=import-outside-toplevel
-            _datetime_to_decimal_year,  # ty: ignore[unresolved-import]
-        )
-
         decimal_year = _datetime_to_decimal_year(times=time, calendar=time.dt.calendar)
     return ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
 
@@ -418,8 +417,8 @@ def time_correction_for_solar_angle(time: xr.DataArray) -> xr.DataArray:
     :cite:cts:`di_napoli_mean_2020`
     """
     da = convert_units_to(day_angle(time), "rad")
-    tc = (
-        0.004297 + 0.107029 * np.cos(da) - 1.837877 * np.sin(da) - 0.837378 * np.cos(2 * da) - 2.340475 * np.sin(2 * da)
+    tc: xr.DataArray = (
+        0.004297 + 0.107029 * np.cos(da) - 1.837877 * np.sin(da) - 0.837378 * np.cos(2 * da) - 2.340475 * np.sin(2 * da)  # type: ignore[assignment]
     )
     tc = tc.assign_attrs(units="degrees")
     return _wrap_radians(convert_units_to(tc, "rad"))
@@ -539,6 +538,8 @@ def cosine_of_solar_zenith_angle(
 
     S_IN_D = 24 * 3600
 
+    h_s: xr.DataArray | float
+    h_e: xr.DataArray | float
     if len(time) < 3 or xr.infer_freq(time) == "D":
         h_s = -np.pi if stat != "instant" else 0.0
         h_e = np.pi - 1e-9  # just below pi
@@ -564,6 +565,8 @@ def cosine_of_solar_zenith_angle(
         ).clip(0, None)
     if stat not in {"average", "integral"}:
         raise NotImplementedError("Argument 'stat' must be one of 'integral', 'average' or 'instant'.")
+
+    h_ss: np.ndarray | float
     if sunlit:
         # hour angle of sunset (eq. 2.15), with NaNs inside the polar day/night
         tantan = cast(xr.DataArray, -np.tan(lat) * np.tan(declination))
@@ -637,7 +640,7 @@ def extraterrestrial_solar_radiation(
     lat: xr.DataArray,
     solar_constant: Quantified = "1361 W m-2",
     method: Literal["spencer", "simple"] = "spencer",
-    chunks: Mapping[Any, tuple] | None = None,
+    chunks: dict[str, int] | None = None,
 ) -> xr.DataArray:
     """
     Extraterrestrial solar radiation.
@@ -744,7 +747,8 @@ def day_lengths(
         day_length_hours = ((24 / np.pi) * np.arccos(-np.tan(radians) * np.tan(declination))).assign_attrs(units="h")
 
     if infill_polar_days:
-        lat_broadcast, decl_broadcast = xr.broadcast(lat_deg, declination)
+        lat_da = lat_deg if isinstance(lat_deg, xr.DataArray) else xr.DataArray(lat_deg)
+        lat_broadcast, decl_broadcast = xr.broadcast(lat_da, declination)
         # Polar day: sun never sets; Polar night: sun never rises.
         polar_day = ((lat_broadcast > 66.5) & (decl_broadcast > 0)) | ((lat_broadcast < -66.5) & (decl_broadcast < 0))
         polar_night = ((lat_broadcast > 66.5) & (decl_broadcast < 0)) | ((lat_broadcast < -66.5) & (decl_broadcast > 0))
@@ -926,8 +930,8 @@ def jones_day_length_latitude_coefficient(
     lat: xr.DataArray | xr.Dataset | xr.DataTree,
     method: Literal["gladstones", "jones"],
     floor: bool = False,
-    start_date: str | DayOfYearStr = "04-01",
-    end_date: str | DayOfYearStr = "11-01",
+    start_date: DayOfYearStr | Literal["default"] = "default",
+    end_date: DayOfYearStr | Literal["default"] = "default",
     freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
 ) -> xr.DataArray:
     r"""
@@ -950,9 +954,9 @@ def jones_day_length_latitude_coefficient(
     floor : bool, optional
         If True, latitudes where the day length latitude coefficient would be below '1.0', the value is set to '1.0'.
         if False, coefficient can be below '1.0' for latitudes where the day length is less than the reference latitude.
-    start_date : str or DayOfYearStr
+    start_date : DayOfYearStr, defaults to '04-01'
         The start date of the growing season.
-    end_date : str or DayOfYearStr
+    end_date : DayOfYearStr, defaults to '11-01'
         The end date of the growing season. Date is not included in the aggregation.
     freq : {"YS", "YS-JAN", "YS-JUL"}
         The frequency at which to aggregate the day lengths.
@@ -996,6 +1000,11 @@ def jones_day_length_latitude_coefficient(
     For both of these methods, the :math:`k` coefficient must be calculated at the growing season frequency (yearly),
     starting from either January or July, depending on the hemisphere of interest.
     """
+    if start_date == "default":
+        start_date = DayOfYearStr("04-01")
+    if end_date == "default":
+        end_date = DayOfYearStr("11-01")
+
     if parse_offset(freq) not in [(1, "Y", True, "JAN"), (1, "Y", True, "JUL")]:
         msg = (
             f"Freq {freq} not supported. Must be 'YS'/'YS-JAN', or 'YS-JUL' for method 'jones'. "
@@ -1134,8 +1143,8 @@ def _gather_lon(da: xr.DataArray) -> xr.DataArray:
 def resample_map(
     obj: DataType,
     dim: str,
-    freq: Freq,
-    func: Callable | str,
+    freq: Freq | None,
+    func: Callable | Reducer,
     map_blocks: bool | Literal["from_context"] = "from_context",
     resample_kwargs: dict | None = None,
     map_kwargs: dict | None = None,
@@ -1151,7 +1160,7 @@ def resample_map(
         The xarray object to resample.
     dim : str
         Dimension over which to resample.
-    freq : str
+    freq : str, optional
         Resampling frequency along `dim`.
     func : callable or str
         Function to map on each resampled group.
@@ -1180,7 +1189,7 @@ def resample_map(
     if isinstance(func, str):
         map_kwargs["dim"] = dim
         if freq is not None:
-            obj = obj.resample({dim: freq})
+            obj = obj.resample({dim: freq})  # type: ignore[assignment]
         return getattr(obj, func)(*map_args, **map_kwargs)
     else:
         if freq is None:
@@ -1303,7 +1312,7 @@ def _add_one_day(time: xr.DataArray) -> xr.DataArray:
         Next day.
     """
     if time.dtype == "O":
-        return time + timedelta(days=1)
+        return time + timedelta(days=1)  # type: ignore[operator]
     return time + np.timedelta64(1, "D")
 
 

@@ -4,7 +4,7 @@ Changelog
 
 `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
 ------------------------------------------------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`), Juliette Lavoie (:user:`juliettelavoie`), Charles Lu (:user:`Lu-Charles`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`), Juliette Lavoie (:user:`juliettelavoie`), Charles Lu (:user:`Lu-Charles`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -96,6 +96,7 @@ Internal changes
 * `AUTHORS.rst` is now bundled in the `license-files` of packaged wheels. (:pull:`2413`).
 * `make autodoc-custom-index` has been removed in favour of `make autodoc-noindex`. `make docs` and other `sphinx` targets now use the new 'noindex' variant. (:pull:`2424`).
 * Testing of ``standardized_precipitation_index`` (SPI) was adjusted to re-enable bottleneck, which was disabled by xarray 2026.09. (:pull:`2446`).
+* The mypy type checking has been added to the pre-commit configurations (:issue:`1719`, :pull:`2425`).
 * `xclim` is now fully compliant with Semantic Versioning v2.0. The `dev` tag has been retired while `-beta` and `-rc` version tags will be used moving forward. (:pull:`2434`):
     * `bump-my-version` has been updated to `>=1.6.0` to make use of the `bump version --to` flag.
 

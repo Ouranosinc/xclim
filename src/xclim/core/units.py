@@ -14,7 +14,7 @@ from collections.abc import Callable
 from copy import deepcopy
 from importlib.resources import files
 from inspect import signature
-from typing import Any, Literal, cast
+from typing import Any, Literal, cast, overload
 
 import cf_xarray.units
 import numpy as np
@@ -22,17 +22,13 @@ import pandas as pd
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
+from xarray import DataTree
 from xarray.coding import cftime_offsets
 from yaml import safe_load
 
 from xclim.core import Freq, InputKind, Quantified, Reducer, ValidationError, infer_kind_from_parameter
 from xclim.core.calendar import get_calendar, parse_offset
 from xclim.core.options import datacheck
-
-try:
-    from xarray import DataTree  # pylint: disable=ungrouped-imports
-except ImportError:
-    DataTree = False
 
 logging.getLogger("pint").setLevel(logging.ERROR)
 
@@ -113,7 +109,7 @@ pint.set_application_registry(units)
 with (files("xclim.data") / "variables.yml").open() as variables:
     CF_CONVERSIONS = safe_load(variables)["conversions"]
 CF_AMOUNTS, CF_RATES = list(zip(*CF_CONVERSIONS["amount2rate"]["valid_names"], strict=True))
-_CONVERSIONS = {}
+_CONVERSIONS: dict[Any, Any] = {}
 
 
 TEMPERATURE_DELTA_UNITS = {
@@ -348,12 +344,52 @@ def str2pint(val: str) -> pint.Quantity:
         return units.Quantity(1, units2pint(val))
 
 
+@overload
+def convert_units_to(  # numpydoc ignore=GL08
+    source: DataTree,
+    target: dict[str, Quantified | pint.Unit],
+    context: Literal["infer", "hydro", "none"] | None = None,
+) -> DataTree: ...
+
+
+@overload
+def convert_units_to(  # numpydoc ignore=GL08
+    source: xr.Dataset,
+    target: dict[str, Quantified | pint.Unit],
+    context: Literal["infer", "hydro", "none"] | None = None,
+) -> xr.Dataset: ...
+
+
+@overload
+def convert_units_to(  # numpydoc ignore=GL08
+    source: xr.DataArray,
+    target: Quantified | pint.Unit,
+    context: Literal["infer", "hydro", "none"] | None = None,
+) -> xr.DataArray: ...
+
+
+@overload
+def convert_units_to(  # numpydoc ignore=GL08
+    source: str,
+    target: Quantified | pint.Unit,
+    context: Literal["infer", "hydro", "none"] | None = None,
+) -> float: ...
+
+
+@overload
+def convert_units_to(  # numpydoc ignore=GL08
+    source: pint.Quantity,
+    target: Quantified | pint.Unit,
+    context: Literal["infer", "hydro", "none"] | None = None,
+) -> float: ...
+
+
 # FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(
     source: Quantified | xr.Dataset | DataTree,  # ty: ignore[invalid-type-form]
-    target: Quantified | pint.Unit | dict,
+    target: Quantified | pint.Unit | dict[str, Quantified | pint.Unit],
     context: Literal["infer", "hydro", "none"] | None = None,
-) -> xr.DataArray | float | xr.Dataset:
+) -> xr.DataArray | float | xr.Dataset | DataTree:
     """
     Convert a mathematical expression into a value with the same units as a DataArray.
 
@@ -368,7 +404,8 @@ def convert_units_to(
         If a DataTree, this function will be applied over nodes with :py:func:`xarray.DataTree.map_over_datasets`.
     target : str or xr.DataArray or units.Quantity or units.Unit or dict
         Target array of values to which units must conform.
-        If `source` is a Dataset, it must be mapping from variable name to target units.
+        An object representing units to convert the source too, anything :py:func:`units2pint` understands.
+        If `source` is a Dataset or a DataTree, it must be mapping from variable name to target units.
     context : {"infer", "hydro", "none"}, optional
         The unit definition context. Default: None.
         If "infer", it will be inferred with :py:func:`xclim.core.units.infer_context` using
@@ -391,10 +428,10 @@ def convert_units_to(
     amount2lwethickness : Convert an amount to a liquid water equivalent thickness.
     lwethickness2amount : Convert a liquid water equivalent thickness to an amount.
     """
-    if DataTree and isinstance(source, DataTree):
+    if isinstance(source, DataTree):
         return source.map_over_datasets(convert_units_to, target, kwargs={"context": context})
     if isinstance(source, xr.Dataset):
-        return source.assign({var: convert_units_to(source[var], tgt, context=context) for var, tgt in target.items()})
+        return source.assign({var: convert_units_to(source[var], tgt, context=context) for var, tgt in target.items()})  # type: ignore[union-attr]
 
     context = context or "none"
 
@@ -434,7 +471,11 @@ def convert_units_to(
         if standard_name is not None and source_unit.dimensionality != target_unit.dimensionality:
             dim_order_diff = source_unit.dimensionality / target_unit.dimensionality
             for convname, convconf in CF_CONVERSIONS.items():
-                for direction, sign in [("to", 1), ("from", -1)]:
+                pairs: list[tuple[Literal["to"], int] | tuple[Literal["from"], int]] = [
+                    ("to", 1),
+                    ("from", -1),
+                ]
+                for direction, sign in pairs:
                     # If the dimensionality diff is compatible with this conversion
                     compatible = all(
                         dimdiff == sign * dim_order_diff.get(f"[{dim}]")
@@ -453,14 +494,19 @@ def convert_units_to(
                             ) from err
                         source_unit = units2pint(source)
 
-        out: xr.DataArray
         if source_unit == target_unit:
             # The units are the same, but the symbol may not be.
             out = source.assign_attrs(**target_cf_attrs)
             return out
 
         with units.context(context or "none"):
-            out = source.copy(data=units.convert(source.data, source_unit, target_unit))
+            out = xr.DataArray(
+                units.convert(source.data, source_unit, target_unit),
+                coords=source.coords,
+                dims=source.dims,
+                name=source.name,
+                attrs=source.attrs,
+            )
             out = out.assign_attrs(**target_cf_attrs)
             return out
 
@@ -521,7 +567,7 @@ Mapping from offset base to CF-compliant unit.
 
 
 def infer_sampling_units(
-    da: xr.DataArray,
+    da: xr.Dataset | xr.DataArray,
     deffreq: Freq | None = None,
     dim: str = "time",
 ) -> tuple[int, str]:
@@ -641,7 +687,7 @@ def ensure_delta(unit: xr.DataArray | str | pint.Quantity) -> str:
 def to_agg_units(
     out: xr.DataArray,
     orig: xr.DataArray,
-    statistic: Reducer,
+    statistic: Reducer | Callable,
     dim: str = "time",
     deffreq: Freq | None = "D",
 ) -> xr.DataArray:
@@ -713,25 +759,28 @@ def to_agg_units(
     >>> degdays.units
     'd K'
     """
+    _statistic: str
     if not isinstance(statistic, str):
-        statistic = statistic.__name__
+        _statistic = statistic.__name__
+    else:
+        _statistic = statistic
 
     is_difference = (
         True
-        if statistic in ["std", "var", "integral"] or "difference" in orig.attrs.get("units_metadata", "")
+        if _statistic in ["std", "var", "integral"] or "difference" in orig.attrs.get("units_metadata", "")
         else None
     )
 
-    if statistic in ["min", "max", "mean", "sum", "std"]:
+    if _statistic in ["min", "max", "mean", "sum", "std"]:
         out.attrs.update(pint2cfattrs(str2pint(orig.units), is_difference))
 
-    elif statistic in ["var"]:
+    elif _statistic in ["var"]:
         out.attrs.update(pint2cfattrs(str2pint(orig.units) ** 2, is_difference))
 
-    elif statistic in ["doymin", "doymax"]:
+    elif _statistic in ["doymin", "doymax"]:
         out.attrs.update(units="1", is_dayofyear=np.int32(1), calendar=get_calendar(orig))
 
-    elif statistic in ["count", "integral"]:
+    elif _statistic in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig, deffreq=deffreq, dim=dim)
         orig_u = units2pint(orig)
         freq_u = str2pint(freq_u_raw)
@@ -739,10 +788,10 @@ def to_agg_units(
         with xr.set_options(keep_attrs=True):
             out = out * m
 
-        if statistic == "count":
+        if _statistic == "count":
             out.attrs["units"] = freq_u_raw
 
-        elif statistic == "integral":
+        elif _statistic == "integral":
             if "[temperature]" in orig_u.dimensionality:
                 # ensure delta_temperature
                 orig_u = 1 * orig_u - 1 * orig_u
@@ -758,12 +807,11 @@ def to_agg_units(
                 out.attrs.update(pint2cfattrs(orig_u * freq_u, is_difference))
     else:
         raise ValueError(
-            f"Unknown aggregation statistic {statistic}. "
+            f"Unknown aggregation statistic {_statistic}. "
             "Known statistics are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
         )
-
     # Remove units_metadata where it doesn't make sense
-    if statistic in ["doymin", "doymax", "count"]:
+    if _statistic in ["doymin", "doymax", "count"]:
         out.attrs.pop("units_metadata", None)
 
     return out
@@ -818,7 +866,7 @@ def _rate_and_amount_converter(
         time = da[dim]
     else:
         time = dim
-        dim = time.name
+        dim = str(time.name)
 
     # We accept str, Quantity or DataArray
     # Ensure the code below has a DataArray, so its simpler
@@ -879,10 +927,10 @@ def _rate_and_amount_converter(
         dt = time.diff(dim, label=label).reindex({dim: time}, method="ffill")
         dt = dt.astype("timedelta64[s]").astype(float)  # Convert to seconds
 
-        if to == "amount":
+        if to == "amount" and hasattr(da, "units"):
             tu = (str2pint(da.units) * str2pint("s")).to_reduced_units()
             out = da * dt * tu.m
-        elif to == "rate":
+        elif to == "rate" and hasattr(da, "units"):
             tu = (str2pint(da.units) / str2pint("s")).to_reduced_units()
             out = (da / dt) * tu.m
         else:
@@ -898,7 +946,11 @@ def _rate_and_amount_converter(
         else:
             raise ValueError("Argument `to` must be one of 'amount' or 'rate'.")
 
-    old_name = da.attrs.get("standard_name")
+    if hasattr(da, "attrs"):
+        old_name = da.attrs.get("standard_name")
+    else:
+        old_name = None
+
     if old_name and (new_name := cf_conversion(old_name, "amount2rate", "to" if to == "rate" else "from")):
         out = out.assign_attrs(standard_name=new_name)
 
@@ -1352,7 +1404,7 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None =
 
 
 def _check_output_has_units(
-    out: xr.DataArray | tuple[xr.DataArray] | xr.Dataset,
+    out: xr.DataArray | tuple[xr.DataArray, ...] | xr.Dataset,
 ) -> None:
     """
     Perform very basic sanity check on the output.
@@ -1360,7 +1412,7 @@ def _check_output_has_units(
     Compute functions are responsible for unit management. If this fails, it's a developer's error.
     """
     if isinstance(out, xr.Dataset):
-        out = out.data_vars.values()
+        out = tuple(out.data_vars.values())
     elif not isinstance(out, tuple):
         out = (out,)
 
@@ -1561,7 +1613,7 @@ def declare_units(**units_by_name) -> Callable:
     return dec
 
 
-def infer_context(standard_name: str | None = None, dimension: str | None = None) -> str:
+def infer_context(standard_name: str | None = None, dimension: str | None = None) -> Literal["infer", "hydro", "none"]:
     """
     Return units context based on either the variable's standard name or the pint dimension.
 

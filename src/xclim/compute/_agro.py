@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Literal, cast
+from typing import Literal, TypeGuard, cast
 
 import numpy as np
 import xarray
@@ -121,19 +121,19 @@ def corn_heat_units(
     ----------
     :cite:cts:`audet_atlas_2012,bootsma_risk_1999`
     """
-    _tasmin = convert_units_to(tasmin, "degC")
-    _tasmax = convert_units_to(tasmax, "degC")
-    _thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
-    _thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
+    tasmin = convert_units_to(tasmin, "degC")
+    tasmax = convert_units_to(tasmax, "degC")
+    thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
+    thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
 
-    mask_tasmin = _tasmin > _thresh_tasmin
-    mask_tasmax = _tasmax > _thresh_tasmax
+    mask_tasmin = tasmin > thresh_tasmin
+    mask_tasmax = tasmax > thresh_tasmax
 
     chu: xarray.DataArray = (
-        xarray.where(mask_tasmin, 1.8 * (_tasmin - _thresh_tasmin), 0)
+        xarray.where(mask_tasmin, 1.8 * (tasmin - thresh_tasmin), 0)
         + xarray.where(
             mask_tasmax,
-            (3.33 * (_tasmax - _thresh_tasmax) - 0.084 * (_tasmax - _thresh_tasmax) ** 2),
+            (3.33 * (tasmax - thresh_tasmax) - 0.084 * (tasmax - thresh_tasmax) ** 2),
             0,
         )
     ) / 2
@@ -155,8 +155,8 @@ def huglin_index(
     thresh: Quantified = "10 degC",
     method: Literal["huglin", "interpolated", "jones"] = "huglin",
     cap_value: float = 1.0,
-    start_date: str | DayOfYearStr = "04-01",
-    end_date: str | DayOfYearStr = "10-01",
+    start_date: DayOfYearStr | Literal["default"] = "default",
+    end_date: DayOfYearStr | Literal["default"] = "default",
     freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
 ) -> xarray.DataArray:
     r"""
@@ -187,9 +187,9 @@ def huglin_index(
     cap_value : float
         The value to use for the latitude coefficient when latitude is above 50°N or below 50°S.
         Only applicable for methods "huglin" and "interpolated" (default: 1.0).
-    start_date : str or DayOfYearStr
+    start_date : DayOfYearStr, defaults to '04-01'
         The hemisphere-based start date to consider (north = April, south = October).
-    end_date : str or DayOfYearStr
+    end_date : DayOfYearStr, defaults to '10-01'
         The hemisphere-based start date to consider (north = October, south = April). This date is non-inclusive.
     freq : str
         Resampling frequency (default: "YS"; For Southern Hemisphere, should be "YS-JUL").
@@ -227,35 +227,62 @@ def huglin_index(
     ----------
     :cite:cts:`huglin_nouveau_1978,hall_spatial_2010`
     """
+    Method = Literal["huglin", "interpolated", "jones"]
+
+    def is_valid_method(value: str) -> TypeGuard[Method]:
+        """
+        Check whether ``value`` is a supported method name.
+
+        Parameters
+        ----------
+        value : str
+            Method name to validate.
+
+        Returns
+        -------
+        bool
+            True if `value` is one of `"huglin"`, `"interpolated"`, or `"jones"`, otherwise ``False``.
+        """
+        return value in {"huglin", "interpolated", "jones"}
+
     if not isinstance(freq, str):
         raise TypeError("Freq must be a string.")
 
-    _tas = convert_units_to(tas, "degC")
-    _tasmax = convert_units_to(tasmax, "degC")
-    _thresh = convert_units_to(thresh, "degC")
+    tas = convert_units_to(tas, "degC")
+    tasmax = convert_units_to(tasmax, "degC")
+    thresh = convert_units_to(thresh, "degC")
 
     if lat is None:
         lat = _gather_lat(tas)
 
     k: int | xarray.DataArray = 1
     k_aggregated: xarray.DataArray | None = None
-    if (method := method.lower()) in ["huglin", "interpolated"]:
-        k = huglin_day_length_latitude_coefficient(lat, method=method, cap_value=cap_value)
-    elif method.lower() == "jones":
-        k_aggregated = jones_day_length_latitude_coefficient(
-            dates=tas.time,
-            lat=lat,
-            method=method,
-            start_date=start_date,
-            end_date=end_date,
-            freq=freq,
-        )
-    else:
+
+    method_name = method.lower()
+
+    if not is_valid_method(method_name):
         raise NotImplementedError(
             "Method is not implemented. Only 'huglin', 'interpolated', and 'jones' are supported."
         )
 
-    hi: xarray.DataArray = (((_tas + _tasmax) / 2) - _thresh).clip(min=0) * k
+    if start_date == "default":
+        start_date = DayOfYearStr("04-01")
+    if end_date == "default":
+        end_date = DayOfYearStr("10-01")
+
+    if method_name in ["huglin", "interpolated"]:
+        k = huglin_day_length_latitude_coefficient(lat, method=method_name, cap_value=cap_value)
+    elif method_name == "jones":
+        k_aggregated = jones_day_length_latitude_coefficient(
+            dates=tas.time,
+            lat=lat,
+            method=method_name,
+            start_date=start_date,
+            end_date=end_date,
+            freq=freq,
+        )
+
+    hi: xarray.DataArray = (((tas + tasmax) / 2) - thresh).clip(min=0) * k
     hi = select_time(hi, date_bounds=(start_date, end_date), include_bounds=(True, False)).resample(time=freq).sum()
     if k_aggregated is not None:
         hi = hi * k_aggregated
@@ -283,9 +310,9 @@ def biologically_effective_degree_days(
     low_dtr: Quantified = "10 degC",
     high_dtr: Quantified = "13 degC",
     max_daily_degree_days: Quantified = "9 degC",
-    start_date: str | DayOfYearStr = "04-01",
-    end_date: str | DayOfYearStr = "11-01",
-    freq: Freq = "YS",
+    start_date: DayOfYearStr | Literal["default"] = "default",
+    end_date: DayOfYearStr | Literal["default"] = "default",
+    freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
 ) -> xarray.DataArray:
     r"""
     Biologically effective growing degree days.
@@ -331,9 +358,9 @@ def biologically_effective_degree_days(
         The higher bound for daily temperature range adjustment.
     max_daily_degree_days : Quantified
         The maximum number of biologically effective degrees days that can be summed daily.
-    start_date : str or DayOfYearStr
+    start_date : DayOfYearStr, defaults to '04-01'
         The hemisphere-based start date to consider (north = April, south = October).
-    end_date : str or DayOfYearStr
+    end_date : DayOfYearStr, defaults to '11-01'
         The hemisphere-based start date to consider (north = October, south = April).
         This date is non-inclusive.
     freq : str
@@ -391,10 +418,15 @@ def biologically_effective_degree_days(
     if not isinstance(freq, str):
         raise TypeError("Freq must be a string.")
 
-    _tasmin = convert_units_to(tasmin, "degC")
-    _tasmax = convert_units_to(tasmax, "degC")
-    thresh_tasmin_deg = convert_units_to(thresh_tasmin, "degC")
+    tasmin = convert_units_to(tasmin, "degC")
+    tasmax = convert_units_to(tasmax, "degC")
+    thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
     max_daily_degree_days = convert_units_to(max_daily_degree_days, "degC")
+
+    if start_date == "default":
+        start_date = DayOfYearStr("04-01")
+    if end_date == "default":
+        end_date = DayOfYearStr("11-01")
 
     k: int | xarray.DataArray = 1
     k_aggregated: xarray.DataArray | None = None
@@ -407,13 +439,13 @@ def biologically_effective_degree_days(
         tr_adj = 0
     elif method in ["gladstones", "huglin", "interpolated", "jones"]:
         # Temperature range adjustment
-        _low_dtr = convert_units_to(low_dtr, "degC")
-        _high_dtr = convert_units_to(high_dtr, "degC")
-        dtr = _tasmax - _tasmin
+        low_dtr = convert_units_to(low_dtr, "degC")
+        high_dtr = convert_units_to(high_dtr, "degC")
+        dtr = tasmax - tasmin
         tr_adj = 0.25 * xarray.where(
-            dtr > _high_dtr,
-            dtr - _high_dtr,
-            xarray.where(dtr < _low_dtr, dtr - _low_dtr, 0),
+            dtr > high_dtr,
+            dtr - high_dtr,
+            xarray.where(dtr < low_dtr, dtr - low_dtr, 0),
         )
 
         if lat is None:
@@ -438,7 +470,7 @@ def biologically_effective_degree_days(
             "Method is not implemented. Only 'gladstones', 'huglin', 'icclim', 'interpolated', and 'jones' are supported."
         )
 
-    bedd: xarray.DataArray = ((((_tasmin + _tasmax) / 2) - thresh_tasmin_deg).clip(min=0) * k + tr_adj).clip(
+    bedd: xarray.DataArray = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(
         max=max_daily_degree_days
     )
     bedd = select_time(bedd, date_bounds=(start_date, end_date), include_bounds=(True, False)).resample(time=freq).sum()
@@ -527,7 +559,7 @@ def cool_night_index(
 
     tasmin = tasmin.where(months == month, drop=True)
 
-    cni: xarray.DataArray = tasmin.resample(time=freq).mean(keep_attrs=True)
+    cni = tasmin.resample(time=freq).mean(keep_attrs=True)
     cni = cni.assign_attrs(units="degC")
     return cni
 
@@ -663,13 +695,14 @@ def dryness_index(  # numpydoc ignore=SS05
     if lat is None:
         lat = _gather_lat(pr)
     if isinstance(lat, xarray.DataArray):
-        if (lat >= 0).any():
+        lat_array = lat
+        if (lat_array >= 0).any():
             has_north = True
-        if (lat < 0).any():
+        if (lat_array < 0).any():
             has_south = True
 
         adjustment = xarray.where(
-            lat >= 0,
+            lat_array >= 0,
             adjustment_array_north,
             adjustment_array_south,
         )
@@ -701,8 +734,8 @@ def dryness_index(  # numpydoc ignore=SS05
         * (pr_masked / 5).clip(max=evspsblpot.time.dt.daysinmonth)
     )
 
-    di_north: xarray.DataArray | None = None
-    di_south: xarray.DataArray | None = None
+    di_north: xarray.DataArray
+    di_south: xarray.DataArray
     # Dryness index
     if has_north:
         di_north = wo + (pr_masked - t_v - e_s).resample(time="YS-JAN").sum()
@@ -714,7 +747,7 @@ def dryness_index(  # numpydoc ignore=SS05
 
     di: xarray.DataArray
     if has_north and has_south:
-        di = di_north.where(lat >= 0, di_south)
+        di = di_north.where(lat_array >= 0, di_south)
     elif has_north:
         di = di_north
     elif has_south:
@@ -803,13 +836,13 @@ def rain_season(
     thresh_dry_start: Quantified = "1.0 mm",
     window_dry_start: int = 7,
     method_dry_start: Literal["per_day", "total"] = "per_day",
-    date_min_start: DayOfYearStr = "05-01",
-    date_max_start: DayOfYearStr = "12-31",
+    date_min_start: DayOfYearStr | Literal["default"] | None = "default",
+    date_max_start: DayOfYearStr | Literal["default"] | None = "default",
     thresh_dry_end: Quantified = "0.0 mm",
     window_dry_end: int = 20,
     method_dry_end: Literal["per_day", "total"] = "per_day",
-    date_min_end: DayOfYearStr = "09-01",
-    date_max_end: DayOfYearStr = "12-31",
+    date_min_end: DayOfYearStr | Literal["default"] | None = "default",
+    date_max_end: DayOfYearStr | Literal["default"] | None = "default",
     freq="YS-JAN",
 ) -> tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray]:
     """
@@ -845,10 +878,12 @@ def rain_season(
         The threshold `thresh_dry_start` is either compared to every daily precipitation
         (`method_dry_start == "per_day"`) or to total precipitations (`method_dry_start == "total"`) in the sequence
         `window_dry_start` days.
-    date_min_start : DayOfYearStr
+    date_min_start : DayOfYearStr, optional, defaults to '05-01'
         First day of year when season can start ("mm-dd").
-    date_max_start : DayOfYearStr
+        Setting `None` removes that constraint.
+    date_max_start : DayOfYearStr, optional, defaults to '12-31'
         Last day of year when season can start ("mm-dd").
+        Setting `None` removes that constraint.
     thresh_dry_end : str
         Threshold length defining a dry day in the sequence related to `window_dry_end`.
     window_dry_end : int
@@ -860,10 +895,12 @@ def rain_season(
         Method used to define a dry sequence associated with `window_dry_end`.
         The threshold `thresh_dry_end` is either compared to every daily precipitation (`method_dry_end == "per_day"`)
         or to total precipitations (`method_dry_end == "total"`) in the sequence `window_dry` days.
-    date_min_end : DayOfYearStr
+    date_min_end : DayOfYearStr, optional, defaults to '09-01'
         First day of year when season can end ("mm-dd").
-    date_max_end : DayOfYearStr
+        Setting `None` removes that constraint.
+    date_max_end : DayOfYearStr, optional, defaults to '12-31'
         Last day of year when season can end ("mm-dd").
+        Setting `None` removes that constraint.
     freq : str
       Resampling frequency.
 
@@ -890,6 +927,15 @@ def rain_season(
     ----------
     :cite:cts:`sivakumar_predicting_1998`
     """
+    # Set default dates
+    if date_min_start == "default":
+        date_min_start = DayOfYearStr("05-01")
+    if date_max_start == "default":
+        date_max_start = DayOfYearStr("12-31")
+    if date_min_end == "default":
+        date_min_end = DayOfYearStr("09-01")
+    if date_max_end == "default":
+        date_max_end = DayOfYearStr("12-31")
     # Unit conversion.
     pram = rate2amount(pr, out_units="mm")
     thresh_wet_start = convert_units_to(thresh_wet_start, pram)
@@ -995,7 +1041,7 @@ def standardized_precipitation_index(
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
-    params: Quantified | None = None,
+    params: xarray.DataArray | None = None,
     prob_zero_interpolation: Literal["center", "upper"] | float = "upper",
     plotting_position_zero: Literal["ecdf", "weibull"] | tuple[float, float] = "ecdf",
     **indexer,
@@ -1155,7 +1201,7 @@ def standardized_precipitation_evapotranspiration_index(
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
-    params: Quantified | None = None,
+    params: xarray.DataArray | None = None,
     **indexer,
 ) -> xarray.DataArray:
     r"""
@@ -1296,7 +1342,7 @@ def effective_growing_degree_days(
     *,
     thresh: Quantified = "5 degC",
     method: Literal["bootsma", "qian"] = "bootsma",
-    after_date: DayOfYearStr = "07-01",
+    after_date: DayOfYearStr | Literal["default"] | None = "default",
     dim: str = "time",
     freq: Freq = "YS",
 ) -> xarray.DataArray:
@@ -1319,8 +1365,9 @@ def effective_growing_degree_days(
         For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold.
         For "qian", the start date is based on a weighted 5-day rolling average,
         based on :py:func`qian_weighted_mean_average`.
-    after_date : str
+    after_date : DayOfYearStr, optional, defaults to '07-01'
         Date of the year after which to look for the first frost event. Should have the format '%m-%d'.
+        Setting `None` removes that constraint.
     dim : str
         Time dimension.
     freq : str
@@ -1350,11 +1397,13 @@ def effective_growing_degree_days(
     ----------
     :cite:cts:`bootsma_impacts_2005`
     """
-    _tasmax = convert_units_to(tasmax, "degC")
-    _tasmin = convert_units_to(tasmin, "degC")
-    _thresh = convert_units_to(thresh, "degC")
+    if after_date == "default":
+        after_date = DayOfYearStr("07-01")
 
-    tas = (_tasmin + _tasmax) / 2
+    tasmax = convert_units_to(tasmax, "degC")
+    tasmin = convert_units_to(tasmin, "degC")
+
+    tas = (tasmin + tasmax) / 2
     tas.attrs["units"] = "degC"
 
     if method.lower() == "bootsma":
@@ -1369,7 +1418,7 @@ def effective_growing_degree_days(
     # The day before the first day below 0 degC
     end = (
         day_threshold_reached(
-            _tasmin,
+            tasmin,
             condition="<",
             thresh="0 degC",
             date=after_date,
@@ -1380,7 +1429,8 @@ def effective_growing_degree_days(
         - 1
     )
 
-    deg_days = (tas - _thresh).clip(min=0).assign_attrs(**tas.attrs)
+    thresh = convert_units_to(thresh, "degC")
+    deg_days = (tas - thresh).clip(min=0).assign_attrs(**tas.attrs)
     return statistics_between_dates(deg_days, start=start, end=end, statistic="integral", freq=freq)
 
 

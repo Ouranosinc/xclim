@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from functools import reduce
 from inspect import signature
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import xarray
@@ -29,7 +29,7 @@ from xclim.core.calendar import climatological_mean_doy, within_bnds_doy
 from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to, declare_units, infer_context, str2pint
 
-_REGISTRY = {}
+_REGISTRY: dict[str, Callable[..., Any]] = {}
 
 ALL_OPERATORS = Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"]
 
@@ -587,7 +587,7 @@ def data_flags(  # noqa: C901
     da: xarray.DataArray,
     ds: xarray.Dataset | None = None,
     flags: dict | None = None,
-    dims: None | str | Sequence[str] = "all",
+    dims: None | str | Sequence[str] | set[str] = "all",
     freq: str | None = None,
     raise_flags: bool = False,
 ) -> xarray.Dataset:
@@ -688,7 +688,7 @@ def data_flags(  # noqa: C901
 
     var = str(da.name)
     if dims == "all":
-        dims = da.dims
+        dims = tuple(str(dim) for dim in da.dims)
     elif isinstance(dims, str):
         # Thus, a single dimension name, we allow this option to mirror xarray.
         dims = {dims}
@@ -716,14 +716,14 @@ def data_flags(  # noqa: C901
         for name, kwargs in flag_func.items():
             func = _REGISTRY[name]
             variable_name = _get_variable_name(func, kwargs)
-            named_da_variable = None
+            named_da_variable: dict[str, xarray.DataArray] | None = None
 
             try:
                 extras = _missing_vars(func, ds, str(da.name))
                 # Entries in extras implies that there are two variables being compared
                 # Both variables will be sent in as dict entries
                 if extras:
-                    named_da_variable = {da.name: da}
+                    named_da_variable = {str(da.name): da}
 
             except MissingVariableError:
                 flags[variable_name] = None
@@ -806,12 +806,10 @@ def ecad_compliant(
             raise DataQualityException(flags)
         return None
 
+    bool_flags = filter(lambda x: x.dtype == bool, flags.data_vars.values())
     ecad_flag = xarray.DataArray(
         # TODO: Test for this change concerning data of type None in dataflag variables
-        ~reduce(
-            np.logical_or,
-            filter(lambda x: x.dtype == bool, flags.data_vars.values()),
-        ),
+        ~reduce(lambda x, y: x | y, bool_flags),
         name="ecad_qc_flag",
         attrs={
             "comment": "Adheres to ECAD quality control checks.",

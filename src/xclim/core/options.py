@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from copy import deepcopy
 from inspect import signature
+from typing import Any
 
 from boltons.funcutils import wraps
 
@@ -27,7 +28,7 @@ MAP_BLOCKS = "resample_map_blocks"
 
 MISSING_METHODS: dict[str, Callable] = {}
 
-OPTIONS = {
+OPTIONS: dict[str, Any] = {
     METADATA_LOCALES: [],
     DATA_VALIDATION: "raise",
     CF_COMPLIANCE: "warn",

@@ -557,6 +557,9 @@ def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1) -> float 
     if d > 10:
         raise ValueError(f"Too many dimensions: {d}.")
 
+    if isinstance(k, int):
+        k = [k]
+
     # Not enough data to draw conclusions.
     if nx < 5 or ny < 5:
         return np.nan if not mk else [np.nan] * len(k)

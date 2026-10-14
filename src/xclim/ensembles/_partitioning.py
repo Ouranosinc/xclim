@@ -7,6 +7,8 @@ This module implements methods and tools meant to partition climate projection u
 
 from __future__ import annotations
 
+from typing import Literal
+
 import numpy as np
 import xarray as xr
 
@@ -281,7 +283,7 @@ def lafferty_sriver(
 
 def general_partition(
     da: xr.DataArray,
-    sm: xr.DataArray | str = "poly",
+    sm: xr.DataArray | Literal["poly"] = "poly",
     var_first: list | None = None,
     mean_first: list | None = None,
     weights: list | None = None,
@@ -342,38 +344,38 @@ def general_partition(
     if sm == "poly":
         # Fit a 4th order polynomial
         fit = da.polyfit(dim="time", deg=4, skipna=True)
-        sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(da.notnull())
+        sm_array = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(da.notnull())
     elif isinstance(sm, xr.DataArray):
-        pass
+        sm_array = sm.copy()
     else:
         raise ValueError("sm should be 'poly' or a DataArray.")
 
     # "Interannual variability is then estimated as the centered rolling 11-year variance of the difference
     # between the extracted forced response and the raw outputs, averaged over all outputs."
     # same as lafferty_sriver()
-    nv_u = (da - sm).rolling(time=11, center=True).var().mean(dim=all_types)
+    nv_u = (da - sm_array).rolling(time=11, center=True).var().mean(dim=all_types)
 
     all_u = []
     total = nv_u.copy()
     for t in mean_first:
         all_but_t = [x for x in all_types if x != t]
         if t in weights:
-            tw = sm.count(t)
-            t_u = sm.mean(dim=all_but_t).weighted(tw).var(dim=t)
+            tw = sm_array.count(t)
+            t_u = sm_array.mean(dim=all_but_t).weighted(tw).var(dim=t)
 
         else:
-            t_u = sm.mean(dim=all_but_t).var(dim=t)
+            t_u = sm_array.mean(dim=all_but_t).var(dim=t)
         all_u.append(t_u)
         total += t_u
 
     for t in var_first:
         all_but_t = [x for x in all_types if x != t]
         if t in weights:
-            tw = sm.count(t)
-            t_u = sm.var(dim=t).weighted(tw).mean(dim=all_but_t)
+            tw = sm_array.count(t)
+            t_u = sm_array.var(dim=t).weighted(tw).mean(dim=all_but_t)
 
         else:
-            t_u = sm.var(dim=t).mean(dim=all_but_t)
+            t_u = sm_array.var(dim=t).mean(dim=all_but_t)
         all_u.append(t_u)
         total += t_u
 
@@ -392,7 +394,7 @@ def general_partition(
     # Mean projection:
     # This is not part of the original algorithm,
     # but we want all partition algos to have similar outputs.
-    g = sm.mean(dim=all_types[0])
+    g = sm_array.mean(dim=all_types[0])
     for dim in all_types[1:]:
         g = g.mean(dim=dim)
 
