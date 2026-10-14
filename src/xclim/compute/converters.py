@@ -437,7 +437,7 @@ def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str) -> xr.
             )
         )
     elif method == "its90":
-        e_sat = xr.DataArray(
+        e_sat: xr.DataArray = (
             np.exp(
                 -2836.5744 / tas**2
                 + -6028.076559 / tas
