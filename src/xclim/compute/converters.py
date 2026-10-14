@@ -2533,7 +2533,7 @@ def universal_thermal_climate_index(
     mask_invalid : bool
         If True (default), UTCI values are NaN where any of the inputs are outside the ranges given by the
         `validity_ranges` argument.
-    validity_ranges : dict, optional
+    validity_ranges : dict[str, tuple(str, str)], optional
         A dictionary giving the validity ranges (as length-2 tuples) for four variables: `tas`, `delta`, `sfcWind`,
         and `hurs`. `delta` is the difference between air temperature and radiant temperature: `tas - mrt`.
         Values should be given as quantity strings (ex: ``"50 °C"``). All entries are not required, they will be filled
@@ -2569,11 +2569,11 @@ def universal_thermal_climate_index(
     :cite:cts:`brode_utci_2009,brode_utci_2012,blazejczyk_introduction_2013`
     """
     e_sat = saturation_vapor_pressure(tas=tas, method="its90")
-    tas: xr.DataArray = convert_units_to(tas, "degC")
-    sfcWind: xr.DataArray = convert_units_to(sfcWind, "m/s")
+    tas = convert_units_to(tas, "degC")
+    sfcWind = convert_units_to(sfcWind, "m/s")
     if wind_cap_min:
         sfcWind = sfcWind.clip(0.5, None)
-    hurs: xr.DataArray = convert_units_to(hurs, "1")
+    hurs = convert_units_to(hurs, "1")
     if hurs_cap_min:
         hurs = hurs.clip(0.05, None)
     if mrt is None:
@@ -2608,8 +2608,8 @@ def universal_thermal_climate_index(
         mask = xr.full_like(utci, True, bool)
         for key, da in [("tas", tas), ("delta", delta), ("sfcWind", sfcWind), ("hurs", hurs)]:
             low, high = validity_ranges[key]
-            low = convert_units_to(low, da)
-            high = convert_units_to(high, da)
+            low = convert_units_to(low, da)  # type: ignore[assignment]
+            high = convert_units_to(high, da)  # type: ignore[assignment]
             mask = mask & (low <= da) & (da <= high)
         utci = utci.where(mask)
     return utci
