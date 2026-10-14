@@ -147,7 +147,7 @@ def humidex(
     if tdps is not None:
         # Convert dewpoint temperature to Kelvins
         tdps_K = convert_units_to(tdps, "kelvin")
-        e: xr.DataArray = 6.112 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / tdps_K))
+        e: xr.DataArray = 6.112 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / tdps_K))  # type: ignore[assignment]
 
     elif hurs is not None:
         # Convert dry bulb temperature to Celsius
@@ -413,45 +413,36 @@ def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str) -> xr.
     if method == "ecmwf":
         method = "buck81"
     if method == "sonntag90":
-        e_sat: xr.DataArray = (
-            100
-            * np.exp(
-                -6096.9385 / tas
-                + 16.635794
-                + -2.711193e-2 * tas
-                + 1.673952e-5 * tas**2
-                + 2.433502 * np.log(tas)  # numpy's log is ln
-            )
+        e_sat: xr.DataArray = 100 * np.exp(  # type: ignore[assignment]
+            -6096.9385 / tas
+            + 16.635794
+            + -2.711193e-2 * tas
+            + 1.673952e-5 * tas**2
+            + 2.433502 * np.log(tas)  # numpy's log is ln
         )
     elif method == "goffgratch46":
         Tb = 373.16  # Water boiling temp [K]
         eb = 101325  # e_sat at Tb [Pa]
-        e_sat = xr.DataArray(
-            eb
-            * 10
-            ** (
-                -7.90298 * ((Tb / tas) - 1)
-                + 5.02808 * np.log10(Tb / tas)
-                + -1.3817e-7 * (10 ** (11.344 * (1 - tas / Tb)) - 1)
-                + 8.1328e-3 * (10 ** (-3.49149 * ((Tb / tas) - 1)) - 1)
-            )
+        e_sat = eb * 10 ** (
+            -7.90298 * ((Tb / tas) - 1)
+            + 5.02808 * np.log10(Tb / tas)
+            + -1.3817e-7 * (10 ** (11.344 * (1 - tas / Tb)) - 1)
+            + 8.1328e-3 * (10 ** (-3.49149 * ((Tb / tas) - 1)) - 1)
         )
     elif method == "its90":
-        e_sat: xr.DataArray = (
-            np.exp(
-                -2836.5744 / tas**2
-                + -6028.076559 / tas
-                + 19.54263612
-                + -2.737830188e-2 * tas
-                + 1.6261698e-5 * tas**2
-                + 7.0229056e-10 * tas**3
-                + -1.8680009e-13 * tas**4
-                + 2.7150305 * np.log(tas)
-            )
+        e_sat = np.exp(  # type: ignore[assignment]
+            -2836.5744 / tas**2
+            + -6028.076559 / tas
+            + 19.54263612
+            + -2.737830188e-2 * tas
+            + 1.6261698e-5 * tas**2
+            + 7.0229056e-10 * tas**3
+            + -1.8680009e-13 * tas**4
+            + 2.7150305 * np.log(tas)
         )
     elif method in ESAT_FORMULAS_COEFFICIENTS:
         A, B, C = ESAT_FORMULAS_COEFFICIENTS[method]["water"]
-        e_sat : xr.DataArray = A * np.exp(B * (tas - 273.16) / (tas + C))
+        e_sat = A * np.exp(B * (tas - 273.16) / (tas + C))  # type: ignore[assignment]
     else:
         valid = ["sonntag90", "goffgratch46", "its90", "ecmwf"] + list(ESAT_FORMULAS_COEFFICIENTS.keys())
         raise ValueError(f"Method {method} is not in {valid}")
@@ -463,32 +454,25 @@ def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str) -> xr.Da
     if method == "ecmwf":
         method = "aerk96"
     if method in "sonntag90":
-        e_sat = xr.DataArray(
-            100
-            * np.exp(
-                -6024.5282 / tas + 24.7219 + 1.0613868e-2 * tas + -1.3198825e-5 * tas**2 + -0.49382577 * np.log(tas)
-            )
+        e_sat: xr.DataArray = 100 * np.exp(  # type: ignore[assignment]
+            -6024.5282 / tas + 24.7219 + 1.0613868e-2 * tas + -1.3198825e-5 * tas**2 + -0.49382577 * np.log(tas)
         )
     elif method in "goffgratch46":
         Tp = 273.16  # Triple-point temperature [K]
         ep = 611.73  # e_sat at Tp [Pa]
-        e_sat = xr.DataArray(
-            ep * 10 ** (-9.09718 * ((Tp / tas) - 1) + -3.56654 * np.log10(Tp / tas) + 0.876793 * (1 - tas / Tp))
-        )
+        e_sat = ep * 10 ** (-9.09718 * ((Tp / tas) - 1) + -3.56654 * np.log10(Tp / tas) + 0.876793 * (1 - tas / Tp))
     elif method in "its90":
-        e_sat = xr.DataArray(
-            np.exp(
-                -5866.6426 / tas
-                + 22.32870244
-                + 1.39387003e-2 * tas
-                + -3.4262402e-5 * tas**2
-                + 2.7040955e-8 * tas**3
-                + 6.7063522e-1 * np.log(tas)
-            )
+        e_sat = np.exp(  # type: ignore[assignment]
+            -5866.6426 / tas
+            + 22.32870244
+            + 1.39387003e-2 * tas
+            + -3.4262402e-5 * tas**2
+            + 2.7040955e-8 * tas**3
+            + 6.7063522e-1 * np.log(tas)
         )
     elif method in ESAT_FORMULAS_COEFFICIENTS:
         A, B, C = ESAT_FORMULAS_COEFFICIENTS[method]["ice"]
-        e_sat = xr.DataArray(A * np.exp(B * (tas - 273.16) / (tas + C)))
+        e_sat = A * np.exp(B * (tas - 273.16) / (tas + C))  # type: ignore[assignment]
     else:
         valid = ["sonntag90", "goffgratch46", "its90", "ecmwf"] + list(ESAT_FORMULAS_COEFFICIENTS.keys())
         raise ValueError(f"Method {method} is not in {valid}")
@@ -820,7 +804,7 @@ def relative_humidity(
         tas = convert_units_to(tas, "K")
         L = 2.501e6
         Rw = (461.5,)
-        hurs = xr.DataArray(100 * np.exp(-L * (tas - tdps) / (Rw * tas * tdps)))
+        hurs: xr.DataArray = 100 * np.exp(-L * (tas - tdps) / (Rw * tas * tdps))  # type: ignore[assignment]
     elif tdps is not None:
         e_sat_dt = saturation_vapor_pressure(
             tas=tdps, ice_thresh=ice_thresh, method=method, interp_power=interp_power, water_thresh=water_thresh
