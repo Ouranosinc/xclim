@@ -599,7 +599,7 @@ def saturation_vapor_pressure(
         e_sat_w = _saturation_vapor_pressure_over_water(tas, method)
         e_sat_i = _saturation_vapor_pressure_over_ice(tas, method)
         e_sat = xr.where(tas > thresh, e_sat_w, e_sat_i)
-    elif ice_thresh is not None and interp_power is not None:  # ice_thresh is not None and interp_power is not None
+    elif ice_thresh is not None and interp_power is not None:
         T_w = convert_units_to(water_thresh, "K")
         T_i = convert_units_to(ice_thresh, "K")
         e_sat_w = _saturation_vapor_pressure_over_water(tas, method)
