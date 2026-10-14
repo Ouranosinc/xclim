@@ -1901,7 +1901,7 @@ def _require(  # numpydoc ignore=GL08
     provided = {}
     for name, array in required.items():
         if array is None:
-            raise ValueError(f"'{name}' has to be provided with 'method' is {method}.")
+            raise ValueError(f"'{name}' has to be provided with method {method}.")
         provided[name] = array
     return provided
 
