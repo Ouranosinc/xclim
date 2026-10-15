@@ -21,6 +21,7 @@ from packaging.version import Version
 from pandas.tseries.offsets import BaseOffset
 from xarray import CFTimeIndex
 from xarray.coding import cftime_offsets
+from xarray.core.resample import DataArrayResample, DatasetResample
 
 from xclim.core import DataType, DayOfYearStr, Freq
 from xclim.core.formatting import update_xclim_history
@@ -803,7 +804,7 @@ def resample_doy(doy: DataType, arr: DataType) -> DataType:
 
 
 def time_bnds(
-    time: DataType | CFTimeIndex | xr.DataArrayResample | xr.DatsetResample | pd.DatetimeIndex,
+    time: DataType | CFTimeIndex | DataArrayResample | DatasetResample | pd.DatetimeIndex,
     freq: Freq | None = None,
 ) -> xr.DataArray:
     """
@@ -843,12 +844,11 @@ def time_bnds(
     """
     if isinstance(time, xr.DataArray | xr.Dataset):
         time = time.indexes[time.name]
-    # elif isinstance(time, DataArrayResample | DatasetResample):
     elif hasattr(time, "groupers"):
         for grouper in time.groupers:  # ty: ignore[not-iterable]
             if "time" in grouper.codes.dims:
                 datetime = grouper.unique_coord.data
-                freq = freq or grouper.grouper.freq
+                freq = freq or getattr(grouper.grouper, "freq", None)
                 if datetime.dtype == "O":
                     time = xr.CFTimeIndex(datetime)
                 else:
@@ -866,7 +866,6 @@ def time_bnds(
             raise NotImplementedError(
                 "Irregular time coordinates are not supported. Please pass a frequency explicitly."
             )
-    # elif hasattr(_freq, "freqstr"):
     elif isinstance(freq, BaseOffset):
         # When freq is an Offset
         freq = freq.freqstr
