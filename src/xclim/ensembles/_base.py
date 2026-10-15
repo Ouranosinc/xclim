@@ -30,7 +30,9 @@ _quantile_params = {
 
 
 def create_ensemble(
-    datasets: list[str | xr.DataArray | xr.Dataset],
+    datasets: list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]]
+    | str
+    | dict[str, xr.Dataset | xr.DataArray | Path | str],
     multifile: bool = False,
     resample_freq: Freq | None = None,
     calendar: str | None = None,
@@ -50,7 +52,7 @@ def create_ensemble(
 
     Parameters
     ----------
-    datasets : list of str or list of xr.Dataset or list of xr.Dataset
+    datasets : list of xr.Dataset or list of xr.DataArray or list of Path of list of str or list of list of str or str or dict
         List of netcdf file paths or xr.Dataset or xr.DataArray objects . If `multifile` is True, ncfiles should be a
         list of lists where each sublist contains input .nc files of an xarray multifile Dataset.
         If DataArray objects are passed, they should have a name in order to be transformed into Datasets.
@@ -106,19 +108,24 @@ def create_ensemble(
         # Simulation 2 is also a list of .nc files:
         datasets.extend(Path("/dir2").glob("*.nc"))
         ens = create_ensemble(datasets, multifile=True)
-    """
+    """  # noqa: E501
+    datasets_list: list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]] | str
     if isinstance(datasets, dict):
         if realizations is None:
-            realizations, datasets = zip(*datasets.items(), strict=False)
+            items = list(datasets.items())
+            realizations = [key for key, _ in items]
+            datasets_list = [value for _, value in items]
         else:
-            datasets = datasets.values()
+            datasets_list = list(datasets.values())
     elif isinstance(datasets, str) and realizations is not None:
         raise ValueError(
             "Passing `realizations` is not supported when `datasets` is a glob pattern, as the final order is random."
         )
+    else:
+        datasets_list = datasets
 
     ds = _ens_align_datasets(
-        datasets,
+        datasets_list,
         multifile,
         resample_freq,
         calendar=calendar,
@@ -380,7 +387,7 @@ def ensemble_percentiles(
 
 
 def _ens_align_datasets(
-    datasets: list[xr.Dataset | Path | str | list[Path | str]] | str,
+    datasets: list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]] | str,
     multifile: bool = False,
     resample_freq: Freq | None = None,
     calendar: str | None = "default",
@@ -392,7 +399,7 @@ def _ens_align_datasets(
 
     Parameters
     ----------
-    datasets : list of xr.Dataset or list of xr.DataArray or list of Path or list of str | or list of list of str or str
+    datasets : list of xr.Dataset or list of xr.DataArray or list of Path or list of str or list of list of str or str
         List of netcdf file paths or xarray Dataset/DataArray objects . If `multifile` is True, 'datasets' should be a
         list of lists where each sublist contains input NetCDF files of a xarray multi-file Dataset.
         DataArrays should have a name, so they can be converted to datasets.
@@ -422,15 +429,15 @@ def _ens_align_datasets(
     xr_kwargs.setdefault("chunks", "auto")
     xr_kwargs.setdefault("decode_times", False)
 
-    _datasets: Sequence[xr.Dataset | Path | str | list[Path | str]]
+    datasets_list: list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]]
     if isinstance(datasets, str):
-        _datasets = glob(datasets)
+        datasets_list = list(glob(datasets))
     else:
-        _datasets = [d for d in datasets]
+        datasets_list = [d for d in datasets]
 
     ds_all: list[xr.Dataset] = []
     calendars = []
-    for i, n in enumerate(_datasets):
+    for i, n in enumerate(datasets_list):
         ds: xr.Dataset
         if multifile:
             ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)
