@@ -274,15 +274,12 @@ def merge_attributes(
         inputs.append((getattr(in_ds, "name", None), in_ds))
     inputs += list(inputs_kws.items())
 
-    if missing_str is None:
-        missing_str = ""
-
     merged_attr = ""
     for in_name, in_ds in inputs:
         if attribute in in_ds.attrs or missing_str is not None:
             if in_name is not None and len(inputs) > 1:
                 merged_attr += f"{in_name}: "
-            merged_attr += in_ds.attrs.get(attribute, "" if in_name is None else missing_str)
+            merged_attr += in_ds.attrs.get(attribute, "" if in_name is None or missing_str is None else missing_str)
             merged_attr += new_line
 
     if len(new_line) > 0:
