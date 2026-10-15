@@ -720,7 +720,7 @@ def relative_humidity(
     method: Literal["goffgratch46", "sonntag90", "tetens30", "wmo08", "its90", "ecmwf"] = "sonntag90",
     interp_power: float | None = None,
     water_thresh: Quantified = "0 degC",
-    invalid_values: str = "clip",
+    invalid_values: Literal["clip", "mask"] | None = "clip",
 ) -> xr.DataArray:
     r"""
     Relative humidity.
@@ -752,7 +752,7 @@ def relative_humidity(
         When ``interp_power`` is given, this is the threshold temperature above which the formulas with reference
         to water are used.
         Default: "0 degC".
-    invalid_values : {"clip", "mask", None}
+    invalid_values : {"clip", "mask"} or None
         What to do with values outside the 0-100 range. If "clip", clips everything to 0 - 100,
         if "mask", replaces values outside the range by np.nan, and if `None`, does nothing.
         Default: "clip".
@@ -866,7 +866,7 @@ def specific_humidity(
     method: Literal["goffgratch46", "sonntag90", "tetens30", "wmo08", "its90", "ecmwf"] = "sonntag90",
     interp_power: float | None = None,
     water_thresh: Quantified = "0 degC",
-    invalid_values: str | None = None,
+    invalid_values: Literal["clip", "mask"] | None = None,
 ) -> xr.DataArray:
     r"""
     Specific humidity from temperature, relative humidity, and pressure.
@@ -895,11 +895,10 @@ def specific_humidity(
         When ``interp_power`` is given, this is the threshold temperature above which the formulas with reference
         to water are used.
         Default: "0 degC".
-    invalid_values : {"clip", "mask", None}
+    invalid_values : {"clip", "mask"}, optional
         What to do with values larger than the saturation specific humidity and lower than 0.
         If "clip", clips everything to 0 - q_sat, if "mask", replaces values outside the range by np.nan,
         if None, does nothing.
-        Default: "clip".
 
     Returns
     -------
