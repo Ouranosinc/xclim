@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from typing import Literal
 
-import numpy as np
 import xarray as xr
 
 # pylint: disable=pointless-string-statement
@@ -191,7 +190,7 @@ def hawkins_sutton_09_weighting(
     mm = da.sel(time=slice(*baseline)).mean("time")
     xm = da.sel(time=baseline[1]) - mm
     xm = xm.drop_vars("time").squeeze()
-    return 1 / (obs + np.abs(xm - obs))
+    return 1 / (obs + (xm - obs).abs())
 
 
 def lafferty_sriver(
