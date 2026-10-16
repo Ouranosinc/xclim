@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from glob import glob
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 import xarray as xr
@@ -28,11 +28,12 @@ _quantile_params = {
     "normal_unbiased": (3 / 8, 3 / 8),
 }
 
+DatasetInput: TypeAlias = xr.Dataset | xr.DataArray | Path | str
+DatasetsInput: TypeAlias = list[DatasetInput | list[Path | str] | str]
+
 
 def create_ensemble(
-    datasets: list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]]
-    | str
-    | dict[str, xr.Dataset | xr.DataArray | Path | str],
+    datasets: DatasetsInput | dict[str, DatasetInput],
     multifile: bool = False,
     resample_freq: Freq | None = None,
     calendar: str | None = None,
@@ -387,7 +388,7 @@ def ensemble_percentiles(
 
 
 def _ens_align_datasets(
-    datasets: list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]] | str,
+    datasets: DatasetsInput,
     multifile: bool = False,
     resample_freq: Freq | None = None,
     calendar: str | None = "default",
