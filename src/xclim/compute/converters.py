@@ -2044,12 +2044,12 @@ def potential_evapotranspiration(  # pylint: disable=too-many-statements
         ra = ra * 0.408
 
         tr = _tasmax - _tasmin
-        tr = tr.where(tr > 0, 0)
+        tr = tr.clip(0)
 
         # Droogers and Allen (2002) formula
         ab = tr - 0.0123 * _pr
         pet = 0.0013 * ra * (_tas + 17.0) * ab**0.76
-        pet = xr.where(np.isnan(ab**0.76), 0, pet)
+        pet = xr.where(ab < 0, 0, pet)
         pet = pet.clip(0)  # mm/month
 
     elif method in ["mcguinnessbordne05", "MB05"]:
