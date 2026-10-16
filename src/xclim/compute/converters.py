@@ -2900,7 +2900,7 @@ def water_budget(
     sfcWind : xarray.DataArray, optional
         Surface wind velocity (at 10 m).
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05", "allen98", "FAO_PM98", "droogersallen02", "DA02"}
-        Method to use to calculate the potential evapotranspiration.
+        Method to use to calculate the potential evapotranspiration. Ignored when `evspsblpot` is given.
         Default: "BR65".
 
     Returns

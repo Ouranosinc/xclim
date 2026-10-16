@@ -437,7 +437,7 @@ water_budget = Converter(
     var_name="water_budget",
     compute=converters.water_budget,
     parameters={
-        "method": None,
+        "method": "BR65",
         "evspsblpot": {"kind": InputKind.VARIABLE},
         "tasmin": None,
         "tasmax": None,
