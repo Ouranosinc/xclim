@@ -622,7 +622,7 @@ def populate_testing_data(
             n.fetch(file)
         except HTTPError:
             msg = f"File `{file}` not accessible in remote repository."
-            logging.error(msg)
+            logger.error(msg)
             errored_files.append(file)
         except SocketBlockedError as err:
             msg = (
@@ -632,10 +632,10 @@ def populate_testing_data(
             )
             raise SocketBlockedError(msg) from err
         else:
-            logging.info("Files were downloaded successfully.")
+            logger.info("Files were downloaded successfully.")
 
     if errored_files:
-        logging.error(
+        logger.error(
             "The following files were unable to be downloaded: %s",
             errored_files,
         )
