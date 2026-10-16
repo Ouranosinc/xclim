@@ -217,7 +217,7 @@ DAY_LENGTH_FACTORS = np.array(
 
 
 @njit
-def _day_length(lat: float, mth: int) -> float:
+def _day_length(lat: float, mth: int) -> float:  # pragma: no cover
     """
     Return the average day length for a month within latitudinal bounds.
 
@@ -251,7 +251,7 @@ def _day_length(lat: float, mth: int) -> float:
 
 
 @njit
-def _day_length_factor(lat: float, mth: int) -> float:
+def _day_length_factor(lat: float, mth: int) -> float:  # pragma: no cover
     """
     Return the day length factor.
 
@@ -281,7 +281,7 @@ def _day_length_factor(lat: float, mth: int) -> float:
 
 
 @vectorize(nopython=True)
-def _fine_fuel_moisture_code(
+def _fine_fuel_moisture_code(  # pragma: no cover
     t: float | np.ndarray,
     p: float | np.ndarray,
     w: float | np.ndarray,
@@ -360,7 +360,7 @@ def _fine_fuel_moisture_code(
 
 
 @vectorize(nopython=True)
-def _duff_moisture_code(
+def _duff_moisture_code(  # pragma: no cover
     t: float | np.ndarray,
     p: float | np.ndarray,
     h: float | np.ndarray,
@@ -426,7 +426,7 @@ def _duff_moisture_code(
 
 
 @vectorize(nopython=True)
-def _drought_code(
+def _drought_code(  # pragma: no cover
     t: float | np.ndarray,
     p: float | np.ndarray,
     mth: int | np.ndarray,
@@ -572,7 +572,9 @@ def daily_severity_rating(fwi: np.ndarray) -> np.ndarray:
 
 
 @vectorize(nopython=True)
-def _overwintering_drought_code(DCf: np.ndarray, wpr: np.ndarray, a: float, b: float, minDC: int) -> np.ndarray | float:
+def _overwintering_drought_code(
+    DCf: np.ndarray, wpr: np.ndarray, a: float, b: float, minDC: int
+) -> np.ndarray | float:  # pragma: no cover
     """
     Compute the season-starting drought code.
 

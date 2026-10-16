@@ -44,7 +44,7 @@ __all__ = [
     nopython=True,
     cache=True,
 )
-def _keetch_byram_drought_index(
+def _keetch_byram_drought_index(  # pragma: no cover
     p: np.ndarray,
     t: np.ndarray,
     pa: float,
@@ -101,7 +101,7 @@ def _keetch_byram_drought_index(
     nopython=True,
     cache=True,
 )
-def _griffiths_drought_factor(
+def _griffiths_drought_factor(  # pragma: no cover
     p: np.ndarray,
     smd: np.ndarray,
     lim: int,
