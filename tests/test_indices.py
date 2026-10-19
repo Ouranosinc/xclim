@@ -2756,7 +2756,7 @@ class TestHardinessZones:
         snd = ds.snd
         wsgmax10m = generic.statistics(ds.sfcWind, statistic="max", freq="MS")
 
-        # Should be caulculated over 30 years, but only four years of data available
+        # Should be calculated over 30 years, but only four years of data available
         chz = xcc.canadian_hardiness_zones(
             tasmin=tasmin,
             tasmax=tasmax,
