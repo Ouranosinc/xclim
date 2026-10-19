@@ -121,7 +121,7 @@ class AttrFormatter(string.Formatter):
         Examples
         --------
         Let's say the string "The dog is {adj1}, the goose is {adj2}" is to be translated
-        to French and that we know that possible values of "adj2 are "nice" and "evil".
+        to French and that we know that possible values of "adj" are "nice" and "evil".
         In French, the genre of the noun changes the adjective (cat = chat is masculine,
         and goose = oie is feminine) so we initialize the formatter as:
 
@@ -152,7 +152,7 @@ class AttrFormatter(string.Formatter):
         ...     freq="YS-JUL",
         ...     src_timestep="MS",
         ... )
-        "La moyenne annuelle est faite sur un échantillon mensuel"
+        'La moyenne annuelle est faite sur un échantillon mensuel'
         """
         baseval = self._match_value(value)
         if baseval is None:  # Not something we know how to translate
