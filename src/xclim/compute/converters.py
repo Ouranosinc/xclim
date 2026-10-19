@@ -2006,12 +2006,12 @@ def _pet_droogers_allen(  # numpydoc ignore=GL08
     ra = ra * 0.408
 
     tr = tasmax - tasmin
-    tr = tr.where(tr > 0, 0)
+    tr = tr.clip(0)
 
     # Droogers and Allen (2002) formula
     ab = tr - 0.0123 * pr
     pet = 0.0013 * ra * (tas + 17.0) * ab**0.76
-    pet = xr.where(np.isnan(ab**0.76), 0, pet)
+    pet = xr.where(ab < 0, 0, pet)
     return pet.clip(0)  # mm/month
 
 
