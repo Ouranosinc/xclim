@@ -18,6 +18,8 @@ import warnings
 from xclim.indicators import convert
 from xclim.indicators.convert._conversion import __all__ as _conversion_all  # noqa: F401
 
+from ._multivariate import *
+from ._multivariate import __all__ as _multivariate_all
 from ._precip import *
 from ._precip import __all__ as _precip_all
 from ._synoptic import *
@@ -27,7 +29,7 @@ from ._temperature import __all__ as _temperature_all
 from ._wind import *
 from ._wind import __all__ as _wind_all
 
-__all__ = _precip_all + _synoptic_all + _temperature_all + _wind_all
+__all__ = _multivariate_all + _precip_all + _synoptic_all + _temperature_all + _wind_all  # pyright: ignore
 
 
 def _deprecated_alias(func_name):
