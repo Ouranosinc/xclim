@@ -111,16 +111,15 @@ def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str,
 
     Parameters
     ----------
-    locale : str or sequence of str
+    locale : str or Sequence of str or tuple of str and dict
         IETF language tag or a tuple of the language tag and a translation dict, or a tuple of the language
         tag and a path to a json file defining translation of attributes.
 
     Returns
     -------
-    str
-        The best fitting locale string.
-    dict
-        The available translations in this locale.
+    tuple of str and CaseInsensitiveDict
+        - The best fitting locale string.
+        - The available translations in this locale.
 
     Raises
     ------
@@ -161,7 +160,7 @@ def get_local_attrs(
 
     Parameters
     ----------
-    indicator : str or sequence of strings
+    indicator : str or Sequence of str
         Indicator's identifier, usually the same as in `xc.core.indicator.registry`.
         If multiple names are passed, the attrs from each indicator are merged,
         with the highest priority set to the first name.
@@ -170,10 +169,11 @@ def get_local_attrs(
         and a path to a json file defining translation of attributes.
     var_name : str, optional
         For multi-output indicator, this is the name of the variable for which we request attributes.
-    names : sequence of str, optional
+    names : Sequence of str, optional
         If given, only returns translations of attributes in this list.
     append_locale_name : bool
-        If True (default), append the language tag (as "{attr_name}_{locale}") to the returned attributes.
+        If True, append the language tag (as "{attr_name}_{locale}") to the returned attributes.
+        Default: True.
 
     Returns
     -------
@@ -218,7 +218,7 @@ def get_local_formatter(
 
     Parameters
     ----------
-    locale : str or tuple of str
+    locale : str or Sequence of str
         IETF language tag or a tuple of the language tag and a translation dict, or a tuple of the language tag
         and a path to a json file defining translation of attributes.
 
@@ -253,20 +253,21 @@ class UnavailableLocaleError(ValueError):
         )
 
 
-def read_locale_file(filename, module: str | None = None, encoding: str = "UTF8") -> CaseInsensitiveDict:
+def read_locale_file(filename: str | Path, module: str | None = None, encoding: str = "UTF8") -> CaseInsensitiveDict:
     """
     Read a locale file (.json) and return its dictionary.
 
     Parameters
     ----------
-    filename : PathLike
+    filename : str or Path
         The file to read.
     module : str, optional
         If the module is a string, this module name is added to all identifiers translated in this file.
         Defaults to None, and no module name is added (as if the indicator was an official xclim indicator).
     encoding : str
         The encoding to use when reading the file.
-        Defaults to `UTF-8`, overriding Python's default mechanism which is machine-dependent.
+        It overrides Python's default mechanism which is machine-dependent.
+        Default: "UTF8".
 
     Returns
     -------
@@ -287,7 +288,7 @@ def load_locale(locdata: str | Path | CaseInsensitiveDict, locale: str) -> None:
 
     Parameters
     ----------
-    locdata : str or Path or dictionary
+    locdata : str or Path or CaseInsensitiveDict
         Either a loaded locale dictionary or a path to a json file.
     locale : str
         The locale name (IETF tag).
@@ -311,11 +312,11 @@ def generate_local_dict(locale: str, init_english: bool = False) -> CaseInsensit
     locale : str
         Locale in the IETF format.
     init_english : bool
-        If True, fills the initial dictionary with the english versions of the attributes. Defaults to False.
+        If True, fills the initial dictionary with the english versions of the attributes. Default: False.
 
     Returns
     -------
-    dict
+    CaseInsensitiveDict
         Indicator translation dictionary.
     """
     from ..core.indicator import registry  # pylint: disable=import-outside-toplevel

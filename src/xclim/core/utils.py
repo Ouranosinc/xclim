@@ -195,7 +195,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     ----------
     da : xr.DataArray
         The input DataArray, with or without the dask backend. Does nothing when passed a non-dask array.
-    **minchunks : dict[str, int]
+    **minchunks : int
         A kwarg mapping from dimension name to minimum chunk size.
         Pass -1 to force a single chunk along that dimension.
 
@@ -236,7 +236,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     return da
 
 
-def uses_dask(*das) -> bool:
+def uses_dask(*das: xr.DataArray | xr.Dataset) -> bool:
     r"""
     Evaluate whether dask is installed and array is loaded as a dask array.
 
@@ -350,16 +350,16 @@ def calc_perc(
 
     Parameters
     ----------
-    arr : array_like
+    arr : np.ndarray
         The input array.
     percentiles : list of float, optional
         The percentiles to compute. If None, only the median is computed.
     alpha : float
-        A constant used to correct the index computed.
+        A constant used to correct the index computed. Default: 1.0.
     beta : float
-        A constant used to correct the index computed.
+        A constant used to correct the index computed. Default: 1.0.
     copy : bool
-        If True, the input array is copied before computation. Default is True.
+        If True, the input array is copied before computation. Default: True.
 
     Returns
     -------
@@ -403,18 +403,18 @@ def nan_calc_percentiles(
 
     Parameters
     ----------
-    arr : array_like
+    arr : np.ndarray
         The input array.
     percentiles : list of float, optional
         The percentiles to compute. If None, only the median is computed.
     axis : int
-        The axis along which to compute the percentiles.
+        The axis along which to compute the percentiles. Default: -1.
     alpha : float
-        A constant used to correct the index computed.
+        A constant used to correct the index computed. Default: 1.0.
     beta : float
-        A constant used to correct the index computed.
+        A constant used to correct the index computed. Default: 1.0.
     copy : bool
-        If True, the input array is copied before computation. Default is True.
+        If True, the input array is copied before computation. Default: True.
 
     Returns
     -------
@@ -442,9 +442,9 @@ def _compute_virtual_index(n: np.ndarray, quantiles: np.ndarray, alpha: float, b
 
     Parameters
     ----------
-    n : array_like
+    n : np.ndarray
         The sample sizes.
-    quantiles : array_like
+    quantiles : np.ndarray
         The quantiles values.
     alpha : float
         A constant used to correct the index computed.
@@ -462,16 +462,21 @@ def _compute_virtual_index(n: np.ndarray, quantiles: np.ndarray, alpha: float, b
     return n * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1
 
 
-def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
+def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray) -> np.ndarray:
     """
-    Compute gamma (AKA 'm' or 'weight') for the linear interpolation of quantiles.
+    Compute gamma (AKA "m" or "weight") for the linear interpolation of quantiles.
 
     Parameters
     ----------
-    virtual_indexes : array_like
+    virtual_indexes : np.ndarray
         The indexes where the percentile is supposed to be found in the sorted sample.
-    previous_indexes : array_like
+    previous_indexes : np.ndarray
         The floor values of virtual_indexes.
+
+    Returns
+    -------
+    np.ndarray
+        Gamma ("γ": "m" or "weight") which is necessary for the linear interpolation of quantiles.
 
     Notes
     -----
@@ -489,16 +494,16 @@ def _get_indexes(
 
     Parameters
     ----------
-    arr : array_like
+    arr : np.ndarray
         The input array.
-    virtual_indexes : array_like
+    virtual_indexes : np.ndarray
         The indexes where the percentile is supposed to be found in the sorted sample.
-    valid_values_count : array_like
+    valid_values_count : np.ndarray
         The number of valid values in the sorted array.
 
     Returns
     -------
-    array_like, array_like
+    tuple of np.ndarray and np.ndarray
         A tuple of virtual_indexes neighbouring indexes (previous and next).
 
     Notes
@@ -538,16 +543,16 @@ def _linear_interpolation(
 
     Parameters
     ----------
-    left : array_like
+    left : np.ndarray
         Left bound.
-    right : array_like
+    right : np.ndarray
         Right bound.
-    gamma : array_like
+    gamma : np.ndarray
         The interpolation weight.
 
     Returns
     -------
-    array_like
+    np.ndarray
         The linearly interpolated array.
     """
     diff_b_a = np.subtract(right, left)
@@ -632,7 +637,7 @@ def make_clix_meta_yaml(  # noqa: C901
 
     Parameters
     ----------
-    raw : os.PathLike or StringIO or str
+    raw : os.PathLike
         The path to the clix-meta "index_definitions.yml" file or the string representation of the yaml.
     adapted : os.PathLike
         The path where to write the adapted yaml.
@@ -789,10 +794,9 @@ def split_auxiliary_coordinates(
 
     Returns
     -------
-    clean_obj : xr.DataArray or xr.Dataset
-        Same as `obj` but without any auxiliary coordinate.
-    aux_crd_ds : xr.Dataset
-        The auxiliary coordinates as a dataset. Might be empty.
+    tuple of xr.DataArray or xr.Dataset and xr.DataArray
+        - Same as `obj` but without any auxiliary coordinate.
+        - The auxiliary coordinates as a dataset. Might be empty.
 
     Notes
     -----
@@ -821,7 +825,7 @@ def get_temp_dimname(dims: Sequence[str], new_dim: str) -> str:
 
     Parameters
     ----------
-    dims : sequence of str
+    dims : Sequence of str
         The dimension names that already exist.
     new_dim : str
         The new name we want.

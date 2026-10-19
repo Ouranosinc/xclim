@@ -57,8 +57,8 @@ def base_flow_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArr
     ----------
     rivo : xarray.DataArray
         Rate of river discharge.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -101,8 +101,8 @@ def rb_flashiness_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.Dat
     ----------
     rivo : xarray.DataArray
         Rate of river discharge.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -151,18 +151,21 @@ def standardized_streamflow_index(
     ----------
     rivo : xarray.DataArray
         Rate of river discharge.
-    freq : str, optional
-        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes
+    freq : Freq, optional
+        Resampling frequency. A monthly, weekly, or daily frequency is expected. Option `None` assumes
         that the desired resampling has already been applied input dataset and will skip the resampling step.
+        Default: "MS".
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    dist : {"genextreme", "fisk"} or `rv_continuous` function
-        Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
+        Default: 1.
+    dist : {"genextreme", "fisk"} or scipy.stats.rv_continuous
+        Name of the univariate distribution, or a callable scypi.stats.rv_continuous (see :py:mod:`scipy.stats`).
     method : {"APP", "ML", "PWM"}
-        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
+        Name of the fitting method, such as "ML" (maximum likelihood), "APP" (approximate). The approximate method
         uses a deterministic function that does not involve any optimization.
-        `PWM` should be used with a `lmoments3` distribution.
+        "PWM" should be used with a `lmoments3` distribution.
+        Default: "ML".
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
@@ -249,7 +252,7 @@ def standardized_streamflow_index(
         freq=freq,
         window=window,
         dist=dist,
-        method=method,
+        method=method,  # type: ignore[arg-type]
         zero_inflated=zero_inflated,
         fitkwargs=fitkwargs,
         cal_start=cal_start,
@@ -273,8 +276,8 @@ def snd_max(snd: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
     ----------
     snd : xarray.DataArray
         Snow depth (mass per area).
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS-JUL".
 
     Returns
     -------
@@ -295,8 +298,8 @@ def snd_max_doy(snd: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArra
     ----------
     snd : xarray.DataArray
         Surface snow depth.
-    freq : str
-         Resampling frequency.
+    freq : Freq
+         Resampling frequency. Default: "YS-JUL".
 
     Returns
     -------
@@ -326,8 +329,8 @@ def snw_max(snw: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
     ----------
     snw : xarray.DataArray
         Snow amount (mass per area).
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS-JUL".
 
     Returns
     -------
@@ -348,8 +351,8 @@ def snw_max_doy(snw: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArra
     ----------
     snw : xarray.DataArray
         Surface snow amount.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS-JUL".
 
     Returns
     -------
@@ -378,9 +381,9 @@ def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: Freq = "YS-JU
     snw : xarray.DataArray
         Snow amount (mass per area).
     window : int
-        Number of days during which the melt is accumulated.
-    freq : str
-        Resampling frequency.
+        Number of days during which the melt is accumulated. Default: 3.
+    freq : Freq
+        Resampling frequency. Default: "YS-JUL".
 
     Returns
     -------
@@ -415,9 +418,9 @@ def melt_and_precip_max(
     pr : xarray.DataArray
         Daily precipitation flux.
     window : int
-        Number of days during which the water input is accumulated.
-    freq : str
-        Resampling frequency.
+        Number of days during which the water input is accumulated. Default: 3.
+    freq : Freq
+        Resampling frequency. Default: "YS-JUL".
 
     Returns
     -------
@@ -462,18 +465,22 @@ def standardized_groundwater_index(
     ----------
     gwl : xarray.DataArray
         Groundwater head level.
-    freq : str, optional
-        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes
+    freq : Freq, optional
+        Resampling frequency. A monthly, weekly, or daily frequency is expected. Option `None` assumes
         that the desired resampling has already been applied input dataset and will skip the resampling step.
+        Default: "MS".
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    dist : {"gamma", "genextreme", "lognorm"} or `rv_continuous`
-        Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
+        Default: 1.
+    dist : {"gamma", "genextreme", "lognorm"} or scipy.stats.rv_continuous
+        Name of the univariate distribution, or a callable scipy.stats.rv_continuous (see :py:mod:`scipy.stats`).
+        Default: "genextreme".
     method : {"APP", "ML", "PWM"}
-        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate).
+        Name of the fitting method, such as "ML" (maximum likelihood), "APP" (approximate).
         The approximate method uses a deterministic function that does not involve any optimization.
-        `PWM` should be used with a `lmoments3` distribution.
+        "PWM" should be used with a `lmoments3` distribution.
+        Default: "ML".
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
@@ -559,7 +566,7 @@ def standardized_groundwater_index(
         freq=freq,
         window=window,
         dist=dist,
-        method=method,
+        method=method,  # type: ignore[arg-type]
         zero_inflated=zero_inflated,
         fitkwargs=fitkwargs,
         cal_start=cal_start,
@@ -583,7 +590,8 @@ def flow_index(rivo: xarray.DataArray, q: float = 0.95) -> xarray.DataArray:
     rivo : xarray.DataArray
         Daily streamflow data.
     q : float
-        Quantile for calculating the flow index, between 0 and 1. Default of 0.95 is for high flows.
+        Quantile for calculating the flow index, between 0 and 1. The higher the number the higher the flows.
+        Default: 0.95.
 
     Returns
     -------
@@ -615,9 +623,11 @@ def high_flow_frequency(rivo: xarray.DataArray, threshold_factor: int = 9, freq:
     rivo : xarray.DataArray
         Daily streamflow data.
     threshold_factor : int
-        Factor by which the median flow is multiplied to set the high flow threshold, default is 9.
-    freq : str
-        Resampling frequency, default is 'YS-OCT' for water year starting in October and ending in September.
+        Factor by which the median flow is multiplied to set the high flow threshold. Default: 9.
+    freq : Freq
+        Resampling frequency.
+        Default is "YS-OCT".
+        The default value is for water year starting in October and ending in September.
 
     Returns
     -------
@@ -649,9 +659,11 @@ def low_flow_frequency(
     rivo : xarray.DataArray
         Daily streamflow data.
     threshold_factor : float
-        Factor by which the mean flow is multiplied to set the low flow threshold, default is 0.2.
-    freq : str
-        Resampling frequency, default is 'YS-OCT' for water year starting in October and ending in September.
+        Factor by which the mean flow is multiplied to set the low flow threshold. Default: 0.2.
+    freq : Freq
+        Resampling frequency.
+        Default is "YS-OCT".
+        The default value is for water year starting in October and ending in September.
 
     Returns
     -------
@@ -680,9 +692,9 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     pr : xarray.DataArray
         Daily precipitation data.
     window : int
-        Window for the days of precipitation data to be weighted and summed, default is 7.
+        Window for the days of precipitation data to be weighted and summed. Default: 7.
     p_exp : float
-        Weighting exponent, default is 0.935.
+        Weighting exponent. Default: 0.935.
 
     Returns
     -------
@@ -725,8 +737,8 @@ def runoff_ratio(
         Mean daily precipitation.
     area : Quantified
         Watershed area.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -747,12 +759,12 @@ def runoff_ratio(
     - For snow-driven watersheds, spring runoff ratios are typically higher than
       annual runoff ratios, as snowmelt generates concentrated runoff events.
     - Temporal analysis: Yearly values computed from seasonal daily data and yearly data, depending on chosen frequency.
-      (e.g., 'YS' for yearly starting Jan, or 'QS-DEC' for seasons, '30YS' to compute the value over slices of 30 years
+      (e.g., "YS" for yearly starting Jan, or "QS-DEC" for seasons, '30YS' to compute the value over slices of 30 years
       from the start of the time series).
 
     References
     ----------
-    :cite:cts:'knoben_2024'
+    :cite:cts:`knoben_2024`
     """
     rivo = convert_units_to(rivo, "mm3/hr")
     area = convert_units_to(area, "mm2")
@@ -776,16 +788,17 @@ def aridity_index(pr: xarray.DataArray, evspsblpot: xarray.DataArray, freq: Freq
 
     Parameters
     ----------
-    pr : array_like
+    pr : xarray.DataArray
         Precipitation.
-    evspsblpot : array_like
+    evspsblpot : xarray.DataArray
         Potential evapotranspiration.
-    freq : str
+    freq : Freq
         Resampling frequency. A monthly or yearly frequency is expected.
+        Default: "YS".
 
     Returns
     -------
-    float
+    xarray.DataArray
         Aridity index per time step (Unitless).
 
     Notes
@@ -801,7 +814,7 @@ def aridity_index(pr: xarray.DataArray, evspsblpot: xarray.DataArray, freq: Freq
 
     References
     ----------
-    :cite:cts:'zomer_2022'
+    :cite:cts:`zomer_2022`
     """
     evspsblpot = convert_units_to(evspsblpot, pr)
     pr = pr.resample(time=freq).mean()
@@ -842,10 +855,12 @@ def lag_snowpack_flow_peaks(
         Surface snow amount.
     rivo : xarray.DataArray
         Daily streamflow data.
-    freq : str
-        Resampling frequency. Defaults to the water year starting on the 1st of October.
+    freq : Freq
+        Resampling frequency. Default: "YS-OCT".
+        The default value represents the water year starting on the 1st of October.
     q : float
-        Quantile for calculating the flow index, between 0 and 1. Default of 0.9 is for high flows.
+        Quantile for calculating the flow index, between 0 and 1. The higher the number the higher the flows.
+        Default: 0.9.
 
     Returns
     -------
@@ -899,14 +914,14 @@ def sen_slope(rivo: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArr
     ----------
     rivo : xarray.DataArray
         Daily streamflow data.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
-    sen_slope : xarray.DataArray, [dimensionless]
+    sen_slope: xarray.DataArray, [dimensionless]
         Sen's slope estimates.
-    p_value : xarray.DataArray, [dimensionless]
+    p_value: xarray.DataArray, [dimensionless]
         Mann-Kendall metric indicating slope tendency.
 
     Notes
@@ -963,12 +978,12 @@ def sen_slope_ratio(
         Observed streamflow vector.
     rivosim : xarray.DataArray, optional
         Simulated streamflow vector.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
-    sen_slope : xarray.DataArray, [dimensionless]
+    sen_slope: xarray.DataArrays, [dimensionless]
         Sen's slope estimates.
     p_value: xarray.DataArray, [dimensionless]
         Mann-Kendall metric indicating slope tendency.
@@ -1010,12 +1025,12 @@ def base_flow_index_seasonal_ratio(
     ----------
     rivo : xarray.DataArray
         Rate of river discharge.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "QS-DEC".
     numerator : str
-        String indicating the season in the numerator of the ratio.
+        String indicating the season in the numerator of the ratio. Default: "DJF".
     denominator : str
-        String indicating the season in the denominator of the ratio.
+        String indicating the season in the denominator of the ratio. Default: "JJA".
 
     Returns
     -------

@@ -19,6 +19,7 @@ from xclim.compute.helpers import BINARY_OPS
 from xclim.compute.run_length import suspicious_run
 from xclim.core import (
     VARIABLES,
+    Freq,
     InputKind,
     MissingVariableError,
     Quantified,
@@ -103,7 +104,7 @@ def register_methods(variable_name: str | None = None) -> Callable:
 
     Returns
     -------
-    callable
+    Callable
         The function being registered.
     """
 
@@ -245,9 +246,9 @@ def temperature_extremely_low(da: xarray.DataArray, *, thresh: Quantified = "-90
     ----------
     da : xarray.DataArray
         Temperature.
-    thresh : str
+    thresh : Quantified
         Threshold below which temperatures are considered problematic and a flag is raised.
-        Default is -90 degrees Celsius.
+        Default: "-90 degC".
 
     Returns
     -------
@@ -282,9 +283,9 @@ def temperature_extremely_high(da: xarray.DataArray, *, thresh: Quantified = "60
     ----------
     da : xarray.DataArray
         Temperature.
-    thresh : str
+    thresh : Quantified
         Threshold above which temperatures are considered problematic and a flag is raised.
-        Default is 60 degrees Celsius.
+        Default: "60 degC".
 
     Returns
     -------
@@ -352,8 +353,9 @@ def very_large_precipitation_events(da: xarray.DataArray, *, thresh: Quantified 
     ----------
     da : xarray.DataArray
         Precipitation.
-    thresh : str
+    thresh : Quantified
         Threshold to search an array for that will trigger flag if any day exceeds value.
+        Default: "300 mm d-1".
 
     Returns
     -------
@@ -383,7 +385,7 @@ def values_op_thresh_repeating_for_n_or_more_days(
     da: xarray.DataArray, *, n: int, thresh: Quantified, op: ALL_OPERATORS = "=="
 ) -> xarray.DataArray:
     """
-    Check if array values repeat at a given threshold for `N` or more days.
+    Check if array values repeat at a given threshold for `n` or more days.
 
     Parameters
     ----------
@@ -391,15 +393,16 @@ def values_op_thresh_repeating_for_n_or_more_days(
         Variable array.
     n : int
         Number of repeating days needed to trigger data flag.
-    thresh : str
+    thresh : Quantified
         Repeating values to search for that will trigger data flag.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Operator used for comparison with thresh.
+        Default: "==".
 
     Returns
     -------
     xarray.DataArray, [bool]
-        Boolean array of True where values repeat at threshold for `N` or more days.
+        Boolean array of True where values repeat at threshold for `n` or more days.
 
     Examples
     --------
@@ -437,10 +440,10 @@ def wind_values_outside_of_bounds(
     ----------
     da : xarray.DataArray
         Wind speed.
-    lower : str
-        The lower limit for wind speed. Default is 0 m s-1.
-    upper : str
-        The upper limit for wind speed. Default is 46 m s-1.
+    lower : Quantified
+        The lower limit for wind speed. Default" 0 m s-1".
+    upper : Quantified
+        The upper limit for wind speed. Default: "46 m s-1".
 
     Returns
     -------
@@ -484,7 +487,7 @@ def outside_n_standard_deviations_of_climatology(
     n : int
         Number of standard deviations.
     window : int
-        Moving window used in determining the climatological mean. Default: `5`.
+        Moving window used in determining the climatological mean. Default: "5".
 
     Returns
     -------
@@ -587,8 +590,8 @@ def data_flags(  # noqa: C901
     da: xarray.DataArray,
     ds: xarray.Dataset | None = None,
     flags: dict | None = None,
-    dims: None | str | Sequence[str] | set[str] = "all",
-    freq: str | None = None,
+    dims: str | Sequence[str] | set[str] | None = "all",
+    freq: Freq | None = None,
     raise_flags: bool = False,
 ) -> xarray.Dataset:
     """
@@ -608,9 +611,9 @@ def data_flags(  # noqa: C901
         A dictionary where the keys are the name of the flags to check and the values are parameter dictionaries.
         The value can be None if there are no parameters to pass (i.e. default will be used).
         The default, None, means that the data flags list will be taken from :py:obj:`xclim.core.VARIABLES`.
-    dims : {"all", None} or str or a sequence of strings
+    dims : str or a sequence of str or set of str or None
         Dimensions upon which the aggregation should be performed. Default: "all".
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency to have data_flags aggregated over periods.
         Defaults to None, which means the "time" axis is treated as any other dimension (see `dims`).
     raise_flags : bool
@@ -753,7 +756,7 @@ def data_flags(  # noqa: C901
 
 def ecad_compliant(
     ds: xarray.Dataset,
-    dims: None | str | Sequence[str] = "all",
+    dims: str | Sequence[str] | None = "all",
     raise_flags: bool = False,
     append: bool = True,
 ) -> xarray.DataArray | xarray.Dataset | None:
@@ -766,13 +769,14 @@ def ecad_compliant(
     ----------
     ds : xarray.Dataset
         Variable-containing dataset.
-    dims : {"all"} or str or a sequence of strings, optional
-        Dimensions upon which aggregation should be performed. Default: ``"all"``.
+    dims : str or sequence of str or None
+        Dimensions upon which aggregation should be performed. Default: "all".
     raise_flags : bool
-        Raise exception if any of the quality assessment flags are raised, otherwise returns None. Default: ``False``.
+        Raise exception if any of the quality assessment flags are raised, otherwise returns None. Default: False.
     append : bool
-        If `True`, return the Dataset with the `ecad_qc_flag` array appended to data_vars.
-        If `False`, return the DataArray of the `ecad_qc_flag` variable.
+        If True, return the Dataset with the `ecad_qc_flag` array appended to data_vars.
+        If False, return the DataArray of the `ecad_qc_flag` variable.
+        Default: True.
 
     Returns
     -------
@@ -831,8 +835,9 @@ def specific_discharge_extremely_high(da: xarray.DataArray, *, thresh: Quantifie
     ----------
     da : xarray.DataArray
         Specific discharge.
-    thresh : str
+    thresh : Quantified
         Threshold above which specific discharges are considered problematic and a flag is raised.
+        Default: "100 mm d-1".
 
     Returns
     -------

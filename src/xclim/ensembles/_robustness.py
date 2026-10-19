@@ -13,7 +13,7 @@ import sys
 import textwrap
 from collections.abc import Callable, Sequence
 from inspect import Parameter, signature
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 import scipy.stats as spstats
@@ -53,7 +53,7 @@ def significance_test(func: Callable) -> Callable:
 
     Parameters
     ----------
-    func : function
+    func : Callable
         The significance test function.
         See :py:func:`robustness_fractions` for requirements.
 
@@ -93,12 +93,12 @@ def _unpack_dim(dim):
 def robustness_fractions(
     fut: xr.DataArray,
     ref: xr.DataArray | None = None,
-    dim: str | Sequence[str] = "realization",
+    dim: str | list[str] = "realization",
     test: str | None = None,
     weights: xr.DataArray | None = None,
     invalid: MissingBase | None = None,
     strict_sign: bool = True,
-    **kwargs,
+    **kwargs: Any,
 ) -> xr.Dataset:
     r"""
     Calculate robustness statistics.
@@ -109,13 +109,13 @@ def robustness_fractions(
     Parameters
     ----------
     fut : xr.DataArray
-        Future period values along 'dim'(s) and 'time' (..., nr, nt1)
+        Future period values along "dim"(s) and "time" (..., nr, nt1)
         or if `ref` is None, Delta values along dim(s) ()..., nr).
     ref : xr.DataArray, optional
-        Reference period values along 'dim'(s) and 'time'  (..., nr, nt2).
-        The size of the 'time' axis does not need to match the one of `fut`.
+        Reference period values along "dim"(s) and "time" (..., nr, nt2).
+        The size of the "time" axis does not need to match the one of `fut`.
         But their dim(s) axes must be identical and the other coordinates should be the same.
-        If `None` (default), values of `fut` are assumed to be deltas instead of
+        If None, values of `fut` are assumed to be deltas instead of
         a distribution across the future period.
     dim : str or list of str, optional
         If str or list of length 1, the realization dimension along which to compute the fractions.
@@ -129,11 +129,12 @@ def robustness_fractions(
         be passed through a `n_pool` coordinate along the realization dimension. If this is not passed,
         it will be expected that all realizations have the same number of pooled elements
         and if a pooled element is invalid, the whole associated realization will be invalid.
-    test : {tests_list}, optional
+        Default: "realization".
+    test : str, optional
         Name of the statistical test used to determine if there was significant change. See Notes.
-    weights : xr.DataArray
+    weights : xr.DataArray, optional
         Weights to apply along the realization dimension. This array cannot contain missing values.
-    invalid : xc.core.missing.MissingBase instance
+    invalid : xc.core.missing.MissingBase, optional
         A Missing class from :py:mod:`xclim.core.missing` to use to flag points what are invalid.
         Invalid points are not included in the fractions. Default is MissingAny, which means any
         nan along the "time" dimension means the timeseries is invalid.
@@ -142,10 +143,11 @@ def robustness_fractions(
         Not used if only deltas are passed as `fut`.
     strict_sign : bool
         Whether to include zeros when determining the sign of change. True (default) does not include
-        them, the comparison is done with `>` and `<`, while false uses `>=`, `<=`.
+        them, the comparison is done with ">" and "<", while false uses ">=", "<=".
         When True, the "agree" fraction is the largest of three : positive, negative, zero change.
         When False, it is the largest of two : zero-or-positive, zero-or-negative.
-    **kwargs : dict
+        Default: True.
+    **kwargs : Any
         Other arguments specific to the statistical test. See Notes.
 
     Returns
@@ -421,8 +423,8 @@ def robustness_categories(
         The fraction of members that were valid for the robustness calculation.
         Can also be passed as a variable of the first argument.
     categories : list of str, optional
-        The label of each robustness categories. They are stored in the semicolon separated ``flag_descriptions``
-        attribute as well as in a compressed form in the ``flag_meanings`` attribute.
+        The label of each robustness categories. They are stored in the semicolon separated `flag_descriptions`
+        attribute as well as in a compressed form in the `flag_meanings` attribute.
         If a point is mapped to two categories, priority is given to the first one in this list.
     ops : list of tuples of str, optional
         For each category, the comparison operators for `change_frac` and `agree_frac`.
@@ -508,10 +510,10 @@ def robustness_coefficient(fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | x
     Parameters
     ----------
     fut : xr.DataArray or xr.Dataset
-        Future ensemble values along 'realization' and 'time' (nr, nt).
+        Future ensemble values along "realization" and "time" (nr, nt).
         Can be a dataset, in which case the coefficient is computed on each variable.
     ref : xr.DataArray or xr.Dataset
-        Reference period values along 'time' (nt). Same type as `fut`.
+        Reference period values along "time" (nt). Same type as `fut`.
 
     Returns
     -------

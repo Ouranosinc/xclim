@@ -14,6 +14,7 @@ from boltons.funcutils import wraps
 from xarray import DataArray
 
 import xclim.core.utils
+from xclim.core import Freq
 from xclim.core.calendar import parse_offset, percentile_doy
 
 BOOTSTRAP_DIM = "_bootstrap"
@@ -78,7 +79,7 @@ def percentile_bootstrap(func: Callable) -> Callable:
     return wrapper
 
 
-def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
+def bootstrap_func(compute_index_func: Callable, **kwargs: Any) -> xarray.DataArray:
     r"""
     Bootstrap the computation of percentile-based indicators.
 
@@ -98,7 +99,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
     ----------
     compute_index_func : Callable
         Index function.
-    **kwargs : dict
+    **kwargs : Any
         Arguments to `func`.
 
     Returns
@@ -216,7 +217,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
     return result
 
 
-def _get_bootstrap_freq(freq):
+def _get_bootstrap_freq(freq: Freq) -> str:
     _, base, start_anchor, anchor = parse_offset(freq)
     bfreq = "Y"
     if start_anchor:
@@ -228,12 +229,10 @@ def _get_bootstrap_freq(freq):
     return bfreq
 
 
-def _get_year_label(year_dt) -> str:
+def _get_year_label(year_dt: cftime.datetime | np.datetime64 | str) -> int:
     if isinstance(year_dt, cftime.datetime):
-        year_label = year_dt.year
-    else:
-        year_label = year_dt.astype("datetime64[Y]").astype(int) + 1970
-    return year_label
+        return year_dt.year
+    return np.datetime64(year_dt, "Y").astype(int) + 1970
 
 
 # TODO: Return a generator instead and assess performance
@@ -252,7 +251,7 @@ def build_bootstrap_year_da(
     label : Any
       Key identifying the group item to replace.
     dim : str
-      Dimension recognised as time. Default: `time`.
+      Dimension recognised as time. Default: "time".
 
     Returns
     -------

@@ -21,6 +21,8 @@ index.
 # Methods starting with a "_" are not usable with xarray objects, whereas the others are.
 from __future__ import annotations
 
+from typing import Literal
+
 import numpy as np
 import xarray as xr
 from numba import float64, guvectorize, int64
@@ -42,25 +44,28 @@ __all__ = [
     nopython=True,
     cache=True,
 )
-def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: dict[float, float]):  # pragma: no cover
+def _keetch_byram_drought_index(  # pragma: no cover
+    p: np.ndarray,
+    t: np.ndarray,
+    pa: float,
+    kbdi0: float,
+    kbdi: np.ndarray,
+) -> None:
     """
     Compute the Keetch-Byram drought (KBDI) index.
 
     Parameters
     ----------
-    p : array_like
+    p : np.ndarray
         Total rainfall over previous 24 hours [mm].
-    t : array_like
+    t : np.ndarray
         Maximum temperature near the surface over previous 24 hours [C].
     pa : float
         Mean annual accumulated rainfall.
     kbdi0 : float
         Previous value of the Keetch-Byram drought index used to initialise the KBDI calculation.
-
-    Returns
-    -------
-    array_like
-        Keetch-Byram drought index.
+    kbdi : np.ndarray
+        The Keetch-Byram drought indexes to be overwritten.
     """
     no_p = 0.0  # Where to define zero rainfall
     rr = 5.0  # Initialise remaining runoff
@@ -96,25 +101,27 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: dict[float, float]):  # p
     nopython=True,
     cache=True,
 )
-def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
+def _griffiths_drought_factor(  # pragma: no cover
+    p: np.ndarray,
+    smd: np.ndarray,
+    lim: int,
+    df: np.ndarray,
+) -> None:
     """
     Compute the Griffiths drought factor.
 
     Parameters
     ----------
-    p : array_like
+    p : np.ndarray
         Total rainfall over previous 24 hours [mm].
-    smd : array_like
+    smd : np.ndarray
         Soil moisture deficit (e.g. KBDI).
     lim : int
         How to limit the drought factor.
         If 0, use equation (14) in :cite:t:`ffdi-finkele_2006`.
         If 1, use equation (13) in :cite:t:`ffdi-finkele_2006`.
-
-    Returns
-    -------
-    df : array_like
-        The limited Griffiths drought factor
+    df : np.ndarray
+        The limited Griffiths drought factors to be overwritten.
     """
     wl = 20  # 20-day window length
 
@@ -274,7 +281,7 @@ def keetch_byram_drought_index(
 def griffiths_drought_factor(
     pr: xr.DataArray,
     smd: xr.DataArray,
-    limiting_func: str = "xlim",
+    limiting_func: Literal["xlim", "discrete"] = "xlim",
 ) -> xr.DataArray:
     """
     Griffiths drought factor based on the soil moisture deficit.
@@ -294,6 +301,7 @@ def griffiths_drought_factor(
         If "xlim" (default), use equation (14) in :cite:t:`ffdi-finkele_2006`.
         If "discrete", use equation Eq (13) in :cite:t:`ffdi-finkele_2006`, but with the lower
         limit of each category bound adjusted to match the upper limit of the previous bound.
+        Default: "xlim".
 
     Returns
     -------
@@ -362,7 +370,7 @@ def mcarthur_forest_fire_danger_index(
     tasmax: xr.DataArray,
     hurs: xr.DataArray,
     sfcWind: xr.DataArray,
-):
+) -> xr.DataArray:
     """
     McArthur forest fire danger index (FFDI) Mark 5.
 

@@ -75,7 +75,7 @@ def get_binary_op(condition: Condition, constrain: Sequence[Condition] | None = 
     ----------
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Comparison binary operator name of symbol.
-    constrain : sequence of {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
+    constrain : Sequence of {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
         A tuple of allowed operators. Or None to allow all known operators.
 
     Returns
@@ -130,7 +130,7 @@ def compare(
         Logical comparison operator.
     right : float, int, np.ndarray, or xr.DataArray
         A value or array-like being evaluated against left`.
-    constrain : sequence of str, optional
+    constrain : Sequence of {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
         Optionally allowed conditions.
 
     Returns
@@ -168,27 +168,28 @@ def spell_mask(
         The statistics to compute on the rolling window.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         The comparison operator to use when finding spells. Comparison is done as ``rolled_data {condition} thresh``.
-    thresh : float or sequence of floats or DataArray or sequence of DataArray
+    thresh : float or Sequence of floats or DataArray or Sequence of DataArray
         The threshold(s) to compare the rolling statistics against.
         If data is a list, this must be a list of the same length as ``data``, with a threshold for each variable.
         This function does not handle units and can't accept Quantified objects.
-    constrain : sequence of str, optional
+    constrain : Sequence of str, optional
         Optionally allowed conditions.
     min_gap : int
         The shortest possible gap between two spells.
         Spells closer than this are merged by assigning the gap steps to the merged spell.
-    weights : sequence of floats, optional
+    weights : Sequence of floats, optional
         A list of weights of the same length as the window.
         Only supported if ``window_statistic`` is ``"mean"``.
-    var_reducer : {'all', 'any'}
+    var_reducer : {"all", "any"}
         If the data is a list, the condition must either be fulfilled on *all*
         or *any* variables for the period to be considered a spell.
+        Default: "all".
 
     Returns
     -------
     xr.DataArray
-        Same shape as ``data``, but boolean.
-        If ``data`` was a list, this is a DataArray of the same shape as the alignment of all variables.
+        Same shape as `data`, but boolean.
+        If `data` was a list, this is a DataArray of the same shape as the alignment of all variables.
     """
     _singlevar = True
     # Checks
@@ -270,9 +271,9 @@ def detrend(ds: DataType, dim="time", deg=1) -> DataType:
     ds : xr.Dataset or xr.DataArray
       The data to detrend. If a Dataset, detrending is done on all data variables.
     dim : str
-      Dimension along which to compute the trend.
+      Dimension along which to compute the trend. Default: "time".
     deg : int
-      Degree of the polynomial to fit.
+      Degree of the polynomial to fit. Default: 1.
 
     Returns
     -------
@@ -348,7 +349,7 @@ def day_angle(time: xr.DataArray) -> xr.DataArray:
     return ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
 
 
-def solar_declination(time: xr.DataArray, method="spencer") -> xr.DataArray:
+def solar_declination(time: xr.DataArray, method: Literal["spencer", "simple"] = "spencer") -> xr.DataArray:
     """
     Solar declination.
 
@@ -359,11 +360,12 @@ def solar_declination(time: xr.DataArray, method="spencer") -> xr.DataArray:
     ----------
     time : xr.DataArray
         Time coordinate.
-    method : {'spencer', 'simple'}
-        Which approximation to use. The default ("spencer") uses the first seven (7) terms of the
+    method : {"spencer", "simple"}
+        Which approximation to use. "spencer" uses the first seven (7) terms of the
         Fourier series representing the observed declination, while "simple" assumes the orbit is
         a circle with a fixed obliquity and that the solstice/equinox happen at fixed angles on
         the orbit (the exact calendar date changes for leap years).
+        Default: "simple".
 
     Returns
     -------
@@ -437,10 +439,11 @@ def eccentricity_correction_factor(
     ----------
     time : xr.DataArray
         Time coordinate.
-    method : {'spencer', 'simple'}
+    method : {"spencer", "simple"}
         Which approximation to use.
-        The default ("spencer") uses the first five (5) terms of the fourier series of the eccentricity.
+        "spencer" uses the first five (5) terms of the fourier series of the eccentricity.
         The "simple" method approximates with only the first two (2).
+        Default: "spencer".
 
     Returns
     -------
@@ -474,7 +477,7 @@ def cosine_of_solar_zenith_angle(
     time: xr.DataArray,
     declination: xr.DataArray,
     lat: Quantified | xr.DataTree,
-    lon: Quantified = "0 °",
+    lon: Quantified = "0 deg",
     time_correction: xr.DataArray | None = None,
     stat: Literal["average", "integral", "instant"] = "average",
     sunlit: bool = False,
@@ -501,17 +504,19 @@ def cosine_of_solar_zenith_angle(
         Latitude coordinate. Expects units of "degree_north".
     lon : Quantified
         Longitude. Needed if the input timeseries is subdaily.
+        Default: "0 deg".
     time_correction : xr.DataArray, optional
         Time correction for solar angle. See :py:func:`time_correction_for_solar_angle`
         This is necessary if stat is "instant".
-    stat : {'average', 'integral', 'instant'}
+    stat : {"average", "integral", "instant"}
         Which daily statistic to return.
-        If "average", this returns the average of the cosine of the zenith angle
-        If "integral", this returns the integral of the cosine of the zenith angle
-        If "instant", this returns the instantaneous cosine of the zenith angle
+        If "average", this returns the average of the cosine of the zenith angle.
+        If "integral", this returns the integral of the cosine of the zenith angle.
+        If "instant", this returns the instantaneous cosine of the zenith angle.
+        Default: "average".
     sunlit : bool
         If True, only the sunlit part of the interval is considered in the integral or average.
-        Does nothing if stat is "instant".
+        Does nothing if stat is "instant". Default: False.
     chunks : dict
         When `time`,  `lat` and `lon` originate from coordinates of a large chunked dataset, this dataset's chunking
         can be passed here to ensure the computation is also chunked.
@@ -657,9 +662,11 @@ def extraterrestrial_solar_radiation(
         Latitude coordinate. Expects units of "degree_north".
     solar_constant : str
         The solar constant, the energy received on earth from the sun per surface per time.
-    method : {'spencer', 'simple'}
+        Default: "1361 W m-2".
+    method : {"spencer", "simple"}
         Which method to use when computing the solar declination and the eccentricity correction factor.
         See :py:func:`solar_declination` and :py:func:`eccentricity_correction_factor`.
+        Default: "spencer".
     chunks : dict
         When `times` and `lat` originate from coordinates of a large chunked dataset, passing the dataset's chunks here
         will ensure the computation is chunked as well.
@@ -705,14 +712,16 @@ def day_lengths(
         This function makes no sense with data of other time frequencies.
     lat : Quantified or xarray.Dataset or xarray.DataTree
         Latitude coordinate. Expects units of "degree_north".
-    method : {'spencer', 'simple'}
+    method : {"spencer", "simple"}
         Which approximation to use when computing the solar declination angle.
         See :py:func:`xclim.compute.helpers.solar_declination`.
+        Default: "spencer".
     infill_polar_days : bool
         Whether to use a mask of 24 hours for polar days and 0 hours for polar nights.
         If False, polar days and nights will be NaN.
         If True, they will be filled with 24 and 0 hours, respectively,
         dependent on latitude and solar declination at the given date.
+        Default: False.
 
     Returns
     -------
@@ -779,13 +788,15 @@ def huglin_day_length_latitude_coefficient(
 
     Parameters
     ----------
-    lat : xarray.DataArray, str
+    lat : xarray.DataArray or str
         Latitude coordinate. Expects units of "degree_north".
         If provided a string (e.g. "45 degree_north"), it is converted to an xarray.DataArray.
     method : {"huglin", "interpolated"}
         The method to use for the coefficient calculation.
+        Default: "interpolated".
     cap_value : float
         For latitudes north of 50° N and south of 50° S, the value for the coefficient.
+        Default: np.nan.
 
     Returns
     -------
@@ -794,7 +805,7 @@ def huglin_day_length_latitude_coefficient(
 
     Notes
     -----
-    For the original `"huglin"` implementation :cite:p:`huglin_nouveau_1978`, the day-length multiplication factor,
+    For the original "huglin" implementation :cite:p:`huglin_nouveau_1978`, the day-length multiplication factor,
     :math:`k`, is calculated as follows:
 
     .. math::
@@ -809,8 +820,8 @@ def huglin_day_length_latitude_coefficient(
                      m, & \text{if } | lat | > 50 \\
                      \end{cases}
 
-    An alternative implementation (`"interpolated"`) uses smoothing to reduce the stepwise behaviour of the
-    "huglin"` method. The day-length multiplication factor (:math:`k`) for the `"interpolated"` method then is
+    An alternative implementation ("interpolated") uses smoothing to reduce the stepwise behaviour of the
+    "huglin" method. The day-length multiplication factor (:math:`k`) for the "interpolated" method then is
     calculated as follows:
 
     .. math::
@@ -858,7 +869,7 @@ def huglin_day_length_latitude_coefficient(
 def gladstones_day_length_latitude_coefficient(
     dates: xr.DataArray,
     lat: xr.DataArray | int | float,
-    neutral_latitude: str = "40.0 deg",
+    neutral_latitude: str = "40 deg",
     constrain: str | None = None,
     day_length_method: Literal["simple", "spencer"] = "spencer",
 ) -> xr.DataArray:
@@ -881,13 +892,15 @@ def gladstones_day_length_latitude_coefficient(
         Latitudes between this value and 0 degrees North will have a coefficient below 1.0 during the growing season,
         while latitudes above this value will have a coefficient greater than 1.0.
         This negative absolute value of this latitude is used for calculating coefficients in the Southern Hemisphere.
+        Default: "40 deg".
     constrain : str, optional
         The lower latitude limit for applying the latitude coefficient.
-        If a str is given (e.g. '25 degree_north`), values below this threshold will be set to '1.0'.
-    day_length_method : {'simple', 'spencer'}
+        If a str is given (e.g. "25 degree_north"), values below this threshold will be set to "1.0".
+    day_length_method : {"simple", "spencer"}
         The method to use for the day length calculation.
         The "simple" method uses a simple approximation of the day length based on latitude and time of year.
         The "spencer" method uses a more complex approximation based on the Fourier series of the solar declination.
+        Default: "spencer".
 
     Returns
     -------
@@ -949,19 +962,21 @@ def jones_day_length_latitude_coefficient(
         If a single value is given, it is converted to an xarray.DataArray.
     method : {"gladstones", "jones"}
         The method to use for the coefficient calculation.
-        The "jones" method .
-        The "gladstones" method uses an approximation of the Gladstones methodology for day length latitude coefficient.
+        The "jones" method uses a temperature range adjustment and integrates axial tilt, latitude, and day-of-year
+        based on :cite:t:`hall_spatial_2010`.
+        The "gladstones" method uses a temperature range adjustment and a latitude coefficient
+        based on :cite:t:`gladstones_wine_2011`.
     floor : bool, optional
-        If True, latitudes where the day length latitude coefficient would be below '1.0', the value is set to '1.0'.
-        if False, coefficient can be below '1.0' for latitudes where the day length is less than the reference latitude.
-    start_date : DayOfYearStr, defaults to '04-01'
+        If True, latitudes where the day length latitude coefficient would be below "1.0", the value is set to "1.0".
+        if False, coefficient can be below "1.0" for latitudes where the day length is less than the reference latitude.
+    start_date : DayOfYearStr, defaults to "04-01"
         The start date of the growing season.
-    end_date : DayOfYearStr, defaults to '11-01'
+    end_date : DayOfYearStr, defaults to "11-01"
         The end date of the growing season. Date is not included in the aggregation.
     freq : {"YS", "YS-JAN", "YS-JUL"}
         The frequency at which to aggregate the day lengths.
         Must be an annual frequency, such as "YS" or "YS-JAN" (yearly start in January)
-        or "YS-JUL" (yearly start in July).
+        or "YS-JUL" (yearly start in July). Default: "YS".
 
     Returns
     -------
@@ -975,7 +990,7 @@ def jones_day_length_latitude_coefficient(
 
     Notes
     -----
-    For the `"jones"` method, A more robust day-length calculation based on latitude, calendar, day-of-year, and
+    For the "jones" method, a more robust day-length calculation based on latitude, calendar, day-of-year, and
     obliquity is used. This algorithm requires a calculation of the sum of the day lengths over the growing season
     at each latitude, :math:`totalSeasonDayLength_{Lat}`, which is then used to calculate the day length latitude
     coefficient :math:`k`:
@@ -1069,7 +1084,7 @@ def wind_speed_height_conversion(
     h_target : str
         Height of the output wind speed.
     method : {"log"}
-        Method used to convert wind speed from one height to another.
+        Method used to convert wind speed from one height to another. Default: "log".
 
     Returns
     -------
@@ -1170,6 +1185,7 @@ def resample_map(
         If False, this does not do anything special.
         If "from_context", xclim's "resample_map_blocks" option is used.
         If the object is not using dask, this is set to False.
+        Default: "from_context".
     resample_kwargs : dict, optional
         Other arguments to pass to `obj.resample()`.
     map_kwargs : dict, optional
@@ -1341,6 +1357,7 @@ def make_hourly_temperature(
         If False, polar days and nights will be NaN.
         If True, they will be filled with 24 and 0 hours, respectively,
         dependent on latitude and solar declination at the given date.
+        Default: False.
 
     Returns
     -------

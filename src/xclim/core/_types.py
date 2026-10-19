@@ -146,42 +146,42 @@ class InputKind(IntEnum):
 
     For developers: For each constant, the docstring specifies the annotation a parameter of a compute function
     should use in order to be picked up by the indicator constructor. Notice that we are using the annotation format
-    as described in `PEP 604 <https://peps.python.org/pep-0604/>`_, i.e. with '|' indicating a union and without import
+    as described in `PEP 604 <https://peps.python.org/pep-0604/>`_, i.e. with "|" indicating a union and without import
     objects from `typing`.
     """
 
     VARIABLE = 0
     """A data variable (DataArray or variable name).
 
-       Annotation : ``xr.DataArray``. May not include anything else, may not be optional.
+       Annotation : `xr.DataArray`. May not include anything else, may not be optional.
     """
     OPTIONAL_VARIABLE = 1
     """An optional data variable (DataArray or variable name).
 
-       Annotation : ``xr.DataArray | None``. The default should be None.
+       Annotation : `xr.DataArray | None`. The default should be None.
     """
     QUANTIFIED = 2
     """A quantity with units, either as a string (scalar), a pint.Quantity (scalar) or a DataArray (with units set).
 
-       Annotation : ``xclim.core.utils.Quantified`` and an entry in the :py:func:`xclim.core.units.declare_units`
-       decorator. "Quantified" translates to ``str | xr.DataArray | pint.util.Quantity``.
+       Annotation : `xclim.core.utils.Quantified` and an entry in the :py:func:`xclim.core.units.declare_units`
+       decorator. "Quantified" translates to `str | xr.DataArray | pint.util.Quantity`.
     """
     FREQ_STR = 3
     """A string representing an "offset alias", as defined by pandas.
 
        See the Pandas documentation on :ref:`timeseries.offset_aliases` for a list of valid aliases.
 
-       Annotation : ``str`` + ``freq`` as the parameter name.
+       Annotation : `str` + `freq` as the parameter name.
     """
     NUMBER = 4
     """A number.
 
-       Annotation : ``int``, ``float`` and unions thereof, potentially optional.
+       Annotation : `int`, `float` and unions thereof, potentially optional.
     """
     STRING = 5
     """A simple string.
 
-       Annotation : ``str`` or ``str | None``. In most cases, this kind of parameter makes sense
+       Annotation : `str` or `str | None`. In most cases, this kind of parameter makes sense
        with choices indicated in the docstring's version of the annotation with curly braces.
        See :ref:`notebooks/extendxclim:Defining new index-like compute functions`.
     """
@@ -198,7 +198,7 @@ class InputKind(IntEnum):
     NUMBER_SEQUENCE = 8
     """A sequence of numbers
 
-       Annotation : ``Sequence[int]``, ``Sequence[float]`` and unions thereof, may include single ``int`` and ``float``,
+       Annotation : `Sequence[int]`, `Sequence[float]` and unions thereof, may include single `int` and `float`,
        may be optional.
     """
     BOOL = 9
@@ -209,18 +209,18 @@ class InputKind(IntEnum):
     DICT = 10
     """A dictionary.
 
-       Annotation : ``dict`` or ``dict | None``, may be optional.
+       Annotation : `dict` or `dict | None`, may be optional.
     """
     MASK = 11
     """A mask or flag or scalar. Any value without units that might be passed as a non-temporal DataArray.
        Can be a DataArray, a single bool or a single float.
 
-        Annotation : ``xr.DataArray | bool`` or ``xr.DataArray | float``, may be optional.
+        Annotation : `xr.DataArray | bool` or `xr.DataArray | float`, may be optional.
     """
     KWARGS = 50
     """A mapping from argument name to value.
 
-       Developers : maps the ``**kwargs``. Please use as little as possible.
+       Developers : maps the `**kwargs`. Please use as little as possible.
     """
     DATASET = 70
     """An xarray dataset.
@@ -236,7 +236,7 @@ class InputKind(IntEnum):
 
 def infer_kind_from_parameter(param) -> InputKind:
     """
-    Return the appropriate InputKind constant from an ``inspect.Parameter`` object.
+    Return the appropriate InputKind constant from an `inspect.Parameter` object.
 
     Parameters
     ----------
@@ -270,6 +270,9 @@ def infer_kind_from_parameter(param) -> InputKind:
         return InputKind.OPTIONAL_VARIABLE
 
     if param.name == "freq":
+        return InputKind.FREQ_STR
+
+    if param.name == "subfreq":
         return InputKind.FREQ_STR
 
     if param.kind == param.VAR_KEYWORD:
@@ -337,7 +340,7 @@ def is_percentile_dataarray(source: xr.DataArray) -> bool:
     """
     Evaluate whether a DataArray is a Percentile.
 
-    A percentile DataArray must have 'climatology_bounds' attributes and either a
+    A percentile DataArray must have "climatology_bounds" attributes and either a
     quantile or percentiles coordinate, the window is not mandatory.
 
     Parameters

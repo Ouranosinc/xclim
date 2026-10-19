@@ -40,12 +40,12 @@ class AttrFormatter(string.Formatter):
 
     Parameters
     ----------
-    mapping : dict of str, sequence of str
+    mapping : dict
         A mapping from values to their possible variations.
-    modifiers : sequence of str
+    modifiers : list of str
         The list of modifiers.
         Must at least match the length of the longest value of `mapping`.
-        Cannot include reserved modifier 'r'.
+        Cannot include reserved modifier "r".
 
     Notes
     -----
@@ -67,7 +67,7 @@ class AttrFormatter(string.Formatter):
         modifiers : list of str
             The list of modifiers.
             Must at least match the length of the longest value of `mapping`.
-            Cannot include reserved modifier 'r'.
+            Cannot include reserved modifier "r".
         """
         super().__init__()
         if "r" in modifiers:
@@ -98,12 +98,12 @@ class AttrFormatter(string.Formatter):
                 kwargs.update({k: v})
         return super().format(format_string, *args, **kwargs)
 
-    def format_field(self, value, format_spec: str) -> str:
+    def format_field(self, value: Any, format_spec: str) -> str:
         """
         Format a value given a formatting spec.
 
         If `format_spec` is in this Formatter's modifiers, the corresponding variation
-        of value is given. If `format_spec` is 'r' (raw), the value is returned unmodified.
+        of value is given. If `format_spec` is "r" (raw), the value is returned unmodified.
         If `format_spec` is not specified but `value` is in the mapping, the first variation is returned.
 
         Parameters
@@ -121,7 +121,7 @@ class AttrFormatter(string.Formatter):
         Examples
         --------
         Let's say the string "The dog is {adj1}, the goose is {adj2}" is to be translated
-        to French and that we know that possible values of `adj` are `nice` and `evil`.
+        to French and that we know that possible values of "adj" are "nice" and "evil".
         In French, the genre of the noun changes the adjective (cat = chat is masculine,
         and goose = oie is feminine) so we initialize the formatter as:
 
@@ -236,7 +236,7 @@ default_formatter = AttrFormatter(
 
 def merge_attributes(
     attribute: str,
-    *inputs_list,  # : xr.DataArray | xr.Dataset
+    *inputs_list: xr.DataArray | xr.Dataset,
     new_line: str = "\n",
     missing_str: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
@@ -255,10 +255,11 @@ def merge_attributes(
         Inputs given that way will be prefixed by their `name` attribute if available.
     new_line : str
         The character to put between each instance of the attributes. Usually, in CF-conventions,
-        the history attributes uses '\\n' while cell_methods uses ' '.
-    missing_str : str
-        A string that is printed if an input doesn't have the attribute. Defaults to None, in which
-        case the input is simply skipped.
+        the history attributes uses "\\n" while cell_methods uses " ".
+        Default: "\n".
+    missing_str : str, optional
+        A string that is printed if an input doesn't have the attribute.
+        If None the input is simply skipped.
     **inputs_kws : xr.DataArray or xr.Dataset
         Mapping from names to the datasets or variables that were used to produce the new object.
         Inputs given that way will be prefixes by the passed name.
@@ -278,7 +279,7 @@ def merge_attributes(
         if attribute in in_ds.attrs or missing_str is not None:
             if in_name is not None and len(inputs) > 1:
                 merged_attr += f"{in_name}: "
-            merged_attr += in_ds.attrs.get(attribute, "" if in_name is None else missing_str)
+            merged_attr += in_ds.attrs.get(attribute, "" if in_name is None or missing_str is None else missing_str)
             merged_attr += new_line
 
     if len(new_line) > 0:
@@ -288,7 +289,7 @@ def merge_attributes(
 
 def update_history(
     hist_str: str,
-    *inputs_list,  # : xr.DataArray | xr.Dataset,
+    *inputs_list: xr.DataArray | xr.Dataset,
     new_name: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
 ) -> str:
@@ -444,7 +445,7 @@ def prefix_attrs(source: dict, keys: Sequence, prefix: str) -> dict:
     ----------
     source : dict
         Source dictionary, for example data attributes.
-    keys : sequence
+    keys : Sequence
         Names of keys to prefix.
     prefix : str
         Prefix to prepend to keys.
@@ -471,7 +472,7 @@ def unprefix_attrs(source: dict, keys: Sequence, prefix: str) -> dict:
     ----------
     source : dict
         Source dictionary, for example data attributes.
-    keys : sequence
+    keys : Sequence
         Names of original keys for which prefix should be removed.
     prefix : str
         Prefix to remove from keys.
@@ -537,6 +538,7 @@ def capitalize_free_text(text, sep=". "):
     sep : str
         The separator indicating the end and the beginning of sentences,
         in addition to the first letter of the text.
+        Default: ". ".
 
     Returns
     -------

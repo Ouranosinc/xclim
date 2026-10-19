@@ -179,16 +179,16 @@ def test_timeseries(
     variable : str
         The name of the DataArray.
     start : str
-        The start date of the time dimension. Default is "2000-07-01".
-    units : str or None
+        The start date of the time dimension. Default: "2000-07-01".
+    units : str, optional
         The units of the DataArray. Default is None.
-    freq : str
-        The frequency of the time dimension. Default is daily/"D".
+    freq : Freq
+        The frequency of the time dimension. Default: "D".
     as_dataset : bool
-        Whether to return a Dataset or a DataArray. Default is False.
-    cftime : bool
-        Whether to use cftime or not. Default is None, which uses cftime only for non-standard calendars.
-    calendar : str or None
+        Whether to return a Dataset or a DataArray. Default: False.
+    cftime : bool, optional
+        Whether to use cftime or not. None uses cftime only for non-standard calendars.
+    calendar : str, optional
         Whether to use a calendar. If a calendar is provided, cftime is used.
 
     Returns

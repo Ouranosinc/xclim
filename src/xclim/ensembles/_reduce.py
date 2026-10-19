@@ -23,7 +23,7 @@ from sklearn.cluster import KMeans
 MPL_INSTALLED = bool(_util.find_spec("matplotlib"))
 
 
-def make_criteria(ds: xarray.Dataset | xarray.DataArray):
+def make_criteria(ds: xarray.Dataset | xarray.DataArray) -> xarray.DataArray:
     """
     Reshape the input into a criteria 2D DataArray.
 
@@ -121,24 +121,26 @@ def kkz_reduce_ensemble(
     Parameters
     ----------
     data : xr.DataArray
-        Selection criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and 'criteria' (P).
+        Selection criteria data : 2-D xr.DataArray with dimensions "realization" (N) and "criteria" (P).
         These are the values used for clustering. Realizations represent the individual original
         ensemble members and criteria the variables/indicators used in the grouping algorithm.
     num_select : int
         The number of members to select.
     dist_method : str
         Any distance metric name accepted by `scipy.spatial.distance.cdist`.
+        Default: "euclidean".
     standardize : bool
         Whether to standardize the input before running the selection or not.
         Standardization consists in translation as to have a zero mean and scaling as to have a unit
         standard deviation.
+        Default: True.
     **cdist_kwargs : Any
         All extra arguments are passed as-is to `scipy.spatial.distance.cdist`, see its docs for more information.
 
     Returns
     -------
     list
-        Selected model indices along the `realization` dimension.
+        Selected model indices along the "realization" dimension.
 
     References
     ----------
@@ -196,8 +198,8 @@ def kmeans_reduce_ensemble(
     Parameters
     ----------
     data : xr.DataArray
-        Selection criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
-        'criteria' (P). These are the values used for clustering. Realizations represent the individual original
+        Selection criteria data : 2-D xr.DataArray with dimensions "realization" (N) and
+        "criteria" (P). These are the values used for clustering. Realizations represent the individual original
         ensemble members and criteria the variables/indicators used in the grouping algorithm.
     method : dict, optional
         Dictionary defining selection method and associated value when required. See Notes.
@@ -206,7 +208,7 @@ def kmeans_reduce_ensemble(
         Defaults to True if matplotlib is installed in the runtime environment.
     max_clusters : int, optional
         Maximum number of members to include in the output ensemble selection.
-        When using 'rsq_optimize' or 'rsq_cutoff' methods, limit the final selection to a maximum number
+        When using "rsq_optimize" or 'rsq_cutoff' methods, limit the final selection to a maximum number
         even if method results indicate a higher value. Defaults to N.
     variable_weights : np.ndarray, optional
         An array of size P.
@@ -232,7 +234,7 @@ def kmeans_reduce_ensemble(
     np.ndarray
         KMeans clustering results.
     dict
-        Dictionary of input data for creating R² profile plot. 'None' when make_graph=False.
+        Dictionary of input data for creating R² profile plot. "None" when make_graph=False.
 
     Notes
     -----

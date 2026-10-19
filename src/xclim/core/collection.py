@@ -167,7 +167,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
 
         Parameters
         ----------
-        indicators : dict of Indicator
+        indicators : dict
             Indicators to put in the new collection.
         name : str, optional
             The name of the module.
@@ -197,15 +197,15 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         encoding: str = "UTF8",
         validate: bool | PathLike = True,
         register: bool = False,
-    ):
+    ) -> IndicatorCollection:
         """
         Build an indicator collection from a YAML file.
 
-        When given only a base filename (no 'yml' extension), this tries to find custom indicators in a module
+        When given only a base filename (no "yml" extension), this tries to find custom indicators in a module
         of the same name (*.py) and translations in json files (*.<lang>.json), see Notes.
 
         Indicator created here will have the name of the module prepended to their identifier (ex: `{mod}.{baseId}`).
-        The base identifier being the key name within the `indicators` mapping in the yaml.
+        The base identifier being the key name within the "indicators" mapping in the yaml.
 
         Parameters
         ----------
@@ -213,24 +213,26 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
             Path to a YAML file or to the stem of all module files.
             See Notes for behaviour when passing a basename only.
         name : str, optional
-            The name of the new or existing module, defaults to the basename of the file (e.g: `atmos.yml` -> `atmos`).
-        computes : Mapping of callables or module or path, optional
+            The name of the new or existing module, defaults to the basename of the file (e.g: "atmos.yml" -> "atmos").
+        computes : dict, optional
             A mapping or module of compute functions or a python file declaring such a module. When creating the
             indicator, the name in the `compute` field is first sought here, then the indicator class will search
             in :py:mod:`xclim.compute.generic` and finally in :py:mod:`xclim.compute`.
-        translations : Mapping of dicts or path, optional
+        translations : dict, optional
             Translated metadata for the new indicators. Keys of the mapping must be two-character language tags.
             Values can be translations dictionaries as defined in :py:mod:`xclim.core.locales`.
             They can also be a path to a JSON file defining the translations.
-        mode : {'raise', 'warn', 'ignore'}
-            How to deal with broken indicator definitions.
+        mode : {"raise", "warn", "ignore"}
+            How to deal with broken indicator definitions. Default: "raise".
         encoding : str
-            The encoding used to open the `.yaml` and `.json` files.
-            It defaults to UTF-8, overriding python's mechanism which is machine dependent.
+            The encoding used to open the .yaml and .json files.
+            It overrides python's mechanism which is machine dependent.
+            Default: "UTF8".
         validate : bool or PathLike
-            If True (default), the yaml module is validated against the `xclim` schema.
+            If True, the yaml module is validated against the xclim schema.
             Can also be the path to a YAML schema against which to validate;
             Or False, in which case validation is simply skipped.
+            Default: True.
         register : bool
             If True, the indicators created here are registered in xclim's indicators registry
             :py:data:`~xclim.core.indicator.registry` upon creation, using the collection's name
@@ -238,6 +240,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
             Defaults to False, making collections independent from xclim's registry.
             This does not change the behaviour of registering new variables, which are always added
             to xclim's central :py:data:`xclim.core.VARIABLES`.
+            Default: False.
 
         Returns
         -------

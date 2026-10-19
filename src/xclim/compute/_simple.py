@@ -55,8 +55,8 @@ def tg_max(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -87,8 +87,8 @@ def tg_mean(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -128,8 +128,8 @@ def tg_min(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -160,8 +160,8 @@ def tn_max(tasmin: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     ----------
     tasmin : xarray.DataArray
         Minimum daily temperature.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -192,8 +192,8 @@ def tn_mean(tasmin: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     ----------
     tasmin : xarray.DataArray
         Minimum daily temperature.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -224,8 +224,8 @@ def tn_min(tasmin: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     ----------
     tasmin : xarray.DataArray
         Minimum daily temperature.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -256,8 +256,8 @@ def tx_max(tasmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     ----------
     tasmax : xarray.DataArray
         Maximum daily temperature.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -288,8 +288,8 @@ def tx_mean(tasmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     ----------
     tasmax : xarray.DataArray
         Maximum daily temperature.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -320,8 +320,8 @@ def tx_min(tasmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     ----------
     tasmax : xarray.DataArray
         Maximum daily temperature.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -357,9 +357,9 @@ def hot_days(
     tasmax : xarray.DataArray
         Maximum daily temperature.
     thresh : Quantified
-        Threshold temperature.
-    freq : str
-        Resampling frequency.
+        Threshold temperature. Default: "25 degC".
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -395,9 +395,9 @@ def frost_days(
     tasmin : xarray.DataArray
         Minimum daily temperature.
     thresh : Quantified
-        Freezing temperature.
-    freq : str
-        Resampling frequency.
+        Freezing temperature. Default: "0 degC".
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -429,9 +429,9 @@ def ice_days(tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: Freq
     tasmax : xarray.DataArray
         Maximum daily temperature.
     thresh : Quantified
-        Freezing temperature.
-    freq : str
-        Resampling frequency.
+        Freezing temperature. Default: "0 degC".
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -462,8 +462,8 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: Freq = "YS") -> xa
     ----------
     pr : xarray.DataArray
         Daily precipitation values.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -505,9 +505,9 @@ def max_n_day_precipitation_amount(
     pr : xarray.DataArray
         Daily precipitation values.
     window : int
-        Window size in days.
-    freq : str
-        Resampling frequency.
+        Window size in days. Default 1.
+    freq : Freq
+        Resampling frequency. Default: "YS".
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         The subset is taken after the N-day sum, thus including data from up to ``window -1``
@@ -548,9 +548,9 @@ def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: Freq = "YS", *
     pr : xarray.DataArray
         Hourly precipitation values.
     window : int
-        Window size in hours.
-    freq : str
-        Resampling frequency.
+        Window size in hours. Default: 1.
+    freq : Freq
+        Resampling frequency. Default: "YS".
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         The subset is taken after the N-hour average, thus including data from up to ``window - 1``
@@ -594,8 +594,8 @@ def snow_depth(
     ----------
     snd : xarray.DataArray
         Mean daily snow depth.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -617,8 +617,8 @@ def sfcWind_max(sfcWind: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArra
     ----------
     sfcWind : xarray.DataArray
         Mean daily wind speed.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -658,8 +658,8 @@ def sfcWind_mean(sfcWind: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArr
     ----------
     sfcWind : xarray.DataArray
         Mean daily wind speed.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -699,8 +699,8 @@ def sfcWind_min(sfcWind: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArra
     ----------
     sfcWind : xarray.DataArray
         Mean daily wind speed.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -740,8 +740,8 @@ def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: Freq = "YS") -> xarray.Da
     ----------
     sfcWindmax : xarray.DataArray
         Maximum daily wind speed.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -780,8 +780,8 @@ def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: Freq = "YS") -> xarray.D
     ----------
     sfcWindmax : xarray.DataArray
         Maximum daily wind speed.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -820,8 +820,8 @@ def sfcWindmax_min(sfcWindmax: xarray.DataArray, freq: Freq = "YS") -> xarray.Da
     ----------
     sfcWindmax : xarray.DataArray
         Maximum daily wind speed.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------

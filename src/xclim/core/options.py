@@ -116,7 +116,7 @@ def register_missing_method(name: str) -> Callable:
     return _register_missing_method
 
 
-def run_check(func, option, *args, **kwargs):
+def run_check(func: Callable, option: str, *args: tuple, **kwargs: dict):
     r"""
     Run function and customize exception handling based on option.
 
@@ -197,28 +197,29 @@ class set_options:  # numpydoc ignore=PR01,PR02
     metadata_locales : list[Any]
         List of IETF language tags or tuples of language tags and a translation dict, or
         tuples of language tags and a path to a json file defining translation of attributes.
-        Default: ``[]``.
+        Default: [].
     data_validation : {"log", "raise", "error"}
         Whether to "log", "raise" an error or 'warn' the user on inputs that fail the data checks in
-        :py:func:`xclim.core.datachecks`. Default: ``"raise"``.
+        :py:func:`xclim.core.datachecks`. Default: "raise".
     cf_compliance : {"log", "raise", "error"}
         Whether to "log", "raise" an error or "warn" the user on inputs that fail the CF compliance checks in
-        :py:func:`xclim.core.cfchecks`. Default: ``"warn"``.
+        :py:func:`xclim.core.cfchecks`. Default: "warn".
     check_missing : {"any", "wmo", "pct", "at_least_n", "skip"}
         How to check for missing data and flag computed indicators.
         Available methods are "any", "wmo", "pct", "at_least_n" and "skip".
         Missing method can be registered through the `xclim.core.options.register_missing_method` decorator.
-        Default: ``"any"``
+        Default: "any".
     missing_options : dict
         Dictionary of options to pass to the missing method. Keys must the name of
         missing method and values must be mappings from option names to values.
     run_length_ufunc : str
         Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
-        Default is ``"auto"``, which means the latter is used for dask-backed and large arrays.
+        "auto" means the latter is used for dask-backed and large arrays.
+        Default: "auto".
     as_dataset : bool
         If True, indicators output datasets. If False, they output DataArrays or tuple of DataArrays.
         The output dataset inherits attributes from the input dataset (if any) according to xarray's
-        ``keep_attrs`` option, which defaults to preserving attributes. Default :``True``.
+        `keep_attrs` option, which defaults to preserving attributes. Default: True.
     resample_map_blocks : bool
         If True, some indicators will wrap their resampling operations with `xr.map_blocks`,
         using :py:func:`xclim.compute.helpers.resample_map`.
@@ -226,7 +227,7 @@ class set_options:  # numpydoc ignore=PR01,PR02
 
     Examples
     --------
-    You can use ``set_options`` either as a context manager:
+    You can use `set_options` either as a context manager:
 
     >>> import xclim
     >>> ds = xr.open_dataset(path_to_tas_file).tas

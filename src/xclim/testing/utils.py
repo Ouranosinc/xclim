@@ -22,7 +22,7 @@ from importlib.metadata import PackageNotFoundError
 from io import StringIO
 from pathlib import Path
 from shutil import copytree
-from typing import IO, Any, TextIO
+from typing import IO, Any, Literal, TextIO
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
 from urllib.request import urlretrieve
@@ -155,7 +155,7 @@ def list_input_variables(submodules: Sequence[str] | None = None, realms: Sequen
 
     Parameters
     ----------
-    submodules : str, optional
+    submodules : Sequence of str, optional
         Restrict the output to indicators of a list of submodules only. Default None, which parses all indicators.
     realms : Sequence of str, optional
         Restrict the output to indicators of a list of realms only. Default None, which parses all indicators.
@@ -202,7 +202,7 @@ def list_input_variables(submodules: Sequence[str] | None = None, realms: Sequen
 
 
 def publish_release_notes(
-    style: str = "md",
+    style: Literal["rst", "md"] = "md",
     file: os.PathLike[str] | StringIO | TextIO | None = None,
     changes: str | os.PathLike[str] | None = None,
 ) -> str | None:
@@ -213,15 +213,15 @@ def publish_release_notes(
     ----------
     style : {"rst", "md"}
         Use ReStructuredText formatting or Markdown. Default: Markdown.
-    file : {os.PathLike, StringIO, TextIO}, optional
+    file : os.PathLike of str or StringIO or TextIO, optional
         If provided, prints to the given file-like object. Otherwise, returns a string.
-    changes : str or os.PathLike[str], optional
+    changes : str or os.PathLike of str, optional
         If provided, manually points to the file where the changelog can be found.
         Assumes a relative path otherwise.
 
     Returns
     -------
-    str, optional
+    str or None
         If `file` not provided, the formatted release notes.
 
     Notes
@@ -296,7 +296,7 @@ def show_versions(
 
     Parameters
     ----------
-    file : {os.PathLike, StringIO, TextIO}, optional
+    file : os.PathLike or StringIO or TextIO, optional
         If provided, prints to the given file-like object. Otherwise, returns a string.
     deps : list of str, optional
         A list of dependencies to gather and print version information from.
@@ -461,7 +461,7 @@ def nimbus(
     branch: str = TESTDATA_BRANCH,
     cache_dir: str | Path | None = TESTDATA_CACHE_DIR,
     allow_updates: bool = True,
-):
+) -> pooch.Pooch:
     """
     Pooch registry instance for xclim test data.
 
@@ -474,7 +474,7 @@ def nimbus(
     cache_dir : str or Path, optional
         The path to the directory where the data files are stored.
     allow_updates : bool
-        If True, allow updates to the data files. Default is True.
+        If True, allow updates to the data files. Default: True.
 
     Returns
     -------
@@ -484,13 +484,13 @@ def nimbus(
     Notes
     -----
     There are three environment variables that can be used to control the behaviour of this registry:
-        - ``XCLIM_TESTDATA_CACHE_DIR``: If this environment variable is set, it will be used as the
+        - `XCLIM_TESTDATA_CACHE_DIR`: If this environment variable is set, it will be used as the
           base directory to store the data files.
-          The directory should be an absolute path (i.e., it should start with ``/``).
-          Otherwise, the default location will be used (based on ``platformdirs``, see :py:func:`pooch.os_cache`).
-        - ``XCLIM_TESTDATA_REPO_URL``: If this environment variable is set, it will be used as the URL of
+          The directory should be an absolute path (i.e., it should start with "/").
+          Otherwise, the default location will be used (based on `platformdirs`, see :py:func:`pooch.os_cache`).
+        - `XCLIM_TESTDATA_REPO_URL`: If this environment variable is set, it will be used as the URL of
           the repository to use when fetching datasets. Otherwise, the default repository will be used.
-        - ``XCLIM_TESTDATA_BRANCH``: If this environment variable is set, it will be used as the branch of
+        - `XCLIM_TESTDATA_BRANCH`: If this environment variable is set, it will be used as the branch of
           the repository to use when fetching datasets. Otherwise, the default branch will be used.
 
     Examples
@@ -573,7 +573,7 @@ def open_dataset(name: str, nimbus_kwargs: dict[str, Any] | None = None, **xr_kw
     ----------
     name : str
         Name of the file containing the dataset.
-    nimbus_kwargs : dict
+    nimbus_kwargs : dict, optional
         Keyword arguments passed to the nimbus function.
     **xr_kwargs : Any
         Keyword arguments passed to xarray.open_dataset.
@@ -606,9 +606,9 @@ def populate_testing_data(
     ----------
     temp_folder : Path, optional
         Path to a temporary folder to use as the local cache. If not provided, the default location will be used.
-    repo : str, optional
+    repo : str
         URL of the repository to use when fetching testing datasets.
-    branch : str, optional
+    branch : str
         Branch of xclim-testdata to use when fetching testing datasets.
     local_cache : Path or str, optional
         The path to the local cache. Defaults to the location set by the platformdirs library.

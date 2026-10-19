@@ -25,7 +25,7 @@ def spatial_analogs(
     method: Literal[
         "seuclidean", "nearest_neighbor", "zech_aslan", "kolmogorov_smirnov", "friedman_rafsky", "kldiv"
     ] = "kldiv",
-    **kwargs,
+    **kwargs: Any,
 ):
     r"""
     Compute dissimilarity statistics between target points and candidate points.
@@ -43,11 +43,11 @@ def spatial_analogs(
     candidates : xr.Dataset
         Dataset of the candidate indicators. Only indicator variables should be included in
         the dataset's `data_vars`.
-    dist_dim : str
-        The dimension over which the *distributions* are constructed. This can be a multi-index dimension.
+    dist_dim : str or Sequence of str
+        The dimension over which the *distributions* are constructed. This can be a multi-index dimension. Default: "time".
     method : {"seuclidean", "nearest_neighbor", "zech_aslan", "kolmogorov_smirnov", "friedman_rafsky", "kldiv"}
-        Which method to use when computing the dissimilarity statistic.
-    **kwargs : dict
+        Which method to use when computing the dissimilarity statistic. Default: "kldiv".
+    **kwargs : Any
         Any other parameter passed directly to the dissimilarity method.
 
     Returns
@@ -123,25 +123,25 @@ def standardize(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
     Returns
     -------
-    (ndarray, ndarray)
+    tuple of ndarray and ndarray
         Standardized arrays.
     """
     s = np.sqrt(x.std(0, ddof=1) * y.std(0, ddof=1))
     return x / s, y / s
 
 
-def metric(func: Callable):
+def metric(func: Callable[..., Any]) -> Callable[..., Any]:
     """
     Register a metric function in the `metrics` mapping and add some preparation/checking code.
 
     Parameters
     ----------
-    func : callable
+    func : Callable
         The metric function to be registered.
 
     Returns
     -------
-    callable
+    Callable
         The metric function with some overhead code.
 
     Notes
@@ -229,7 +229,7 @@ def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
     Returns
     -------
-    float
+    np.ndarray
         Nearest-Neighbor dissimilarity metric ranging from 0 to 1.
 
     References
@@ -514,13 +514,13 @@ def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1) -> float 
         Samples from distribution P, which typically represents the true distribution (reference).
     y : np.ndarray (m,d)
         Samples from distribution Q, which typically represents the approximate distribution (candidate).
-    k : int or sequence
+    k : int or Sequence of int
         The kth neighbours to look for when estimating the density of the distributions.
         Defaults to 1, which can be noisy.
 
     Returns
     -------
-    float or sequence
+    float or Sequence of float
         The estimated Kullback-Leibler divergence D(P||Q) computed from the distances to the kth neighbour.
 
     Notes

@@ -70,8 +70,8 @@ def expected_count(
     **indexer,
 ) -> xr.DataArray:
     """
-    Get expected number of step of length ``src_timestep`` per each resampling period
-    ``freq`` that ``time`` covers.
+    Get expected number of step of length `src_timestep` per each resampling period
+    `freq` that "time" covers.
 
     The determination of the resampling periods intersecting with the input array are
     done following xarray's and pandas' heuristics. The input coordinate needs not be
@@ -81,9 +81,9 @@ def expected_count(
     ----------
     time : xr.DataArray, optional
         Input time coordinate from which the final resample time coordinate is guessed.
-    freq : str, optional.
+    freq : Freq, optional.
         Resampling frequency. If not given or None, the count for the full time range is returned.
-    src_timestep : str, Optional
+    src_timestep : Freq, Optional
         The expected input frequency. If not given, it will be inferred from the input array.
     **indexer : Indexer
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
@@ -166,12 +166,12 @@ class MissingBase:
     r"""
     Base class used to determined where Indicator outputs should be masked.
 
-    Subclasses should implement the ``is_missing``, ``validate`` and ``__init__``
-    methods. The ``__init__`` is to be implemented in order to change the docstring
+    Subclasses should implement the `is_missing`, `validate` and `__init__`
+    methods. The `__init__` is to be implemented in order to change the docstring
     and signature but is not expected to do anything other than the validation
-    of the options, everything else should happen in the call (i.e. ``is_missing``).
-    Subclasses can also override the ``_validate_src_timestep`` method to add restrictions
-    on allowed values. That method should return False on invalid ``src_timestep``.
+    of the options, everything else should happen in the call (i.e. `is_missing`).
+    Subclasses can also override the `_validate_src_timestep` method to add restrictions
+    on allowed values. That method should return False on invalid `src_timestep`.
 
     Decorate subclasses with `xclim.core.options.register_missing_method` to add them
     to the registry before using them in an Indicator.
@@ -189,7 +189,7 @@ class MissingBase:
 
         Parameters
         ----------
-        **options : dict
+        **options : Any
             Optional arguments.
 
         Returns
@@ -209,7 +209,7 @@ class MissingBase:
         da : xr.DataArray
             Input data.
         **indexer : {dim: indexer}, optional
-            The time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+            The time attribute and values over which to subset the array. For example, use season="DJF" to select winter
             values, month=1 to select January, or month=[6,7,8] to select summer months.
             See :py:func:`xclim.core.calendar.select_time`.
 
@@ -237,16 +237,16 @@ class MissingBase:
 
         Parameters
         ----------
-        valid : DataArray
+        valid : xr.DataArray
             Boolean array of valid values (that has already been indexed).
-        count : DataArray
+        count : xr.DataArray
             Indexer-aware integer array of number of expected elements at the resampling frequency.
-        freq : str or None
+        freq : Freq or None
             The resampling frequency, or None if the temporal dimension is to be collapsed.
 
         Returns
         -------
-        DataArray
+        xr.DataArray
             Boolean array at the resampled frequency,
             True on the periods that should be considered missing.
         """
@@ -266,19 +266,19 @@ class MissingBase:
         ----------
         da : xr.DataArray
             Input data, must have a "time" coordinate.
-        freq : str, optional
+        freq : Freq, optional
             Resampling frequency. If None, a collapse of the temporal dimension is assumed.
-        src_timestep : str, optional
+        src_timestep : Freq, optional
             The expected source input frequency. If not given, it will be inferred from the input array.
         **indexer : Indexer
-            Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+            Time attribute and values over which to subset the array. For example, use season="DJF" to select winter
             values, month=1 to select January, or month=[6,7,8] to select summer months.
             If not indexer is given, all values are considered.
             See :py:func:`xclim.core.calendar.select_time`.
 
         Returns
         -------
-        DataArray
+        xr.DataArray
             Boolean array at the resampled frequency,
             True on the periods that should be considered missing or invalid.
         """
@@ -365,19 +365,19 @@ class MissingTwoSteps(MissingBase):
         ----------
         da : xr.DataArray
             Input data, must have a "time" coordinate.
-        freq : str, optional
+        freq : Freq, optional
             Target resampling frequency. If None, a collapse of the temporal dimension is assumed.
-        src_timestep : str, optional
+        src_timestep : Freq, optional
             The expected source input frequency. If not given, it will be inferred from the input array.
         **indexer : Indexer
-            Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+            Time attribute and values over which to subset the array. For example, use season="DJF" to select winter
             values, month=1 to select January, or month=[6,7,8] to select summer months.
             If no indexer is given, all values are considered.
             See :py:func:`xclim.core.calendar.select_time`.
 
         Returns
         -------
-        DataArray
+        xr.DataArray
             Boolean array at the resampled frequency,
             True on the periods that should be considered missing or invalid.
         """
@@ -421,8 +421,10 @@ class MissingWMO(MissingTwoSteps):
         ----------
         nm : int
             Minimal number of missing elements for a month to be masked.
+            Default: 11.
         nc : int
             Minimal number of consecutive missing elements for a month to be masked.
+            Default: 5.
         """
         super().__init__(nm=nm, nc=nc, subfreq="MS")
 
@@ -466,8 +468,8 @@ class MissingPct(MissingTwoSteps):
         ----------
         tolerance: float
             The maximum tolerated proportion of missing values,
-            given as a number between 0 and 1.
-        subfreq : str, optional
+            given as a number between 0 and 1. Default: 0.1.
+        subfreq : Freq, optional
             If given, computes a mask at this frequency using this method and
             then resample at the target frequency using the "any" method on subgroups.
         """
@@ -502,8 +504,8 @@ class AtLeastNValid(MissingTwoSteps):
         Parameters
         ----------
         n: float
-            The minimum number of valid values needed.
-        subfreq : str, optional
+            The minimum number of valid values needed. Default: 20.
+        subfreq : Freq, optional
             If given, computes a mask at this frequency using this method and
             then resample at the target frequency using the "any" method on subgroups.
         """
@@ -585,12 +587,12 @@ def missing_from_context(da: xr.DataArray, freq: Freq, src_timestep: Freq | None
     ----------
     da : xr.DataArray
         Input data, must have a "time" coordinate.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency. If absent, a collapse of the temporal dimension is assumed.
-    src_timestep : str, optional
+    src_timestep : Freq, optional
         The expected source input frequency. If not given, it will be inferred from the input array.
     **indexer : Indexer
-        Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+        Time attribute and values over which to subset the array. For example, use season="DJF" to select winter
         values, month=1 to select January, or month=[6,7,8] to select summer months.
         If not indexer is given, all values are considered.
         See :py:func:`xclim.core.calendar.select_time`.

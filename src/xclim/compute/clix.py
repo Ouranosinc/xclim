@@ -76,7 +76,7 @@ def count_level_crossings(
         Variable that must be above the threshold.
     threshold : Quantified
         Threshold.
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
@@ -118,7 +118,7 @@ def count_occurrences(
         Threshold.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         Logical comparison operator.
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
@@ -160,7 +160,7 @@ def count_percentile_occurrences(
         Logical comparison operator.
     reference_period : tuple of two dates
         Start and end of the period used to compute the percentiles. Dates are given as YYYY-MM-DD.
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         This function only makes sense with annual frequencies.
 
@@ -217,7 +217,7 @@ def count_thresholded_percentile_occurrences(
         Logical comparison operator to find percentile occurrences on filtered data.
     reference_period : tuple of two dates
         Start and end of the period used to compute the percentiles. Dates are given as YYYY-MM-DD.
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         This function only makes sense with annual frequencies.
 
@@ -258,7 +258,7 @@ def diurnal_temperature_range(
         The highest daily temperature (tasmax).
     statistic : {"min", "max", "mean", "std", "var", "sum"}
         Reducer over the resampling period.
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
@@ -284,7 +284,7 @@ def extreme_temperature_range(low_data: xr.DataArray, high_data: xr.DataArray, f
         The lowest daily temperature (tasmin).
     high_data : xr.DataArray
         The highest daily temperature (tasmax).
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
@@ -318,7 +318,7 @@ def first_occurrence(
         Threshold.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         Logical comparison operator.
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     after_date : DayOfYearStr, optional
         Earliest day the occurrence can be found.
@@ -360,7 +360,7 @@ def interday_diurnal_temperature_range(low_data: xr.DataArray, high_data: xr.Dat
         The lowest data.
     high_data : xr.DataArray
         The highest data.
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
@@ -394,7 +394,7 @@ def last_occurrence(
         Threshold.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         Logical comparison operator.
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     before_date : DayOfYearStr, optional
         Latest day the occurrence can be found.
@@ -427,7 +427,7 @@ def percentile(data: xr.DataArray, per: float, freq: Freq):
         An array.
     per : float
         A percentile (0, 100).
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
@@ -454,7 +454,7 @@ def running_statistics(
         The running statistic. The result is assigned to the window's center.
     overall_statistic : {"min", "max", "mean", "std", "var", "sum"}
         Reducer over the resampling period.
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         Resampling is done after computing the running statistics.
 
@@ -499,7 +499,7 @@ def spell_length(
         Logical comparison operator.
     statistic : {"min", "max", "mean", "std", "var", "sum"}
         Spell lengths reducer over the resampling period.
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
@@ -529,7 +529,7 @@ def statistics(data: xr.DataArray, statistic: Reducer, freq: Freq):
         Input data.
     statistic : {"min", "max", "mean", "std", "var", "sum"}
         Reducer over the resampling period.
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
@@ -558,7 +558,7 @@ def temperature_sum(data: xr.DataArray, threshold: Quantified, condition: Condit
         Threshold.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         Logical comparison operator.
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
@@ -594,7 +594,7 @@ def thresholded_percentile(
         Logical comparison operator.
     per : float
         A percentile (0, 100).
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
@@ -637,7 +637,7 @@ def thresholded_running_statistics(
         Size of the rolling window (centered).
     overall_statistic : {"min", "max", "mean", "std", "var", "sum"}
         Reducer over the resampling period.
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         Applied after the rolling window.
 
@@ -683,7 +683,7 @@ def thresholded_statistics(
         Logical comparison operator.
     statistic : {"min", "max", "mean", "std", "var", "sum"}
         Reducer over the resampling period.
-    freq : str
+    freq : Freq
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns

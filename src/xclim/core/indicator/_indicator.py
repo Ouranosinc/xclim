@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from functools import reduce
 from inspect import _empty as _empty_default
 from itertools import zip_longest
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import xarray
@@ -25,6 +25,7 @@ import xclim.core.locales as xloc
 from xclim.core import (
     KIND_ANNOTATION,
     VARIABLES,
+    Freq,
     InputKind,
     MissingVariableError,
     ValidationError,
@@ -35,6 +36,7 @@ from xclim.core import (
 from xclim.core.calendar import parse_offset, select_time
 from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.formatting import (
+    AttrFormatter,
     capitalize_free_text,
     default_formatter,
     gen_call_string,
@@ -273,7 +275,7 @@ class Output:  # numpydoc ignore=PR01
         attrs :  dict, optional
             Attributes describing the metadata, which will be added as attribute on the compute DataArray.
             Usually, indicators will set `standard_name` (if there's one), `long_name` and `description`.
-        **attrs_kwargs
+        **attrs_kwargs : Any
             Attributes can also be passed as kwargs.
         """
         self.var_name = var_name
@@ -306,7 +308,7 @@ class Output:  # numpydoc ignore=PR01
             "units_metadata": self.units_metadata,
         }
 
-    def get(self, key, default=None):
+    def get(self, key: str, default: Any | None = None) -> Any:
         """
         Convenience method to access any metadata element.
 
@@ -316,15 +318,15 @@ class Output:  # numpydoc ignore=PR01
         ----------
         key : str
             Name of the metadata element (or attribute) to return.
-            If ``key`` is not one of ``var_name``, ``dimensionality``,
-            ``units`` or ``units_metadata`` it is searched in ``self.attrs``.
-        default : any
+            If `key` is not one of "var_name", "dimensionality",
+            "units" or "units_metadata" it is searched in `self.attrs`.
+        default : Any, optional
             If the key is not found, default value to return.
 
         Returns
         -------
-        any
-            The corresponding value, or ``default`` if the key isn't found.
+        Any
+            The corresponding value, or `default` if the key isn't found.
         """
         if key in self.meta:
             return self.meta[key]
@@ -365,6 +367,7 @@ class Output:  # numpydoc ignore=PR01
         multiple_returns: bool
             If True and the `var_name` is defined, it is added at the beginning of the string.
             The numpydoc style forbids adding an output name if there's only one output.
+            Default: bool.
 
         Returns
         -------
@@ -419,19 +422,19 @@ class IndexWrapper:  # numpydoc ignore=PR01
     outputs: list[Output]  # Returns section
     """List of output metadata."""
 
-    def __new__(cls, compute):
+    def __new__(cls, compute: Callable) -> IndexWrapper:
         """
         Create an IndexWrapper from a compute function.
 
         Parameters
         ----------
-        compute : callable
+        compute : Callable
           A function, annotated, documentated and wrapped by :py:func:`xclim.core.units.declare_units`
           as explained in :ref:`notebooks/extendxclim:Defining new index-like compute functions`.
 
         Returns
         -------
-        dict
+        IndexWrapper
           Metadata extracted from the function.
         """
         doc = parse_from_object(compute)
@@ -502,8 +505,8 @@ class IndexWrapper:  # numpydoc ignore=PR01
                 compute_name=compute_name,
                 units=units,
                 description=description,
-                choices=choices,
-                annotation=annotation,
+                choices=choices,  # type: ignore[arg-type]
+                annotation=annotation,  # type: ignore[arg-type]
             )
 
         # Parse outputs
@@ -555,7 +558,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
         return len(self.outputs)
 
     @property
-    def parameters(self) -> Mapping[str, Parameter]:
+    def parameters(self) -> dict[str, Parameter]:
         """
         Dictionary of controllable (non-injected) parameters.
 
@@ -569,7 +572,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
         return {name: param for name, param in self._all_parameters.items() if not param.injected}
 
     @property
-    def injected_parameters(self) -> Mapping[str, Any]:
+    def injected_parameters(self) -> dict[str, Any]:
         """
         Dictionary of all injected parameters (values).
 
@@ -752,13 +755,13 @@ class IndicatorBase(IndexWrapper):
         return {}
 
     @classmethod
-    def _update_parameters(cls, parameters, new_params, var_mapping):
+    def _update_parameters(cls, parameters: dict, new_params: dict, var_mapping: dict) -> tuple[dict, dict]:
         """
         Merge parent input parameters with passed specifications, rename variables.
 
         Parameters
         ----------
-        parameters : dict of Parameters
+        parameters : dict
             Dict of :py:class:`~xclim.core.indicator.Parameter` objects.
         new_params : dict
             Dict of parameters overrides passed to the indicator constructor (as `parameters`).
@@ -825,13 +828,13 @@ class IndicatorBase(IndexWrapper):
         return parameters, new_units
 
     @classmethod
-    def _ensure_correct_parameters(cls, parameters):
+    def _ensure_correct_parameters(cls, parameters: dict) -> dict:
         """
         Ensure all input parameters are correct.
 
         Parameters
         ----------
-        parameters : dict of Parameters
+        parameters : dict
             Dict of :py:class:`xclim.core.indicator.Parameter` objects.
 
         Returns
@@ -851,7 +854,7 @@ class IndicatorBase(IndexWrapper):
         return dict(sorted(parameters.items(), key=sortkey))
 
     @classmethod
-    def _update_outputs(cls, outputs, new_outputs):
+    def _update_outputs(cls, outputs: list[Output], new_outputs: list[dict] | list[Output] | dict) -> list[Output]:
         """
         Merge parent output attributes with passed specifications.
 
@@ -876,7 +879,7 @@ class IndicatorBase(IndexWrapper):
         return [(oo | nn) for oo, nn in zip_longest(outputs, new_outputs, fillvalue=Output())]
 
     @classmethod
-    def _ensure_correct_outputs(cls, outputs, identifier):
+    def _ensure_correct_outputs(cls, outputs: list[Output], identifier: str | None) -> list[Output]:
         """
         Ensure all output attributes are correct.
 
@@ -884,12 +887,12 @@ class IndicatorBase(IndexWrapper):
         ----------
         outputs : list of Output
             List of :py:class:`Output` objects.
-        identifier : str, optional
+        identifier : str or None
             Identifier of the indicator.
 
         Returns
         -------
-        list
+        list of Output
             Same as `outputs`, potentially modified.
         """
         # For single output, var_name defaults to identifier.
@@ -1023,7 +1026,7 @@ class IndicatorBase(IndexWrapper):
 
         Parameters
         ----------
-        outs : list
+        outs : list of xr
             List of the output DataArrays.
         das : dict
             Dictionary of variable (DataArray) inputs.
@@ -1051,9 +1054,9 @@ class IndicatorBase(IndexWrapper):
 
         Parameters
         ----------
-        outs : list
+        outs : list or xr.DataArray
             List of the output DataArrays.
-        das : dict
+        das : dict or str and xr.DataArray
             Dictionary of variable (DataArray) inputs.
         params : dict
             Dictionary of non-variable inputs.
@@ -1248,7 +1251,14 @@ class _MetadataFormatter(_DataTreeIterator):
                 mba[param.compute_name] = mba[name]
         return mba
 
-    def _format_attrs(self, attrs, fmtargs, meta=None, var_name=None, formatter=default_formatter):
+    def _format_attrs(
+        self,
+        attrs: dict[str, str],
+        fmtargs: dict[str, Any],
+        meta: dict | None = None,
+        var_name: str | None = None,
+        formatter: AttrFormatter = default_formatter,
+    ) -> dict[str, str]:
         """
         Format attributes with the run-time values of `compute` call parameters.
 
@@ -1267,6 +1277,7 @@ class _MetadataFormatter(_DataTreeIterator):
             The name of the variable of which the attributed are being formatted.
         formatter : AttrFormatter
             Plaintext mappings for indicator attributes.
+            Defaults to `default_formatter`.
 
         Returns
         -------
@@ -1290,7 +1301,7 @@ class _MetadataFormatter(_DataTreeIterator):
 
         Parameters
         ----------
-        args : mapping, optional
+        args : dict, optional
             Arguments as passed to the call method of the indicator.
             If not given, the default arguments will be used when formatting the attributes.
 
@@ -1434,7 +1445,7 @@ class _InputChecker(_DeprecationWarner):
                     )
         return das, params, meta
 
-    def cfcheck(self, **das) -> None:
+    def cfcheck(self, **das: DataArray) -> None:
         r"""
         Compare metadata attributes to CF-Convention standards.
 
@@ -1446,7 +1457,7 @@ class _InputChecker(_DeprecationWarner):
 
         Parameters
         ----------
-        **das : dict
+        **das : xr.DataArray
             A dictionary of DataArrays to check.
         """
         for varname, vardata in das.items():
@@ -1457,7 +1468,7 @@ class _InputChecker(_DeprecationWarner):
                 # Silently ignore unknown variables.
                 pass
 
-    def datacheck(self, **das) -> None:
+    def datacheck(self, **das: DataArray) -> None:
         r"""
         Verify that input data is valid.
 
@@ -1470,7 +1481,7 @@ class _InputChecker(_DeprecationWarner):
 
         Parameters
         ----------
-        **das : dict
+        **das : DataArray
             A dictionary of DataArrays to check.
 
         Raises
@@ -1670,15 +1681,15 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
         compute: Callable | None = None,
         title: str | None = None,
         abstract: str | None = None,
-        realm: str | None = None,
+        realm: Literal["atmos", "convert", "seaIce", "land", "ocean"] | None = None,
         keywords: list[str] | None = None,
         references: str | None = None,
         notes: str | None = None,
         input: dict | None = None,
         parameters: dict | None = None,
-        outputs: dict | None = None,
+        outputs: list[dict] | list[Output] | None = None,
         context: str = "none",
-        src_freq: str | list[str] | None = None,
+        src_freq: Freq | list[Freq] | None = None,
         register: bool = True,
         **outputs_kwargs,
     ):
@@ -1689,12 +1700,12 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
         ----------
         identifier : str, optional
             Unique ID for this indicator. Single-output indicator will use this as their output variable
-            name if no `var_name`is passed to the first element of `attrs`.
+            name if no `var_name` is passed to the first element of `attrs`.
             Unless ``register`` is False, indicators are registered to :py:data:`xclim.core.indicator.registry`,
             using this ID. The registry is case-insensitive.
             When defining indicators in a python module, it can be helpful to use the same name in the code as the
             identifier, to avoid confusion between the two, especially for collections and translations.
-        compute : func, optional
+        compute : Callable, optional
             The function computing the indicators. It should return one or more DataArray.
             Metadata will first be parsed from it as much as possible.
         title : str, optional
@@ -1703,7 +1714,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
         abstract : str, optional
             A long description of what is in the computed outputs.
             Parsed from `compute` docstring if None (second paragraph).
-        realm : {'atmos', 'convert', 'seaIce', 'land', 'ocean'}, optional
+        realm : {"atmos", "convert", "seaIce", "land", "ocean"}, optional
             General domain of validity of the indicator.
         keywords : list of strings, optional
             Keywords.
@@ -1721,19 +1732,21 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
             Overrides for the parameters. Either value to "inject", removing that parameter from the call signature,
             or dictionaries of properties to override the ones parsed from the docstring.
             See :py:class:`~xclim.core.indicator.Parameter` for valid properties. Additionally,
-            `name` can be passed to change the name of the argument in the call signature.
+            "name" can be passed to change the name of the argument in the call signature.
         outputs : list of dict or list of Output
             Metadata for the computation's output : name, units and attributes.
             Any attribute are accepted, but giving a `var_name` is required for multi-output indicators.
             The list must be the same length as the number of outputs of the compute function.
         context : str
             A `pint` unit context enabled during the computation of this indicator.
-            For example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day' for all inputs an outputs.
-        src_freq : str or sequence of str, optional
+            For example use "hydro" to allow conversion from "kg m-2 s-1" to "mm/day" for all inputs an outputs.
+            Default: "none".
+        src_freq : Freq or Sequence of Freq, optional
             The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
         register : bool
             If True (default), the indicator is registered into the :py:data:`registry` dictionary of indicators
             using its identifier as key.
+            Default: True.
         **outputs_kwargs
             For convenience, output attributes and metadata can also be passed by name to the constructor.
         """  # numpydoc ignore=PR01,PR02
@@ -1760,7 +1773,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
         cls,
         identifier: str | None = None,
         register: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ) -> Indicator:
         """
         Create a new indicator by copying and modifying this indicator, similar to subclassing.
@@ -1770,13 +1783,14 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
 
         Parameters
         ----------
-        identifier : str
+        identifier : str, optional
             Unique ID for this indicator. Identifier are never inherited from their parent.
             This must be set if `register` is True.
         register : bool
             Whether to register this new indicator in the :py:data:`registry`.
             Must be set to False is `identifier` is not given.
-        **kwargs
+            Default: True.
+        **kwargs : Any
             All other arguments that :py:meth:`Indicator.__init__` accepts.
 
         Returns

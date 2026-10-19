@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Literal, TypeGuard, cast
+from typing import Literal, cast
 
 import numpy as np
 import xarray
@@ -81,9 +81,9 @@ def corn_heat_units(
     tasmax : xarray.DataArray
         Maximum daily temperature.
     thresh_tasmin : Quantified
-        The minimum temperature threshold needed for corn growth.
+        The minimum temperature threshold needed for corn growth. Default: "4.44 degC".
     thresh_tasmax : Quantified
-        The maximum temperature threshold needed for corn growth.
+        The maximum temperature threshold needed for corn growth. Default: "10 degC".
 
     Returns
     -------
@@ -183,16 +183,20 @@ def huglin_index(
         between 40° and 50° based on :cite:t:`huglin_nouveau_1978`.
         The "interpolated" method uses a smoothed curve latitude coefficient for values
         based on the intervals set in :cite:t:`huglin_nouveau_1978`.
-        The "jones" method integrates axial tilt, latitude, and day-of-year based on :cite:t:`hall_spatial_2010`.
+        The "jones" method uses a temperature range adjustment and integrates axial tilt, latitude, and day-of-year
+        based on :cite:t:`hall_spatial_2010`.
+        Default: "huglin".
     cap_value : float
         The value to use for the latitude coefficient when latitude is above 50°N or below 50°S.
-        Only applicable for methods "huglin" and "interpolated" (default: 1.0).
-    start_date : DayOfYearStr, defaults to '04-01'
+        Only applicable for methods "huglin" and "interpolated".
+        Default: 1.0.
+    start_date : DayOfYearStr, defaults to "04-01"
         The hemisphere-based start date to consider (north = April, south = October).
-    end_date : DayOfYearStr, defaults to '10-01'
+    end_date : DayOfYearStr, defaults to "10-01"
         The hemisphere-based start date to consider (north = October, south = April). This date is non-inclusive.
-    freq : str
-        Resampling frequency (default: "YS"; For Southern Hemisphere, should be "YS-JUL").
+    freq : {"YS", "YS-JAN", "YS-JUL"}
+        Resampling frequency (For Southern Hemisphere, should be "YS-JUL").
+        Default: "YS".
 
     Returns
     -------
@@ -212,7 +216,7 @@ def huglin_index(
 
     There are a few methods provided for calculating the day-length multiplication factor (:math:`k`) based on latitude:
 
-    - For the `"huglin"` and `"interpolated"` methods, values for k increase from `1.0` at 40°N or 40°S to `1.06` at 50°N or 50°S,
+    - For the "huglin"` and `"interpolated"` methods, values for k increase from `1.0` at 40°N or 40°S to `1.06` at 50°N or 50°S,
       where the `interpolated` method uses a smoothed curve and the `huglin` method uses a stepwise function.
       Values above 50°N or below 50°S are set via the `cap_value` variable, with `1.0` set as default.
       See: :py:func:`xclim.compute.helpers.huglin_day_length_latitude_coefficient` for more information.
@@ -227,24 +231,6 @@ def huglin_index(
     ----------
     :cite:cts:`huglin_nouveau_1978,hall_spatial_2010`
     """
-    Method = Literal["huglin", "interpolated", "jones"]
-
-    def is_valid_method(value: str) -> TypeGuard[Method]:
-        """
-        Check whether ``value`` is a supported method name.
-
-        Parameters
-        ----------
-        value : str
-            Method name to validate.
-
-        Returns
-        -------
-        bool
-            True if `value` is one of `"huglin"`, `"interpolated"`, or `"jones"`, otherwise ``False``.
-        """
-        return value in {"huglin", "interpolated", "jones"}
-
     if not isinstance(freq, str):
         raise TypeError("Freq must be a string.")
 
@@ -258,9 +244,9 @@ def huglin_index(
     k: int | xarray.DataArray = 1
     k_aggregated: xarray.DataArray | None = None
 
-    method_name = method.lower()
+    method = method.lower()  # type: ignore[assignment]
 
-    if not is_valid_method(method_name):
+    if method not in {"huglin", "interpolated", "jones"}:
         raise NotImplementedError(
             "Method is not implemented. Only 'huglin', 'interpolated', and 'jones' are supported."
         )
@@ -270,13 +256,13 @@ def huglin_index(
     if end_date == "default":
         end_date = DayOfYearStr("10-01")
 
-    if method_name in ["huglin", "interpolated"]:
-        k = huglin_day_length_latitude_coefficient(lat, method=method_name, cap_value=cap_value)
-    elif method_name == "jones":
+    if method in ["huglin", "interpolated"]:
+        k = huglin_day_length_latitude_coefficient(lat, method=method, cap_value=cap_value)
+    elif method == "jones":
         k_aggregated = jones_day_length_latitude_coefficient(
             dates=tas.time,
             lat=lat,
-            method=method_name,
+            method=method,
             start_date=start_date,
             end_date=end_date,
             freq=freq,
@@ -332,7 +318,7 @@ def biologically_effective_degree_days(
         Latitude coordinate.
         If None and method is not "icclim", a CF-conformant "latitude" field must be available within the passed DataArray.
     thresh_tasmin : Quantified
-        The minimum temperature threshold.
+        The minimum temperature threshold. Default: "10 degC".
     method : {"gladstones", "huglin", "icclim", "interpolated", "jones"}
         The formula to use for the daily temperature range and latitude coefficient.
         The "gladstones" method uses a temperature range adjustment and a latitude coefficient
@@ -349,22 +335,28 @@ def biologically_effective_degree_days(
         The "jones" method uses a temperature range adjustment and integrates axial tilt, latitude,
         and day-of-year based on :cite:t:`hall_spatial_2010`.
         End_date should be "11-01" for the Northern Hemisphere.
+        Default: "gladstones".
     cap_value : float
         The value to use for the latitude coefficient for latitudes north of 50°N or south of 50°S.
         Only applicable for methods "huglin" and "interpolated".
+        Default: 1.0.
     low_dtr : Quantified
         The lower bound for daily temperature range adjustment.
+        Default: "10 degC".
     high_dtr : Quantified
         The higher bound for daily temperature range adjustment.
+        Default: "13 degC".
     max_daily_degree_days : Quantified
         The maximum number of biologically effective degrees days that can be summed daily.
-    start_date : DayOfYearStr, defaults to '04-01'
+        Default: "9 degC".
+    start_date : DayOfYearStr, defaults to "04-01"
         The hemisphere-based start date to consider (north = April, south = October).
-    end_date : DayOfYearStr, defaults to '11-01'
+    end_date : DayOfYearStr, defaults to "11-01"
         The hemisphere-based start date to consider (north = October, south = April).
         This date is non-inclusive.
-    freq : str
+    freq : {"YS", "YS-JAN", "YS-JUL"}
         Resampling frequency (For Southern Hemisphere, should be "YS-JUL").
+        Default: "YS".
 
     Returns
     -------
@@ -484,7 +476,7 @@ def biologically_effective_degree_days(
 @declare_units(tasmin="[temperature]")
 def cool_night_index(
     tasmin: xarray.DataArray,
-    lat: xarray.DataArray | str | None = None,
+    lat: xarray.DataArray | Literal["north", "south"] | None = None,
     freq: Literal["YS", "YS-JAN"] = "YS",
 ) -> xarray.DataArray:
     """
@@ -501,7 +493,7 @@ def cool_night_index(
         Latitude coordinate as an array, float or string.
         If None, a CF-conformant "latitude" field must be available within the passed DataArray.
     freq : {"YS", "YS-JAN"}
-        Resampling frequency.
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -593,6 +585,7 @@ def dryness_index(  # numpydoc ignore=SS05
         The initial soil water reserve accessible to root systems [length]. Default: 200 mm.
     freq : {"YS", "YS-JAN"}
         Resampling frequency.
+        Default: "YS".
 
     Returns
     -------
@@ -781,8 +774,8 @@ def latitude_temperature_index(
         If None, a CF-conformant "latitude" field must be available within the passed DataArray.
     lat_factor : float
         Latitude factor. Maximum poleward latitude. Default: 75.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -843,7 +836,7 @@ def rain_season(
     method_dry_end: Literal["per_day", "total"] = "per_day",
     date_min_end: DayOfYearStr | Literal["default"] | None = "default",
     date_max_end: DayOfYearStr | Literal["default"] | None = "default",
-    freq="YS-JAN",
+    freq: Freq = "YS-JAN",
 ) -> tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray]:
     """
     Find the length of the rain season and the day of year of its start and its end.
@@ -859,50 +852,58 @@ def rain_season(
         Precipitation data.
     thresh_wet_start : Quantified
         Accumulated precipitation threshold associated with `window_wet_start`.
+        Default: "20.0 mm".
     window_wet_start : int
         Number of days when accumulated precipitation is above `thresh_wet_start`.
-        Defines the first condition to start the rain season.
+        Defines the first condition to start the rain season. Default: 3.
     window_not_dry_start : int
         Number of days, after `window_wet_start` days, during which no dry period must be found as a second and last
         condition to start the rain season.
         A dry sequence is defined with `thresh_dry_start`, `window_dry_start` and `method_dry_start`.
+        Default: 30.
     thresh_dry_start : Quantified
         Threshold length defining a dry day in the sequence related to `window_dry_start`.
+        Default: "1.0 mm".
     window_dry_start : int
         Number of days used to define a dry sequence in the start of the season.
         Daily precipitations lower than `thresh_dry_start` during `window_dry_start` days are considered a dry sequence.
         The precipitations must be lower than `thresh_dry_start` for either every day in the sequence
         (`method_dry_start == "per_day"`) or for the total (`method_dry_start == "total"`).
+        Default: 7.
     method_dry_start : {"per_day", "total"}
         Method used to define a dry sequence associated with `window_dry_start`.
         The threshold `thresh_dry_start` is either compared to every daily precipitation
         (`method_dry_start == "per_day"`) or to total precipitations (`method_dry_start == "total"`) in the sequence
         `window_dry_start` days.
-    date_min_start : DayOfYearStr, optional, defaults to '05-01'
+        Default: "per_day".
+    date_min_start : DayOfYearStr, optional, defaults to "05-01"
         First day of year when season can start ("mm-dd").
         Setting `None` removes that constraint.
-    date_max_start : DayOfYearStr, optional, defaults to '12-31'
+    date_max_start : DayOfYearStr, optional, defaults to "12-31"
         Last day of year when season can start ("mm-dd").
         Setting `None` removes that constraint.
-    thresh_dry_end : str
+    thresh_dry_end : Quantified
         Threshold length defining a dry day in the sequence related to `window_dry_end`.
+        Default: "0.0 mm".
     window_dry_end : int
         Number of days used to define a dry sequence in the end of the season.
         Daily precipitations lower than `thresh_dry_end` during `window_dry_end` days are considered a dry sequence.
         The precipitations must be lower than `thresh_dry_end` for either every day in the sequence
         (`method_dry_end == "per_day"`) or for the total (`method_dry_end == "total"`).
+        Default: 20.
     method_dry_end : {"per_day", "total"}
         Method used to define a dry sequence associated with `window_dry_end`.
         The threshold `thresh_dry_end` is either compared to every daily precipitation (`method_dry_end == "per_day"`)
         or to total precipitations (`method_dry_end == "total"`) in the sequence `window_dry` days.
-    date_min_end : DayOfYearStr, optional, defaults to '09-01'
+        Default: "per_day".
+    date_min_end : DayOfYearStr, optional, defaults to "09-01"
         First day of year when season can end ("mm-dd").
         Setting `None` removes that constraint.
-    date_max_end : DayOfYearStr, optional, defaults to '12-31'
+    date_max_end : DayOfYearStr, optional, defaults to "12-31"
         Last day of year when season can end ("mm-dd").
         Setting `None` removes that constraint.
-    freq : str
-      Resampling frequency.
+    freq : Freq
+      Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -1053,28 +1054,32 @@ def standardized_precipitation_index(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    freq : str, optional
-        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes
+    freq : Freq, optional
+        Resampling frequency. A monthly, weekly, or daily frequency is expected. Option `None` assumes
         that the desired resampling has already been applied input dataset and will skip the resampling step.
+        Default: "MS".
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    dist : {'gamma', 'fisk', 'genextreme', 'lognorm'} or `rv_continuous` function
-        Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
+        Default: 1.
+    dist : {"gamma", "fisk", "genextreme", "lognorm"} or scipy.stats.rv_continuous
+        Name of the univariate distribution, or a callable scipy.stats.rv_continuous (see :py:mod:`scipy.stats`).
+        Default: "gamma".
     method : {"APP", "ML", "PWM"}
-        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
+        Name of the fitting method, such as "ML" (maximum likelihood), "APP" (approximate). The approximate method
         uses a deterministic function that does not involve any optimization, which can be sensitive to noise.
-        `PWM` should be used with a `lmoments3` distribution.
+        "PWM" should be used with a `lmoments3` distribution.
+        Default: "ML".
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
-        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
+        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist="gamma"` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
     cal_end : DateStr, optional
         End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period finishes at the end of the input dataset.
-    params : xarray.DataArray
+    params : xarray.DataArray, optional
         Fit parameters.
         The `params` can be computed using ``xclim.compute.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
@@ -1085,12 +1090,14 @@ def standardized_precipitation_index(
         method "upper" assigns the upper bound of the zero-rank interval. The "center" method assigns the
         midpoint of the zero-rank interval. If a float in [0, 1] is provided, it is used as a linear interpolation
         factor between the lower (0) and upper (1) zero-rank plotting positions.
-    plotting_position_zero : {"ecdf", "weibull"} or tuple[float, float]
+        Default: "upper".
+    plotting_position_zero : {"ecdf", "weibull"} or tuple of float and float
         Method used to assign a probability to a rank for the zeros (only used if `zero_inflated` is True).
         "ecdf" (default option) is the empirical cumulative distribution and divides the number or zeros
         by the total number of observations. "weibull" implements the unbiased version, dividing by the
         total number of observation plus one. A tuple consisting of two coefficients in [0,1] to relate the
         number of zeros and the total number of observations. "ecdf" corresponds to (0,1)  and "weibull" to (0,0).
+        Default: "ecdf".
         See :py:func:`scipy.stats.mstats.plotting_positions`
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
@@ -1174,7 +1181,7 @@ def standardized_precipitation_index(
         freq=freq,
         window=window,
         dist=dist,
-        method=method,
+        method=method,  # type: ignore[arg-type]
         zero_inflated=zero_inflated,
         fitkwargs=fitkwargs,
         cal_start=cal_start,
@@ -1215,21 +1222,25 @@ def standardized_precipitation_evapotranspiration_index(
     ----------
     wb : xarray.DataArray
         Daily water budget (pr - pet).
-    freq : str, optional
-        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes
+    freq : Freq, optional
+        Resampling frequency. A monthly, weekly, or daily frequency is expected. Option `None` assumes
         that the desired resampling has already been applied input dataset and will skip the resampling step.
+        Default: "MS".
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly
         resampling, the window is an integer number of months.
-    dist : {'gamma', 'fisk', 'genextreme', 'lognorm'} or `rv_continuous` function
-        Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
+        Default: 1.
+    dist : {"gamma", "fisk", "genextreme", "lognorm"} or scipy.stats.rv_continuous
+        Name of the univariate distribution, or a callable scipy.stats.rv_continuous (see :py:mod:`scipy.stats`).
+        Default: "gamma".
     method : {"APP", "ML", "PWM"}
-        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
+        Name of the fitting method, such as "ML" (maximum likelihood), "APP" (approximate). The approximate method
         uses a deterministic function that does not involve any optimization, which can be sensitive to noise.
-        `PWM` should be used with a `lmoments3` distribution.
+        "PWM" should be used with a `lmoments3` distribution.
+        Default: "ML".
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
-        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
+        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist="gamma"` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1276,7 +1287,7 @@ def standardized_precipitation_evapotranspiration_index(
         freq=freq,
         window=window,
         dist=dist,
-        method=method,
+        method=method,  # type: ignore[arg-type]
         zero_inflated=zero_inflated,
         fitkwargs=fitkwargs,
         cal_start=cal_start,
@@ -1359,19 +1370,19 @@ def effective_growing_degree_days(
     tasmin : xr.DataArray
         Daily minimum temperature.
     thresh : Quantified
-        The minimum temperature threshold.
+        The minimum temperature threshold. Default: "5 degC".
     method : {"bootsma", "qian"}
         The window method used to determine the temperature-based start date.
         For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold.
-        For "qian", the start date is based on a weighted 5-day rolling average,
-        based on :py:func`qian_weighted_mean_average`.
-    after_date : DayOfYearStr, optional, defaults to '07-01'
-        Date of the year after which to look for the first frost event. Should have the format '%m-%d'.
+        For "qian", the start date is based on a weighted 5-day rolling average, based on :py:func`qian_weighted_mean_average`.
+        Default: "bootsma".
+    after_date : DayOfYearStr, optional, defaults to "07-01"
+        Date of the year after which to look for the first frost event. Should have the format "%m-%d".
         Setting `None` removes that constraint.
     dim : str
-        Time dimension.
-    freq : str
-        Resampling frequency.
+        Time dimension. Default: "time".
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -1435,7 +1446,7 @@ def effective_growing_degree_days(
 
 
 @declare_units(tasmin="[temperature]")
-def hardiness_zones(  # numpydoc ignore=SS05
+def hardiness_zones(
     tasmin: xarray.DataArray, window: int = 30, method: Literal["usda", "anbg"] = "usda", freq: Freq = "YS"
 ):
     """
@@ -1450,11 +1461,12 @@ def hardiness_zones(  # numpydoc ignore=SS05
     tasmin : xr.DataArray
         Minimum temperature.
     window : int
-        The length of the averaging window, in years.
+        The length of the averaging window, in years. Default: 30.
     method : {"usda", "anbg"}
         Whether to return the American (`usda`) or the Australian (`anbg`) classification zones.
-    freq : str
-        Resampling frequency.
+        Default: "usda".
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -1545,8 +1557,8 @@ def chill_portions(tas: xarray.DataArray, freq: Freq = "YS", **indexer) -> xarra
     ----------
     tas : xr.DataArray
         Hourly temperature.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
@@ -1599,9 +1611,9 @@ def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: Freq =
     tas : xr.DataArray
         Hourly temperature.
     positive_only : bool
-        If `True`, only positive daily chill units are aggregated.
-    freq : str
-        Resampling frequency.
+        If `True`, only positive daily chill units are aggregated. Default: False.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -1644,7 +1656,9 @@ def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: Freq =
 
 
 @declare_units(tas="[precipitation]")
-def precipitation_concentration_index(pr: xarray.DataArray, freq: str = "YS", subfreq: str = "MS") -> xarray.DataArray:
+def precipitation_concentration_index(
+    pr: xarray.DataArray, freq: Freq = "YS", subfreq: Freq = "MS"
+) -> xarray.DataArray:
     r"""
     Precipitation Concentration Index.
 
@@ -1656,10 +1670,10 @@ def precipitation_concentration_index(pr: xarray.DataArray, freq: str = "YS", su
     ----------
     pr : xr.DataArray
         Precipitation flux or rate, with units convertible to a precipitation unit (e.g. ``"mm/day"``).
-    freq : str
-        Resampling frequency for the output (main period). Default is ``"YS"`` (yearly).
-    subfreq : str
-        Resampling frequency for computing sub-period totals. Default is ``"MS"`` (monthly).
+    freq : Freq
+        Resampling frequency for the output (main period). Default: "YS".
+    subfreq : Freq
+        Resampling frequency for computing sub-period totals. Default: "MS".
 
     Returns
     -------

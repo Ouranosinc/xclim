@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from glob import glob
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 import xarray as xr
@@ -28,13 +28,16 @@ _quantile_params = {
     "normal_unbiased": (3 / 8, 3 / 8),
 }
 
+DatasetInput: TypeAlias = xr.Dataset | xr.DataArray | Path | str
+DatasetsInput: TypeAlias = list[DatasetInput | list[Path | str] | str]
+
 
 def create_ensemble(
-    datasets: Any,
+    datasets: DatasetsInput | dict[str, DatasetInput],
     multifile: bool = False,
     resample_freq: Freq | None = None,
     calendar: str | None = None,
-    realizations: Sequence[Any] | None = None,
+    realizations: Sequence | None = None,
     cal_kwargs: dict | None = None,
     **xr_kwargs,
 ) -> xr.Dataset:
@@ -50,8 +53,8 @@ def create_ensemble(
 
     Parameters
     ----------
-    datasets : list or dict or str
-        List of netcdf file paths or xarray Dataset/DataArray objects . If `multifile` is True, ncfiles should be a
+    datasets : list of xr.Dataset or list of xr.DataArray or list of Path of list of str or list of list of str or str or dict
+        List of netcdf file paths or xr.Dataset or xr.DataArray objects . If `multifile` is True, ncfiles should be a
         list of lists where each sublist contains input .nc files of an xarray multifile Dataset.
         If DataArray objects are passed, they should have a name in order to be transformed into Datasets.
         A dictionary can be passed instead of a list, in which case the keys are used as coordinates along the new
@@ -60,7 +63,7 @@ def create_ensemble(
     multifile : bool
         If True, climate simulations are treated as xarray multifile Datasets before concatenation.
         Only applicable when "datasets" is sequence of list of file paths. Default: False.
-    resample_freq : Optional[str]
+    resample_freq : Freq, optional
         If the members of the ensemble have the same frequency but not the same offset,
         they cannot be properly aligned.
         If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
@@ -68,8 +71,8 @@ def create_ensemble(
         The calendar of the time coordinate of the ensemble.
         By default, the biggest calendar (in number of days by year) is chosen.
         For example, a mixed input of "noleap" and "360_day" will default to "noleap".
-        'default' is the standard calendar using np.datetime64 objects (xarray's "standard" with `use_cftime=False`).
-    realizations : sequence, optional
+        "default" is the standard calendar using np.datetime64 objects (xarray's "standard" with `use_cftime=False`).
+    realizations : Sequence, optional
         The coordinate values for the new `realization` axis.
         If None (default), the new axis has a simple integer coordinate.
         This argument shouldn't be used if `datasets` is a glob pattern as the dataset order is random.
@@ -106,19 +109,24 @@ def create_ensemble(
         # Simulation 2 is also a list of .nc files:
         datasets.extend(Path("/dir2").glob("*.nc"))
         ens = create_ensemble(datasets, multifile=True)
-    """
+    """  # noqa: E501
+    datasets_list: list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]] | str
     if isinstance(datasets, dict):
         if realizations is None:
-            realizations, datasets = zip(*datasets.items(), strict=False)
+            items = list(datasets.items())
+            realizations = [key for key, _ in items]
+            datasets_list = [value for _, value in items]
         else:
-            datasets = datasets.values()
+            datasets_list = list(datasets.values())
     elif isinstance(datasets, str) and realizations is not None:
         raise ValueError(
             "Passing `realizations` is not supported when `datasets` is a glob pattern, as the final order is random."
         )
+    else:
+        datasets_list = datasets
 
     ds = _ens_align_datasets(
-        datasets,
+        datasets_list,
         multifile,
         resample_freq,
         calendar=calendar,
@@ -152,12 +160,13 @@ def ensemble_mean_std_max_min(
     ----------
     ens : xr.Dataset
         Ensemble dataset (see xclim.ensembles.create_ensemble).
-    min_members : int, optional
+    min_members : int or None
         The minimum number of valid ensemble members for a statistic to be valid.
         Passing None is equivalent to setting min_members to the size of the realization dimension.
-        The default (1) essentially skips this check.
+        1 essentially skips this check.
+        Default: 1.
     weights : xr.DataArray, optional
-        Weights to apply along the 'realization' dimension. This array cannot contain missing values.
+        Weights to apply along the "realization" dimension. This array cannot contain missing values.
 
     Returns
     -------
@@ -237,25 +246,27 @@ def ensemble_percentiles(
     ----------
     ens : xr.Dataset or xr.DataArray
         Ensemble Dataset or DataArray (see xclim.ensembles.create_ensemble).
-    values : Sequence[int], optional
-        Percentile values to calculate. Default: (10, 50, 90).
+    values : Sequence of int, optional
+        Percentile values to calculate. Defaults to [10, 50, 90].
     keep_chunk_size : bool, optional
-        For ensembles using dask arrays, all chunks along the 'realization' axis are merged.
+        For ensembles using dask arrays, all chunks along the "realization" axis are merged.
         If True, the dataset is rechunked along the dimension with the largest chunks,
         so that the chunks keep the same size (approximately).
         If False, no shrinking is performed, resulting in much larger chunks.
         If not defined, the function decides which is best.
-    min_members : int, optional
+    min_members : int or None
         The minimum number of valid ensemble members for a statistic to be valid.
         Passing None is equivalent to setting min_members to the size of the realization dimension.
-        The default (1) essentially skips this check.
+        1 essentially skips this check.
+        Default: 1.
     weights : xr.DataArray, optional
-        Weights to apply along the 'realization' dimension. This array cannot contain missing values.
+        Weights to apply along the "realization" dimension. This array cannot contain missing values.
         When given, the function uses xarray's quantile method which is slower than xclim's NaN-optimized algorithm,
-        and does not support `method` values other than `linear`.
+        and does not support "method" values other than "linear".
     split : bool
         Whether to split each percentile into a new variable
         or concatenate the output along a new "percentiles" dimension.
+        Default: True.
     method : {"linear", "interpolated_inverted_cdf", "hazen", "weibull", "median_unbiased", "normal_unbiased"}
         Method to use for estimating the percentile, see the `numpy.percentile` documentation for more information.
 
@@ -377,55 +388,57 @@ def ensemble_percentiles(
 
 
 def _ens_align_datasets(
-    datasets: list[xr.Dataset | Path | str | list[Path | str]] | str,
+    datasets: DatasetsInput,
     multifile: bool = False,
     resample_freq: Freq | None = None,
     calendar: str | None = "default",
     cal_kwargs: dict | None = None,
-    **xr_kwargs,
+    **xr_kwargs: Any,
 ) -> list[xr.Dataset]:
     r"""
     Create a list of aligned xarray Datasets for ensemble Dataset creation.
 
     Parameters
     ----------
-    datasets : list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]] or str
+    datasets : list of xr.Dataset or list of xr.DataArray or list of Path or list of str or list of list of str or str
         List of netcdf file paths or xarray Dataset/DataArray objects . If `multifile` is True, 'datasets' should be a
         list of lists where each sublist contains input NetCDF files of a xarray multi-file Dataset.
         DataArrays should have a name, so they can be converted to datasets.
         If a string, it is assumed to be a glob pattern for finding datasets.
     multifile : bool
         If True climate simulations are treated as xarray multi-file datasets before concatenation.
-        Only applicable when 'datasets' is a sequence of file paths.
-    resample_freq : str, optional
+        Only applicable when `datasets` is a sequence of file paths.
+        Default: False.
+    resample_freq : Freq, optional
         If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
         If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
     calendar : str, optional
         The calendar of the time coordinate of the ensemble.
-        For conversions involving '360_day', the align_on='date' option is used.
+        For conversions involving "360_day", the `align_on="date"` option is used.
         See :py:func:`xclim.core.calendar.convert_calendar`.
-        'default' is the standard calendar using np.datetime64 objects.
+        "default" is the standard calendar using np.datetime64 objects.
+        Default: "default".
     cal_kwargs : dict, optional
         Any keyword to be given to used when setting calendar options.
-    **xr_kwargs : dict
+    **xr_kwargs : Any
         Any keyword arguments to be given to xarray when opening the files.
 
     Returns
     -------
-    list[xr.Dataset]
+    list of xr.Dataset
     """
     xr_kwargs.setdefault("chunks", "auto")
     xr_kwargs.setdefault("decode_times", False)
 
-    _datasets: Sequence[xr.Dataset | Path | str | list[Path | str]]
+    datasets_list: list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]]
     if isinstance(datasets, str):
-        _datasets = glob(datasets)
+        datasets_list = list(glob(datasets))
     else:
-        _datasets = [d for d in datasets]
+        datasets_list = [d for d in datasets]
 
     ds_all: list[xr.Dataset] = []
     calendars = []
-    for i, n in enumerate(_datasets):
+    for i, n in enumerate(datasets_list):
         ds: xr.Dataset
         if multifile:
             ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)

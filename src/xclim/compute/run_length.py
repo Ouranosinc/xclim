@@ -19,7 +19,7 @@ import xarray as xr
 from numba import njit
 
 from xclim.compute.helpers import resample_map
-from xclim.core import DateStr, DayOfYearStr, Freq, Reducer
+from xclim.core import Condition, DateStr, DayOfYearStr, Freq, Reducer
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
 from xclim.core.utils import lazy_indexing, uses_dask
 
@@ -46,17 +46,18 @@ def use_ufunc(
 
     Parameters
     ----------
-    ufunc_1dim : {'from_context', 'auto', True, False}
+    ufunc_1dim : bool or {"from_context", "auto"}
         The method for handling the ufunc parameters.
     da : xr.DataArray
         Input array.
     dim : str
-        The dimension along which to find runs.
-    freq : str, optional
+        The dimension along which to find runs. Default: "time".
+    freq : Freq, optional
         Resampling frequency. If None, the dimension provided is completely reduced.
-    index : {'first', 'last'}
-        If 'first' (default), the run length is indexed with the first element in the run.
-        If 'last', with the last element in the run.
+    index : {"first", "last"}
+        If "first", the run length is indexed with the first element in the run.
+        If "last", with the last element in the run.
+        Default: "first".
 
     Returns
     -------
@@ -108,10 +109,10 @@ def resample_and_rl(
         Run length function to apply.
     *args : Any
         Positional arguments needed in `compute`.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency. If None, the dimension provided is completely reduced.
     dim : str
-        The dimension along which to find runs.
+        The dimension along which to find runs. Default: "time".
     **kwargs : Any
         Keyword arguments needed in `compute`.
 
@@ -183,10 +184,11 @@ def _cumsum_reset(
     da : xr.DataArray
         Input array.
     dim : str
-        Dimension name along which the cumulative sum is taken.
-    index : {'first', 'last'}
-        If 'first', the largest value of the cumulative sum is indexed with the first element in the run.
-        If 'last'(default), with the last element in the run.
+        Dimension name along which the cumulative sum is taken. Default: "time".
+    index : {"first", "last"}
+        If "first", the largest value of the cumulative sum is indexed with the first element in the run.
+        If "last", with the last element in the run.
+        Default: "last".
 
     Returns
     -------
@@ -242,10 +244,11 @@ def rle(
     da : xr.DataArray
         Input array.
     dim : str
-        Dimension name.
-    index : {'first', 'last'}
-        If 'first' (default), the run length is indexed with the first element in the run.
-        If 'last', with the last element in the run.
+        Dimension name. Default: "time".
+    index : {"first", "last"}
+        If "first", the run length is indexed with the first element in the run.
+        If "last", with the last element in the run.
+        Default: "first".
 
     Returns
     -------
@@ -289,22 +292,26 @@ def rle_statistics(
     ----------
     da : xr.DataArray
         N-dimensional array (boolean).
-    statistic : str
+    statistic : {
+        "min", "max", "mean", "std", "var", "count", "sum", "integral", "doymin", "doymax", "quantile", "q10", "q90"
+        }
         Name of the reducing function.
     window : int
         Minimal length of consecutive runs to be included in the statistics.
     dim : str
-        Dimension along which to calculate consecutive run; Default: 'time'.
-    freq : str, optional
+        Dimension along which to calculate consecutive run. Default: "time".
+    freq : Freq, optional
         Resampling frequency. If None, the dimension provided is completely reduced.
-    ufunc_1dim : Union[str, bool]
-        Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+    ufunc_1dim : bool or {"from_context", "auto"}
+        Use the 1d 'ufunc' version of this function : "auto" will attempt to select optimal
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
         for DataArray with a small number of grid points.
         It can be modified globally through the "run_length_ufunc" global option.
-    index : {'first', 'last'}
-        If 'first' (default), the run length is indexed with the first element in the run.
-        If 'last', with the last element in the run.
+        Default: "from_context".
+    index : {"first", "last"}
+        If "first", the run length is indexed with the first element in the run.
+        If "last", with the last element in the run.
+        Default: "first".
 
     Returns
     -------
@@ -348,14 +355,15 @@ def longest_run(
     da : xr.DataArray
         N-dimensional array (boolean).
     dim : str
-        Dimension along which to calculate consecutive run; Default: 'time'.
-    freq : str, optional
+        Dimension along which to calculate consecutive run. Default: "time".
+    freq : Freq, optional
         Resampling frequency. If None, the dimension provided is completely reduced.
-    ufunc_1dim : Union[str, bool]
-        Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+    ufunc_1dim : bool or {"from_context", "auto"}
+        Use the 1d 'ufunc' version of this function : "auto" will attempt to select optimal
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
         for DataArray with a small number of grid points.
         It can be modified globally through the "run_length_ufunc" global option.
+        Default: "from_context".
     index : {'first', 'last'}
         If 'first', the run length is indexed with the first element in the run.
         If 'last', with the last element in the run.
@@ -395,17 +403,19 @@ def windowed_run_events(
         Minimum run length.
         When equal to 1, an optimized version of the algorithm is used.
     dim : str
-        Dimension along which to calculate consecutive run (default: 'time').
-    freq : str, optional
+        Dimension along which to calculate consecutive run. Default: "time".
+    freq : Freq, optional
         Resampling frequency. If None, the dimension provided is completely reduced.
-    ufunc_1dim : Union[str, bool]
-        Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+    ufunc_1dim : bool or {"auto", "from_context"}
+        Use the 1d 'ufunc' version of this function : "auto" will attempt to select optimal
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
         for DataArray with a small number of grid points.
         Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
-    index : {'first', 'last'}
-        If 'first', the run length is indexed with the first element in the run.
-        If 'last', with the last element in the run.
+        Default: "from_context".
+    index : {"first", "last"}
+        If "first", the run length is indexed with the first element in the run.
+        If "last", with the last element in the run.
+        Default: "first".
 
     Returns
     -------
@@ -448,17 +458,19 @@ def windowed_run_count(
         Minimum run length.
         When equal to 1, an optimized version of the algorithm is used.
     dim : str
-        Dimension along which to calculate consecutive run (default: 'time').
-    freq : str, optional
+        Dimension along which to calculate consecutive run. Default: "time".
+    freq : Freq, optional
         Resampling frequency. If None, the dimension provided is completely reduced.
-    ufunc_1dim : Union[str, bool]
-        Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+    ufunc_1dim : bool or {"auto", "from_context"}
+        Use the 1d 'ufunc' version of this function : "auto" will attempt to select optimal
         usage based on number of data points. Using 1D_ufunc=True is typically more efficient
         for DataArray with a small number of grid points.
         Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
-    index : {'first', 'last'}
-        If 'first', the run length is indexed with the first element in the run.
-        If 'last', with the last element in the run.
+        Default: "from_context".
+    index : {"first", "last"}
+        If "first", the run length is indexed with the first element in the run.
+        If "last", with the last element in the run.
+        Default: "first".
 
     Returns
     -------
@@ -499,12 +511,13 @@ def windowed_max_run_sum(
         Minimum run length.
         When equal to 1, an optimized version of the algorithm is used.
     dim : str
-        Dimension along which to calculate consecutive run (default: 'time').
-    freq : str, optional
+        Dimension along which to calculate consecutive run. Default: "time".
+    freq : Freq, optional
         Resampling frequency. If None, the dimension provided is completely reduced.
-    index : {'first', 'last'}
-        If 'first', the run length is indexed with the first element in the run.
-        If 'last', with the last element in the run.
+    index : {"first", "last"}
+        If "first", the run length is indexed with the first element in the run.
+        If "last", with the last element in the run.
+        Default: "first".
 
     Returns
     -------
@@ -551,14 +564,14 @@ def _boundary_run(
         When equal to 1, an optimized version of the algorithm is used.
     dim : str
         Dimension along which to calculate consecutive run.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency. If None, the dimension provided is completely reduced.
-    coord : str, optional
+    coord : str or bool, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
-    ufunc_1dim : str or bool
-        Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+    ufunc_1dim : bool or {"auto", "from_context"}
+        Use the 1d 'ufunc' version of this function : "auto" will attempt to select optimal
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
         for DataArray with a small number of grid points.
         Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
@@ -648,18 +661,20 @@ def first_run(
         Minimum duration of consecutive run to accumulate values.
         When equal to 1, an optimized version of the algorithm is used.
     dim : str
-        Dimension along which to calculate consecutive run (default: 'time').
-    freq : str, optional
+        Dimension along which to calculate consecutive run. Default: "time".
+    freq : Freq, optional
         Resampling frequency. If None, the dimension provided is completely reduced.
     coord : str or bool, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
-    ufunc_1dim : {"auto", "from_context"} or bool
-        Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+        Default: False.
+    ufunc_1dim : bool or {"auto", "from_context"}
+        Use the 1d 'ufunc' version of this function : "auto" will attempt to select optimal
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
         for DataArray with a small number of grid points.
         Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
+        Default: "from_context".
 
     Returns
     -------
@@ -698,18 +713,19 @@ def last_run(
         Minimum duration of consecutive run to accumulate values.
         When equal to 1, an optimized version of the algorithm is used.
     dim : str
-        Dimension along which to calculate consecutive run (default: 'time').
-    freq : str, optional
+        Dimension along which to calculate consecutive run. Default: "time".
+    freq : Freq, optional
         Resampling frequency. If None, the dimension provided is completely reduced.
     coord : Optional[str]
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
-    ufunc_1dim : Union[str, bool]
-        Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+    ufunc_1dim : bool or {"auto", "from_context"}
+        Use the 1d 'ufunc' version of this function : "auto" will attempt to select optimal
         usage based on number of data points.  Using `1D_ufunc=True` is typically more efficient
         for a DataArray with a small number of grid points.
         Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
+        Default: "from_context".
 
     Returns
     -------
@@ -740,11 +756,12 @@ def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str = True):
     mask : xr.DataArray
         Boolean array.
     dim : str
-        Dimension along which to look for runs.
+        Dimension along which to look for runs. Default: "time".
     coord : bool or str
         If `True`, return values of the coordinate.
         If a str, returns values from `dim.dt.<coord>`.
         If `False`, return indexes.
+        Default: True.
 
     Returns
     -------
@@ -801,8 +818,8 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: Freq | None = No
     da : xr.DataArray
         Boolean array.
     dim : str
-        Dimension along which to check for the longest run.
-    freq : str, optional
+        Dimension along which to check for the longest run. Default: "time".
+    freq : Freq, optional
         Resampling frequency. If None, the dimension provided is completely reduced.
 
     Returns
@@ -847,7 +864,7 @@ def runs_with_holes(
     window_stop : int
         Number of True (1) values needed to start a run in `da_stop`.
     dim : str
-        Dimension name.
+        Dimension name. Default: "time".
 
     Returns
     -------
@@ -856,8 +873,8 @@ def runs_with_holes(
 
     Notes
     -----
-    A season (as defined in ``season``) could be considered as an event with ``window_stop == window_start``
-    and ``da_stop == 1 - da_start``, although it has more constraints on when to start and stop a run through
+    A season (as defined in `season`) could be considered as an event with `window_stop == window_start`
+    and `da_stop == 1 - da_start`, although it has more constraints on when to start and stop a run through
     the `date` argument and only one season can be found.
     """
     da_start = da_start.astype(int).fillna(0)
@@ -895,11 +912,12 @@ def season_start(
         The date (in MM-DD format) that a season must include to be considered valid.
         Setting `None` removes that constraint.
     dim : str
-        Dimension along which to calculate the season (default: 'time').
-    coord : Optional[str]
+        Dimension along which to calculate the season. Default: "time".
+    coord : str or bool, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
+        Default: False.
 
     Returns
     -------
@@ -940,11 +958,12 @@ def season_end(
         The date (in MM-DD format) that a run must include to be considered valid.
         Setting `None` removes that constraint.
     dim : str
-        Dimension along which to calculate consecutive run (default: 'time').
-    coord : str, optional
+        Dimension along which to calculate consecutive run. Default: "time".
+    coord : str or bool, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
+        Default: False.
     _beg : xr.DataArray, optional
         If given, the start of the season. This is used to avoid recomputing the start.
 
@@ -1009,14 +1028,15 @@ def season(
         The date (in MM-DD format) that a run must include to be considered valid.
         Setting `None` removes that constraint.
     dim : str
-        Dimension along which to calculate consecutive run (default: 'time').
+        Dimension along which to calculate consecutive run. Default: "time".
     stat : str, optional
         Not currently implemented.
         If not None, return a statistic of the season. The statistic is calculated on the season's values.
-    coord : Optional[str]
+    coord : str or bool, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
+        Default: False.
 
     Returns
     -------
@@ -1117,7 +1137,7 @@ def season_length(
         The date (in MM-DD format) that a run must include to be considered valid.
         Setting `None` removes that constraint.
     dim : str
-        Dimension along which to calculate consecutive run (default: 'time').
+        Dimension along which to calculate consecutive run. Default: "time".
 
     Returns
     -------
@@ -1152,15 +1172,16 @@ def run_end_after_date(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive run to accumulate values.
-    date : DayOfYearStr, optional, defaults to '07-01'
+    date : DayOfYearStr, optional, defaults to "07-01"
         The date after which to look for the end of a run.
         Setting `None` removes that constraint.
     dim : str
-        Dimension along which to calculate consecutive run (default: 'time').
-    coord : Optional[Union[bool, str]]
+        Dimension along which to calculate consecutive run Default: "time".
+    coord : str or bool, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
-        DateTimeAccessor object to use (ex: 'dayofyear').
+        DateTimeAccessor object to use (ex: "dayofyear").
+        Default: "dayofyear".
 
     Returns
     -------
@@ -1211,15 +1232,16 @@ def first_run_after_date(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive run to accumulate values.
-    date : DayOfYearStr, optional, defaults to '07-01'
+    date : DayOfYearStr, optional, defaults to "07-01"
         The date after which to look for the run.
         Setting `None` removes that constraint.
     dim : str
-        Dimension along which to calculate consecutive run (default: 'time').
+        Dimension along which to calculate consecutive run. Default: "time".
     coord : bool or str, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
-        DateTimeAccessor object to use (ex: 'dayofyear').
+        DateTimeAccessor object to use (ex: "dayofyear").
+        Default: "dayofyear".
 
     Returns
     -------
@@ -1258,15 +1280,16 @@ def last_run_before_date(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive run to accumulate values.
-    date : DayOfYearStr, optional, defaults to '07-01'
+    date : DayOfYearStr, optional, defaults to "07-01"
         The date before which to look for the last event.
         Setting `None` removes that constraint.
     dim : str
-        Dimension along which to calculate consecutive run (default: 'time').
+        Dimension along which to calculate consecutive run. Default: "time".
     coord : bool or str, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
-        DateTimeAccessor object to use (ex: 'dayofyear').
+        DateTimeAccessor object to use (ex: "dayofyear").
+        Default: "dayofyear".
 
     Returns
     -------
@@ -1302,15 +1325,16 @@ def first_run_before_date(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive run to accumulate values.
-    date : DayOfYearStr, optional, defaults to '07-01'
+    date : DayOfYearStr, optional, defaults to "07-01"
         The date before which to look for the run.
         Setting `None` removes that constraint.
     dim : str
-        Dimension along which to calculate consecutive run (default: 'time').
+        Dimension along which to calculate consecutive run. Default: "time".
     coord : bool or str, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
-        DateTimeAccessor object to use (e.g. 'dayofyear').
+        DateTimeAccessor object to use (e.g. "dayofyear").
+        Default: "dayofyear".
 
     Returns
     -------
@@ -1355,16 +1379,16 @@ def rle_1d(
 
     Parameters
     ----------
-    arr : int or float or bool or Sequence[Union[int, float, bool]] or xr.DataArray or np.ndarray
+    arr : int or float or bool or Sequence of those or xr.DataArray or np.ndarray
         Array of values to be parsed.
 
     Returns
     -------
-    values : np.ndarray
+    values: np.ndarray
         The values taken by arr over each run.
-    run_lengths : np.ndarray
+    run_lengths: xr.DataArray
         The length of each run.
-    start_positions : np.ndarray
+    start_positions: np.ndarray
         The starting index of each run.
 
     Examples
@@ -1419,7 +1443,7 @@ def statistics_run_1d(arr: Sequence[bool], statistic: str, window: int) -> int:
     arr : Sequence of bool
         Input array (bool).
     statistic : {"mean", "sum", "min", "max", "std", "count", "q?"}
-        Reducing function name. The special name 'q?' computes a quantile with the provided value (e.g. 'q90' computes
+        Reducing function name. The special name "q?" computes a quantile with the provided value (e.g. "q90" computes
          a `q=0.90` quantile).
     window : int
         Minimal length of runs to be included in the statistics.
@@ -1490,7 +1514,7 @@ def windowed_run_count_ufunc(x: xr.DataArray | Sequence[bool], window: int, dim:
 
     Parameters
     ----------
-    x : xr.DataArray or sequence of bool
+    x : xr.DataArray or Sequence of bool
         Input array (bool).
     window : int
         Minimum duration of consecutive run to accumulate values.
@@ -1522,7 +1546,7 @@ def windowed_run_events_ufunc(x: xr.DataArray | Sequence[bool], window: int, dim
 
     Parameters
     ----------
-    x : xr.DataArray or sequence of bool
+    x : xr.DataArray or Sequence of bool
         Input array (bool).
     window : int
         Minimum run length.
@@ -1561,12 +1585,12 @@ def statistics_run_ufunc(
     ----------
     x : Sequence of bool
         Input array (bool).
-    statistic : {'min', 'max', 'mean', 'sum', 'std', 'q?'}
-        Reducing function name. The special name 'q?' should be called as e.g. 'q90' to compute a `q=0.90` quantile.
+    statistic : {"min", "max", "mean", "sum", "std", "q?"}
+        Reducing function name. The special name "q?" should be called as e.g. "q90" to compute a `q=0.90` quantile.
     window : int
         Minimal length of runs.
     dim : str
-        The dimension along which the runs are found.
+        The dimension along which the runs are found. Default: "time".
 
     Returns
     -------
@@ -1642,7 +1666,7 @@ def index_of_date(
     max_idxs : int, optional
         Maximum number of returned indexes.
     default : int
-        Index to return if date is None.
+        Index to return if date is None. Default: 0.
 
     Returns
     -------
@@ -1675,7 +1699,7 @@ def index_of_date(
 def suspicious_run_1d(
     arr: np.ndarray,
     window: int = 10,
-    op: Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"] = ">",
+    op: Condition = ">",
     thresh: float | None = None,
 ) -> np.ndarray:
     """
@@ -1688,7 +1712,7 @@ def suspicious_run_1d(
     window : int
         Minimum run length.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-        Operator for threshold comparison. Defaults to ">".
+        Operator for threshold comparison. Default: ">".
     thresh : float, optional
         Threshold compared against which values are checked for identical values.
 
@@ -1725,7 +1749,7 @@ def suspicious_run(
     arr: xr.DataArray,
     dim: str = "time",
     window: int = 10,
-    op: Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"] = ">",
+    op: Condition = ">",
     thresh: float | None = None,
 ) -> xr.DataArray:
     """
@@ -1742,7 +1766,7 @@ def suspicious_run(
     window : int
         Minimum run length.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-        Operator for threshold comparison, defaults to ">".
+        Operator for threshold comparison. Default: ">".
     thresh : float, optional
         Threshold above which values are checked for identical values.
 
@@ -1862,8 +1886,8 @@ def find_events(
     """
     Find events (runs).
 
-    An event starts with a run of ``window`` consecutive True values in the condition
-    and stops with ``window_stop`` consecutive True values in the stop condition.
+    An event starts with a run of `window` consecutive True values in the condition
+    and stops with `window_stop` consecutive True values in the stop condition.
 
     This returns a Dataset with each event along an `event` dimension.
     It does not perform statistics over the events like other function in this module do.
@@ -1878,11 +1902,11 @@ def find_events(
         The stopping boolean mask, true where the end condition of the event is fulfilled.
         Defaults to the opposite of `condition`.
     window_stop : int
-        The number of consecutive True values in ``condition_stop`` for an event to end.
-        Defaults to 1.
+        The number of consecutive True values in `condition_stop` for an event to end.
+        Default: 1.
     data : DataArray, optional
         The actual data. If present, its sum within each event is added to the output.
-    freq : str, optional
+    freq : Freq, optional
         A frequency to divide the data into periods. If absent, the output has not time dimension.
         If given, the events are searched within in each resample period independently.
     dim : str
@@ -1890,12 +1914,12 @@ def find_events(
 
     Returns
     -------
-    xr.Dataset, same shape as the data (and the time dimension is resample or removed, according to ``freq``).
+    xr.Dataset, same shape as the data (and the time dimension is resample or removed, according to `freq`).
         The Dataset has the following variables:
             event_length: The number of time steps in each event
             event_effective_length: The number of time steps of even event where the start condition is true.
             event_start: The datetime of the start of the run.
-            event_sum: The sum within each event, only considering steps where start condition is true (if ``data``).
+            event_sum: The sum within each event, only considering steps where start condition is true (if `data`).
     """
     if condition_stop is None:
         condition_stop = ~condition

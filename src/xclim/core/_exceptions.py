@@ -37,15 +37,17 @@ def raise_warn_or_log(
     ----------
     err : Exception
         An error.
-    mode : {'ignore', 'log', 'warn', 'raise'}
+    mode : {"ignore", "log", "warn", "raise"}
         What to do with the error.
     msg : str, optional
         The string used when logging or warning.
         Defaults to the `msg` attr of the error (if present) or to "Failed with <err>".
     err_type : type
         The type of error/exception to raise.
+        Default: ValueError.
     stacklevel : int
         Stacklevel when warning. Relative to the call of this function (1 is added).
+        Default: 1.
 
     Raises
     ------

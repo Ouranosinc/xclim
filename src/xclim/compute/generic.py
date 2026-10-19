@@ -99,9 +99,9 @@ def statistics(
     ----------
     data : xr.DataArray
         Input data.
-    statistic : {"min", "max", "mean", "std", "var", 'count', 'sum', 'integral', 'doymax', 'doymin'} or Callable
+    statistic : {"min", "max", "mean", "std", "var", "count", "sum", "integral", "doymax", "doymin"} or Callable
         Reducing operation. It can either be a DataArray method or a function that can be applied to a DataArray.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, time dimension is reduced completely.
     out_units : str, optional
@@ -135,7 +135,7 @@ def running_statistics(
     statistic: Reducer,
     freq: Freq | None,
     window_center: bool = True,
-    out_units=None,
+    out_units: str | None = None,
     **indexer,
 ) -> xr.DataArray:
     r"""
@@ -153,11 +153,12 @@ def running_statistics(
         Operation to apply to the rolling window.
     statistic : {"min", "max", "mean", "std", "var", "count", "sum", "integral", "doymax", "doymin"} or Callable
         Reducing operation. Can either be a DataArray method or a function that can be applied to a DataArray.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         Resampling is done after the running statistic. If None, time dimension is reduced completely.
     window_center : bool
         If True, the window is centered on the date. If False, the window is right-aligned.
+        Default: True.
     out_units : str, optional
         Output units to assign.
         Only necessary if `statistic` is a function not supported by :py:func:`xclim.core.units.to_agg_units`.
@@ -188,7 +189,7 @@ def thresholded_statistics(
     statistic: Reducer,
     freq: Freq | None,
     constrain: Sequence[Condition] | None = None,
-    out_units=None,
+    out_units: str | None = None,
     **indexer,
 ) -> xr.DataArray:
     """
@@ -206,7 +207,7 @@ def thresholded_statistics(
         Threshold, should have the same dimensionality as ``data``.
     statistic :  {"min", "max", "mean", "std", "var", "count", "sum", "integral", "doymin", "doymax"} or Callable
         Reducing operation. Can either be a DataArray method or a function that can be applied to a DataArray.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
     constrain : sequence of str, optional
@@ -261,11 +262,12 @@ def thresholded_running_statistics(
         Operation to apply to the rolling window.
     statistic : {"min", "max", "mean", "std", "var", "count", "sum", "integral", "doymax", "doymin"} or Callable
         Reducing operation. Can either be a DataArray method or a function that can be applied to a DataArray.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         Resampling is done after the running statistic. If None, time dimension is reduced completely.
     window_center : bool
         If True, the window is centered on the date. If False, the window is right-aligned.
+        Default: True.
     constrain : sequence of str, optional
         Allowed conditions, to be used when creating a more specific indicator from this function.
     out_units : str, optional
@@ -317,7 +319,7 @@ def count_occurrences(
         Logical comparison operator. Comparison is done as ``data {condition} thresh``.
     thresh : Quantified
         Threshold value. Should have the same dimensionality as data.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
     constrain : sequence of str, optional
@@ -360,15 +362,17 @@ def count_domain_occurrences(
         Minimum value.
     high_bound : Quantified
         Maximum value.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
-    low_condition : {'>', '>=', 'gt', 'ge'}
-        The comparison operator to use on the lower bound. Default is ">" which means
-        equality does not fulfill the condition.
-    high_condition : {'<', '<=', 'lt', 'le'}
-        The comparison operator to use on the higher bound. Default is "<=" which means
-        equality does fulfill the condition.
+    low_condition : {">", ">=", "gt", "ge"}
+        The comparison operator to use on the lower bound.
+        ">" means that equality does not fulfill the condition.
+        Default: ">".
+    high_condition : {"<", "<=", "lt", "le"}
+        The comparison operator to use on the higher bound.
+        "<=" means that equality does fulfill the condition.
+        Default: "<="
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
@@ -424,12 +428,13 @@ def bivariate_count_occurrences(
     thresh2 : Quantified, optional
         Threshold for data variable 2.
         If None, ``thresh1`` is used.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
     var_reducer : {"all", "any"}
         The condition must either be fulfilled on *all* or *any* variables
         for the timestep to be considered an occurrence.
+        Default: "all".
     constrain1 : sequence of str, optional
         Allowed comparison operators for variable 1, None to allow all.
     constrain2 : sequence of str, optional
@@ -498,17 +503,19 @@ def count_percentile_occurrences(
         Logical comparison operator. Computed as  ``data[i] {condition} climatology[doy(i)]``.
     reference_period : tuple of two dates
         Start and end of the period used to compute the percentiles. Dates should be given as YYYY-MM-DD.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         This function only makes sense with annual frequencies. If None, time dimension is reduced completely.
     window : int
         The number of days on each side of the given day-of-year to include in the climatology.
+        Default: 5.
     bootstrap : bool
         Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
         Bootstrapping is only useful when the percentiles are computed on a part of the studied sample (like here).
         This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-        the rest of the time series
+        the rest of the time series.
         Note that bootstrapping is computationally expensive.
+        Default: False.
     constrain : sequence of str, optional
         Allowed conditions. None to allow them all.
     **indexer : {dim: indexer, }, optional
@@ -571,17 +578,18 @@ def count_thresholded_percentile_occurrences(
         Logical comparison operator to find occurrences. Computed as  ``data[i] {condition} climatology[doy(i)]``.
     reference_period : tuple of two dates
         Start and end of the period used to compute the percentiles. Dates should be given as YYYY-MM-DD.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         This function only makes sense with annual frequencies. If None, time dimension is reduced completely.
     window : int
-        The number of days on each side of the given day-of-year to include in the climatology.
+        The number of days on each side of the given day-of-year to include in the climatology. Default: 5.
     bootstrap : bool
         Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
         Bootstrapping is only useful when the percentiles are computed on a part of the studied sample (like here).
         This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-        the rest of the time series
+        the rest of the time series.
         Note that bootstrapping is computationally expensive.
+        Default: False.
     constrain : sequence of str, optional
         Allowed conditions. None to allow them all.
     **indexer : {dim: indexer, }, optional
@@ -682,7 +690,7 @@ def spell_length_statistics(
         Input data.
     window : int
         Minimum length of a spell.
-    window_statistic : {'min', 'max', 'sum', 'mean', 'integral'}
+    window_statistic : {"min", "max", "sum", "mean", "integral"}
         Reduction along the window length to compute running statistic.
         Note that this does not matter when `window` is 1, in which case any occurrence
         of ``data {condition} thresh`` is considered a valid "spell".
@@ -690,18 +698,20 @@ def spell_length_statistics(
         Logical comparison operator. Computed as ``rolling_stat {condition} thresh``.
     thresh : Quantified
         Threshold to test against.
-    statistic : {'max', 'sum', 'count'} or sequence of str
+    statistic : {"max", "sum", "count"} or sequence of those
         Statistic on the spell lengths. If a list, multiple statistics are computed.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency. If None, time dimension is reduced completely.
     min_gap : int
         The shortest possible gap between two spells. Spells closer than this are merged by assigning
         the gap steps to the merged spell.
+        Default: 1.
     constrain : sequence of str, optional
         Allowed conditions. None to allow them all.
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
+        Default: True.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
         Indexing is done after finding the days part of a spell, but before taking the spell statistics.
@@ -792,7 +802,7 @@ def bivariate_spell_length_statistics(
         Input data.
     window : int
         Minimum length of a spell.
-    window_statistic : {'min', 'max', 'sum', 'mean', 'integral'}
+    window_statistic : {"min", "max", "sum", "mean", "integral"}
         Reduction along the window length to compute running statistic.
         Note that this does not matter when `window` is 1, in which case any occurrence
         of ``data {condition} thresh`` is considered a valid "spell".
@@ -802,18 +812,20 @@ def bivariate_spell_length_statistics(
         Threshold to test against for data1.
     thresh2 : Quantified
         Threshold to test against for data2.
-    statistic : {'max', 'sum', 'count'} or sequence of str
+    statistic : {'max', 'sum', 'count'} or sequence of those
         Statistic on the spell lengths. If a list, multiple statistics are computed.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency. If None, time dimension is reduced completely.
     min_gap : int
         The shortest possible gap between two spells. Spells closer than this are merged by assigning
         the gap steps to the merged spell.
+        Default: 1.
     constrain : sequence of str, optional
         Allowed conditions. None to allow them all.
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
+        Default: True.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
         Indexing is done after finding the days part of a spell, but before taking the spell statistics.
@@ -852,7 +864,7 @@ def season(
     condition: Condition,
     thresh: Quantified,
     window: int,
-    aspect: Literal["start", "end", "length"],  # | Sequence[Literal["start", "end", "length"]],
+    aspect: Literal["start", "end", "length"],
     freq: Freq | None,
     mid_date: DayOfYearStr | None = None,
     constrain: Sequence[Condition] | None = None,
@@ -876,9 +888,9 @@ def season(
         Threshold for the condition.
     window : int
         Minimum number of days that the condition must be met / not met for the start / end of the season.
-    aspect : {'start', 'end', 'length'}, or a list of those
+    aspect : {"start", "end", "length"}, or a list of those
         Which season aspect(s) to return. If a list, this function returns a tuple in the same order as this argument.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency. If None, time dimension is reduced completely.
     mid_date : DayOfYearStr, optional
         An optional middle date. The start must happen before and the end after for the season to be valid.
@@ -1013,13 +1025,13 @@ def difference_statistics(
         The lowest variable (ex: tasmin)).
     data2 : xr.DataArray
         The highest variable (ex: tasmax).
-    statistic : {'max', 'min', 'mean', 'sum'}
+    statistic : {"max", "min", "mean", "sum"}
         The statistic to compute over the difference between the two variables.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
     absolute : bool
-        If True, the statistic is computed over the absolute difference.
+        If True, the statistic is computed over the absolute difference. Default: False.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
@@ -1052,7 +1064,7 @@ def extreme_range(data1: xr.DataArray, data2: xr.DataArray, freq: Freq, **indexe
         The lowest data.
     data2 : xr.DataArray
         The highest data.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
     **indexer : {dim: indexer, }, optional
@@ -1094,13 +1106,14 @@ def interday_difference_statistics(
         The lowest data.
     data2 : xr.DataArray
         The highest data.
-    statistic : {'max', 'min', 'mean', 'sum'}
+    statistic : {"max", "min", "mean", "sum"}
         Resampling statistic.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
     absolute : bool
         If True, the statistic is computed over the absolute value of the differentiated difference.
+        Default: True.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
         Subsetting is done after differentiating along time.
@@ -1127,7 +1140,7 @@ def percentile(data: xr.DataArray, per: float, freq: Freq | None, **indexer):
         An array.
     per : float
         A percentile (0, 100).
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
     **indexer : {dim: indexer, }, optional
@@ -1168,10 +1181,10 @@ def thresholded_percentile(
         Threshold.
     per : float
         A percentile (0, 100).
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
-    constrain : sequence of str, optional
+    constrain : Sequence of str, optional
         Optionally allowed conditions. Default: None.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
@@ -1214,7 +1227,7 @@ def statistics_between_dates(
         End (as day-of-year) dates for the statistic computation. The end date is not included in the statistic.
     statistic : {'min', 'max', 'sum', 'mean', 'std', 'integral'}
         Statistic to compute over the selected period.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         Default (None) tries to infer the frequency from ``start`` and ``end``.
 
@@ -1322,7 +1335,7 @@ def integrated_difference(
         Logical comparison operator.
     thresh : Quantified
         The value threshold.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
     **indexer : {dim: indexer, }, optional
@@ -1372,15 +1385,15 @@ def day_threshold_reached(
         Logical comparison operator.
     thresh : str
         Threshold.
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If None, the time dimension is completely reduced.
     date : DayOfYearStr, optional
         Date of the year after which to look for the first event, or before which to look for the last event.
-        Should have the format '%m-%d'. None means there is no limit.
+        Should have the format "%m-%d". None means there is no limit.
         Setting `None` removes that constraint.
-    which : {'first', 'last'}
-        Whether to look for the first or the last event.
+    which : {"first", "last"}
+        Whether to look for the first or the last event. Default: "first".
     window : int
         Minimum number of days with values above thresh needed for evaluation. Default: 1.
     constrain : sequence of str, optional
@@ -1402,7 +1415,7 @@ def day_threshold_reached(
     elif which == "last":
         func = rl.last_run_before_date
     else:
-        raise ValueError(f"'which' must be 'first' or 'last'. Got {which}.")
+        raise ValueError(f"`which` must be 'first' or 'last'. Got {which}.")
 
     cond = select_time(cond, **indexer)
     out: xr.DataArray = resample_map(
@@ -1455,7 +1468,7 @@ def thresholded_events(
         Threshold defining the end of an event. Defaults to `thresh`.
     window_stop : int, optional
         Number of time steps where the end condition must be true to end an event. Defaults to ``window``.
-    freq : str, optional
+    freq : Freq, optional
         A frequency to divide the data into periods. If absent, the output has not time dimension.
         If given, the events are searched within in each resample period independently.
 
@@ -1499,10 +1512,10 @@ def day_to_day_variability(data: xr.DataArray, freq: Freq = "YS", subfreq: Freq 
     ----------
     data : xr.DataArray
         The input variable.
-    freq : str
-        Resampling frequency used to average the sub-period standard deviations. Default is ``"YS"`` (yearly).
-    subfreq : str
-        Resampling frequency used to compute the standard deviation. Default is ``"MS"`` (monthly).
+    freq : Freq
+        Resampling frequency used to average the sub-period standard deviations. Default: "YS".
+    subfreq : Freq
+        Resampling frequency used to compute the standard deviation. Default: "MS".
 
     Returns
     -------

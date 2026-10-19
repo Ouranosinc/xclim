@@ -212,7 +212,7 @@ def pint2cfunits(value: pint.Quantity | pint.Unit) -> str:
 
     Parameters
     ----------
-    value : pint.Unit
+    value : pint.Quantity or pint.Unit
         Input unit.
 
     Returns
@@ -227,13 +227,13 @@ def pint2cfunits(value: pint.Quantity | pint.Unit) -> str:
     return f"{value:~cf}" or "1"
 
 
-def pint2cfattrs(value: pint.Quantity | pint.Unit, is_difference=None) -> dict[str, str]:
+def pint2cfattrs(value: pint.Quantity | pint.Unit, is_difference: bool | None = None) -> dict[str, str]:
     """
     Return CF-compliant units attributes from a `pint` unit.
 
     Parameters
     ----------
-    value : pint.Unit
+    value : pint.Quantity or pint.Unit
         Input unit.
     is_difference : bool, optional
         Whether the value represent a difference in temperature, which is ambiguous in the case of absolute
@@ -291,7 +291,7 @@ def ensure_cf_units(ustr: str) -> str:
     return pint2cfunits(units2pint(ustr))
 
 
-def pint_multiply(da: xr.DataArray, q: Any, out_units: str | None = None) -> xr.DataArray:
+def pint_multiply(da: xr.DataArray, q: pint.Quantity, out_units: str | None = None) -> xr.DataArray:
     """
     Multiply xarray.DataArray by pint.Quantity.
 
@@ -398,8 +398,8 @@ def convert_units_to(
 
     Parameters
     ----------
-    source : str or xr.DataArray or units.Quantity or xr.Dataset or xr.DataTree
-        The value to be converted, e.g. '4C' or '1 mm/d'.
+    source : Quantified or xr.Dataset or xr.DataTree
+        The value to be converted, e.g. "4C" or "1 mm/d".
         If a Dataset, `target` must also be a mapping from variable name to target units.
         If a DataTree, this function will be applied over nodes with :py:func:`xarray.DataTree.map_over_datasets`.
     target : str or xr.DataArray or units.Quantity or units.Unit or dict
@@ -525,10 +525,10 @@ def cf_conversion(standard_name: str, conversion: str, direction: Literal["to", 
     ----------
     standard_name : str
         Standard name of the input.
-    conversion : {'amount2rate', 'amount2lwethickness'}
+    conversion : {"amount2rate", "amount2lwethickness"}
         Type of conversion. Available conversions are the keys of the `conversions` entry in `xclim/data/variables.yml`.
         See :py:data:`xclim.core.units.CF_CONVERSIONS`. They also correspond to functions in this module.
-    direction : {'to', 'from'}
+    direction : {"to", "from"}
         The direction of the requested conversion. "to" means the conversion as given by the `conversion` name,
         while "from" means the reverse operation. For example `conversion="amount2rate"` and `direction="from"`
         will search for a conversion from a rate or flux to an amount or thickness for the given standard name.
@@ -578,10 +578,10 @@ def infer_sampling_units(
     ----------
     da : xr.DataArray
         A DataArray from which to take coordinate `dim`.
-    deffreq : str, optional
+    deffreq : Freq, optional
         If no frequency is inferred from `da[dim]`, take this one.
     dim : str
-        Dimension from which to infer the frequency.
+        Dimension from which to infer the frequency. Default: "time".
 
     Returns
     -------
@@ -653,7 +653,7 @@ def ensure_absolute_temperature(units: str) -> str:
     return units
 
 
-def ensure_delta(unit: xr.DataArray | str | pint.Quantity) -> str:
+def ensure_delta(unit: Quantified) -> str:
     """
     Return delta units for temperature.
 
@@ -662,7 +662,7 @@ def ensure_delta(unit: xr.DataArray | str | pint.Quantity) -> str:
 
     Parameters
     ----------
-    unit : str
+    unit : Quantified
         Unit to transform in delta (or not).
 
     Returns
@@ -701,14 +701,15 @@ def to_agg_units(
     orig : xr.DataArray
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
-    statistic : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax', 'count', 'integral', 'sum'} or Callable
+    statistic : {"min", "max", "mean", "std", "var", "doymin", "doymax", "count", "integral", "sum"} or Callable
         The type of aggregation operation performed. "integral" is mathematically equivalent to "sum",
         but the units are multiplied by the timestep of the data (requires an inferrable frequency).
     dim : str
-        The time dimension along which the aggregation was performed.
-    deffreq : str, optional
-        For operations `count` and `integral`, this gives the default source frequency to assume,
-        if it can't be inferred from ``out[dim]``.
+        The time dimension along which the aggregation was performed. Default: "time".
+    deffreq : Freq, optional
+        For statistic is "count" or "integral", this gives the default source frequency to assume,
+        if it can't be inferred from `out[dim]`.
+        Default: "D".
 
     Returns
     -------
@@ -817,7 +818,7 @@ def to_agg_units(
     return out
 
 
-def is_temporal_rate(da: xr.DataArray):
+def is_temporal_rate(da: xr.DataArray) -> bool | None:
     """
     Return if the given data has a standard name denoting a temporal rate.
 
@@ -827,7 +828,7 @@ def is_temporal_rate(da: xr.DataArray):
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         A variable that might contain a CF standard name.
 
     Returns
@@ -980,21 +981,22 @@ def rate2amount(
 
     Parameters
     ----------
-    rate : xr.DataArray or pint.Quantity or str
+    rate : Quantified
         "Rate" variable, with units of "amount" per time. Ex: Precipitation in "mm / d".
     dim : str or DataArray
-        The name of time dimension or the coordinate itself.
+        The name of time dimension or the coordinate itself. Default: "time".
     sampling_rate_from_coord : bool
         For data with irregular time coordinates.
         If True, the diff of the time coordinate will be used as the sampling rate, meaning each data point
         will be assumed to apply for the interval ending at the next point. See notes.
-        Defaults to False, which raises an error if the time coordinate is irregular.
+        If False, it raises an error if the time coordinate is irregular.
+        Default: False.
     out_units : str, optional
         Specific output units, if needed.
 
     Returns
     -------
-    xr.DataArray or Quantity
+    xr.DataArray
         The converted variable. The standard_name of `rate` is modified if a conversion is found.
 
     Raises
@@ -1068,16 +1070,17 @@ def amount2rate(
 
     Parameters
     ----------
-    amount : xr.DataArray or pint.Quantity or str
+    amount : Quantified
         "amount" variable. Ex: Precipitation amount in "mm".
     dim : str or xr.DataArray
-        The name of the time dimension or the time coordinate itself.
+        The name of the time dimension or the time coordinate itself. Default: "time".
     sampling_rate_from_coord : bool
         For data with irregular time coordinates.
         If True, the diff of the time coordinate will be used as the sampling rate,
         meaning each data point will be assumed to span the interval ending at the next point.
         See notes of :py:func:`xclim.core.units.rate2amount`.
-        Defaults to False, which raises an error if the time coordinate is irregular.
+        If False, it raises an error if the time coordinate is irregular.
+        Default: False.
     out_units : str, optional
         Specific output units, if needed.
 
@@ -1106,7 +1109,7 @@ def amount2rate(
 
 
 @_register_conversion("amount2lwethickness", "to")
-def amount2lwethickness(amount: xr.DataArray, out_units: str | None = None) -> xr.DataArray | Quantified:
+def amount2lwethickness(amount: xr.DataArray, out_units: str | None = None) -> xr.DataArray:
     """
     Convert a liquid water amount (mass over area) to its equivalent area-averaged thickness (length).
 
@@ -1122,7 +1125,7 @@ def amount2lwethickness(amount: xr.DataArray, out_units: str | None = None) -> x
 
     Returns
     -------
-    xr.DataArray or Quantified
+    xr.DataArray
         The standard_name of `amount` is modified if a conversion is found
         (see :py:func:`xclim.core.units.cf_conversion`), it is removed otherwise.
         Other attributes are left untouched.
@@ -1142,7 +1145,7 @@ def amount2lwethickness(amount: xr.DataArray, out_units: str | None = None) -> x
 
 
 @_register_conversion("amount2lwethickness", "from")
-def lwethickness2amount(thickness: xr.DataArray, out_units: str | None = None) -> xr.DataArray | Quantified:
+def lwethickness2amount(thickness: xr.DataArray, out_units: str | None = None) -> xr.DataArray:
     """
     Convert a liquid water thickness (length) to its equivalent amount (mass over area).
 
@@ -1158,7 +1161,7 @@ def lwethickness2amount(thickness: xr.DataArray, out_units: str | None = None) -
 
     Returns
     -------
-    xr.DataArray or Quantified
+    xr.DataArray
         The standard_name of `amount` is modified if a conversion is found
         (see :py:func:`xclim.core.units.cf_conversion`), it is removed otherwise. Other attributes are left untouched.
 
@@ -1613,7 +1616,7 @@ def declare_units(**units_by_name) -> Callable:
     return dec
 
 
-def infer_context(standard_name: str | None = None, dimension: str | None = None) -> Literal["infer", "hydro", "none"]:
+def infer_context(standard_name: str | None = None, dimension: str | None = None) -> Literal["hydro", "none"]:
     """
     Return units context based on either the variable's standard name or the pint dimension.
 
@@ -1627,7 +1630,7 @@ def infer_context(standard_name: str | None = None, dimension: str | None = None
     standard_name : str, optional
         CF-Convention standard name.
     dimension : str, optional
-        Pint dimension, e.g. '[time]'.
+        Pint dimension, e.g. "[time]".
 
     Returns
     -------
