@@ -47,7 +47,7 @@ _xr_argops = {
     "coldest": xarray.DataArray.argmin,
 }
 
-_np_ops: dict[str, Literal["max", "min"]] = {
+_np_ops: dict[str, str] = {
     "wettest": "max",
     "warmest": "max",
     "dryest": "min",  # "dryest" is a common enough spelling mistake
@@ -235,7 +235,7 @@ def tg_mean_warmcold_quarter(
         raise NotImplementedError("`op` parameter may only be one of 'warmest' or 'coldest'")
     np_op = _np_ops[op]
 
-    return statistics(out, statistic=np_op, freq=freq)
+    return statistics(out, statistic=np_op, freq=freq)  # type: ignore[arg-type]
 
 
 @declare_units(tas="[temperature]", pr="[precipitation]")
@@ -347,7 +347,7 @@ def prcptot_wetdry_quarter(
         raise NotImplementedError("`op` parameter may only be one of 'wettest', 'driest' or 'dryest'")
     np_op = _np_ops[op]
 
-    return statistics(pr_qrt, statistic=np_op, freq=freq)
+    return statistics(pr_qrt, statistic=np_op, freq=freq)  # type: ignore[arg-type]
 
 
 @declare_units(pr="[precipitation]", tas="[temperature]")
