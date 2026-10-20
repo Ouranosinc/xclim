@@ -867,7 +867,7 @@ def _rate_and_amount_converter(
         time = da[dim]
     else:
         time = dim
-        dim = str(time.name)
+        dim = time.name  # type: ignore[assignment]
 
     # We accept str, Quantity or DataArray
     # Ensure the code below has a DataArray, so its simpler
@@ -911,8 +911,8 @@ def _rate_and_amount_converter(
                     calendar=get_calendar(time),
                     use_cftime=(time.dtype == "O"),
                 ),
-                dims=(dim,),
-                name=dim,
+                dims=(dim,),  # type: ignore[arg-type]
+                name=dim,  # type: ignore[arg-type]
                 attrs=time.attrs,
             )
         else:
@@ -924,7 +924,7 @@ def _rate_and_amount_converter(
         # In the case with no freq, last period as the same length as the one before.
         # In the case with freq in M, Q, A, this has been dealt with above in `time`
         # and `label` has been updated accordingly.
-        dt = time.diff(dim, label=label).reindex({dim: time}, method="ffill")
+        dt = time.diff(dim, label=label).reindex({dim: time}, method="ffill")  # type: ignore[arg-type]
         dt = dt.astype("timedelta64[s]").astype(float)  # Convert to seconds
 
         if to == "amount" and hasattr(da, "units"):
