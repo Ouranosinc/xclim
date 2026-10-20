@@ -684,7 +684,7 @@ def extraterrestrial_solar_radiation(
     ds = solar_declination(times, method=method)
     gsc = convert_units_to(solar_constant, "J m-2 d-1")
     rad_to_day = 1 / (2 * np.pi)  # convert radians of the "day circle" to day
-    esr: xr.DataArray = (
+    esr = (
         gsc
         * rad_to_day
         * cosine_of_solar_zenith_angle(times, ds, lat=lat, stat="integral", sunlit=True, chunks=chunks)
@@ -1041,7 +1041,7 @@ def jones_day_length_latitude_coefficient(
             .resample(time=freq)
             .sum()
         )
-        k_jones: xr.DataArray = (2.8311e-4 * day_length) + 0.30834
+        k_jones = (2.8311e-4 * day_length) + 0.30834
 
         all_below_1 = (k_jones < 1.0).all(dim="lat")
         k_jones = k_jones.where(~all_below_1, np.nan)

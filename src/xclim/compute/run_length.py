@@ -122,7 +122,7 @@ def resample_and_rl(
         Output of compute resampled according to frequency {freq}.
     """
     if resample_before_rl:
-        out: xr.DataArray = resample_map(
+        out = resample_map(
             da,
             dim,
             freq,

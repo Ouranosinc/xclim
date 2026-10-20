@@ -315,7 +315,7 @@ def pint_multiply(da: xr.DataArray, q: pint.Quantity, out_units: str | None = No
         f = f.to(out_units)
     else:
         f = f.to_reduced_units()
-    out: xr.DataArray = da * f.magnitude
+    out = da * f.magnitude
     out = out.assign_attrs(units=pint2cfunits(f.units))
     return out
 
@@ -918,7 +918,6 @@ def _rate_and_amount_converter(
         else:
             m, u = infer_sampling_units(da, freq)
 
-    out: xr.DataArray
     # Freq is month, season or year, which are not constant units, or simply freq is not inferrable.
     if u is None:
         # Get sampling period lengths in nanoseconds
@@ -1216,7 +1215,7 @@ def _flux_and_rate_converter(
         out_u = in_u * density_u**density_exp
 
     density_conv = convert_units_to(density, (out_u / in_u) ** density_exp)
-    out: xr.DataArray = (da * density_conv**density_exp).assign_attrs(da.attrs)
+    out = (da * density_conv**density_exp).assign_attrs(da.attrs)
     out = out.assign_attrs(units=pint2cfunits(out_u))
     if "standard_name" in out.attrs.keys():
         out.attrs.pop("standard_name")

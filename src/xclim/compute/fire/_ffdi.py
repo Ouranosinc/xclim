@@ -259,7 +259,7 @@ def keetch_byram_drought_index(
     else:
         kbdi0 = xr.full_like(pr.isel(time=0), 0)
 
-    kbdi: xr.DataArray = xr.apply_ufunc(
+    kbdi = xr.apply_ufunc(
         _keetch_byram_drought_index_pass,
         pr,
         tasmax,
@@ -342,7 +342,7 @@ def griffiths_drought_factor(
     else:
         raise ValueError(f"{limiting_func} is not a valid input for `limiting_func`")
 
-    df: xr.DataArray = xr.apply_ufunc(
+    df = xr.apply_ufunc(
         _griffiths_drought_factor_pass,
         pr,
         smd,

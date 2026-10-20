@@ -120,7 +120,7 @@ def statistics(
         # Get function for xclim-implemented statistics
         statistic = XCLIM_OPS.get(statistic, statistic)
     with xr.set_options(keep_attrs=True):
-        out: xr.DataArray = resample_map(data, "time", freq, statistic if statistic != "integral" else "sum")
+        out = resample_map(data, "time", freq, statistic if statistic != "integral" else "sum")
     if out_units is not None:
         return out.assign_attrs(units=out_units)
     statistic = "integral" if (statistic == "sum" and is_temporal_rate(data)) else statistic
@@ -943,7 +943,7 @@ def season(
 
     if aspect in ["start", "end"]:
         map_kwargs["coord"] = "dayofyear"
-    out: xr.DataArray = resample_map(cond, "time", freq, func[aspect], map_kwargs=map_kwargs)
+    out = resample_map(cond, "time", freq, func[aspect], map_kwargs=map_kwargs)
     if aspect == "length":
         return to_agg_units(out, data, "count")
     # else, a date
@@ -1418,7 +1418,7 @@ def day_threshold_reached(
         raise ValueError(f"`which` must be 'first' or 'last'. Got {which}.")
 
     cond = select_time(cond, **indexer)
-    out: xr.DataArray = resample_map(
+    out = resample_map(
         cond,
         "time",
         freq,

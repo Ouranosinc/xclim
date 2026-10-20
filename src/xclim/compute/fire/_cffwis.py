@@ -494,7 +494,8 @@ def initial_spread_index(ws: np.ndarray, ffmc: np.ndarray) -> np.ndarray:
     """
     mo = 147.2 * (101.0 - ffmc) / (59.5 + ffmc)  # *Eq.1*#
     ff = 19.1152 * np.exp(mo * -0.1386) * (1.0 + (mo**5.31) / 49300000.0)  # *Eq.25*#
-    isi: np.ndarray = ff * np.exp(0.05039 * ws)  # *Eq.26*#
+    # isi: np.ndarray = ff * np.exp(0.05039 * ws)  # *Eq.26*#
+    isi = ff * np.exp(0.05039 * ws)  # *Eq.26*#
     return isi
 
 
@@ -1738,7 +1739,7 @@ def fire_season(
 
         return season_mask
 
-    da: xr.DataArray = convert_units_to(tas, "degC")
+    da = convert_units_to(tas, "degC")
     ds = da.rename("tas").to_dataset()
     if snd is not None:
         ds["snd"] = convert_units_to(snd, "m")

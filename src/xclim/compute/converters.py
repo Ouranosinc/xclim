@@ -204,7 +204,7 @@ def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
     :cite:cts:`blazejczyk_comparison_2012`
     """
     thresh = 20  # degC
-    t: xr.DataArray = convert_units_to(tas, "degC")
+    t = convert_units_to(tas, "degC")
     t = t.where(t > thresh)
     r = convert_units_to(hurs, "%")
 
@@ -220,7 +220,7 @@ def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
         - 0.000003582 * t * t * r * r
     )
     hi = hi.assign_attrs(units="degC")
-    out: xr.DataArray = convert_units_to(hi, tas.units)
+    out = convert_units_to(hi, tas.units)
     return out
 
 
@@ -825,7 +825,7 @@ def relative_humidity(
         tas = convert_units_to(tas, "K")
         L = 2.501e6
         Rw = (461.5,)
-        hurs: xr.DataArray = 100 * np.exp(-L * (tas - tdps) / (Rw * tas * tdps))  # type: ignore[assignment]
+        hurs = 100 * np.exp(-L * (tas - tdps) / (Rw * tas * tdps))  # type: ignore[assignment]
     elif tdps is not None:
         e_sat_dt = saturation_vapor_pressure(
             tas=tdps, ice_thresh=ice_thresh, method=method, interp_power=interp_power, water_thresh=water_thresh
@@ -951,7 +951,7 @@ def specific_humidity(
 
     w_sat = 0.62198 * e_sat / (ps - e_sat)
     w = w_sat * hurs
-    q: xr.DataArray = w / (1 + w)
+    q = w / (1 + w)
 
     if invalid_values is not None:
         q_sat = w_sat / (1 + w_sat)
@@ -1178,7 +1178,6 @@ def snowfall_approximation(
     ----------
     :cite:cts:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019,dai_snowfall_2008`
     """
-    prsn: xr.DataArray
     if method == "binary":
         thresh = convert_units_to(thresh, tas)
         prsn = pr.where(tas <= thresh, 0)
@@ -1345,7 +1344,6 @@ def rain_approximation(
     ----------
     :cite:cts:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019,dai_snowfall_2008`
     """
-    prra: xr.DataArray
     if method.startswith("dai"):
         tas = convert_units_to(tas, "°C")
         if isinstance(landmask, bool):
@@ -1440,7 +1438,7 @@ def snd_to_snw(
     :cite:cts:`sturm_swe_2010`
     """
     density = snr if (snr is not None) else const
-    snw: xr.DataArray = rate2flux(snd, density=density, out_units=out_units).rename("snw")
+    snw = rate2flux(snd, density=density, out_units=out_units).rename("snw")
     # TODO: Leave this operation to rate2flux? Maybe also the variable renaming above?
     snw = snw.assign_attrs(standard_name="surface_snow_amount")
     return snw
@@ -2302,7 +2300,7 @@ def potential_evapotranspiration(  # pylint: disable=too-many-statements
 
     pet = pet.assign_attrs(units="mm")
     rate = amount2rate(pet, out_units="mm/d")
-    out: xr.DataArray = convert_units_to(rate, "kg m-2 s-1", context="hydro")
+    out = convert_units_to(rate, "kg m-2 s-1", context="hydro")
     return out
 
 
@@ -2639,9 +2637,10 @@ def universal_thermal_climate_index(
         hurs = hurs.clip(0.05, None)
     if mrt is None:
         mrt = mean_radiant_temperature(rsds=rsds, rsus=rsus, rlds=rlds, rlus=rlus, stat=stat)
-    _mrt: xr.DataArray = convert_units_to(mrt, "degC")
-    delta = _mrt - tas
-    pa: xr.DataArray = convert_units_to(e_sat, "kPa") * hurs
+    mrt = convert_units_to(mrt, "degC")
+
+    delta = mrt - tas
+    pa = convert_units_to(e_sat, "kPa") * hurs
 
     utci = xr.apply_ufunc(
         _utci,
@@ -2937,7 +2936,7 @@ def water_budget(
     if xr.infer_freq(pet.time) == "MS":
         pr = pr.resample(time="MS").mean(dim="time", keep_attrs=True)
 
-    out: xr.DataArray = pr - pet
+    out = pr - pet
     out = out.assign_attrs(units=pr.attrs["units"])
     return out
 
@@ -2992,7 +2991,7 @@ def wind_profile(
 
     if method == "power_law":
         alpha = kwargs.pop("alpha", 1 / 7)
-        out: xr.DataArray = wind_speed * (h / h_r) ** alpha
+        out = wind_speed * (h / h_r) ** alpha
         out = out.assign_attrs(units=wind_speed.attrs["units"])
         return out
     raise NotImplementedError(f"Method {method} not implemented.")
@@ -3090,7 +3089,7 @@ def wind_power_potential(
 
     v = wind_speed * f
 
-    out: xr.DataArray = xr.apply_ufunc(_wind_power_factor, v, cut_in, rated, cut_out)
+    out = xr.apply_ufunc(_wind_power_factor, v, cut_in, rated, cut_out)
     out = out.assign_attrs(units="")
     return out
 
