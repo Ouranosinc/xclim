@@ -1240,7 +1240,7 @@ def standardized_precipitation_evapotranspiration_index(
         Default: "ML".
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
-        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist="gamma"` which is allowed.
+        If method is "PWM", `fitkwargs` should be empty, except for `floc` with `dist="gamma"` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
