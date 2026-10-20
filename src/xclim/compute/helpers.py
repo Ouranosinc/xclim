@@ -159,12 +159,12 @@ def spell_mask(
 
     Parameters
     ----------
-    data : DataArray or sequence of DataArray
+    data : xr.DataArray or sequence of xr.DataArray
         The input data. Can be a list, in which case the condition is checked on all variables.
         See var_reducer for the latter case.
     window : int
         The length of the rolling window in which to compute statistics.
-    window_statistic : {'min', 'max', 'sum', 'mean', 'std', 'var'}
+    window_statistic : {"min", "max", "sum", "mean", "std", "var"}
         The statistics to compute on the rolling window.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         The comparison operator to use when finding spells. Comparison is done as ``rolled_data {condition} thresh``.
@@ -179,7 +179,7 @@ def spell_mask(
         Spells closer than this are merged by assigning the gap steps to the merged spell.
     weights : Sequence of floats, optional
         A list of weights of the same length as the window.
-        Only supported if ``window_statistic`` is ``"mean"``.
+        Only supported if `window_statistic` is "mean".
     var_reducer : {"all", "any"}
         If the data is a list, the condition must either be fulfilled on *all*
         or *any* variables for the period to be considered a spell.
