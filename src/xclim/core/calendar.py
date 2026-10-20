@@ -405,7 +405,7 @@ def ensure_cftime_array(
 def percentile_doy(
     arr: xr.DataArray,
     window: int = 5,
-    per: float | Sequence[float] = 10.0,
+    per: float | Sequence[float] | np.ndarray = 10.0,
     alpha: float = 1.0 / 3.0,
     beta: float = 1.0 / 3.0,
     copy: bool = True,
@@ -425,7 +425,7 @@ def percentile_doy(
     window : int
         Number of time-steps around each day of the year to include in the calculation.
         Default: 5.
-    per : float or Sequence of float
+    per : float or Sequence of float or np.ndarray
         Percentile(s) between [0, 100].
         Default: 10.0.
     alpha : float

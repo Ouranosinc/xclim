@@ -340,7 +340,7 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: Hashable | None = 
 
 def calc_perc(
     arr: np.ndarray,
-    percentiles: list[float] | None = None,
+    percentiles: Sequence[float] | np.ndarray | None = None,
     alpha: float = 1.0,
     beta: float = 1.0,
     copy: bool = True,
@@ -352,7 +352,7 @@ def calc_perc(
     ----------
     arr : np.ndarray
         The input array.
-    percentiles : list of float, optional
+    percentiles : Sequence of float or np.ndarray, optional
         The percentiles to compute. If None, only the median is computed.
     alpha : float
         A constant used to correct the index computed. Default: 1.0.
@@ -367,13 +367,13 @@ def calc_perc(
         The percentiles along the last axis.
     """
     if percentiles is None:
-        _percentiles = [50.0]
+        percentiles = [50.0]
     else:
-        _percentiles = percentiles
+        percentiles = percentiles
 
     percs = nan_calc_percentiles(
         arr=arr,
-        percentiles=_percentiles,
+        percentiles=percentiles,
         axis=-1,
         alpha=alpha,
         beta=beta,
@@ -392,7 +392,7 @@ def calc_perc(
 
 def nan_calc_percentiles(
     arr: np.ndarray,
-    percentiles: list[float] | None = None,
+    percentiles: Sequence[float] | np.ndarray | None = None,
     axis: int = -1,
     alpha: float = 1.0,
     beta: float = 1.0,
@@ -405,7 +405,7 @@ def nan_calc_percentiles(
     ----------
     arr : np.ndarray
         The input array.
-    percentiles : list of float, optional
+    percentiles : Sequence of float or np.ndarray, optional
         The percentiles to compute. If None, only the median is computed.
     axis : int
         The axis along which to compute the percentiles. Default: -1.
@@ -422,15 +422,15 @@ def nan_calc_percentiles(
         The percentiles along the specified axis.
     """
     if percentiles is None:
-        _percentiles = [50.0]
+        percentiles = [50.0]
     else:
-        _percentiles = percentiles
+        percentiles = percentiles
 
     if copy:
         # bootstrapping already works on a data's copy
         # doing it again is extremely costly, especially with dask.
         arr = arr.copy()
-    quantiles = np.array([per / 100.0 for per in _percentiles])
+    quantiles = np.array([per / 100.0 for per in percentiles])
     return _nan_quantile(arr, quantiles, axis, alpha, beta)
 
 
