@@ -983,7 +983,7 @@ def sen_slope_ratio(
 
     Returns
     -------
-    sen_slope: xarray.DataArrays, [dimensionless]
+    sen_slope: xarray.DataArray, [dimensionless]
         Sen's slope estimates.
     p_value: xarray.DataArray, [dimensionless]
         Mann-Kendall metric indicating slope tendency.

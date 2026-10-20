@@ -216,7 +216,7 @@ def huglin_index(
 
     There are a few methods provided for calculating the day-length multiplication factor (:math:`k`) based on latitude:
 
-    - For the "huglin"` and `"interpolated"` methods, values for k increase from `1.0` at 40°N or 40°S to `1.06` at 50°N or 50°S,
+    - For the "huglin" and "interpolated" methods, values for k increase from `1.0` at 40°N or 40°S to `1.06` at 50°N or 50°S,
       where the `interpolated` method uses a smoothed curve and the `huglin` method uses a stepwise function.
       Values above 50°N or below 50°S are set via the `cap_value` variable, with `1.0` set as default.
       See: :py:func:`xclim.compute.helpers.huglin_day_length_latitude_coefficient` for more information.
@@ -1072,7 +1072,7 @@ def standardized_precipitation_index(
         Default: "ML".
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
-        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist="gamma"` which is allowed.
+        If method is "PWM", `fitkwargs` should be empty, except for `floc` with `dist="gamma"` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1240,7 +1240,7 @@ def standardized_precipitation_evapotranspiration_index(
         Default: "ML".
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
-        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist="gamma"` which is allowed.
+        If method is "PWM", `fitkwargs` should be empty, except for `floc` with `dist="gamma"` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
