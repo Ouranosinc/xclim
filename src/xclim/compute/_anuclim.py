@@ -287,7 +287,7 @@ def tg_mean_wetdry_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["wettest", "driest", "dryest"]:
-        raise NotImplementedError("`op` parameter may only be one of 'wettest', 'driest' or 'dryest'")
+        raise NotImplementedError("`op` parameter may only be one of 'wettest' or 'driest''")
     xr_op = _xr_argops[op]
 
     out = _from_other_arg(criteria=pr_qrt, output=tas_qrt, op=xr_op, freq=freq)
