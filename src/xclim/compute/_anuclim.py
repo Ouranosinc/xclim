@@ -344,7 +344,7 @@ def prcptot_wetdry_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["wettest", "driest", "dryest"]:
-        raise NotImplementedError("`op` parameter may only be one of 'wettest', 'driest' or 'dryest'")
+        raise NotImplementedError("`op` parameter may only be one of 'wettest' or 'driest'")
     np_op = _np_ops[op]
 
     return statistics(pr_qrt, statistic=np_op, freq=freq)  # type: ignore[arg-type]
