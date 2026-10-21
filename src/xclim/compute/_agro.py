@@ -738,7 +738,6 @@ def dryness_index(  # numpydoc ignore=SS05
         di_south = di_south.shift(time=1).isel(time=slice(1, None))
         di_south["time"] = di_south.indexes["time"].shift(-6, "MS")
 
-    di: xarray.DataArray
     if has_north and has_south:
         di = di_north.where(lat_array >= 0, di_south)
     elif has_north:
