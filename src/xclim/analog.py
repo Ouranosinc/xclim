@@ -495,7 +495,7 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
 
 
 @metric
-def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] | np.ndarray = 1) -> float | Sequence[float]:
+def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1) -> float | Sequence[float]:
     r"""
     Compute the Kullback-Leibler divergence between two multivariate samples.
 
@@ -514,13 +514,13 @@ def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] | np.ndarray =
         Samples from distribution P, which typically represents the true distribution (reference).
     y : np.ndarray (m,d)
         Samples from distribution Q, which typically represents the approximate distribution (candidate).
-    k : int or Sequence of int or np.ndarray
+    k : int or Sequence of int
         The kth neighbours to look for when estimating the density of the distributions.
         Defaults to 1, which can be noisy.
 
     Returns
     -------
-    float or Sequence of float or np.ndarray
+    float or Sequence of float
         The estimated Kullback-Leibler divergence D(P||Q) computed from the distances to the kth neighbour.
 
     Notes

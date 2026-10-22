@@ -340,7 +340,7 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: Hashable | None = 
 
 def calc_perc(
     arr: np.ndarray,
-    percentiles: Sequence[float] | np.ndarray | None = None,
+    percentiles: Sequence[float] | None = None,
     alpha: float = 1.0,
     beta: float = 1.0,
     copy: bool = True,
@@ -352,7 +352,7 @@ def calc_perc(
     ----------
     arr : np.ndarray
         The input array.
-    percentiles : Sequence of float or np.ndarray, optional
+    percentiles : Sequence of float, optional
         The percentiles to compute. If None, only the median is computed.
     alpha : float
         A constant used to correct the index computed. Default: 1.0.
@@ -392,7 +392,7 @@ def calc_perc(
 
 def nan_calc_percentiles(
     arr: np.ndarray,
-    percentiles: Sequence[float] | np.ndarray | None = None,
+    percentiles: Sequence[float] | None = None,
     axis: int = -1,
     alpha: float = 1.0,
     beta: float = 1.0,
@@ -405,7 +405,7 @@ def nan_calc_percentiles(
     ----------
     arr : np.ndarray
         The input array.
-    percentiles : Sequence of float or np.ndarray, optional
+    percentiles : Sequence of float, optional
         The percentiles to compute. If None, only the median is computed.
     axis : int
         The axis along which to compute the percentiles. Default: -1.
