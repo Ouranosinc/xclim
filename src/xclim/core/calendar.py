@@ -425,7 +425,7 @@ def percentile_doy(
     window : int
         Number of time-steps around each day of the year to include in the calculation.
         Default: 5.
-    per : float or Sequence of float or np.ndarray
+    per : float or Sequence of float
         Percentile(s) between [0, 100].
         Default: 10.0.
     alpha : float
