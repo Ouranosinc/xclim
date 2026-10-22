@@ -1042,7 +1042,7 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
 
     Returns
     -------
-    dict[str, xarray.DataArray]
+    dict[str, xr.DataArray]
         Dictionary containing the computed indexes as prescribed in `indexes`, including the intermediate
         ones needed, even if they were not explicitly listed in `indexes`. When overwintering is
         activated, `winter_pr` is added. If `season_method` is not None and `season_mask` was not given,

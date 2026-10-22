@@ -240,7 +240,7 @@ def parametric_quantile(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         An array of parametric quantiles estimated from the distribution parameters.
 
     Notes
@@ -314,7 +314,7 @@ def parametric_cdf(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         An array of parametric CDF values estimated from the distribution parameters.
     """
     if not isinstance(v, xr.DataArray):
@@ -380,7 +380,7 @@ def parametric_pdf(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         An array of probabilities estimated from the distribution parameters.
     """
     if not isinstance(v, xr.DataArray):
@@ -456,7 +456,7 @@ def fa(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         An array of values with a 1/t probability of exceedance (if mode=='max').
 
     See Also
@@ -497,7 +497,7 @@ def frequency_analysis(
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Input data.
     mode : {"min", "max"}
         Whether we are looking for a probability of exceedance (high) or a probability of non-exceedance (low).
@@ -524,7 +524,7 @@ def frequency_analysis(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         An array of values with a 1/t probability of exceedance or non-exceedance when mode is high or low respectively.
 
     See Also
@@ -779,7 +779,7 @@ def preprocess_standardized_index(da: xr.DataArray, freq: Freq | None, window: i
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Input array.
     freq : Freq, optional
         Resampling frequency. A monthly, weekly, or daily frequency is expected.
@@ -794,7 +794,7 @@ def preprocess_standardized_index(da: xr.DataArray, freq: Freq | None, window: i
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Processed array, following resampling if applicable.
     str
         Time grouping corresponding to the final time frequency.
@@ -862,7 +862,7 @@ def standardized_index_fit_params(
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Input array.
     freq : Freq, optional
         Resampling frequency. A monthly, weekly, or daily frequency is expected. Option `None` assumes
@@ -885,7 +885,7 @@ def standardized_index_fit_params(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Standardized Index fitting parameters.
 
     Notes
@@ -988,7 +988,7 @@ def standardized_index(
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Daily input data.
     freq : Freq, optional
         Resampling frequency. A monthly, weekly, or daily frequency is expected. Option `None` assumes
@@ -1013,7 +1013,7 @@ def standardized_index(
     cal_end : DateStr, optional
         End date of the calibration period. A `DateStr` is expected, that is a `str` in format "YYYY-MM-DD".
         `None` means that the calibration period finishes at the end of the input dataset.
-    params : xarray.DataArray, optional
+    params : xr.DataArray, optional
         Fit parameters.
         The `params` can be computed using :py:func:`xclim.compute.stats.standardized_index_fit_params` in advance.
         The output can be given here as input, and it overrides other options.
@@ -1039,7 +1039,7 @@ def standardized_index(
 
     Returns
     -------
-    xarray.DataArray, [unitless]
+    xr.DataArray, [unitless]
         Standardized Precipitation Index.
 
     See Also

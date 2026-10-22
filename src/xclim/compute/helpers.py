@@ -710,7 +710,7 @@ def day_lengths(
     dates : xr.DataArray
         Daily datetime data.
         This function makes no sense with data of other time frequencies.
-    lat : Quantified or xarray.Dataset or xarray.DataTree
+    lat : Quantified or xr.Dataset or xr.DataTree
         Latitude coordinate. Expects units of "degree_north".
     method : {"spencer", "simple"}
         Which approximation to use when computing the solar declination angle.
@@ -725,7 +725,7 @@ def day_lengths(
 
     Returns
     -------
-    xarray.DataArray, [hours]
+    xr.DataArray, [hours]
         Day-lengths in hours per individual day.
 
     Raises
@@ -788,9 +788,9 @@ def huglin_day_length_latitude_coefficient(
 
     Parameters
     ----------
-    lat : xarray.DataArray or str
+    lat : xr.DataArray or str
         Latitude coordinate. Expects units of "degree_north".
-        If provided a string (e.g. "45 degree_north"), it is converted to an xarray.DataArray.
+        If provided a string (e.g. "45 degree_north"), it is converted to an xr.DataArray.
     method : {"huglin", "interpolated"}
         The method to use for the coefficient calculation.
         Default: "interpolated".
@@ -800,7 +800,7 @@ def huglin_day_length_latitude_coefficient(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Coefficient for the day length based on latitude.
 
     Notes
@@ -882,11 +882,11 @@ def gladstones_day_length_latitude_coefficient(
 
     Parameters
     ----------
-    dates : xarray.DataArray
+    dates : xr.DataArray
         The dates for which the day length latitude coefficient is computed.
-    lat : xarray.DataArray or int or float
+    lat : xr.DataArray or int or float
         Latitude coordinate. Expects units of "degree_north".
-        If a single value is given, it is converted to an xarray.DataArray.
+        If a single value is given, it is converted to an xr.DataArray.
     neutral_latitude : str
         The latitude at which the day length coefficient is 1.0.
         Latitudes between this value and 0 degrees North will have a coefficient below 1.0 during the growing season,
@@ -904,7 +904,7 @@ def gladstones_day_length_latitude_coefficient(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Coefficient for the day length based on latitude.
     """
     if not isinstance(lat, xr.DataArray):
@@ -955,11 +955,11 @@ def jones_day_length_latitude_coefficient(
 
     Parameters
     ----------
-    dates : xarray.DataArray
+    dates : xr.DataArray
         The dates for which the day length latitude coefficient is computed.
     lat : xr.DataArray or xr.Dataset or xr.DataTree
         Latitude coordinate. Expects units of "degree_north".
-        If a single value is given, it is converted to an xarray.DataArray.
+        If a single value is given, it is converted to an xr.DataArray.
     method : {"gladstones", "jones"}
         The method to use for the coefficient calculation.
         The "jones" method uses a temperature range adjustment and integrates axial tilt, latitude, and day-of-year
@@ -980,7 +980,7 @@ def jones_day_length_latitude_coefficient(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Coefficient for the day length based on latitude, aggregated over the growing season.
 
     Raises
@@ -1077,7 +1077,7 @@ def wind_speed_height_conversion(
 
     Parameters
     ----------
-    ua : xarray.DataArray
+    ua : xr.DataArray
         Wind speed at height `h`.
     h_source : str
         Height of the input wind speed `ua` (e.g. `h == "10 m"` for a wind speed at `10 meters`).
@@ -1088,7 +1088,7 @@ def wind_speed_height_conversion(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Wind speed at height `h_target`.
 
     References
@@ -1115,12 +1115,12 @@ def _gather_lat(da: xr.DataArray) -> xr.DataArray:
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         CF-conformant DataArray with a "latitude" coordinate.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Latitude coordinate.
     """
     try:
@@ -1138,12 +1138,12 @@ def _gather_lon(da: xr.DataArray) -> xr.DataArray:
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         CF-conformant DataArray with a "longitude" coordinate.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Longitude coordinate.
     """
     try:
@@ -1171,7 +1171,7 @@ def resample_map(
 
     Parameters
     ----------
-    obj : DataArray or Dataset
+    obj : xr.DataArray or xr.Dataset
         The xarray object to resample.
     dim : str
         Dimension over which to resample.
@@ -1263,18 +1263,18 @@ def _compute_daytime_temperature(
 
     Parameters
     ----------
-    hour_after_sunrise : xarray.DataArray
+    hour_after_sunrise : xr.DataArray
         Hours after the last sunrise.
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Daily minimum temperature.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Daily maximum temperature.
-    daylength : xarray.DataArray
+    daylength : xr.DataArray
         Length of the day in hours.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Hourly daytime temperature.
     """
     return (tasmax - tasmin) * np.sin((np.pi * hour_after_sunrise) / (daylength + 4)) + tasmin
@@ -1294,18 +1294,18 @@ def _compute_nighttime_temperature(
 
     Parameters
     ----------
-    hours_after_sunset : xarray.DataArray
+    hours_after_sunset : xr.DataArray
         Hours after the last sunset.
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Daily minimum temperature.
-    tas_sunset : xarray.DataArray
+    tas_sunset : xr.DataArray
         Temperature at last sunset.
-    daylength : xarray.DataArray
+    daylength : xr.DataArray
         Length of the day in hours.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Hourly nighttime temperature.
     """
     return tas_sunset - ((tas_sunset - tasmin) / np.log(24 - daylength)) * np.log(hours_after_sunset)
@@ -1348,9 +1348,9 @@ def make_hourly_temperature(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Daily minimum temperature.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Daily maximum temperature.
     infill_polar_days : bool
         Whether to use a mask of 24 hours for polar days and 0 hours for polar nights.
@@ -1361,7 +1361,7 @@ def make_hourly_temperature(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Hourly temperature.
     """
     data = xr.merge([tasmin, tasmax])

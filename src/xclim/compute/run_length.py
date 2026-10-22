@@ -1772,7 +1772,7 @@ def suspicious_run(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         A boolean array of the same shape as the input, indicating where runs of identical values are found.
     """
     return xr.apply_ufunc(

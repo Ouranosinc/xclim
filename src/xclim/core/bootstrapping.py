@@ -9,9 +9,8 @@ from typing import Any
 
 import cftime
 import numpy as np
-import xarray
+import xarray as xr
 from boltons.funcutils import wraps
-from xarray import DataArray
 
 import xclim.core.utils
 from xclim.core import Freq
@@ -48,11 +47,11 @@ def percentile_bootstrap(func: Callable) -> Callable:
         @declare_units(tas="[temperature]", t90="[temperature]")
         @percentile_bootstrap
         def tg90p(
-            tas: xarray.DataArray,
-            t90: xarray.DataArray,
+            tas: xr.DataArray,
+            t90: xr.DataArray,
             freq: Freq = "YS",
             bootstrap: bool = False,
-        ) -> xarray.DataArray:
+        ) -> xr.DataArray:
             pass
 
     Examples
@@ -79,7 +78,7 @@ def percentile_bootstrap(func: Callable) -> Callable:
     return wrapper
 
 
-def bootstrap_func(compute_index_func: Callable, **kwargs: Any) -> xarray.DataArray:
+def bootstrap_func(compute_index_func: Callable, **kwargs: Any) -> xr.DataArray:
     r"""
     Bootstrap the computation of percentile-based indicators.
 
@@ -111,7 +110,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs: Any) -> xarray.DataAr
     -----
     This function is meant to be used by the `percentile_bootstrap` decorator.
     The parameters of the percentile calculation (percentile, window, reference_period)
-    are stored in the attributes of the percentile DataArray.
+    are stored in the attributes of the percentile xr.DataArray.
     The bootstrap algorithm implemented here does the following::
 
         For each temporal grouping in the calculation of the index
@@ -130,16 +129,16 @@ def bootstrap_func(compute_index_func: Callable, **kwargs: Any) -> xarray.DataAr
     # Identify the input and the percentile arrays from the bound arguments
     per_key, da_key = None, None
     for name, val in kwargs.items():
-        if isinstance(val, DataArray):
+        if isinstance(val, xr.DataArray):
             if "percentile_doy" in val.attrs.get("history", ""):
                 per_key = name
             else:
                 da_key = name
     if da_key is None or per_key is None:
-        raise KeyError("The input data and the percentile DataArray must be provided as named arguments.")
-    # Extract the DataArray inputs from the arguments
-    da: DataArray = kwargs.pop(da_key)
-    per_da: DataArray | None = kwargs.pop(per_key, None)
+        raise KeyError("The input data and the percentile xr.DataArray must be provided as named arguments.")
+    # Extract the xr.DataArray inputs from the arguments
+    da = kwargs.pop(da_key)
+    per_da = kwargs.pop(per_key, None)
     if per_da is None:
         # per may be empty on non doy percentiles
         raise KeyError("`bootstrap` can only be used with percentiles computed using `percentile_doy`")
@@ -196,7 +195,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs: Any) -> xarray.DataAr
                         str(d): chunks[bda.get_axis_num(d)] for d in set(bda.dims).intersection(set(per_template.dims))
                     }
                     per_template = per_template.chunk(chunking)
-            per = xarray.map_blocks(
+            per = xr.map_blocks(
                 # strip history update from percentile_doy
                 percentile_doy.__wrapped__,  # type: ignore[attr-defined]
                 obj=bda,
@@ -212,7 +211,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs: Any) -> xarray.DataAr
             kw[per_key] = per_da
             value = compute_index_func(**kw)
         acc.append(value)
-    result = xarray.concat(acc, dim="time")
+    result = xr.concat(acc, dim="time")
     result.attrs["units"] = value.attrs["units"]
     return result
 
@@ -237,17 +236,17 @@ def _get_year_label(year_dt: cftime.datetime | np.datetime64 | str) -> int:
 
 # TODO: Return a generator instead and assess performance
 def build_bootstrap_year_da(
-    da: DataArray, groups: dict[Any, slice | list[int]], label: Any, dim: str = "time"
-) -> DataArray:
+    da: xr.DataArray, groups: dict[Any, slice | list[int]], label: Any, dim: str = "time"
+) -> xr.DataArray:
     """
     Return an array where every other group replaces a group in the original along a new dimension.
 
     Parameters
     ----------
-    da : DataArray
+    da : xr.DataArray
       Original input array over the reference period.
     groups : dict
-      Output of grouping functions, such as `DataArrayResample.groups`.
+      Output of grouping functions, such as `xr.DataArrayResample.groups`.
     label : Any
       Key identifying the group item to replace.
     dim : str
@@ -255,7 +254,7 @@ def build_bootstrap_year_da(
 
     Returns
     -------
-    DataArray:
+    xr.DataArray:
       Array where one group is replaced by values from every other group along the `bootstrap` dimension.
     """
     gr = groups.copy()
@@ -285,4 +284,4 @@ def build_bootstrap_year_da(
         else:
             raise NotImplementedError
         out_accumulator.append(out_view)
-    return xarray.concat(out_accumulator, dim=BOOTSTRAP_DIM)
+    return xr.concat(out_accumulator, dim=BOOTSTRAP_DIM)

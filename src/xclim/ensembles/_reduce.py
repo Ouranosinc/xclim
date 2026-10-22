@@ -15,7 +15,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 import scipy.stats
-import xarray
+import xarray as xr
 from scipy.spatial import distance
 from sklearn.cluster import KMeans
 
@@ -23,7 +23,7 @@ from sklearn.cluster import KMeans
 MPL_INSTALLED = bool(_util.find_spec("matplotlib"))
 
 
-def make_criteria(ds: xarray.Dataset | xarray.DataArray) -> xarray.DataArray:
+def make_criteria(ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
     """
     Reshape the input into a criteria 2D DataArray.
 
@@ -63,14 +63,14 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray) -> xarray.DataArray:
         """Variable version : stack non-realization dims."""
         return da.stack(criteria=set(da.dims) - {"realization"})
 
-    if isinstance(ds, xarray.Dataset):
+    if isinstance(ds, xr.Dataset):
         # When variables have different set of dims, missing dims on one variable results in duplicated values
         # when a simple stack is done. To avoid that: stack each variable independently add a new "variables" dim
         stacked = {da.name: _make_crit(da.expand_dims(variables=[da.name])) for da in ds.data_vars.values()}
         # Get name of all stacked coords
         stacked_coords = set.union(*[set(da.indexes["criteria"].names) for da in stacked.values()])
         # Concat the variables by dropping old stacked index and related coords
-        crit = xarray.concat(
+        crit = xr.concat(
             [da.reset_index("criteria").drop_vars(stacked_coords, errors="ignore") for k, da in stacked.items()],
             "criteria",
         )
@@ -85,7 +85,7 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray) -> xarray.DataArray:
             for crd in stacked_coords
         ]
         crit = crit.assign_coords(
-            xarray.Coordinates.from_pandas_multiindex(
+            xr.Coordinates.from_pandas_multiindex(
                 pd.MultiIndex.from_arrays([arr for name, arr in coords], names=[name for name, arr in coords]),
                 "criteria",
             )
@@ -102,7 +102,7 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray) -> xarray.DataArray:
 
 
 def kkz_reduce_ensemble(
-    data: xarray.DataArray,
+    data: xr.DataArray,
     num_select: int,
     *,
     dist_method: str = "euclidean",
@@ -177,7 +177,7 @@ def kkz_reduce_ensemble(
 
 
 def kmeans_reduce_ensemble(
-    data: xarray.DataArray,
+    data: xr.DataArray,
     *,
     method: dict | None = None,
     make_graph: bool = MPL_INSTALLED,

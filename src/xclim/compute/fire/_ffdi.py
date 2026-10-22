@@ -294,7 +294,7 @@ def griffiths_drought_factor(
     ----------
     pr : xr.DataArray
         Total rainfall over previous 24 hours [mm/day].
-    smd : xarray DataArray
+    smd : xr DataArray
         Daily soil moisture deficit (often KBDI) [mm/day].
     limiting_func : {"xlim", "discrete"}
         How to limit the values of the drought factor.

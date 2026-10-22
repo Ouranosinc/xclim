@@ -86,17 +86,17 @@ def humidex(
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean Temperature.
-    tdps : xarray.DataArray, optional
+    tdps : xr.DataArray, optional
         Dewpoint Temperature, used to compute the vapour pressure.
-    hurs : xarray.DataArray, optional
+    hurs : xr.DataArray, optional
         Relative Humidity, used as an alternative way to compute the vapour pressure if the dewpoint
         temperature is not available.
 
     Returns
     -------
-    xarray.DataArray, [temperature]
+    xr.DataArray, [temperature]
       The Humidex Index.
 
     Notes
@@ -249,14 +249,14 @@ def tas_from_tasmin_tasmax(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Dat
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Minimum (daily) Temperature.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Maximum (daily) Temperature.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Mean (daily) Temperature [same units as tasmin].
 
     Examples
@@ -523,7 +523,7 @@ def saturation_vapor_pressure(
 
     Returns
     -------
-    xarray.DataArray, [Pa]
+    xaxrrray.DataArray, [Pa]
         Saturation Vapour Pressure.
 
     See Also
@@ -665,9 +665,9 @@ def vapor_pressure_deficit(
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean daily temperature.
-    hurs : xarray.DataArray
+    hurs : xr.DataArray
         Relative humidity.
     ice_thresh : Quantified, optional
         Threshold temperature under which to switch to equations in reference to ice instead of water.
@@ -685,7 +685,7 @@ def vapor_pressure_deficit(
 
     Returns
     -------
-    xarray.DataArray, [Pa]
+    xr.DataArray, [Pa]
         Vapour pressure deficit.
 
     See Also
@@ -902,7 +902,7 @@ def specific_humidity(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Specific Humidity.
 
     Notes
@@ -1000,7 +1000,7 @@ def specific_humidity_from_dewpoint(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Specific Humidity.
 
     Notes
@@ -1122,9 +1122,9 @@ def snowfall_approximation(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Mean daily Precipitation Flux.
-    tas : xarray.DataArray, optional
+    tas : xr.DataArray, optional
         Mean, Maximum, or Minimum daily Temperature.
     thresh : Quantified
         Freezing point temperature. Non-scalar values are not allowed with method "brown".
@@ -1145,7 +1145,7 @@ def snowfall_approximation(
 
     Returns
     -------
-    xarray.DataArray, [same units as pr]
+    xr.DataArray, [same units as pr]
         Solid Precipitation Flux.
 
     See Also
@@ -1292,9 +1292,9 @@ def rain_approximation(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Mean daily Precipitation Flux.
-    tas : xarray.DataArray, optional
+    tas : xr.DataArray, optional
         Mean, Maximum, or Minimum daily Temperature.
     thresh : Quantified
         Freezing point temperature. Non-scalar values are not allowed with method "brown".
@@ -1315,7 +1315,7 @@ def rain_approximation(
 
     Returns
     -------
-    xarray.DataArray, [same units as pr]
+    xr.DataArray, [same units as pr]
         Liquid precipitation rate.
 
     See Also
@@ -1707,9 +1707,9 @@ def wind_chill_index(
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Surface air temperature.
-    sfcWind : xarray.DataArray
+    sfcWind : xr.DataArray
         Surface wind speed (10 m).
     method : {"CAN", "US"}
         If "CAN" (default), a "slow wind" equation is used where winds are slower than 5 km/h, see Notes.
@@ -1723,7 +1723,7 @@ def wind_chill_index(
 
     Returns
     -------
-    xarray.DataArray, [degC]
+    xr.DataArray, [degC]
         Wind Chill Index.
 
     Notes
@@ -1791,16 +1791,16 @@ def clausius_clapeyron_scaled_precipitation(
 
     Parameters
     ----------
-    delta_tas : xarray.DataArray
+    delta_tas : xr.DataArray
         Difference in temperature between a baseline climatology and another climatology.
-    pr_baseline : xarray.DataArray
+    pr_baseline : xr.DataArray
         Baseline precipitation to adjust with Clausius-Clapeyron.
     cc_scale_factor : float
         Clausius Clapeyron scale factor. Default: 1.07.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Baseline precipitation scaled to other climatology using Clausius-Clapeyron relationship.
 
     Warnings
@@ -1875,19 +1875,19 @@ def fao_allen98(
 
     Parameters
     ----------
-    net_radiation : xarray.DataArray
+    net_radiation : xr.DataArray
         Net radiation at crop surface [MJ m-2 day-1].
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Air temperature at 2 m height [degC].
-    wind : xarray.DataArray
+    wind : xr.DataArray
         Wind speed at 2 m height [m s-1].
-    es : xarray.DataArray
+    es : xr.DataArray
         Saturation vapour pressure [kPa].
-    ea : xarray.DataArray
+    ea : xr.DataArray
         Actual vapour pressure [kPa].
-    delta_svp : xarray.DataArray
+    delta_svp : xr.DataArray
         Slope of saturation vapour pressure curve [kPa degC-1].
-    gamma : xarray.DataArray or str
+    gamma : xr.DataArray or str
         Psychrometric constant [kPa deg C].
     G : str
         Soil heat flux (G) [MJ m-2 day-1].
@@ -1895,7 +1895,7 @@ def fao_allen98(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Potential Evapotranspiration from a hypothetical grass reference surface [mm day-1].
 
     References
@@ -2188,28 +2188,28 @@ def potential_evapotranspiration(  # pylint: disable=too-many-statements
 
     Parameters
     ----------
-    tasmin : xarray.DataArray, optional
+    tasmin : xr.DataArray, optional
         Minimum daily Temperature.
-    tasmax : xarray.DataArray, optional
+    tasmax : xr.DataArray, optional
         Maximum daily Temperature.
-    tas : xarray.DataArray, optional
+    tas : xr.DataArray, optional
         Mean daily Temperature.
-    lat : xarray.DataArray, optional
+    lat : xr.DataArray, optional
         Latitude.
         If not provided, it is sought on `tasmin` or `tas` using cf-xarray accessors.
-    hurs : xarray.DataArray, optional
+    hurs : xr.DataArray, optional
         Relative Humidity.
-    rsds : xarray.DataArray, optional
+    rsds : xr.DataArray, optional
         Surface Downwelling Shortwave Radiation.
-    rsus : xarray.DataArray, optional
+    rsus : xr.DataArray, optional
         Surface Upwelling Shortwave Radiation.
-    rlds : xarray.DataArray, optional
+    rlds : xr.DataArray, optional
         Surface Downwelling Longwave Radiation.
-    rlus : xarray.DataArray, optional
+    rlus : xr.DataArray, optional
         Surface Upwelling Longwave Radiation.
-    sfcWind : xarray.DataArray, optional
+    sfcWind : xr.DataArray, optional
         Surface Wind Velocity (at 10 m).
-    pr : xarray.DataArray, optional
+    pr : xr.DataArray, optional
         Mean daily Precipitation Flux.
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05", "allen98", "FAO_PM98", "droogersallen02", "DA02"}
         Which method to use, see Notes.
@@ -2225,7 +2225,7 @@ def potential_evapotranspiration(  # pylint: disable=too-many-statements
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Potential Evapotranspiration.
 
     Notes
@@ -2561,13 +2561,13 @@ def universal_thermal_climate_index(
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean Temperature.
-    hurs : xarray.DataArray
+    hurs : xr.DataArray
         Relative Humidity.
-    sfcWind : xarray.DataArray
+    sfcWind : xr.DataArray
         Wind Velocity.
-    mrt : xarray.DataArray, optional
+    mrt : xr.DataArray, optional
         Mean Radiant Temperature.
     rsds : xr.DataArray, optional
         Surface Downwelling Shortwave Radiation.
@@ -2611,7 +2611,7 @@ def universal_thermal_climate_index(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Universal Thermal Climate Index.
 
     Notes
@@ -2697,7 +2697,7 @@ def _fdir_ratio(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Ratio of direct solar radiation.
 
     Notes
@@ -2750,7 +2750,7 @@ def mean_radiant_temperature(
 
     Returns
     -------
-    xarray.DataArray, [K]
+    xr.DataArray, [K]
         Mean Radiant Temperature.
 
     Warnings
@@ -2873,30 +2873,30 @@ def water_budget(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Daily precipitation.
-    evspsblpot : xarray.DataArray, optional
+    evspsblpot : xr.DataArray, optional
         Potential evapotranspiration.
-    tasmin : xarray.DataArray, optional
+    tasmin : xr.DataArray, optional
         Minimum daily temperature.
-    tasmax : xarray.DataArray, optional
+    tasmax : xr.DataArray, optional
         Maximum daily temperature.
-    tas : xarray.DataArray, optional
+    tas : xr.DataArray, optional
         Mean daily temperature.
-    lat : xarray.DataArray, optional
+    lat : xr.DataArray, optional
         Latitude coordinate, needed if evspsblpot is not given.
         If None, a CF-conformant "latitude" field must be available within the `pr` DataArray.
-    hurs : xarray.DataArray, optional
+    hurs : xr.DataArray, optional
         Relative humidity.
-    rsds : xarray.DataArray, optional
+    rsds : xr.DataArray, optional
         Surface Downwelling Shortwave Radiation.
-    rsus : xarray.DataArray, optional
+    rsus : xr.DataArray, optional
         Surface Upwelling Shortwave Radiation.
-    rlds : xarray.DataArray, optional
+    rlds : xr.DataArray, optional
         Surface Downwelling Longwave Radiation.
-    rlus : xarray.DataArray, optional
+    rlus : xr.DataArray, optional
         Surface Upwelling Longwave Radiation.
-    sfcWind : xarray.DataArray, optional
+    sfcWind : xr.DataArray, optional
         Surface wind velocity (at 10 m).
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05", "allen98", "FAO_PM98", "droogersallen02", "DA02"}
         Method to use to calculate the potential evapotranspiration. Ignored when `evspsblpot` is given.
@@ -2904,7 +2904,7 @@ def water_budget(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Precipitation minus potential evapotranspiration.
 
     See Also
@@ -2956,7 +2956,7 @@ def wind_profile(
 
     Parameters
     ----------
-    wind_speed : xarray.DataArray
+    wind_speed : xr.DataArray
         Wind Speed at the reference height.
     h : Quantified
         Height at which to compute the Wind Speed.
@@ -2971,7 +2971,7 @@ def wind_profile(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Wind Speed at the desired height.
 
     Notes
@@ -3019,10 +3019,10 @@ def wind_power_potential(
 
     Parameters
     ----------
-    wind_speed : xarray.DataArray
+    wind_speed : xr.DataArray
         Wind Speed at the hub height.
         Use the `wind_profile` function to estimate from the surface wind speed.
-    air_density : xarray.DataArray, optional
+    air_density : xr.DataArray, optional
         Air Density at the hub height. Defaults to 1.225 kg/m³.
         This is worth changing if applying in cold or mountainous regions with non-standard air density.
     cut_in : Quantified

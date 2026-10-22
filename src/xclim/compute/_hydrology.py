@@ -6,10 +6,10 @@ import importlib.util as _util
 from typing import Literal
 
 import numpy as np
-import xarray
+import xarray as xr
 from scipy.stats import rv_continuous
-from xarray import DataArray
 
+# from xarray import DataArray
 from xclim.compute import generic
 from xclim.compute.helpers import resample_map
 from xclim.compute.stats import standardized_index
@@ -47,7 +47,7 @@ __all__ = [
 
 
 @declare_units(rivo="[discharge]")
-def base_flow_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
+def base_flow_index(rivo: xr.DataArray, freq: Freq = "YS") -> xr.DataArray:
     r"""
     Base flow index.
 
@@ -55,14 +55,14 @@ def base_flow_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArr
 
     Parameters
     ----------
-    rivo : xarray.DataArray
+    rivo : xr.DataArray
         Rate of river discharge.
     freq : Freq
         Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Base flow index.
 
     Notes
@@ -90,7 +90,7 @@ def base_flow_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArr
 
 
 @declare_units(rivo="[discharge]")
-def rb_flashiness_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
+def rb_flashiness_index(rivo: xr.DataArray, freq: Freq = "YS") -> xr.DataArray:
     r"""
     Richards-Baker flashiness index.
 
@@ -99,14 +99,14 @@ def rb_flashiness_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.Dat
 
     Parameters
     ----------
-    rivo : xarray.DataArray
+    rivo : xr.DataArray
         Rate of river discharge.
     freq : Freq
         Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         R-B Index.
 
     Notes
@@ -133,7 +133,7 @@ def rb_flashiness_index(rivo: xarray.DataArray, freq: Freq = "YS") -> xarray.Dat
     params="[]",
 )
 def standardized_streamflow_index(
-    rivo: xarray.DataArray,
+    rivo: xr.DataArray,
     freq: Freq | None = "MS",
     window: int = 1,
     dist: Literal["genextreme", "fisk"] | rv_continuous = "genextreme",
@@ -141,15 +141,15 @@ def standardized_streamflow_index(
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
-    params: xarray.DataArray | None = None,
+    params: xr.DataArray | None = None,
     **indexer,
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Standardized Streamflow Index (SSI).
 
     Parameters
     ----------
-    rivo : xarray.DataArray
+    rivo : xr.DataArray
         Rate of river discharge.
     freq : Freq, optional
         Resampling frequency. A monthly, weekly, or daily frequency is expected. Option `None` assumes
@@ -174,7 +174,7 @@ def standardized_streamflow_index(
     cal_end : DateStr, optional
         End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period finishes at the end of the input dataset.
-    params : xarray.DataArray, optional
+    params : xr.DataArray, optional
         Fit parameters.
         The `params` can be computed using ``xclim.compute.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
@@ -184,7 +184,7 @@ def standardized_streamflow_index(
 
     Returns
     -------
-    xarray.DataArray, [unitless]
+    xr.DataArray, [unitless]
         Standardized Streamflow Index.
 
     See Also
@@ -266,7 +266,7 @@ def standardized_streamflow_index(
 
 @deprecated("1.0", "land.snd_max")
 @declare_units(snd="[length]")
-def snd_max(snd: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
+def snd_max(snd: xr.DataArray, freq: Freq = "YS-JUL") -> xr.DataArray:
     """
     Maximum snow depth.
 
@@ -274,21 +274,21 @@ def snd_max(snd: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
 
     Parameters
     ----------
-    snd : xarray.DataArray
+    snd : xr.DataArray
         Snow depth (mass per area).
     freq : Freq
         Resampling frequency. Default: "YS-JUL".
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         The maximum snow depth over a given number of days for each period. [length].
     """
     return generic.statistics(snd, statistic="max", freq=freq)
 
 
 @declare_units(snd="[length]")
-def snd_max_doy(snd: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
+def snd_max_doy(snd: xr.DataArray, freq: Freq = "YS-JUL") -> xr.DataArray:
     """
     Day of year of maximum snow depth.
 
@@ -296,14 +296,14 @@ def snd_max_doy(snd: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArra
 
     Parameters
     ----------
-    snd : xarray.DataArray
+    snd : xr.DataArray
         Surface snow depth.
     freq : Freq
          Resampling frequency. Default: "YS-JUL".
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         The day of year at which snow depth reaches its maximum value.
     """
     # Identify periods where there is at least one non-null value for snow depth
@@ -319,7 +319,7 @@ def snd_max_doy(snd: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArra
 
 @deprecated("1.0", "land.snw_max")
 @declare_units(snw="[snowamount]")
-def snw_max(snw: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
+def snw_max(snw: xr.DataArray, freq: Freq = "YS-JUL") -> xr.DataArray:
     """
     Maximum snow amount.
 
@@ -327,21 +327,21 @@ def snw_max(snw: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
 
     Parameters
     ----------
-    snw : xarray.DataArray
+    snw : xr.DataArray
         Snow amount (mass per area).
     freq : Freq
         Resampling frequency. Default: "YS-JUL".
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         The maximum snow amount over a given number of days for each period. [mass/area].
     """
     return generic.statistics(snw, statistic="max", freq=freq)
 
 
 @declare_units(snw="[snowamount]")
-def snw_max_doy(snw: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
+def snw_max_doy(snw: xr.DataArray, freq: Freq = "YS-JUL") -> xr.DataArray:
     """
     Day of year of maximum snow amount.
 
@@ -349,14 +349,14 @@ def snw_max_doy(snw: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArra
 
     Parameters
     ----------
-    snw : xarray.DataArray
+    snw : xr.DataArray
         Surface snow amount.
     freq : Freq
         Resampling frequency. Default: "YS-JUL".
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         The day of year at which snow amount reaches its maximum value.
     """
     # Identify periods where there is at least one non-null value for snow depth
@@ -370,7 +370,7 @@ def snw_max_doy(snw: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArra
 
 
 @declare_units(snw="[snowamount]")
-def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: Freq = "YS-JUL") -> xarray.DataArray:
+def snow_melt_we_max(snw: xr.DataArray, window: int = 3, freq: Freq = "YS-JUL") -> xr.DataArray:
     """
     Maximum snow melt.
 
@@ -378,7 +378,7 @@ def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: Freq = "YS-JU
 
     Parameters
     ----------
-    snw : xarray.DataArray
+    snw : xr.DataArray
         Snow amount (mass per area).
     window : int
         Number of days during which the melt is accumulated. Default: 3.
@@ -387,7 +387,7 @@ def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: Freq = "YS-JU
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         The maximum snow melt over a given number of days for each period. [mass/area].
     """
     # Compute change in SWE. Set melt as a positive change.
@@ -403,9 +403,7 @@ def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: Freq = "YS-JU
 
 
 @declare_units(snw="[snowamount]", pr="[precipitation]")
-def melt_and_precip_max(
-    snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: Freq = "YS-JUL"
-) -> xarray.DataArray:
+def melt_and_precip_max(snw: xr.DataArray, pr: xr.DataArray, window: int = 3, freq: Freq = "YS-JUL") -> xr.DataArray:
     """
     Maximum snow melt and precipitation.
 
@@ -413,9 +411,9 @@ def melt_and_precip_max(
 
     Parameters
     ----------
-    snw : xarray.DataArray
+    snw : xr.DataArray
         Snow amount (mass per area).
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Daily precipitation flux.
     window : int
         Number of days during which the water input is accumulated. Default: 3.
@@ -424,7 +422,7 @@ def melt_and_precip_max(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         The maximum snow melt plus precipitation over a given number of days for each period. [mass/area].
     """
     # Compute change in SWE. Set melt as a positive change.
@@ -447,7 +445,7 @@ def melt_and_precip_max(
     params="[]",
 )
 def standardized_groundwater_index(
-    gwl: xarray.DataArray,
+    gwl: xr.DataArray,
     freq: Freq | None = "MS",
     window: int = 1,
     dist: Literal["gamma", "genextreme", "lognorm"] | rv_continuous = "genextreme",
@@ -455,15 +453,15 @@ def standardized_groundwater_index(
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
-    params: xarray.DataArray | None = None,
+    params: xr.DataArray | None = None,
     **indexer,
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Standardized Groundwater Index (SGI).
 
     Parameters
     ----------
-    gwl : xarray.DataArray
+    gwl : xr.DataArray
         Groundwater head level.
     freq : Freq, optional
         Resampling frequency. A monthly, weekly, or daily frequency is expected. Option `None` assumes
@@ -489,7 +487,7 @@ def standardized_groundwater_index(
     cal_end : DateStr, optional
         End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period finishes at the end of the input dataset.
-    params : xarray.DataArray, optional
+    params : xr.DataArray, optional
         Fit parameters.
         The `params` can be computed using ``xclim.compute.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
@@ -499,7 +497,7 @@ def standardized_groundwater_index(
 
     Returns
     -------
-    xarray.DataArray, [unitless]
+    xr.DataArray, [unitless]
         Standardized Groundwater Index.
 
     See Also
@@ -579,7 +577,7 @@ def standardized_groundwater_index(
 
 
 @declare_units(rivo="[discharge]")
-def flow_index(rivo: xarray.DataArray, q: float = 0.95) -> xarray.DataArray:
+def flow_index(rivo: xr.DataArray, q: float = 0.95) -> xr.DataArray:
     """
     Flow index.
 
@@ -587,7 +585,7 @@ def flow_index(rivo: xarray.DataArray, q: float = 0.95) -> xarray.DataArray:
 
     Parameters
     ----------
-    rivo : xarray.DataArray
+    rivo : xr.DataArray
         Daily streamflow data.
     q : float
         Quantile for calculating the flow index, between 0 and 1. The higher the number the higher the flows.
@@ -595,7 +593,7 @@ def flow_index(rivo: xarray.DataArray, q: float = 0.95) -> xarray.DataArray:
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Normalized rivoq, which is the qth quantile of daily streamflow normalized by the median flow.
 
     References
@@ -610,7 +608,7 @@ def flow_index(rivo: xarray.DataArray, q: float = 0.95) -> xarray.DataArray:
 
 
 @declare_units(rivo="[discharge]")
-def high_flow_frequency(rivo: xarray.DataArray, threshold_factor: int = 9, freq: Freq = "YS-OCT") -> xarray.DataArray:
+def high_flow_frequency(rivo: xr.DataArray, threshold_factor: int = 9, freq: Freq = "YS-OCT") -> xr.DataArray:
     """
     High flow frequency.
 
@@ -620,7 +618,7 @@ def high_flow_frequency(rivo: xarray.DataArray, threshold_factor: int = 9, freq:
 
     Parameters
     ----------
-    rivo : xarray.DataArray
+    rivo : xr.DataArray
         Daily streamflow data.
     threshold_factor : int
         Factor by which the median flow is multiplied to set the high flow threshold. Default: 9.
@@ -631,7 +629,7 @@ def high_flow_frequency(rivo: xarray.DataArray, threshold_factor: int = 9, freq:
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Number of high flow days.
 
     References
@@ -644,9 +642,7 @@ def high_flow_frequency(rivo: xarray.DataArray, threshold_factor: int = 9, freq:
 
 
 @declare_units(rivo="[discharge]")
-def low_flow_frequency(
-    rivo: xarray.DataArray, threshold_factor: float = 0.2, freq: Freq = "YS-OCT"
-) -> xarray.DataArray:
+def low_flow_frequency(rivo: xr.DataArray, threshold_factor: float = 0.2, freq: Freq = "YS-OCT") -> xr.DataArray:
     """
     Low flow frequency.
 
@@ -656,7 +652,7 @@ def low_flow_frequency(
 
     Parameters
     ----------
-    rivo : xarray.DataArray
+    rivo : xr.DataArray
         Daily streamflow data.
     threshold_factor : float
         Factor by which the mean flow is multiplied to set the low flow threshold. Default: 0.2.
@@ -667,7 +663,7 @@ def low_flow_frequency(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Number of low flow days.
 
     References
@@ -680,7 +676,7 @@ def low_flow_frequency(
 
 
 @declare_units(pr="[precipitation]")
-def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp: float = 0.935) -> xarray.DataArray:
+def antecedent_precipitation_index(pr: xr.DataArray, window: int = 7, p_exp: float = 0.935) -> xr.DataArray:
     """
     Antecedent Precipitation Index.
 
@@ -689,7 +685,7 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Daily precipitation data.
     window : int
         Window for the days of precipitation data to be weighted and summed. Default: 7.
@@ -698,7 +694,7 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Antecedent Precipitation Index.
 
     References
@@ -707,7 +703,7 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     """
     pr = rate2amount(pr)
     pr = convert_units_to(pr, "mm", context="hydro")
-    weights = xarray.DataArray(
+    weights = xr.DataArray(
         list(reversed([p_exp ** (idx - 1) for idx in range(1, window + 1)])),
         dims="window_dim",
     )
@@ -719,11 +715,11 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
 # TODO: change a to `area`?
 @declare_units(rivo="[discharge]", pr="[precipitation]", area="[area]")
 def runoff_ratio(
-    rivo: xarray.DataArray,
-    pr: xarray.DataArray,
+    rivo: xr.DataArray,
+    pr: xr.DataArray,
     area: Quantified,
     freq: Freq = "YS",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     """
     Runoff ratio.
 
@@ -731,9 +727,9 @@ def runoff_ratio(
 
     Parameters
     ----------
-    rivo : xarray.DataArray
+    rivo : xr.DataArray
         Daily streamflow data.
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Mean daily precipitation.
     area : Quantified
         Watershed area.
@@ -742,7 +738,7 @@ def runoff_ratio(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Runoff ratio (dimensionless).
 
     Notes
@@ -779,7 +775,7 @@ def runoff_ratio(
 
 
 @declare_units(pr="[precipitation]", evspsblpot="[precipitation]")
-def aridity_index(pr: xarray.DataArray, evspsblpot: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
+def aridity_index(pr: xr.DataArray, evspsblpot: xr.DataArray, freq: Freq = "YS") -> xr.DataArray:
     """
     Aridity index.
 
@@ -788,9 +784,9 @@ def aridity_index(pr: xarray.DataArray, evspsblpot: xarray.DataArray, freq: Freq
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Precipitation.
-    evspsblpot : xarray.DataArray
+    evspsblpot : xr.DataArray
         Potential evapotranspiration.
     freq : Freq
         Resampling frequency. A monthly or yearly frequency is expected.
@@ -798,7 +794,7 @@ def aridity_index(pr: xarray.DataArray, evspsblpot: xarray.DataArray, freq: Freq
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Aridity index per time step (Unitless).
 
     Notes
@@ -835,11 +831,11 @@ def _timemax(da):
 # TODO: Change the indicator name? That seems a bit off
 @declare_units(snw="[snowamount]", rivo="[discharge]")
 def lag_snowpack_flow_peaks(
-    snw: xarray.DataArray,
-    rivo: xarray.DataArray,
+    snw: xr.DataArray,
+    rivo: xr.DataArray,
     freq: Freq = "YS-OCT",
     q: float = 0.9,
-) -> xarray.DataArray:
+) -> xr.DataArray:
     """
     Time lag between maximum snowpack and river high flows.
 
@@ -851,9 +847,9 @@ def lag_snowpack_flow_peaks(
 
     Parameters
     ----------
-    snw : xarray.DataArray
+    snw : xr.DataArray
         Surface snow amount.
-    rivo : xarray.DataArray
+    rivo : xr.DataArray
         Daily streamflow data.
     freq : Freq
         Resampling frequency. Default: "YS-OCT".
@@ -864,7 +860,7 @@ def lag_snowpack_flow_peaks(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Number of days between maximum snowpack and the circular mean date of high flow days.
 
     See Also
@@ -889,7 +885,7 @@ def lag_snowpack_flow_peaks(
     # delta time between snw_max and t0
     dt_snw_max = resample_map(snw, "time", freq, _timemax) - t0
     # Convert to float, and ensure a NaT gets converted to a nan
-    dt_snw_max = xarray.where(dt_snw_max.isnull(), np.nan, dt_snw_max.astype("timedelta64[s]").astype(float))
+    dt_snw_max = xr.where(dt_snw_max.isnull(), np.nan, dt_snw_max.astype("timedelta64[s]").astype(float))
 
     def _mean_timedelta_over_perc(rivo, q, t0):
         dt_q = (rivo.time - t0).astype("timedelta64[s]").astype(float)
@@ -904,7 +900,7 @@ def lag_snowpack_flow_peaks(
 
 
 @declare_units(rivo="[discharge]")
-def sen_slope(rivo: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArray, xarray.DataArray]:
+def sen_slope(rivo: xr.DataArray, freq: Freq = "YS") -> tuple[xr.DataArray, xr.DataArray]:
     """
     Temporal robustness analysis of streamflow.
 
@@ -912,16 +908,16 @@ def sen_slope(rivo: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArr
 
     Parameters
     ----------
-    rivo : xarray.DataArray
+    rivo : xr.DataArray
         Daily streamflow data.
     freq : Freq
         Resampling frequency. Default: "YS".
 
     Returns
     -------
-    sen_slope: xarray.DataArray, [dimensionless]
+    sen_slope: xr.DataArray, [dimensionless]
         Sen's slope estimates.
-    p_value: xarray.DataArray, [dimensionless]
+    p_value: xr.DataArray, [dimensionless]
         Mann-Kendall metric indicating slope tendency.
 
     Notes
@@ -944,7 +940,7 @@ def sen_slope(rivo: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArr
     def _mann_kendall(q, freq):
         qr = q.resample(time=freq).mean()
         qr = split_time_to_season_year(qr, freq)
-        out = xarray.apply_ufunc(
+        out = xr.apply_ufunc(
             lambda q: (lambda mk_output: np.array([mk_output.slope, mk_output.p]))(mk.original_test(q)),
             qr,
             input_core_dims=[["time"]],
@@ -964,8 +960,8 @@ def sen_slope(rivo: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArr
 
 @declare_units(rivo="[discharge]", rivosim="[discharge]")
 def sen_slope_ratio(
-    rivo: xarray.Dataset, rivosim: xarray.DataArray, freq: Freq = "YS"
-) -> tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray, xarray.DataArray, xarray.DataArray]:
+    rivo: xr.Dataset, rivosim: xr.DataArray, freq: Freq = "YS"
+) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray, xr.DataArray, xr.DataArray]:
     """
     Temporal robustness analysis of streamflow.
 
@@ -974,24 +970,24 @@ def sen_slope_ratio(
 
     Parameters
     ----------
-    rivo : xarray.DataArray
+    rivo : xr.DataArray
         Observed streamflow vector.
-    rivosim : xarray.DataArray, optional
+    rivosim : xr.DataArray, optional
         Simulated streamflow vector.
     freq : Freq
         Resampling frequency. Default: "YS".
 
     Returns
     -------
-    sen_slope: xarray.DataArray, [dimensionless]
+    sen_slope: xr.DataArray, [dimensionless]
         Sen's slope estimates.
-    p_value: xarray.DataArray, [dimensionless]
+    p_value: xr.DataArray, [dimensionless]
         Mann-Kendall metric indicating slope tendency.
-    sen_slope_sim: xarray.DataArray, [dimensionless]
+    sen_slope_sim: xr.DataArray, [dimensionless]
         Sen's slope estimates of the simulation dataset.
-    p_value_sim: xarray.DataArray, [dimensionless]
+    p_value_sim: xr.DataArray, [dimensionless]
         Mann-Kendall metric indicating slope tendency of the simulation dataset.
-    ratio: xarray.DataArray, [dimensionless]
+    ratio: xr.DataArray, [dimensionless]
         Ratio of the slopes.
 
     Notes
@@ -1013,8 +1009,8 @@ def sen_slope_ratio(
 
 @declare_units(rivo="[discharge]")
 def base_flow_index_seasonal_ratio(
-    rivo: xarray.DataArray, freq: Freq = "QS-DEC", numerator: str = "DJF", denominator: str = "JJA"
-) -> tuple[DataArray, DataArray]:
+    rivo: xr.DataArray, freq: Freq = "QS-DEC", numerator: str = "DJF", denominator: str = "JJA"
+) -> tuple[xr.DataArray, xr.DataArray]:
     """
     Seasonal Base flow index (bfi) and ratio of winter to summer base flow index.
 
@@ -1023,7 +1019,7 @@ def base_flow_index_seasonal_ratio(
 
     Parameters
     ----------
-    rivo : xarray.DataArray
+    rivo : xr.DataArray
         Rate of river discharge.
     freq : Freq
         Resampling frequency. Default: "QS-DEC".
@@ -1034,9 +1030,9 @@ def base_flow_index_seasonal_ratio(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Base flow index with a season coordinate.
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Base flow index winter to summer ratio.
 
     Notes

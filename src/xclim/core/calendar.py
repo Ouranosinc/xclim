@@ -377,7 +377,7 @@ def ensure_cftime_array(
     ----------
     time : xr.DataArray or xr.CFTimeIndex or np.ndarray or Sequence of cftime.datetime or Sequence of pydt.datetime
         A one-dimensional array or sequence of datetime-like objects.
-        `xarray.DataArray` objects are expected to have a "time" coordinate.
+        `xr.DataArray` objects are expected to have a "time" coordinate.
 
     Returns
     -------
@@ -922,14 +922,14 @@ def climatological_mean_doy(arr: xr.DataArray, window: int = 5) -> tuple[xr.Data
 
     Parameters
     ----------
-    arr : xarray.DataArray
+    arr : xr.DataArray
         Input array.
     window : int
         Window size in days. Default: 5.
 
     Returns
     -------
-    tuple of xarray.DataArrays and xarray.DataArray
+    tuple of xr.DataArrays and xr.DataArray
         Mean and standard deviation.
     """
     rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
@@ -949,16 +949,16 @@ def within_bnds_doy(arr: xr.DataArray, *, low: xr.DataArray, high: xr.DataArray)
 
     Parameters
     ----------
-    arr : xarray.DataArray
+    arr : xr.DataArray
         Input array.
-    low : xarray.DataArray
+    low : xr.DataArray
         Low bound with dayofyear coordinate.
-    high : xarray.DataArray
+    high : xr.DataArray
         High bound with dayofyear coordinate.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Boolean array of values within doy.
     """
     low = resample_doy(low, arr)

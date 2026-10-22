@@ -22,7 +22,6 @@ import pandas as pd
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
-from xarray import DataTree
 from xarray.coding import cftime_offsets
 from yaml import safe_load
 
@@ -293,7 +292,7 @@ def ensure_cf_units(ustr: str) -> str:
 
 def pint_multiply(da: xr.DataArray, q: pint.Quantity, out_units: str | None = None) -> xr.DataArray:
     """
-    Multiply xarray.DataArray by pint.Quantity.
+    Multiply xr.DataArray by pint.Quantity.
 
     Parameters
     ----------
@@ -346,10 +345,10 @@ def str2pint(val: str) -> pint.Quantity:
 
 @overload
 def convert_units_to(  # numpydoc ignore=GL08
-    source: DataTree,
+    source: xr.DataTree,
     target: dict[str, Quantified | pint.Unit],
     context: Literal["infer", "hydro", "none"] | None = None,
-) -> DataTree: ...
+) -> xr.DataTree: ...
 
 
 @overload
@@ -386,10 +385,10 @@ def convert_units_to(  # numpydoc ignore=GL08
 
 # FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(
-    source: Quantified | xr.Dataset | DataTree,  # ty: ignore[invalid-type-form]
+    source: Quantified | xr.Dataset | xr.DataTree,  # ty: ignore[invalid-type-form]
     target: Quantified | pint.Unit | dict[str, Quantified | pint.Unit],
     context: Literal["infer", "hydro", "none"] | None = None,
-) -> xr.DataArray | float | xr.Dataset | DataTree:
+) -> xr.DataArray | float | xr.Dataset | xr.DataTree:
     """
     Convert a mathematical expression into a value with the same units as a DataArray.
 
@@ -401,11 +400,11 @@ def convert_units_to(
     source : Quantified or xr.Dataset or xr.DataTree
         The value to be converted, e.g. "4C" or "1 mm/d".
         If a Dataset, `target` must also be a mapping from variable name to target units.
-        If a DataTree, this function will be applied over nodes with :py:func:`xarray.DataTree.map_over_datasets`.
+        If a xr.DataTree, this function will be applied over nodes with :py:func:`xarray.DataTree.map_over_datasets`.
     target : str or xr.DataArray or units.Quantity or units.Unit or dict
         Target array of values to which units must conform.
         An object representing units to convert the source too, anything :py:func:`units2pint` understands.
-        If `source` is a Dataset or a DataTree, it must be mapping from variable name to target units.
+        If `source` is a Dataset or a xr.DataTree, it must be mapping from variable name to target units.
     context : {"infer", "hydro", "none"}, optional
         The unit definition context. Default: None.
         If "infer", it will be inferred with :py:func:`xclim.core.units.infer_context` using
@@ -428,7 +427,7 @@ def convert_units_to(
     amount2lwethickness : Convert an amount to a liquid water equivalent thickness.
     lwethickness2amount : Convert a liquid water equivalent thickness to an amount.
     """
-    if isinstance(source, DataTree):
+    if isinstance(source, xr.DataTree):
         return source.map_over_datasets(convert_units_to, target, kwargs={"context": context})
     if isinstance(source, xr.Dataset):
         return source.assign({var: convert_units_to(source[var], tgt, context=context) for var, tgt in target.items()})  # type: ignore[union-attr]

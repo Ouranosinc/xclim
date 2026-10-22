@@ -1745,9 +1745,9 @@ class FireSeasonBase(Indicator):
 
         Parameters
         ----------
-        tas : xarray.DataArray
+        tas : xr.DataArray
             Near-surface air temperature.
-        snd : xarray.DataArray, optional
+        snd : xr.DataArray, optional
             Snow depth.
         """
         cfchecks.check_valid(tas, "standard_name", "air_temperature")

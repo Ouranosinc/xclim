@@ -17,9 +17,8 @@ from itertools import zip_longest
 from typing import Any, Literal
 
 import numpy as np
-import xarray
+import xarray as xr
 from docstring_parser import parse_from_object
-from xarray import DataArray, Dataset
 
 import xclim.core.locales as xloc
 from xclim.core import (
@@ -273,7 +272,7 @@ class Output:  # numpydoc ignore=PR01
         units_metadata : str, optional
             Additional CF metadata for the units.
         attrs :  dict, optional
-            Attributes describing the metadata, which will be added as attribute on the compute DataArray.
+            Attributes describing the metadata, which will be added as attribute on the compute xr.DataArray.
             Usually, indicators will set `standard_name` (if there's one), `long_name` and `description`.
         **attrs_kwargs : Any
             Attributes can also be passed as kwargs.
@@ -650,7 +649,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
         parameters = []
         for name, param in self.parameters.items():
             parameters.append(param._gen_signature(name=name))
-        ret_ann = DataArray if self.n_outs == 1 else tuple[(DataArray,) * self.n_outs]  # ty: ignore[invalid-type-form]
+        ret_ann = xr.DataArray if self.n_outs == 1 else tuple[(xr.DataArray,) * self.n_outs]  # ty: ignore[invalid-type-form]
         return inspect.Signature(parameters, return_annotation=ret_ann)
 
     def __init__(self, **kwds):
@@ -927,7 +926,7 @@ class IndicatorBase(IndexWrapper):
         with np.errstate(divide="ignore", invalid="ignore"), units.context(self.context):
             outs = self.compute(**args)
 
-        if isinstance(outs, DataArray):
+        if isinstance(outs, xr.DataArray):
             outs = [outs]
         else:  # tuple
             outs = list(outs)
@@ -976,7 +975,7 @@ class IndicatorBase(IndexWrapper):
         return das, params, meta
 
     def _preprocess_and_checks(
-        self, das: dict[str, DataArray], params: dict[str, Any], meta: dict[str, Any]
+        self, das: dict[str, xr.DataArray], params: dict[str, Any], meta: dict[str, Any]
     ) -> tuple[dict, dict, dict]:
         """
         Preprocessing of the input parameters before calling the compute function.
@@ -984,7 +983,7 @@ class IndicatorBase(IndexWrapper):
         Parameters
         ----------
         das : dict
-            Dictionary of variable (DataArray) inputs.
+            Dictionary of variable (xr.DataArray) inputs.
         params : dict
             Dictionary of non-variable inputs.
         meta : dict
@@ -1010,7 +1009,7 @@ class IndicatorBase(IndexWrapper):
             if param.compute_name is not _empty:
                 if key in das:
                     args[param.compute_name] = das[key]
-                # elif because some args are in both (percentile DataArrays)
+                # elif because some args are in both (percentile xr.DataArrays)
                 elif key in params:
                     if param.kind == InputKind.KWARGS:
                         args.update(params[key])
@@ -1019,17 +1018,17 @@ class IndicatorBase(IndexWrapper):
         return args
 
     def _postprocess(
-        self, outs: list[DataArray], das: dict[str, DataArray], params: dict[str, Any], meta: dict[str, Any]
-    ) -> tuple[list[DataArray], dict]:
+        self, outs: list[xr.DataArray], das: dict[str, xr.DataArray], params: dict[str, Any], meta: dict[str, Any]
+    ) -> tuple[list[xr.DataArray], dict]:
         """
         Postprocessing of the outputs after calling the compute function.
 
         Parameters
         ----------
-        outs : list of xr
-            List of the output DataArrays.
-        das : dict
-            Dictionary of variable (DataArray) inputs.
+        outs : list of xr.DataArray
+            List of the output xr.DataArrays.
+        das : dict of str and xr.DataArray
+            Dictionary of variable (xr.DataArray) inputs.
         params : dict
             Dictionary of non-variable inputs.
         meta : dict
@@ -1045,7 +1044,7 @@ class IndicatorBase(IndexWrapper):
         return outs, meta
 
     def _finalize(
-        self, outs: list[DataArray], das: dict[str, DataArray], params: dict[str, Any], meta: dict[str, Any]
+        self, outs: list[xr.DataArray], das: dict[str, xr.DataArray], params: dict[str, Any], meta: dict[str, Any]
     ) -> Any:
         """
         Finalize the computation.
@@ -1055,9 +1054,9 @@ class IndicatorBase(IndexWrapper):
         Parameters
         ----------
         outs : list or xr.DataArray
-            List of the output DataArrays.
+            List of the output xr.DataArrays.
         das : dict or str and xr.DataArray
-            Dictionary of variable (DataArray) inputs.
+            Dictionary of variable (xr.DataArray) inputs.
         params : dict
             Dictionary of non-variable inputs.
         meta : dict
@@ -1068,7 +1067,7 @@ class IndicatorBase(IndexWrapper):
         Any
             The result from the computation of the indicator.
         """
-        # Return a single DataArray in case of single output
+        # Return a single xr.DataArray in case of single output
         if len(outs) == 1:
             return outs[0]
 
@@ -1107,7 +1106,7 @@ class _DatasetIO(IndicatorBase):
                 kind=InputKind.DATASET,
                 default=None,
                 description="A dataset with the variables given by name.",
-                annotation=xarray.Dataset,
+                annotation=xr.Dataset,
             )
         }
 
@@ -1118,10 +1117,10 @@ class _DatasetIO(IndicatorBase):
         for name, meta in parameters.items():
             if meta.kind == InputKind.OPTIONAL_VARIABLE:
                 meta.default = None
-                meta.annotation = DataArray | str
+                meta.annotation = xr.DataArray | str
             elif meta.kind == InputKind.VARIABLE:
                 meta.default = name
-                meta.annotation = DataArray | str
+                meta.annotation = xr.DataArray | str
         return super()._ensure_correct_parameters(parameters)
 
     def _parse_arguments(self, kwargs):
@@ -1135,7 +1134,7 @@ class _DatasetIO(IndicatorBase):
                         f"Passing variable names as string requires giving the `ds` dataset (got {name}='{val}')"
                     )
                 if (isinstance(val, str) or val is None) and ds is not None:
-                    # Set default name for DataArray
+                    # Set default name for xr.DataArray
                     key = val or name
 
                     if key in ds:
@@ -1151,8 +1150,8 @@ class _DatasetIO(IndicatorBase):
 
     def _finalize(self, outs, das, params, meta):
         if OPTIONS[AS_DATASET]:
-            out = Dataset({o.name: o for o in outs})
-            if xarray.get_options()["keep_attrs"] is not False:
+            out = xr.Dataset({o.name: o for o in outs})
+            if xr.get_options()["keep_attrs"] is not False:
                 out.attrs.update(meta.get("dsattrs", {}))
             return out
 
@@ -1166,7 +1165,7 @@ class _DataTreeIterator(_DatasetIO):
         added["ds"].description = "A dataset with the variables given by name, or a DataTree of such datasets."
         return added
 
-    def _apply_on_tree_node(self, node: Dataset, *args, **kwargs):
+    def _apply_on_tree_node(self, node: xr.Dataset, *args, **kwargs):
         """Compute this indicator on DataTree node."""
         if not node.data_vars:
             # empty node
@@ -1174,7 +1173,7 @@ class _DataTreeIterator(_DatasetIO):
         return self(*args, ds=node, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        if isinstance(kwargs.get("ds"), xarray.DataTree):
+        if isinstance(kwargs.get("ds"), xr.DataTree):
             dt = kwargs.pop("ds")
             with set_options(as_dataset=True):
                 return dt.map_over_datasets(self._apply_on_tree_node, *args, kwargs=kwargs)
@@ -1195,7 +1194,7 @@ class _MetadataFormatter(_DataTreeIterator):
         outs, meta = super()._postprocess(outs, das, params, meta)
         # Metadata attributes from templates
         parent_attrs = {}
-        if xarray.get_options()["keep_attrs"] is not False and len(das) == 1:
+        if xr.get_options()["keep_attrs"] is not False and len(das) == 1:
             parent_attrs = {k: v for k, v in list(das.values())[0].attrs.items() if k not in self._drop_attrs}
 
         history = self._gen_xclim_description(das, params, meta)
@@ -1241,7 +1240,7 @@ class _MetadataFormatter(_DataTreeIterator):
                     mba["indexer"] = args.get("freq") or "YS"
             elif is_percentile_dataarray(v):
                 mba.update(get_percentile_metadata(v, k))
-            elif isinstance(v, DataArray):
+            elif isinstance(v, xr.DataArray):
                 mba[k] = f"<{v.name or 'unnamed'} array>"
             else:
                 mba[k] = v
@@ -1337,7 +1336,7 @@ class _MetadataFormatter(_DataTreeIterator):
 
     def _finalize(self, outs, das, params, meta):
         out = super()._finalize(outs, das, params, meta)
-        if isinstance(out, Dataset):
+        if isinstance(out, xr.Dataset):
             history = self._gen_xclim_description(das, params, meta)
             out.attrs["history"] = update_history(
                 history,
@@ -1431,7 +1430,7 @@ class _InputChecker(_DeprecationWarner):
     def _preprocess_and_checks(self, das, params, meta):
         """Actions to be done after parsing the arguments and before computing."""
         das, params, meta = super()._preprocess_and_checks(das, params, meta)
-        # Pre-computation validation checks on DataArray arguments
+        # Pre-computation validation checks on xr.DataArray arguments
         self.datacheck(**das)
         self.cfcheck(**das)
 
@@ -1445,7 +1444,7 @@ class _InputChecker(_DeprecationWarner):
                     )
         return das, params, meta
 
-    def cfcheck(self, **das: DataArray) -> None:
+    def cfcheck(self, **das: xr.DataArray) -> None:
         r"""
         Compare metadata attributes to CF-Convention standards.
 
@@ -1458,7 +1457,7 @@ class _InputChecker(_DeprecationWarner):
         Parameters
         ----------
         **das : xr.DataArray
-            A dictionary of DataArrays to check.
+            A dictionary of xr.DataArrays to check.
         """
         for varname, vardata in das.items():
             try:
@@ -1468,7 +1467,7 @@ class _InputChecker(_DeprecationWarner):
                 # Silently ignore unknown variables.
                 pass
 
-    def datacheck(self, **das: DataArray) -> None:
+    def datacheck(self, **das: xr.DataArray) -> None:
         r"""
         Verify that input data is valid.
 
@@ -1481,8 +1480,8 @@ class _InputChecker(_DeprecationWarner):
 
         Parameters
         ----------
-        **das : DataArray
-            A dictionary of DataArrays to check.
+        **das : xr.DataArray
+            A dictionary of xr.DataArrays to check.
 
         Raises
         ------
@@ -1669,10 +1668,10 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
 
     Compared to their base `compute` function, indicators add the possibility of using a dataset
     or a :py:class:`xarray.DataTree` as input, with the added argument `ds` in the call signature.
-    All arguments that were indicated by the compute function to be variables (DataArrays) through
+    All arguments that were indicated by the compute function to be variables (xr.DataArrays) through
     annotations will be promoted to also accept strings that correspond to variable names
-    in the `ds` Dataset (or on each DataTree nodes). Also, indicators return Datasets by default,
-    while compute functions return one or multiple DataArrays.
+    in the `ds` xr.Dataset (or on each DataTree nodes). Also, indicators return xr.Datasets by default,
+    while compute functions return one or multiple xr.DataArrays.
     """
 
     def __init__(
@@ -1706,7 +1705,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
             When defining indicators in a python module, it can be helpful to use the same name in the code as the
             identifier, to avoid confusion between the two, especially for collections and translations.
         compute : Callable, optional
-            The function computing the indicators. It should return one or more DataArray.
+            The function computing the indicators. It should return one or more xr.DataArray.
             Metadata will first be parsed from it as much as possible.
         title : str, optional
             A succinct description of what is in the computed outputs.
@@ -1880,7 +1879,7 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02 # pylint: d
             # Reduce by or and broadcast to ensure the same length in time
             # When indexing is used and there are no valid points in the last period, mask will not include it
             mask = reduce(np.logical_or, miss)
-            if isinstance(mask, DataArray):  # mask might be a bool in some cases
+            if isinstance(mask, xr.DataArray):  # mask might be a bool in some cases
                 if "time" in mask.dims and mask.time.size < outs[0].time.size:
                     mask = mask.reindex(time=outs[0].time, fill_value=True)
                 # Remove any aux coord to avoid any unwanted dask computation in the alignment within "where"

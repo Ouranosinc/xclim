@@ -6,7 +6,7 @@ from collections.abc import Callable, Sequence
 from typing import Literal, cast
 
 import numpy as np
-import xarray
+import xarray as xr
 
 from xclim.compute import run_length as rl
 from xclim.compute.converters import rain_approximation, snowfall_approximation
@@ -73,14 +73,14 @@ __all__ = [
 @declare_units(tasmin="[temperature]", tasmin_per="[temperature]")
 @percentile_bootstrap
 def cold_spell_duration_index(
-    tasmin: xarray.DataArray,
-    tasmin_per: xarray.DataArray,
+    tasmin: xr.DataArray,
+    tasmin_per: xr.DataArray,
     window: int = 6,
     freq: Freq = "YS",
     resample_before_rl: bool = True,
     bootstrap: bool = False,
     condition: Literal["<", "<=", "lt", "le"] = "<",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Cold spell duration index.
 
@@ -89,9 +89,9 @@ def cold_spell_duration_index(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Minimum daily temperature.
-    tasmin_per : xarray.DataArray
+    tasmin_per : xr.DataArray
         The nth percentile of daily minimum temperature with `dayofyear` coordinate.
     window : int
         Minimum number of days with temperature below threshold to qualify as a cold spell. Default: 6.
@@ -114,7 +114,7 @@ def cold_spell_duration_index(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
         Count of days with at least six consecutive days when the daily minimum temperature is below the 10th
         percentile.
 
@@ -168,12 +168,12 @@ def cold_spell_duration_index(
     pr_per="[precipitation]",
 )
 def cold_and_dry_days(
-    tas: xarray.DataArray,
-    pr: xarray.DataArray,
-    tas_per: xarray.DataArray,
-    pr_per: xarray.DataArray,
+    tas: xr.DataArray,
+    pr: xr.DataArray,
+    tas_per: xr.DataArray,
+    pr_per: xr.DataArray,
     freq: Freq = "YS",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Cold and dry days.
 
@@ -181,20 +181,20 @@ def cold_and_dry_days(
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean daily temperature values.
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Daily precipitation.
-    tas_per : xarray.DataArray
+    tas_per : xr.DataArray
         First quartile of daily mean temperature computed by month.
-    pr_per : xarray.DataArray
+    pr_per : xr.DataArray
         First quartile of daily total precipitation computed by month.
     freq : Freq
         Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         The total number of days when cold and dry conditions coincide.
 
     Warnings
@@ -221,7 +221,7 @@ def cold_and_dry_days(
     thresh = resample_doy(pr_per, pr)
     pr25 = pr < thresh
 
-    cold_and_dry = cast(xarray.DataArray, np.logical_and(tg25, pr25))
+    cold_and_dry = cast(xr.DataArray, np.logical_and(tg25, pr25))
     resampled = cold_and_dry.resample(time=freq).sum(dim="time")
     out = to_agg_units(resampled, tas, "count", deffreq="D")
     return out
@@ -234,12 +234,12 @@ def cold_and_dry_days(
     pr_per="[precipitation]",
 )
 def warm_and_dry_days(
-    tas: xarray.DataArray,
-    pr: xarray.DataArray,
-    tas_per: xarray.DataArray,
-    pr_per: xarray.DataArray,
+    tas: xr.DataArray,
+    pr: xr.DataArray,
+    tas_per: xr.DataArray,
+    pr_per: xr.DataArray,
     freq: Freq = "YS",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Warm and dry days.
 
@@ -247,20 +247,20 @@ def warm_and_dry_days(
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean daily temperature values.
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Daily precipitation.
-    tas_per : xarray.DataArray
+    tas_per : xr.DataArray
         Third quartile of daily mean temperature computed by month.
-    pr_per : xarray.DataArray
+    pr_per : xr.DataArray
         First quartile of daily total precipitation computed by month.
     freq : Freq
         Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         The total number of days when warm and dry conditions coincide.
 
     Warnings
@@ -287,7 +287,7 @@ def warm_and_dry_days(
     thresh = resample_doy(pr_per, pr)
     pr25 = pr < thresh
 
-    warm_and_dry = cast(xarray.DataArray, np.logical_and(tg75, pr25))
+    warm_and_dry = cast(xr.DataArray, np.logical_and(tg75, pr25))
     resampled = warm_and_dry.resample(time=freq).sum(dim="time")
     out = to_agg_units(resampled, tas, "count", deffreq="D")
     return out
@@ -300,12 +300,12 @@ def warm_and_dry_days(
     pr_per="[precipitation]",
 )
 def warm_and_wet_days(
-    tas: xarray.DataArray,
-    pr: xarray.DataArray,
-    tas_per: xarray.DataArray,
-    pr_per: xarray.DataArray,
+    tas: xr.DataArray,
+    pr: xr.DataArray,
+    tas_per: xr.DataArray,
+    pr_per: xr.DataArray,
     freq: Freq = "YS",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Warm and wet days.
 
@@ -313,20 +313,20 @@ def warm_and_wet_days(
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean daily temperature values.
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Daily precipitation.
-    tas_per : xarray.DataArray
+    tas_per : xr.DataArray
         Third quartile of daily mean temperature computed by month.
-    pr_per : xarray.DataArray
+    pr_per : xr.DataArray
         Third quartile of daily total precipitation computed by month.
     freq : Freq
         Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         The total number of days when warm and wet conditions coincide.
 
     Warnings
@@ -353,7 +353,7 @@ def warm_and_wet_days(
     thresh = resample_doy(pr_per, pr)
     pr75 = pr > thresh
 
-    warm_and_wet = cast(xarray.DataArray, np.logical_and(tg75, pr75))
+    warm_and_wet = cast(xr.DataArray, np.logical_and(tg75, pr75))
     resampled = warm_and_wet.resample(time=freq).sum(dim="time")
     out = to_agg_units(resampled, tas, "count", deffreq="D")
     return out
@@ -366,12 +366,12 @@ def warm_and_wet_days(
     pr_per="[precipitation]",
 )
 def cold_and_wet_days(
-    tas: xarray.DataArray,
-    pr: xarray.DataArray,
-    tas_per: xarray.DataArray,
-    pr_per: xarray.DataArray,
+    tas: xr.DataArray,
+    pr: xr.DataArray,
+    tas_per: xr.DataArray,
+    pr_per: xr.DataArray,
     freq: Freq = "YS",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Cold and wet days.
 
@@ -379,20 +379,20 @@ def cold_and_wet_days(
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean daily temperature values.
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Daily precipitation.
-    tas_per : xarray.DataArray
+    tas_per : xr.DataArray
         First quartile of daily mean temperature computed by month.
-    pr_per : xarray.DataArray
+    pr_per : xr.DataArray
         Third quartile of daily total precipitation computed by month.
     freq : Freq
         Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         The total number of days when cold and wet conditions coincide.
 
     Warnings
@@ -419,7 +419,7 @@ def cold_and_wet_days(
     thresh = resample_doy(pr_per, pr)
     pr75 = pr > thresh
 
-    cold_and_wet = cast(xarray.DataArray, np.logical_and(tg25, pr75))
+    cold_and_wet = cast(xr.DataArray, np.logical_and(tg25, pr75))
     resampled = cold_and_wet.resample(time=freq).sum(dim="time")
     out = to_agg_units(resampled, tas, "count", deffreq="D")
     return out
@@ -432,8 +432,8 @@ def cold_and_wet_days(
     thresh_tasmax="[temperature]",
 )
 def multiday_temperature_swing(
-    tasmin: xarray.DataArray,
-    tasmax: xarray.DataArray,
+    tasmin: xr.DataArray,
+    tasmax: xr.DataArray,
     thresh_tasmin: Quantified = "0 degC",
     thresh_tasmax: Quantified = "0 degC",
     window: int = 1,
@@ -443,7 +443,7 @@ def multiday_temperature_swing(
     freq: Freq = "YS",
     resample_before_rl: bool = True,
     **indexer,
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Statistics of consecutive diurnal temperature swing events.
 
@@ -452,9 +452,9 @@ def multiday_temperature_swing(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Minimum daily temperature.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Maximum daily temperature.
     thresh_tasmin : Quantified
         The temperature threshold needed to trigger a freeze event. Default: "0 degC".
@@ -480,7 +480,7 @@ def multiday_temperature_swing(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
         {freq} {condition} length of diurnal temperature cycles exceeding thresholds.
 
     Notes
@@ -518,11 +518,11 @@ def multiday_temperature_swing(
 @deprecated("1.0", "atmos.daily_temperature_range")
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
 def daily_temperature_range(
-    tasmin: xarray.DataArray,
-    tasmax: xarray.DataArray,
+    tasmin: xr.DataArray,
+    tasmax: xr.DataArray,
     freq: Freq = "YS",
     op: Literal["min", "max", "mean", "std"] | Callable = "mean",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Statistics of daily temperature range.
 
@@ -530,9 +530,9 @@ def daily_temperature_range(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Minimum daily temperature.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Maximum daily temperature.
     freq : Freq
         Resampling frequency. Default: "YS".
@@ -542,7 +542,7 @@ def daily_temperature_range(
 
     Returns
     -------
-    xarray.DataArray, [same units as tasmin]
+    xr.DataArray, [same units as tasmin]
         The average variation in daily temperature range for the given time period.
 
     Notes
@@ -561,9 +561,7 @@ def daily_temperature_range(
 
 @deprecated("1.0", "atmos.daily_temperature_range_variability")
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
-def daily_temperature_range_variability(
-    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: Freq = "YS"
-) -> xarray.DataArray:
+def daily_temperature_range_variability(tasmin: xr.DataArray, tasmax: xr.DataArray, freq: Freq = "YS") -> xr.DataArray:
     r"""
     Mean absolute day-to-day variation in daily temperature range.
 
@@ -571,16 +569,16 @@ def daily_temperature_range_variability(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Minimum daily temperature.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Maximum daily temperature.
     freq : Freq
         Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray, [same units as tasmin]
+    xr.DataArray, [same units as tasmin]
         The average day-to-day variation in daily temperature range for the given time period.
 
     Notes
@@ -597,9 +595,7 @@ def daily_temperature_range_variability(
 
 @deprecated("1.0", "atmos.extreme_temperature_range")
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
-def extreme_temperature_range(
-    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: Freq = "YS"
-) -> xarray.DataArray:
+def extreme_temperature_range(tasmin: xr.DataArray, tasmax: xr.DataArray, freq: Freq = "YS") -> xr.DataArray:
     r"""
     Extreme intra-period temperature range.
 
@@ -607,16 +603,16 @@ def extreme_temperature_range(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Minimum daily temperature.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Maximum daily temperature.
     freq : Freq
         Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray, [same units as tasmin]
+    xr.DataArray, [same units as tasmin]
         Extreme intra-period temperature range for the given time period.
 
     Notes
@@ -639,15 +635,15 @@ def extreme_temperature_range(
     thresh_tasmax="[temperature]",
 )
 def heat_wave_frequency(
-    tasmin: xarray.DataArray,
-    tasmax: xarray.DataArray,
+    tasmin: xr.DataArray,
+    tasmax: xr.DataArray,
     thresh_tasmin: Quantified = "22 degC",
     thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
     freq: Freq = "YS",
     op: Literal[">", ">=", "gt", "ge"] = ">",
     resample_before_rl: bool = True,
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Heat wave frequency.
 
@@ -656,9 +652,9 @@ def heat_wave_frequency(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Minimum daily temperature.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Maximum daily temperature.
     thresh_tasmin : Quantified
         The minimum temperature threshold needed to trigger a heatwave event. Default: "22 degC".
@@ -677,7 +673,7 @@ def heat_wave_frequency(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Number of heatwave at the requested frequency.
 
     Notes
@@ -719,15 +715,15 @@ def heat_wave_frequency(
     thresh_tasmax="[temperature]",
 )
 def heat_wave_max_length(
-    tasmin: xarray.DataArray,
-    tasmax: xarray.DataArray,
+    tasmin: xr.DataArray,
+    tasmax: xr.DataArray,
     thresh_tasmin: Quantified = "22 degC",
     thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
     freq: Freq = "YS",
     op: Literal[">", ">=", "gt", "ge"] = ">",
     resample_before_rl: bool = True,
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Heat wave max length.
 
@@ -738,9 +734,9 @@ def heat_wave_max_length(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Minimum daily temperature.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Maximum daily temperature.
     thresh_tasmin : Quantified
         The minimum temperature threshold needed to trigger a heatwave event. Default: "22 degC".
@@ -759,7 +755,7 @@ def heat_wave_max_length(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
         Maximum length of heatwave at the requested frequency.
 
     Notes
@@ -800,15 +796,15 @@ def heat_wave_max_length(
     thresh_tasmax="[temperature]",
 )
 def heat_wave_total_length(
-    tasmin: xarray.DataArray,
-    tasmax: xarray.DataArray,
+    tasmin: xr.DataArray,
+    tasmax: xr.DataArray,
     thresh_tasmin: Quantified = "22 degC",
     thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
     freq: Freq = "YS",
     op: Literal[">", ">=", "gt", "ge"] = ">",
     resample_before_rl: bool = True,
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Heat wave total length.
 
@@ -818,9 +814,9 @@ def heat_wave_total_length(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Minimum daily temperature.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Maximum daily temperature.
     thresh_tasmin : Quantified
         The minimum temperature threshold needed to trigger a heatwave event. Default: "22 degC".
@@ -839,7 +835,7 @@ def heat_wave_total_length(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
         Total length of heatwave at the requested frequency.
 
     Notes
@@ -869,13 +865,13 @@ def heat_wave_total_length(
     thresh="[temperature]",
 )
 def liquid_precip_ratio(
-    pr: xarray.DataArray,
-    prra: xarray.DataArray | None = None,
-    prsn: xarray.DataArray | None = None,
-    tas: xarray.DataArray | None = None,
+    pr: xr.DataArray,
+    prra: xr.DataArray | None = None,
+    prsn: xr.DataArray | None = None,
+    tas: xr.DataArray | None = None,
     thresh: Quantified = "0 degC",
     freq: Freq = "QS-DEC",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Ratio of rainfall to total precipitation.
 
@@ -885,13 +881,13 @@ def liquid_precip_ratio(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Mean daily precipitation flux.
-    prra : xarray.DataArray, optional
+    prra : xr.DataArray, optional
         Mean daily liquid precipitation flux.
-    prsn : xarray.DataArray, optional
+    prsn : xr.DataArray, optional
         Mean daily solid precipitation flux.
-    tas : xarray.DataArray, optional
+    tas : xr.DataArray, optional
         Mean daily temperature.
     thresh : Quantified
         Threshold temperature under which precipitation is assumed to be solid. Default: "0 degC".
@@ -900,7 +896,7 @@ def liquid_precip_ratio(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Ratio of rainfall to total precipitation.
 
     See Also
@@ -927,7 +923,7 @@ def liquid_precip_ratio(
 
        R_j = \frac{PR^{\mathrm{liquid}}_{j}}{PR_j}
     """
-    rain: xarray.DataArray
+    # rain: xr.DataArray
     if prra is not None:
         rain = convert_units_to(prra, pr)
     elif prsn is not None:
@@ -946,12 +942,12 @@ def liquid_precip_ratio(
 
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
 def precip_accumulation(
-    pr: xarray.DataArray,
-    tas: xarray.DataArray | None = None,
+    pr: xr.DataArray,
+    tas: xr.DataArray | None = None,
     phase: Literal["liquid", "solid"] | None = None,
     thresh: Quantified = "0 degC",
     freq: Freq = "YS",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Accumulated total (liquid and/or solid) precipitation.
 
@@ -962,9 +958,9 @@ def precip_accumulation(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
       Mean daily precipitation flux.
-    tas : xarray.DataArray, optional
+    tas : xr.DataArray, optional
       Mean, maximum or minimum daily temperature.
     phase : {"liquid", "solid"}, optional
       Which phase to consider, "liquid" or "solid", if None (default), both are considered.
@@ -975,7 +971,7 @@ def precip_accumulation(
 
     Returns
     -------
-    xarray.DataArray, [length]
+    xr.DataArray, [length]
       The total daily precipitation at the given time frequency for the given phase.
 
     Notes
@@ -1010,12 +1006,12 @@ def precip_accumulation(
 
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
 def precip_average(
-    pr: xarray.DataArray,
-    tas: xarray.DataArray | None = None,
+    pr: xr.DataArray,
+    tas: xr.DataArray | None = None,
     phase: Literal["liquid", "solid"] | None = None,
     thresh: Quantified = "0 degC",
     freq: Freq = "YS",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Averaged (liquid and/or solid) precipitation.
 
@@ -1026,9 +1022,9 @@ def precip_average(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Mean daily precipitation flux.
-    tas : xarray.DataArray, optional
+    tas : xr.DataArray, optional
         Mean, maximum or minimum daily temperature.
     phase : {"liquid", "solid"}, optional
         Which phase to consider, "liquid" or "solid", if None (default), both are considered.
@@ -1039,7 +1035,7 @@ def precip_average(
 
     Returns
     -------
-    xarray.DataArray, [length]
+    xr.DataArray, [length]
         The averaged daily precipitation at the given time frequency for the given phase.
 
     Notes
@@ -1075,12 +1071,12 @@ def precip_average(
 # FIXME: Resample after run length?
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[precipitation]")
 def rain_on_frozen_ground_days(
-    pr: xarray.DataArray,
-    tas: xarray.DataArray,
+    pr: xr.DataArray,
+    tas: xr.DataArray,
     thresh: Quantified = "1 mm/day",
     window: int = 7,
     freq: Freq = "YS",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     """
     Number of rain on frozen ground events.
 
@@ -1089,9 +1085,9 @@ def rain_on_frozen_ground_days(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Mean daily precipitation flux.
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean daily temperature.
     thresh : Quantified
         Precipitation threshold to consider a day as a rain event.Default: "1 mm/day".
@@ -1103,7 +1099,7 @@ def rain_on_frozen_ground_days(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
         The number of rain on frozen ground events per period.
 
     Notes
@@ -1146,12 +1142,12 @@ def rain_on_frozen_ground_days(
     tas_thresh="[temperature]",
 )
 def high_precip_low_temp(
-    pr: xarray.DataArray,
-    tas: xarray.DataArray,
+    pr: xr.DataArray,
+    tas: xr.DataArray,
     pr_thresh: Quantified = "0.4 mm/day",
     tas_thresh: Quantified = "-0.2 degC",
     freq: Freq = "YS",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     """
     Number of days with precipitation above threshold and temperature below threshold.
 
@@ -1160,9 +1156,9 @@ def high_precip_low_temp(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Mean daily precipitation flux.
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Daily mean, minimum or maximum temperature.
     pr_thresh : Quantified
         Precipitation threshold to exceed. Default: "0.4 mm/day".
@@ -1173,7 +1169,7 @@ def high_precip_low_temp(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
         Count of days with high precipitation and low temperatures.
 
     Examples
@@ -1194,13 +1190,13 @@ def high_precip_low_temp(
 @declare_units(pr="[precipitation]", pr_per="[precipitation]", thresh="[precipitation]")
 @percentile_bootstrap
 def days_over_precip_thresh(
-    pr: xarray.DataArray,
-    pr_per: xarray.DataArray,
+    pr: xr.DataArray,
+    pr_per: xr.DataArray,
     thresh: Quantified = "1 mm/day",
     freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal[">", ">=", "gt", "ge"] = ">",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Number of wet days with daily precipitation over a given percentile.
 
@@ -1209,9 +1205,9 @@ def days_over_precip_thresh(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Mean daily precipitation flux.
-    pr_per : xarray.DataArray
+    pr_per : xr.DataArray
         Percentile of wet day precipitation flux. Either computed daily (one value per day
         of year) or computed over a period (one value per spatial point).
     thresh : Quantified
@@ -1231,7 +1227,7 @@ def days_over_precip_thresh(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
       Count of days with daily precipitation above the given percentile [days].
 
     Examples
@@ -1256,13 +1252,13 @@ def days_over_precip_thresh(
 @declare_units(pr="[precipitation]", pr_per="[precipitation]", thresh="[precipitation]")
 @percentile_bootstrap
 def fraction_over_precip_thresh(
-    pr: xarray.DataArray,
-    pr_per: xarray.DataArray,
+    pr: xr.DataArray,
+    pr_per: xr.DataArray,
     thresh: Quantified = "1 mm/day",
     freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal[">", ">=", "gt", "ge"] = ">",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Fraction of precipitation due to wet days with daily precipitation over a given percentile.
 
@@ -1271,9 +1267,9 @@ def fraction_over_precip_thresh(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Mean daily precipitation flux.
-    pr_per : xarray.DataArray
+    pr_per : xr.DataArray
         Percentile of wet day precipitation flux. Either computed daily (one value per day
         of year) or computed over a period (one value per spatial point).
     thresh : Quantified
@@ -1293,7 +1289,7 @@ def fraction_over_precip_thresh(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Fraction of precipitation over threshold during wet days.
     """
     pr_per = convert_units_to(pr_per, pr, context="hydro")
@@ -1319,12 +1315,12 @@ def fraction_over_precip_thresh(
 @declare_units(tas="[temperature]", tas_per="[temperature]")
 @percentile_bootstrap
 def tg90p(
-    tas: xarray.DataArray,
-    tas_per: xarray.DataArray,
+    tas: xr.DataArray,
+    tas_per: xr.DataArray,
     freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal[">", ">=", "gt", "ge"] = ">",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Number of days with daily mean temperature over the 90th percentile.
 
@@ -1332,9 +1328,9 @@ def tg90p(
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean daily temperature.
-    tas_per : xarray.DataArray
+    tas_per : xr.DataArray
         90th percentile of daily mean temperature.
     freq : Freq
         Resampling frequency. Default: "YS".
@@ -1351,7 +1347,7 @@ def tg90p(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
         Count of days with daily mean temperature below the 10th percentile [days].
 
     Notes
@@ -1378,12 +1374,12 @@ def tg90p(
 @declare_units(tas="[temperature]", tas_per="[temperature]")
 @percentile_bootstrap
 def tg10p(
-    tas: xarray.DataArray,
-    tas_per: xarray.DataArray,
+    tas: xr.DataArray,
+    tas_per: xr.DataArray,
     freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal["<", "<=", "lt", "le"] = "<",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Number of days with daily mean temperature below the 10th percentile.
 
@@ -1391,9 +1387,9 @@ def tg10p(
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean daily temperature.
-    tas_per : xarray.DataArray
+    tas_per : xr.DataArray
         10th percentile of daily mean temperature.
     freq : Freq
         Resampling frequency. Default: "YS".
@@ -1410,7 +1406,7 @@ def tg10p(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
         Count of days with daily mean temperature below the 10th percentile [days].
 
     Notes
@@ -1437,12 +1433,12 @@ def tg10p(
 @declare_units(tasmin="[temperature]", tasmin_per="[temperature]")
 @percentile_bootstrap
 def tn90p(
-    tasmin: xarray.DataArray,
-    tasmin_per: xarray.DataArray,
+    tasmin: xr.DataArray,
+    tasmin_per: xr.DataArray,
     freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal[">", ">=", "gt", "ge"] = ">",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Number of days with daily minimum temperature over the 90th percentile.
 
@@ -1450,9 +1446,9 @@ def tn90p(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Minimum daily temperature.
-    tasmin_per : xarray.DataArray
+    tasmin_per : xr.DataArray
         90th percentile of daily minimum temperature.
     freq : Freq
         Resampling frequency. Default: "YS".
@@ -1469,7 +1465,7 @@ def tn90p(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
         Count of days with daily minimum temperature below the 10th percentile [days].
 
     Notes
@@ -1496,12 +1492,12 @@ def tn90p(
 @declare_units(tasmin="[temperature]", tasmin_per="[temperature]")
 @percentile_bootstrap
 def tn10p(
-    tasmin: xarray.DataArray,
-    tasmin_per: xarray.DataArray,
+    tasmin: xr.DataArray,
+    tasmin_per: xr.DataArray,
     freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal["<", "<=", "lt", "le"] = "<",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Number of days with daily minimum temperature below the 10th percentile.
 
@@ -1509,9 +1505,9 @@ def tn10p(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Mean daily temperature.
-    tasmin_per : xarray.DataArray
+    tasmin_per : xr.DataArray
         10th percentile of daily minimum temperature.
     freq : Freq
         Resampling frequency. Default: "YS".
@@ -1528,7 +1524,7 @@ def tn10p(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
       Count of days with daily minimum temperature below the 10th percentile [days].
 
     Notes
@@ -1555,12 +1551,12 @@ def tn10p(
 @declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
 @percentile_bootstrap
 def tx90p(
-    tasmax: xarray.DataArray,
-    tasmax_per: xarray.DataArray,
+    tasmax: xr.DataArray,
+    tasmax_per: xr.DataArray,
     freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal[">", ">=", "gt", "ge"] = ">",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Number of days with daily maximum temperature over the 90th percentile.
 
@@ -1568,9 +1564,9 @@ def tx90p(
 
     Parameters
     ----------
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Maximum daily temperature.
-    tasmax_per : xarray.DataArray
+    tasmax_per : xr.DataArray
         90th percentile of daily maximum temperature.
     freq : Freq
         Resampling frequency. Default: "YS".
@@ -1587,7 +1583,7 @@ def tx90p(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
         Count of days with daily maximum temperature below the 10th percentile [days].
 
     Notes
@@ -1614,12 +1610,12 @@ def tx90p(
 @declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
 @percentile_bootstrap
 def tx10p(
-    tasmax: xarray.DataArray,
-    tasmax_per: xarray.DataArray,
+    tasmax: xr.DataArray,
+    tasmax_per: xr.DataArray,
     freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal["<", "<=", "lt", "le"] = "<",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Number of days with daily maximum temperature below the 10th percentile.
 
@@ -1627,9 +1623,9 @@ def tx10p(
 
     Parameters
     ----------
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Maximum daily temperature.
-    tasmax_per : xarray.DataArray
+    tasmax_per : xr.DataArray
         10th percentile of daily maximum temperature.
     freq : Freq
         Resampling frequency. Default: "YS".
@@ -1646,7 +1642,7 @@ def tx10p(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
         Count of days with daily maximum temperature below the 10th percentile [days].
 
     Notes
@@ -1678,13 +1674,13 @@ def tx10p(
     thresh_tasmax="[temperature]",
 )
 def tx_tn_days_above(
-    tasmin: xarray.DataArray,
-    tasmax: xarray.DataArray,
+    tasmin: xr.DataArray,
+    tasmax: xr.DataArray,
     thresh_tasmin: Quantified = "22 degC",
     thresh_tasmax: Quantified = "30 degC",
     freq: Freq = "YS",
     condition: Literal[">", ">=", "gt", "ge"] = ">",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Number of days with both hot maximum and minimum daily temperatures.
 
@@ -1692,9 +1688,9 @@ def tx_tn_days_above(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Minimum daily temperature.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Maximum daily temperature.
     thresh_tasmin : Quantified
         Threshold temperature for tasmin on which to base evaluation. Default: "22 degC".
@@ -1707,7 +1703,7 @@ def tx_tn_days_above(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
         The number of days with tasmin > thresh_tasmin and tasmax > thresh_tasmax per period.
 
     Notes
@@ -1744,14 +1740,14 @@ def tx_tn_days_above(
 @declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
 @percentile_bootstrap
 def warm_spell_duration_index(
-    tasmax: xarray.DataArray,
-    tasmax_per: xarray.DataArray,
+    tasmax: xr.DataArray,
+    tasmax_per: xr.DataArray,
     window: int = 6,
     freq: Freq = "YS",
     resample_before_rl: bool = True,
     bootstrap: bool = False,
     condition: Literal[">", ">=", "gt", "ge"] = ">",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Warm spell duration index.
 
@@ -1761,9 +1757,9 @@ def warm_spell_duration_index(
 
     Parameters
     ----------
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Maximum daily temperature.
-    tasmax_per : xarray.DataArray
+    tasmax_per : xr.DataArray
         Percentile(s) of daily maximum temperature.
     window : int
         Minimum number of days with temperature above threshold to qualify as a warm spell. Default: 6.
@@ -1786,7 +1782,7 @@ def warm_spell_duration_index(
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xr.DataArray, [time]
         Warm spell duration index.
 
     References
@@ -1826,11 +1822,11 @@ def warm_spell_duration_index(
 @declare_units(pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
 def winter_rain_ratio(
     *,
-    pr: xarray.DataArray,
-    prsn: xarray.DataArray | None = None,
-    tas: xarray.DataArray | None = None,
+    pr: xr.DataArray,
+    prsn: xr.DataArray | None = None,
+    tas: xr.DataArray | None = None,
     freq: Freq = "QS-DEC",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     """
     Ratio of rainfall to total precipitation during winter.
 
@@ -1839,18 +1835,18 @@ def winter_rain_ratio(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Mean daily precipitation flux.
-    prsn : xarray.DataArray, optional
+    prsn : xr.DataArray, optional
         Mean daily solid precipitation flux.
-    tas : xarray.DataArray, optional
+    tas : xr.DataArray, optional
         Mean daily temperature.
     freq : Freq
         Resampling frequency. Default. "QS-DEC".
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Ratio of rainfall to total precipitation during winter months (DJF).
     """
     ratio = liquid_precip_ratio(pr, prsn, tas, freq=freq)
@@ -1861,14 +1857,14 @@ def winter_rain_ratio(
 
 @declare_units(snd="[length]", sfcWind="[speed]", snd_thresh="[length]", sfcWind_thresh="[speed]")
 def blowing_snow(
-    snd: xarray.DataArray,
-    sfcWind: xarray.DataArray,
+    snd: xr.DataArray,
+    sfcWind: xr.DataArray,
     snd_thresh: Quantified = "5 cm",
     sfcWind_thresh: Quantified = "15 km/h",
     window: int = 3,
     freq: Freq = "YS-JUL",
     **indexer,
-) -> xarray.DataArray:
+) -> xr.DataArray:
     """
     Blowing snow days.
 
@@ -1876,7 +1872,7 @@ def blowing_snow(
 
     Parameters
     ----------
-    snd : xarray.DataArray
+    snd : xr.DataArray
         Surface snow depth.
     sfcWind : xr.DataArray
         Wind velocity.
@@ -1895,7 +1891,7 @@ def blowing_snow(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Number of days when snowfall and wind speeds are above respective thresholds.
     """
     snd_thresh = convert_units_to(snd_thresh, snd)
@@ -1915,7 +1911,7 @@ def blowing_snow(
 
 
 @declare_units(pr="[precipitation]", evspsbl="[precipitation]")
-def water_cycle_intensity(pr: xarray.DataArray, evspsbl: xarray.DataArray, freq="YS") -> xarray.DataArray:
+def water_cycle_intensity(pr: xr.DataArray, evspsbl: xr.DataArray, freq="YS") -> xr.DataArray:
     """
     Water cycle intensity.
 
@@ -1923,16 +1919,16 @@ def water_cycle_intensity(pr: xarray.DataArray, evspsbl: xarray.DataArray, freq=
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Precipitation flux.
-    evspsbl : xarray.DataArray
+    evspsbl : xr.DataArray
         Actual evapotranspiration flux.
     freq : Freq
         Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         The sum of precipitation and actual evapotranspiration for each period.
 
     References
