@@ -352,7 +352,7 @@ def calc_perc(
     ----------
     arr : np.ndarray
         The input array.
-    percentiles : Sequence of float or np.ndarray, optional
+    percentiles : Sequence of float, optional
         The percentiles to compute. If None, only the median is computed.
     alpha : float
         A constant used to correct the index computed. Default: 1.0.
