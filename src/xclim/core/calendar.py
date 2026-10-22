@@ -405,7 +405,7 @@ def ensure_cftime_array(
 def percentile_doy(
     arr: xr.DataArray,
     window: int = 5,
-    per: float | Sequence[float] | np.ndarray = 10.0,
+    per: float | Sequence[float] = 10.0,
     alpha: float = 1.0 / 3.0,
     beta: float = 1.0 / 3.0,
     copy: bool = True,
