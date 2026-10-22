@@ -4,7 +4,7 @@ Changelog
 
 `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
 ------------------------------------------------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`), Juliette Lavoie (:user:`juliettelavoie`), Charles Lu (:user:`Lu-Charles`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`), Juliette Lavoie (:user:`juliettelavoie`), Charles Lu (:user:`Lu-Charles`), Kobe Vandelanotte (:user:`kobebryant432`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -48,6 +48,7 @@ Bug fixes
 * Handling of ``units_metadata`` has been updated. (:pull:`2431`).
     * In ``convert_units_to``, if the source is known to be "on-scale" or "difference" but the target is ambiguous, the source's metadata is preserved.
     * When "difference" units are formatted to string, CF symbols are more consistently used.
+* ``potential_evapotranspiration`` with ``method="DA02"`` now returns NaN instead of 0 where inputs are missing. (:issue:`2448`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
