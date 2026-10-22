@@ -520,7 +520,7 @@ def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int]  = 1) -> float
 
     Returns
     -------
-    float or Sequence of float or np.ndarray
+    float or Sequence of float
         The estimated Kullback-Leibler divergence D(P||Q) computed from the distances to the kth neighbour.
 
     Notes
