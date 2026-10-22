@@ -368,8 +368,6 @@ def calc_perc(
     """
     if percentiles is None:
         percentiles = [50.0]
-    else:
-        percentiles = percentiles
 
     percs = nan_calc_percentiles(
         arr=arr,
@@ -423,8 +421,6 @@ def nan_calc_percentiles(
     """
     if percentiles is None:
         percentiles = [50.0]
-    else:
-        percentiles = percentiles
 
     if copy:
         # bootstrapping already works on a data's copy
