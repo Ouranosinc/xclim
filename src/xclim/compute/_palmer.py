@@ -1,4 +1,5 @@
-"""Palmer drought indices.
+"""
+Palmer drought indices.
 
 Calculation of Palmer drought indices from precipitation,
 potential evapotranspiration, and available water-holding capacity.
@@ -18,10 +19,12 @@ Wells et al. (2004)
 """
 
 from __future__ import annotations
-import numpy as np
-import xarray as xr
+
 import collections
 from dataclasses import dataclass
+
+import numpy as np
+import xarray as xr
 
 __all__ = [
     "compute_pdsi_from_zindex",
@@ -32,6 +35,7 @@ __all__ = [
 
 _PDSI_MIN = -4.0
 _PDSI_MAX = 4.0
+
 
 @dataclass
 class PalmerWaterBalance:
@@ -111,7 +115,6 @@ def palmer_drought_indices(
     Palmer, W. C. (1965)
     Wells, N., Goddard, S., and Hayes, M. J. (2004)
     """
-
     if monthly_inputs:
         monthly = xr.Dataset(
             {
@@ -258,7 +261,6 @@ def monthly_water_balance(
     """
     Aggregate Palmer water-balance variables to monthly totals.
     """
-
     monthly = {
         "P": pr.resample(time="MS").sum(),
         "PET": pet.resample(time="MS").sum(),
@@ -523,11 +525,19 @@ def palmer_water_balance(
     under_storage_list = []
 
     for i in range(monthly_pr.sizes["time"]):
-
         p = monthly_pr.isel(time=i)
         pet = monthly_pet.isel(time=i)
 
-        (state, et, pr, r, ro, pro, l, pl,) = step_palmer_water_balance(
+        (
+            state,
+            et,
+            pr,
+            r,
+            ro,
+            pro,
+            l,
+            pl,
+        ) = step_palmer_water_balance(
             state,
             awhc,
             p,
@@ -548,13 +558,9 @@ def palmer_water_balance(
 
         pl_list.append(pl.expand_dims(time=[monthly_pr.time.values[i]]))
 
-        surface_storage_list.append(
-            state.surface_storage.expand_dims(time=[monthly_pr.time.values[i]])
-        )
+        surface_storage_list.append(state.surface_storage.expand_dims(time=[monthly_pr.time.values[i]]))
 
-        under_storage_list.append(
-            state.under_storage.expand_dims(time=[monthly_pr.time.values[i]])
-        )
+        under_storage_list.append(state.under_storage.expand_dims(time=[monthly_pr.time.values[i]]))
 
     surface_storage = xr.concat(
         surface_storage_list,
@@ -593,17 +599,9 @@ def subset_calibration_period(
     if calibration_start_year is None and calibration_end_year is None:
         return monthly
 
-    start_year = (
-        calibration_start_year
-        if calibration_start_year is not None
-        else int(monthly.time.dt.year.min())
-    )
+    start_year = calibration_start_year if calibration_start_year is not None else int(monthly.time.dt.year.min())
 
-    end_year = (
-        calibration_end_year
-        if calibration_end_year is not None
-        else int(monthly.time.dt.year.max())
-    )
+    end_year = calibration_end_year if calibration_end_year is not None else int(monthly.time.dt.year.max())
 
     return monthly.where(
         (monthly.time.dt.year >= start_year) & (monthly.time.dt.year <= end_year),
@@ -627,7 +625,6 @@ def compute_cafec_coefficients(
     xr.Dataset
         Monthly CAFEC coefficients (alpha, beta, gamma, delta).
     """
-
     pet_bar = monthly["PET"].groupby("time.month").mean("time")
     aet_bar = monthly["AET"].groupby("time.month").mean("time")
 
@@ -674,7 +671,6 @@ def compute_monthly_departure(
     xr.Dataset
         CAFEC precipitation and moisture departure.
     """
-
     month = monthly.time.dt.month
 
     alpha = cafec.alpha.sel(month=month)
@@ -682,12 +678,7 @@ def compute_monthly_departure(
     gamma = cafec.gamma.sel(month=month)
     delta = cafec.delta.sel(month=month)
 
-    cafec_precip = (
-        alpha * monthly["PET"]
-        + beta * monthly["PR"]
-        + gamma * monthly["PRO"]
-        - delta * monthly["PL"]
-    )
+    cafec_precip = alpha * monthly["PET"] + beta * monthly["PR"] + gamma * monthly["PRO"] - delta * monthly["PL"]
 
     departure = monthly["P"] - cafec_precip
 
@@ -721,7 +712,6 @@ def compute_k_factor(
     xr.DataArray
         Monthly climatic characteristic (K).
     """
-
     p_bar = monthly["P"].groupby("time.month").mean("time")
     pet_bar = monthly["PET"].groupby("time.month").mean("time")
     r_bar = monthly["R"].groupby("time.month").mean("time")
@@ -761,7 +751,6 @@ def compute_z_index(
     xr.DataArray
         Monthly Palmer moisture anomaly (Z-index).
     """
-
     month = departure.time.dt.month
     k = k_factor.sel(month=month)
     z = k * departure["departure"]
@@ -786,7 +775,6 @@ def compute_pdsi_from_zindex(
     xr.Dataset
         Dataset containing PDSI, PHDI, and PMDI.
     """
-
     pdsi, phdi, pmdi = xr.apply_ufunc(
         _pdsi_from_zindex,
         z,
@@ -837,7 +825,6 @@ def _pdsi_from_zindex(
     tuple[np.ndarray, np.ndarray, np.ndarray]
         PDSI, PHDI, and PMDI time series.
     """
-
     V = 0.0
     Pe = 0.0
     X1 = 0.0
@@ -858,20 +845,15 @@ def _pdsi_from_zindex(
     # The Palmer spell-state logic is retained while allowing
     # alternative persistence and Z-index weighting coefficients.
     for k in range(number_of_months):
-
         if (Pe == 100) or (Pe == 0):
-
             if abs(X3) <= 0.5:
                 PV = 0
                 PPe[k] = 0
                 PX3[k] = 0
 
-                PX1, PX2, PX3, X, BT = _compute_X(
-                    Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight
-                )
+                PX1, PX2, PX3, X, BT = _compute_X(Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight)
 
             elif X3 > 0.5:
-
                 if Z[k] >= 0.15:
                     PV, PPe, PX1, PX2, PX3, X, BT = _between_0s(
                         k, Z, X3, PX1, PX2, PX3, PPe, BT, X, persistence, z_weight
@@ -897,7 +879,6 @@ def _pdsi_from_zindex(
                     )
 
             elif X3 < -0.5:
-
                 if Z[k] <= -0.15:
                     PV, PPe, PX1, PX2, PX3, X, BT = _between_0s(
                         k, Z, X3, PX1, PX2, PX3, PPe, BT, X, persistence, z_weight
@@ -923,9 +904,7 @@ def _pdsi_from_zindex(
                     )
 
         else:
-
             if X3 > 0:
-
                 PV, PPe, PX1, PX2, PX3, X, BT = _wet_spell_abatement(
                     k,
                     Z,
@@ -945,7 +924,6 @@ def _pdsi_from_zindex(
                 )
 
             else:
-
                 PV, PPe, PX1, PX2, PX3, X, BT = _dry_spell_abatement(
                     k,
                     Z,
@@ -1038,7 +1016,6 @@ def _assign_X_backtracking(
     """
     Propagate backtracked Palmer index assignments.
     """
-
     # Follow the stored backtracking path and assign the
     # appropriate preliminary wet or dry index.
     for i in range(current_month_index - 1, previous_nonzero_index - 1, -1):
@@ -1071,7 +1048,6 @@ def _assign_X(
     """
     Finalize Palmer index assignments after backtracking.
     """
-
     # Apply deferred backtracking when a spell assignment
     # could not be resolved in the previous timestep.
     if k > 0:
@@ -1135,7 +1111,6 @@ def _compute_X(Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight):
     """
     Update preliminary and established Palmer drought indices.
     """
-
     # Apply the Palmer recurrence using configurable
     # persistence and Z-index weighting factors.
     PX1[k] = max(0.0, persistence * X1 + z_weight * Z[k])
@@ -1176,7 +1151,6 @@ def _between_0s(k, Z, X3, PX1, PX2, PX3, PPe, BT, X, persistence, z_weight):
     """
     Handle transitions between established Palmer spells.
     """
-
     PV = 0
     # Continue the established spell while resetting
     # competing preliminary spell indices.
@@ -1246,9 +1220,7 @@ def _wet_spell_abatement(
     else:
         PX3[k] = persistence * X3 + z_weight * Z[k]
 
-    PX1, PX2, PX3, X, BT = _compute_X(
-        Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight
-    )
+    PX1, PX2, PX3, X, BT = _compute_X(Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight)
 
     return PV, PPe, PX1, PX2, PX3, X, BT
 
@@ -1273,7 +1245,6 @@ def _dry_spell_abatement(
     """
     Update an established drought following Palmer's procedure.
     """
-
     Uw = Z[k] + 0.15
     # Accumulate evidence that the established drought
     # should terminate.
@@ -1412,11 +1383,16 @@ def _scpdsi_from_zindex(
     calibration_start_year: int,
     calibration_end_year: int,
     input_start_year: int,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,]:
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+]:
     """
     Apply self-calibration to a monthly Z-index series.
     """
-
     if np.all(np.isnan(z)):
         return (
             np.full_like(z, np.nan),
@@ -1445,7 +1421,14 @@ def _scpdsi_from_zindex(
     # Compute baseline Palmer indices prior to self-calibration.
     pdsi, _, _ = _pdsi_from_zindex(z)
 
-    (scz, pdsi, scpdsi, X1, X2, X3,) = _self_calibrate(
+    (
+        scz,
+        pdsi,
+        scpdsi,
+        X1,
+        X2,
+        X3,
+    ) = _self_calibrate(
         pdsi_values=pdsi.copy(),
         sczindex_values=z.copy(),
         calibration_start_year=calibration_start_year,
@@ -1539,7 +1522,6 @@ def _duration_factors(
     and the most extreme rolling accumulated Z anomalies within the
     calibration period.
     """
-
     month_scales = [3, 6, 9, 12, 18, 24, 30, 36, 42, 48]
 
     z_sums = np.zeros((len(month_scales),))
@@ -1590,7 +1572,6 @@ def _calibration_slice(
     """
     Return the calibration-period slice within a monthly series.
     """
-
     start = (calibration_start_year - input_start_year) * periods_per_year
     n_periods = (calibration_end_year - calibration_start_year + 1) * periods_per_year
 
@@ -1606,7 +1587,14 @@ def _self_calibrate(
     calibration_start_year: int,
     calibration_end_year: int,
     input_start_year: int,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,]:
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+]:
     """
     Apply Wells-style self-calibration to Palmer drought indices.
 
@@ -1749,7 +1737,13 @@ def _compute_scpdsi(
     dry_B: float,
     calibration_complete: bool,
     tolerance: float = 0.0,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,]:
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+]:
     """
     Compute the self-calibrated Palmer Drought Severity Index (SC-PDSI).
 
@@ -1757,7 +1751,6 @@ def _compute_scpdsi(
     self-calibrated Z-index series and updates Palmer spell-state indices
     using the Wells et al. (2004) self-calibration procedure.
     """
-
     # Candidate wet and dry spell histories used for
     # SC-PDSI backtracking.
     wet_index_deque = collections.deque([])
@@ -1769,7 +1762,6 @@ def _compute_scpdsi(
     previous_key = -1
 
     for period in range(established_index_values.size):
-
         previous_established_index_X3 = 0.0
 
         if previous_key >= 0 and not np.isnan(established_index_values[previous_key]):
@@ -1807,7 +1799,6 @@ def _compute_scpdsi(
             # No established spell exists. Skip spell-abatement
             # calculations and initialize a new candidate spell.
             if previous_established_index_X3 == 0:
-
                 new_X3 = 0
                 new_V = 0
 
@@ -1829,10 +1820,7 @@ def _compute_scpdsi(
                 )
 
             else:
-
-                new_X3 = c * previous_established_index_X3 + sczindex_values[period] / (
-                    m + b
-                )
+                new_X3 = c * previous_established_index_X3 + sczindex_values[period] / (m + b)
 
                 # ZE is the Z anomaly required to terminate an established spell.
                 ZE = (m + b) * (wd * 0.5 - c * previous_established_index_X3)
@@ -1861,7 +1849,6 @@ def _compute_scpdsi(
                     new_probability = (new_V / Q) * 100
 
                     if new_probability >= (100 - tolerance):
-
                         new_X3 = 0
                         new_V = 0
 
@@ -1894,7 +1881,6 @@ def _compute_scpdsi(
             V = new_V
 
         else:
-
             pdsi_values[period] = np.nan
             wet_index_values[period] = np.nan
             dry_index_values[period] = np.nan
@@ -1941,12 +1927,10 @@ def _choose_X(
     (X3). Candidate spell histories are retained for possible
     backtracking during spell transitions.
     """
-
     previous_wet_index_X1 = 0
     previous_dry_index_X2 = 0
 
     if (previous_key >= 0) and not np.isnan(established_index_values[previous_key]):
-
         previous_wet_index_X1 = wet_index_values[previous_key]
         previous_dry_index_X2 = dry_index_values[previous_key]
 
@@ -1960,16 +1944,13 @@ def _choose_X(
     # Update candidate wet and dry spell indices.
     new_X1 = wetc * previous_wet_index_X1 + z_index / (wet_M + wet_B)
     if new_X1 < 0:
-
         new_X1 = 0.0
 
     new_X2 = dryc * previous_dry_index_X2 + z_index / (dry_M + dry_B)
     if new_X2 > 0:
-
         new_X2 = 0.0
 
     if (new_X1 >= 0.5) and (new_X3 == 0):
-
         _backtrack_self_calibrated(
             pdsi_values,
             wet_index_deque,
@@ -1983,9 +1964,7 @@ def _choose_X(
         new_X1 = 0.0
 
     else:
-
         if (new_X2 <= -0.5) and (new_X3 == 0):
-
             _backtrack_self_calibrated(
                 pdsi_values,
                 wet_index_deque,
@@ -1999,9 +1978,7 @@ def _choose_X(
             new_X2 = 0.0
 
         elif new_X3 == 0:
-
             if new_X1 == 0:
-
                 _backtrack_self_calibrated(
                     pdsi_values,
                     wet_index_deque,
@@ -2013,7 +1990,6 @@ def _choose_X(
                 new_X = new_X2
 
             elif new_X2 == 0:
-
                 _backtrack_self_calibrated(
                     pdsi_values,
                     wet_index_deque,
@@ -2025,13 +2001,11 @@ def _choose_X(
                 new_X = new_X1
 
             else:
-
                 wet_index_deque.appendleft(new_X1)
                 dry_index_deque.appendleft(new_X2)
                 new_X = new_X3
 
         else:
-
             # Retain candidate spell histories for possible
             # backtracking during future transitions.
             wet_index_deque.appendleft(new_X1)
@@ -2055,13 +2029,11 @@ def _backtrack_self_calibrated(
     Resolves stored wet and dry spell candidates after a spell
     transition and updates the Palmer index assignment history.
     """
-
     num1 = new_X
 
     # Walk backward through the stored candidate spell
     # histories following the sign of the current spell.
     while wet_index_deque and dry_index_deque:
-
         if num1 > 0:
             num1 = wet_index_deque.popleft()
             num2 = dry_index_deque.popleft()
@@ -2072,7 +2044,6 @@ def _backtrack_self_calibrated(
         # Switch to the competing candidate when the current
         # value is effectively zero.
         if ((-1.0 * tolerance) <= num1) and (num1 <= tolerance):
-
             num1 = num2
 
         pdsi_values[month_index] = num1

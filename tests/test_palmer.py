@@ -6,9 +6,9 @@ import xarray as xr
 
 from xclim.compute import palmer_drought_indices
 
+
 def test_palmer_smoke():
     """Verify Palmer computation runs successfully."""
-
     time = pd.date_range("2000-01-01", periods=120, freq="MS")
 
     pr = xr.DataArray(
@@ -76,6 +76,7 @@ def test_palmer_outputs_present():
 
     assert expected.issubset(ds.data_vars)
 
+
 def test_palmer_preserves_time_dimension():
 
     ntime = 120
@@ -104,6 +105,7 @@ def test_palmer_preserves_time_dimension():
     )
 
     assert ds.sizes["time"] == ntime
+
 
 def test_palmer_gridded_input():
 
@@ -145,13 +147,14 @@ def test_palmer_gridded_input():
     assert ds["pdsi"].sizes["y"] == 3
     assert ds["pdsi"].sizes["x"] == 4
 
+
 def test_palmer_produces_finite_values():
 
     time = pd.date_range("2000-01-01", periods=120, freq="MS")
 
     # create a deterministic random-number generator
     rng = np.random.default_rng(42)
-    
+
     pr = xr.DataArray(
         rng.uniform(20, 100, size=120),
         coords={"time": time},
@@ -175,21 +178,24 @@ def test_palmer_produces_finite_values():
 
     assert np.isfinite(ds["pdsi"]).any()
 
+
 def test_pdsi_regression_wet_to_dry_transition():
     # Regression values generated using the current Palmer implementation
     # for a synthetic series transitioning from wet (50 mm/month)
     # to drought (10 mm/month) conditions.
-    
+
     expected_pdsi = -4.342777742626958
     expected_z = -1.1403694898678955
 
     time = pd.date_range("2000-01-01", periods=120, freq="MS")
 
     pr = xr.DataArray(
-        np.concatenate([
-            np.full(60, 50.0),   # wet period
-            np.full(60, 10.0),   # drought period
-        ]),
+        np.concatenate(
+            [
+                np.full(60, 50.0),  # wet period
+                np.full(60, 10.0),  # drought period
+            ]
+        ),
         coords={"time": time},
         dims="time",
     )
@@ -220,4 +226,3 @@ def test_pdsi_regression_wet_to_dry_transition():
         expected_z,
         rtol=1e-5,
     )
-
