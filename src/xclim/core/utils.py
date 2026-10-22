@@ -405,7 +405,7 @@ def nan_calc_percentiles(
     ----------
     arr : np.ndarray
         The input array.
-    percentiles : Sequence of float or np.ndarray, optional
+    percentiles : Sequence of float, optional
         The percentiles to compute. If None, only the median is computed.
     axis : int
         The axis along which to compute the percentiles. Default: -1.
