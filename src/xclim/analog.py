@@ -495,7 +495,7 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
 
 
 @metric
-def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] | np.ndarray = 1) -> float | Sequence[float]:
+def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int]  = 1) -> float | Sequence[float]:
     r"""
     Compute the Kullback-Leibler divergence between two multivariate samples.
 
