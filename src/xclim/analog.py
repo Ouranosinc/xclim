@@ -514,7 +514,7 @@ def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int]  = 1) -> float
         Samples from distribution P, which typically represents the true distribution (reference).
     y : np.ndarray (m,d)
         Samples from distribution Q, which typically represents the approximate distribution (candidate).
-    k : int or Sequence of int or np.ndarray
+    k : int or Sequence of int
         The kth neighbours to look for when estimating the density of the distributions.
         Defaults to 1, which can be noisy.
 
