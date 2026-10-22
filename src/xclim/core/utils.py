@@ -392,7 +392,7 @@ def calc_perc(
 
 def nan_calc_percentiles(
     arr: np.ndarray,
-    percentiles: Sequence[float]  | None = None,
+    percentiles: Sequence[float] | None = None,
     axis: int = -1,
     alpha: float = 1.0,
     beta: float = 1.0,
