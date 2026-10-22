@@ -12,7 +12,7 @@ import importlib.util
 import logging
 import os
 import warnings
-from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Hashable, ItemsView, Iterator, KeysView, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -22,6 +22,8 @@ import xarray as xr
 from dask import array as dsk
 from yaml import safe_dump, safe_load
 
+from xclim.core._types import DataType
+
 logger = logging.getLogger("xclim")
 
 
@@ -30,8 +32,8 @@ class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
 
     # ruff: disable[D102, D105]
 
-    def __init__(self, data: Mapping = None):
-        self._data = {}
+    def __init__(self, data: Mapping | None = None):
+        self._data: dict[Any, Any] = {}
         if data:
             self.update(data)
 
@@ -55,29 +57,19 @@ class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
     def setdefault(self, key: str, default: Any = None) -> Any:  # numpydoc ignore=GL08
         return self._data.setdefault(self._casefold(key), default)
 
-    def __contains__(self, key: str) -> bool:
-        return self._casefold(key) in self._data
+    def __contains__(self, key: object) -> bool:
+        return isinstance(key, str) and self._casefold(key) in self._data
 
     def __delitem__(self, key: str):
         del self._data[self._casefold(key)]
 
-    def update(self, other: Mapping, **kwargs):  # numpydoc ignore=GL08
-        if hasattr(other, "keys"):
-            for k in other.keys():
-                self[k] = other[k]
-        else:
-            for k, v in other:
-                self[k] = v
-        for k, v in kwargs.items():
-            self[k] = v
-
     def __iter__(self) -> Iterator[str]:
         return iter(self._data)
 
-    def items(self) -> Iterator[tuple[str, Any]]:  # numpydoc ignore=GL08
+    def items(self) -> ItemsView[str, Any]:  # numpydoc ignore=GL08
         return self._data.items()
 
-    def keys(self) -> Iterator[str]:  # numpydoc ignore=GL08
+    def keys(self) -> KeysView[str]:  # numpydoc ignore=GL08
         return self._data.keys()
 
     def __len__(self) -> int:
@@ -85,9 +77,6 @@ class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
 
     def __repr__(self) -> str:
         return repr(self._data)
-
-    def pop(self, key: str) -> Any:  # numpydoc ignore=GL08
-        return self._data.pop(self._casefold(key))
 
     def popitem(self) -> tuple[str, Any]:  # numpydoc ignore=GL08
         return self._data.popitem()
@@ -186,6 +175,10 @@ def load_module(path: os.PathLike, name: str | None = None) -> ModuleType:
     """
     path = Path(path)
     spec = importlib.util.spec_from_file_location(name or path.stem, path)
+    if spec is None:
+        raise ValueError("'spec' is not a valid ModuleSpec type but 'None'.")
+    if spec.loader is None:
+        raise ValueError("'spec.loader' is not a valid ModuleSpec type but 'None'.")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)  # This executes code, effectively loading the module
     return mod
@@ -202,7 +195,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     ----------
     da : xr.DataArray
         The input DataArray, with or without the dask backend. Does nothing when passed a non-dask array.
-    **minchunks : dict[str, int]
+    **minchunks : int
         A kwarg mapping from dimension name to minimum chunk size.
         Pass -1 to force a single chunk along that dimension.
 
@@ -214,8 +207,8 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     if not uses_dask(da):
         return da
 
-    all_chunks = dict(zip(da.dims, da.chunks, strict=False))
-    chunking = {}
+    all_chunks = dict(zip(da.dims, da.chunks or (), strict=False))
+    chunking: dict[str, int | tuple[int, ...]] = {}
     for dim, minchunk in minchunks.items():
         chunks = all_chunks[dim]
         if minchunk == -1 and len(chunks) > 1:
@@ -226,9 +219,9 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
         if toosmall.sum() > 1:
             # Many chunks are too small, merge them by groups
             fac = np.ceil(minchunk / min(chunks)).astype(int)
-            chunking[dim] = tuple(sum(chunks[i : i + fac]) for i in range(0, len(chunks), fac))
+            chunks = tuple(sum(chunks[i : i + fac]) for i in range(0, len(chunks), fac))
+            chunking[dim] = chunks
             # Reset counter is case the last chunks are still too small
-            chunks = chunking[dim]
             toosmall = np.array(chunks) < minchunk
         if toosmall.sum() == 1:
             # Only one, merge it with adjacent chunk
@@ -243,7 +236,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     return da
 
 
-def uses_dask(*das) -> bool:
+def uses_dask(*das: xr.DataArray | xr.Dataset) -> bool:
     r"""
     Evaluate whether dask is installed and array is loaded as a dask array.
 
@@ -268,7 +261,7 @@ def uses_dask(*das) -> bool:
     return any(_is_dask_array(da) for da in das)
 
 
-def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: str | None = None) -> xr.DataArray:
+def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: Hashable | None = None) -> xr.DataArray:
     """
     Get values of `da` at indices `index` in a NaN-aware and lazy manner.
 
@@ -295,7 +288,7 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: str | None = None)
         idx_ndim = index.ndim
         if idx_ndim == 0:
             # The 0-D index case, we add a dummy dimension to help dask
-            dim = get_temp_dimname(da.dims, "x")
+            dim = get_temp_dimname([str(dim) for dim in da.dims], "x")
             index = index.expand_dims(dim)
         # Which indexes to mask.
         invalid = index.isnull()
@@ -304,7 +297,7 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: str | None = None)
 
         # No need for coords, we extract by integer index.
         # Renaming with no name to fix bug in xr 2024.01.0
-        tmpname = get_temp_dimname(da.dims, "temp")
+        tmpname = get_temp_dimname([str(dim) for dim in da.dims], "temp")
         da2 = xr.DataArray(da.data, dims=(tmpname,), name=None)
         # Map blocks chunks aux coords. Remove them to avoid the alignment check load in `where`
         index, auxcrd = split_auxiliary_coordinates(index)
@@ -357,16 +350,16 @@ def calc_perc(
 
     Parameters
     ----------
-    arr : array_like
+    arr : np.ndarray
         The input array.
-    percentiles : sequence of float, optional
+    percentiles : Sequence of float, optional
         The percentiles to compute. If None, only the median is computed.
     alpha : float
-        A constant used to correct the index computed.
+        A constant used to correct the index computed. Default: 1.0.
     beta : float
-        A constant used to correct the index computed.
+        A constant used to correct the index computed. Default: 1.0.
     copy : bool
-        If True, the input array is copied before computation. Default is True.
+        If True, the input array is copied before computation. Default: True.
 
     Returns
     -------
@@ -374,19 +367,22 @@ def calc_perc(
         The percentiles along the last axis.
     """
     if percentiles is None:
-        _percentiles = [50.0]
-    else:
-        _percentiles = percentiles
+        percentiles = [50.0]
+
+    percs = nan_calc_percentiles(
+        arr=arr,
+        percentiles=percentiles,
+        axis=-1,
+        alpha=alpha,
+        beta=beta,
+        copy=copy,
+    )
+
+    if isinstance(percs, float):
+        return np.asarray(percs)
 
     return np.moveaxis(
-        nan_calc_percentiles(
-            arr=arr,
-            percentiles=_percentiles,
-            axis=-1,
-            alpha=alpha,
-            beta=beta,
-            copy=copy,
-        ),
+        percs,
         source=0,
         destination=-1,
     )
@@ -399,40 +395,38 @@ def nan_calc_percentiles(
     alpha: float = 1.0,
     beta: float = 1.0,
     copy: bool = True,
-) -> np.ndarray:
+) -> float | np.ndarray:
     """
     Convert the percentiles to quantiles and compute them using _nan_quantile.
 
     Parameters
     ----------
-    arr : array_like
+    arr : np.ndarray
         The input array.
-    percentiles : sequence of float, optional
+    percentiles : Sequence of float, optional
         The percentiles to compute. If None, only the median is computed.
     axis : int
-        The axis along which to compute the percentiles.
+        The axis along which to compute the percentiles. Default: -1.
     alpha : float
-        A constant used to correct the index computed.
+        A constant used to correct the index computed. Default: 1.0.
     beta : float
-        A constant used to correct the index computed.
+        A constant used to correct the index computed. Default: 1.0.
     copy : bool
-        If True, the input array is copied before computation. Default is True.
+        If True, the input array is copied before computation. Default: True.
 
     Returns
     -------
-    np.ndarray
+    np.ndarray or float
         The percentiles along the specified axis.
     """
     if percentiles is None:
-        _percentiles = [50.0]
-    else:
-        _percentiles = percentiles
+        percentiles = [50.0]
 
     if copy:
         # bootstrapping already works on a data's copy
         # doing it again is extremely costly, especially with dask.
         arr = arr.copy()
-    quantiles = np.array([per / 100.0 for per in _percentiles])
+    quantiles = np.array([per / 100.0 for per in percentiles])
     return _nan_quantile(arr, quantiles, axis, alpha, beta)
 
 
@@ -444,9 +438,9 @@ def _compute_virtual_index(n: np.ndarray, quantiles: np.ndarray, alpha: float, b
 
     Parameters
     ----------
-    n : array_like
+    n : np.ndarray
         The sample sizes.
-    quantiles : array_like
+    quantiles : np.ndarray
         The quantiles values.
     alpha : float
         A constant used to correct the index computed.
@@ -464,16 +458,21 @@ def _compute_virtual_index(n: np.ndarray, quantiles: np.ndarray, alpha: float, b
     return n * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1
 
 
-def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
+def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray) -> np.ndarray:
     """
-    Compute gamma (AKA 'm' or 'weight') for the linear interpolation of quantiles.
+    Compute gamma (AKA "m" or "weight") for the linear interpolation of quantiles.
 
     Parameters
     ----------
-    virtual_indexes : array_like
+    virtual_indexes : np.ndarray
         The indexes where the percentile is supposed to be found in the sorted sample.
-    previous_indexes : array_like
+    previous_indexes : np.ndarray
         The floor values of virtual_indexes.
+
+    Returns
+    -------
+    np.ndarray
+        Gamma ("γ": "m" or "weight") which is necessary for the linear interpolation of quantiles.
 
     Notes
     -----
@@ -491,16 +490,16 @@ def _get_indexes(
 
     Parameters
     ----------
-    arr : array_like
+    arr : np.ndarray
         The input array.
-    virtual_indexes : array_like
+    virtual_indexes : np.ndarray
         The indexes where the percentile is supposed to be found in the sorted sample.
-    valid_values_count : array_like
+    valid_values_count : np.ndarray
         The number of valid values in the sorted array.
 
     Returns
     -------
-    array_like, array_like
+    tuple of np.ndarray and np.ndarray
         A tuple of virtual_indexes neighbouring indexes (previous and next).
 
     Notes
@@ -540,16 +539,16 @@ def _linear_interpolation(
 
     Parameters
     ----------
-    left : array_like
+    left : np.ndarray
         Left bound.
-    right : array_like
+    right : np.ndarray
         Right bound.
-    gamma : array_like
+    gamma : np.ndarray
         The interpolation weight.
 
     Returns
     -------
-    array_like
+    np.ndarray
         The linearly interpolated array.
     """
     diff_b_a = np.subtract(right, left)
@@ -634,7 +633,7 @@ def make_clix_meta_yaml(  # noqa: C901
 
     Parameters
     ----------
-    raw : os.PathLike or StringIO or str
+    raw : os.PathLike
         The path to the clix-meta "index_definitions.yml" file or the string representation of the yaml.
     adapted : os.PathLike
         The path where to write the adapted yaml.
@@ -646,7 +645,7 @@ def make_clix_meta_yaml(  # noqa: C901
     with Path(raw).open(encoding="utf-8") as f:
         src = safe_load(f)
 
-    yml = {}
+    yml: dict[str, Any] = {}
     yml["realm"] = "atmos"
     yml["doc"] = """
   ===================
@@ -770,13 +769,13 @@ def _chunk_like(*inputs, chunks: dict[str, int] | None):  # *inputs : xr.DataArr
         if not isinstance(da, xr.DataArray | xr.Dataset):
             outputs.append(da)
         else:
-            outputs.append(da.chunk(**{d: c for d, c in chunks.items() if d in da.dims}))
+            outputs.append(da.chunk({d: c for d, c in chunks.items() if d in da.dims}))
     return tuple(outputs)
 
 
 def split_auxiliary_coordinates(
-    obj: xr.DataArray | xr.Dataset,
-) -> tuple[xr.DataArray | xr.Dataset, xr.DataArray]:
+    obj: DataType,
+) -> tuple[DataType, xr.Dataset]:
     """
     Split auxiliary coords from the dataset.
 
@@ -791,10 +790,9 @@ def split_auxiliary_coordinates(
 
     Returns
     -------
-    clean_obj : xr.DataArray or xr.Dataset
-        Same as `obj` but without any auxiliary coordinate.
-    aux_crd_ds : xr.Dataset
-        The auxiliary coordinates as a dataset. Might be empty.
+    tuple of xr.DataArray or xr.Dataset and xr.DataArray
+        - Same as `obj` but without any auxiliary coordinate.
+        - The auxiliary coordinates as a dataset. Might be empty.
 
     Notes
     -----
@@ -823,7 +821,7 @@ def get_temp_dimname(dims: Sequence[str], new_dim: str) -> str:
 
     Parameters
     ----------
-    dims : sequence of str
+    dims : Sequence of str
         The dimension names that already exist.
     new_dim : str
         The new name we want.

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import cf_xarray  # noqa: F401, pylint: disable=unused-import
 import numpy as np
-import xarray
+import xarray as xr
 
 from xclim.core.units import convert_units_to, declare_units
 
@@ -22,8 +22,8 @@ __all__ = [
 
 @declare_units(ua="[speed]")
 def jetstream_metric_woollings(
-    ua: xarray.DataArray,
-) -> tuple[xarray.DataArray, xarray.DataArray]:
+    ua: xr.DataArray,
+) -> tuple[xr.DataArray, xr.DataArray]:
     """
     Strength and latitude of jetstream.
 
@@ -33,14 +33,14 @@ def jetstream_metric_woollings(
 
     Parameters
     ----------
-    ua : xarray.DataArray
+    ua : xr.DataArray
         Eastward wind component (u) at between 750 and 950 hPa.
 
     Returns
     -------
-    jetlat: xarray.DataArray, [°]
+    jetlat: xr.DataArray, [°]
         Daily time series of latitude of jetstream.
-    jetstr: xarray.DataArray, [speed]
+    jetstr: xr.DataArray, [speed]
         Daily time series of strength of jetstream.
 
     Warnings
@@ -102,7 +102,7 @@ def jetstream_metric_woollings(
     return jetlat, jetstr
 
 
-def _compute_low_pass_filter_weights(window_size: int, cutoff: float) -> xarray.DataArray:
+def _compute_low_pass_filter_weights(window_size: int, cutoff: float) -> xr.DataArray:
     order = ((window_size - 1) // 2) + 1
     nwts = 2 * order + 1
     w = np.zeros([nwts])
@@ -114,5 +114,5 @@ def _compute_low_pass_filter_weights(window_size: int, cutoff: float) -> xarray.
     w[n - 1 : 0 : -1] = firstfactor * sigma
     w[n + 1 : -1] = firstfactor * sigma
 
-    lanczos_weights = xarray.DataArray(w[0 + (window_size % 2) : -1], dims=["window"])
+    lanczos_weights = xr.DataArray(w[0 + (window_size % 2) : -1], dims=["window"])
     return lanczos_weights
