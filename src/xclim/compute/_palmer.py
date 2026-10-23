@@ -825,7 +825,6 @@ def _pdsi_from_zindex(
     tuple[np.ndarray, np.ndarray, np.ndarray]
         PDSI, PHDI, and PMDI time series.
     """
-
     if np.all(np.isnan(Z)):
         return (
             np.full_like(Z, np.nan),
@@ -844,7 +843,6 @@ def _pdsi_from_zindex(
             np.full_like(Z, 0.0),
             np.full_like(Z, 0.0),
         )
-
 
     V = 0.0
     Pe = 0.0
