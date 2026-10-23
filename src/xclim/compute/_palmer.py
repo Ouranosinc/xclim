@@ -193,23 +193,23 @@ def palmer_drought_indices(
         calibration_departure["departure"],
     )
 
-    z = compute_z_index(
+    Z = compute_z_index(
         departure,
         k,
     )
     if soil_mask is not None:
-        z = z.where(soil_mask)
+        Z = Z.where(soil_mask)
 
     # Compute Palmer and self-calibrated Palmer indices
     # from the monthly Z-index.
     pdsi_ds = compute_pdsi_from_zindex(
-        z,
+        Z,
     )
 
     # SC-PDSI uses the calibration period to derive
     # self-calibrated wet and dry duration factors.
     scpdsi_ds = compute_scpdsi_from_zindex(
-        z,
+        Z,
         calibration_start_year,
         calibration_end_year,
     )
@@ -217,7 +217,7 @@ def palmer_drought_indices(
     return xr.Dataset(
         {
             # Palmer indices
-            "z": z,
+            "Z": Z,
             "pdsi": pdsi_ds["pdsi"],
             "phdi": pdsi_ds["phdi"],
             "pmdi": pdsi_ds["pmdi"],
@@ -753,21 +753,21 @@ def compute_z_index(
     """
     month = departure.time.dt.month
     k = k_factor.sel(month=month)
-    z = k * departure["departure"]
-    z.name = "Z"
+    Z = k * departure["departure"]
+    Z.name = "Z"
 
-    return z
+    return Z
 
 
 def compute_pdsi_from_zindex(
-    z: xr.DataArray,
+    Z: xr.DataArray,
 ) -> xr.Dataset:
     """
     Compute Palmer drought indices from monthly Z-index values.
 
     Parameters
     ----------
-    z : xr.DataArray
+    Z : xr.DataArray
         Monthly Palmer moisture anomaly (Z-index).
 
     Returns
@@ -777,7 +777,7 @@ def compute_pdsi_from_zindex(
     """
     pdsi, phdi, pmdi = xr.apply_ufunc(
         _pdsi_from_zindex,
-        z,
+        Z,
         input_core_dims=[["time"]],
         output_core_dims=[["time"], ["time"], ["time"]],
         vectorize=True,
@@ -825,6 +825,27 @@ def _pdsi_from_zindex(
     tuple[np.ndarray, np.ndarray, np.ndarray]
         PDSI, PHDI, and PMDI time series.
     """
+
+    if np.all(np.isnan(Z)):
+        return (
+            np.full_like(Z, np.nan),
+            np.full_like(Z, np.nan),
+            np.full_like(Z, np.nan),
+        )
+    if np.all(~np.isfinite(Z)):
+        return (
+            np.full_like(Z, np.nan),
+            np.full_like(Z, np.nan),
+            np.full_like(Z, np.nan),
+        )
+    if np.nanmax(np.abs(Z)) == 0:
+        return (
+            np.full_like(Z, 0.0),
+            np.full_like(Z, 0.0),
+            np.full_like(Z, 0.0),
+        )
+
+
     V = 0.0
     Pe = 0.0
     X1 = 0.0
@@ -1306,7 +1327,7 @@ def _dry_spell_abatement(
 
 
 def compute_scpdsi_from_zindex(
-    z: xr.DataArray,
+    Z: xr.DataArray,
     calibration_start_year: int | None,
     calibration_end_year: int | None,
 ) -> xr.Dataset:
@@ -1315,7 +1336,7 @@ def compute_scpdsi_from_zindex(
 
     Parameters
     ----------
-    z : xr.DataArray
+    Z : xr.DataArray
         Monthly Palmer moisture anomaly (Z-index).
     calibration_start_year : int, optional
         First year of the calibration period.
@@ -1328,8 +1349,8 @@ def compute_scpdsi_from_zindex(
         Dataset containing self-calibrated Z-index, SC-PDSI, and
         intermediate Palmer spell-state indices.
     """
-    input_start_year = int(z.time.dt.year.values[0])
-    input_end_year = int(z.time.dt.year.values[-1])
+    input_start_year = int(Z.time.dt.year.values[0])
+    input_end_year = int(Z.time.dt.year.values[-1])
 
     # Use the full record if no calibration period is specified.
     if calibration_start_year is None:
@@ -1339,7 +1360,7 @@ def compute_scpdsi_from_zindex(
 
     scz, scpdsi, X1, X2, X3 = xr.apply_ufunc(
         _scpdsi_from_zindex,
-        z,
+        Z,
         calibration_start_year,
         calibration_end_year,
         input_start_year,
@@ -1379,7 +1400,7 @@ def compute_scpdsi_from_zindex(
 
 
 def _scpdsi_from_zindex(
-    z: np.ndarray,
+    Z: np.ndarray,
     calibration_start_year: int,
     calibration_end_year: int,
     input_start_year: int,
@@ -1393,33 +1414,33 @@ def _scpdsi_from_zindex(
     """
     Apply self-calibration to a monthly Z-index series.
     """
-    if np.all(np.isnan(z)):
+    if np.all(np.isnan(Z)):
         return (
-            np.full_like(z, np.nan),
-            np.full_like(z, np.nan),
-            np.full_like(z, np.nan),
-            np.full_like(z, np.nan),
-            np.full_like(z, np.nan),
+            np.full_like(Z, np.nan),
+            np.full_like(Z, np.nan),
+            np.full_like(Z, np.nan),
+            np.full_like(Z, np.nan),
+            np.full_like(Z, np.nan),
         )
-    if np.all(~np.isfinite(z)):
+    if np.all(~np.isfinite(Z)):
         return (
-            np.full_like(z, np.nan),
-            np.full_like(z, np.nan),
-            np.full_like(z, np.nan),
-            np.full_like(z, np.nan),
-            np.full_like(z, np.nan),
+            np.full_like(Z, np.nan),
+            np.full_like(Z, np.nan),
+            np.full_like(Z, np.nan),
+            np.full_like(Z, np.nan),
+            np.full_like(Z, np.nan),
         )
-    if np.nanmax(np.abs(z)) == 0:
+    if np.nanmax(np.abs(Z)) == 0:
         return (
-            np.full_like(z, 0.0),
-            np.full_like(z, 0.0),
-            np.full_like(z, 0.0),
-            np.full_like(z, 0.0),
-            np.full_like(z, 0.0),
+            np.full_like(Z, 0.0),
+            np.full_like(Z, 0.0),
+            np.full_like(Z, 0.0),
+            np.full_like(Z, 0.0),
+            np.full_like(Z, 0.0),
         )
 
     # Compute baseline Palmer indices prior to self-calibration.
-    pdsi, _, _ = _pdsi_from_zindex(z)
+    pdsi, _, _ = _pdsi_from_zindex(Z)
 
     (
         scz,
@@ -1430,7 +1451,7 @@ def _scpdsi_from_zindex(
         X3,
     ) = _self_calibrate(
         pdsi_values=pdsi.copy(),
-        sczindex_values=z.copy(),
+        sczindex_values=Z.copy(),
         calibration_start_year=calibration_start_year,
         calibration_end_year=calibration_end_year,
         input_start_year=input_start_year,
@@ -1487,15 +1508,15 @@ def _z_sum(
 
     # Restrict analysis to the calibration period and remove
     # missing values before computing rolling accumulation.
-    z = sczindex_values[cal_slice]
-    z = z[np.isfinite(z)]
+    Z = sczindex_values[cal_slice]
+    Z = Z[np.isfinite(Z)]
 
-    if len(z) < interval:
+    if len(Z) < interval:
         return np.nan
 
     # Rolling accumulated Z anomalies for the requested duration.
     rolling = np.convolve(
-        z,
+        Z,
         np.ones(interval),
         mode="valid",
     )
