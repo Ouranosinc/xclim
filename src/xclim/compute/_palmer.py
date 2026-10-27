@@ -22,18 +22,19 @@ from __future__ import annotations
 
 import collections
 from dataclasses import dataclass
-from xclim.core.calendar import compare_offsets
 
 import numpy as np
 import xarray as xr
 
+from xclim.core.calendar import compare_offsets
+
 __all__ = [
+    "palmer_indices",
     "pdsi",
     "phdi",
     "pmdi",
     "scpdsi",
     "z_index",
-    "palmer_indices",
 ]
 
 _PDSI_MIN = -4.0
@@ -216,10 +217,7 @@ def scpdsi(
     out.attrs.update(
         units="",
         long_name="Self-Calibrated Palmer Drought Severity Index",
-        description=(
-            "Monthly self-calibrated Palmer Drought Severity "
-            "Index computed following Wells et al. (2004)."
-        ),
+        description=("Monthly self-calibrated Palmer Drought Severity Index computed following Wells et al. (2004)."),
     )
 
     return out
@@ -251,10 +249,7 @@ def z_index(
     out.attrs.update(
         units="",
         long_name="Palmer Moisture Anomaly Index",
-        description=(
-            "Monthly Palmer moisture anomaly (Z-index) "
-            "computed from Palmer water-balance departures."
-        ),
+        description=("Monthly Palmer moisture anomaly (Z-index) computed from Palmer water-balance departures."),
     )
 
     return out
@@ -313,7 +308,6 @@ def palmer_indices(
     Palmer, W. C. (1965)
     Wells, N., Goddard, S., and Hayes, M. J. (2004)
     """
-
     # Internal alias for readability.
     pet = evspsblpot
 
@@ -744,7 +738,16 @@ def palmer_water_balance(
         p = monthly_pr.isel(time=i)
         pet = monthly_pet.isel(time=i)
 
-        (state, et, pr, r, ro, pro, l, pl,) = step_palmer_water_balance(
+        (
+            state,
+            et,
+            pr,
+            r,
+            ro,
+            pro,
+            l,
+            pl,
+        ) = step_palmer_water_balance(
             state,
             awhc,
             p,
@@ -765,13 +768,9 @@ def palmer_water_balance(
 
         pl_list.append(pl.expand_dims(time=[monthly_pr.time.values[i]]))
 
-        surface_storage_list.append(
-            state.surface_storage.expand_dims(time=[monthly_pr.time.values[i]])
-        )
+        surface_storage_list.append(state.surface_storage.expand_dims(time=[monthly_pr.time.values[i]]))
 
-        under_storage_list.append(
-            state.under_storage.expand_dims(time=[monthly_pr.time.values[i]])
-        )
+        under_storage_list.append(state.under_storage.expand_dims(time=[monthly_pr.time.values[i]]))
 
     surface_storage = xr.concat(
         surface_storage_list,
@@ -810,17 +809,9 @@ def subset_calibration_period(
     if calibration_start_year is None and calibration_end_year is None:
         return monthly
 
-    start_year = (
-        calibration_start_year
-        if calibration_start_year is not None
-        else int(monthly.time.dt.year.min())
-    )
+    start_year = calibration_start_year if calibration_start_year is not None else int(monthly.time.dt.year.min())
 
-    end_year = (
-        calibration_end_year
-        if calibration_end_year is not None
-        else int(monthly.time.dt.year.max())
-    )
+    end_year = calibration_end_year if calibration_end_year is not None else int(monthly.time.dt.year.max())
 
     return monthly.where(
         (monthly.time.dt.year >= start_year) & (monthly.time.dt.year <= end_year),
@@ -897,12 +888,7 @@ def compute_monthly_departure(
     gamma = cafec.gamma.sel(month=month)
     delta = cafec.delta.sel(month=month)
 
-    cafec_precip = (
-        alpha * monthly["PET"]
-        + beta * monthly["PR"]
-        + gamma * monthly["PRO"]
-        - delta * monthly["PL"]
-    )
+    cafec_precip = alpha * monthly["PET"] + beta * monthly["PR"] + gamma * monthly["PRO"] - delta * monthly["PL"]
 
     departure = monthly["P"] - cafec_precip
 
@@ -1094,9 +1080,7 @@ def _pdsi_from_zindex(
                 PPe[k] = 0
                 PX3[k] = 0
 
-                PX1, PX2, PX3, X, BT = _compute_X(
-                    Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight
-                )
+                PX1, PX2, PX3, X, BT = _compute_X(Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight)
 
             elif X3 > 0.5:
                 if Z[k] >= 0.15:
@@ -1464,9 +1448,7 @@ def _wet_spell_abatement(
     else:
         PX3[k] = persistence * X3 + z_weight * Z[k]
 
-    PX1, PX2, PX3, X, BT = _compute_X(
-        Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight
-    )
+    PX1, PX2, PX3, X, BT = _compute_X(Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight)
 
     return PV, PPe, PX1, PX2, PX3, X, BT
 
@@ -1628,7 +1610,13 @@ def _scpdsi_from_zindex(
     calibration_start_year: int,
     calibration_end_year: int,
     input_start_year: int,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,]:
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+]:
     """
     Apply self-calibration to a monthly Z-index series.
     """
@@ -1660,7 +1648,14 @@ def _scpdsi_from_zindex(
     # Compute baseline Palmer indices prior to self-calibration.
     pdsi, _, _ = _pdsi_from_zindex(Z)
 
-    (scz, pdsi, scpdsi, X1, X2, X3,) = _self_calibrate(
+    (
+        scz,
+        pdsi,
+        scpdsi,
+        X1,
+        X2,
+        X3,
+    ) = _self_calibrate(
         pdsi_values=pdsi.copy(),
         sczindex_values=Z.copy(),
         calibration_start_year=calibration_start_year,
@@ -1819,7 +1814,14 @@ def _self_calibrate(
     calibration_start_year: int,
     calibration_end_year: int,
     input_start_year: int,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,]:
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+]:
     """
     Apply Wells-style self-calibration to Palmer drought indices.
 
@@ -1962,7 +1964,13 @@ def _compute_scpdsi(
     dry_B: float,
     calibration_complete: bool,
     tolerance: float = 0.0,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,]:
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+]:
     """
     Compute the self-calibrated Palmer Drought Severity Index (SC-PDSI).
 
@@ -2039,9 +2047,7 @@ def _compute_scpdsi(
                 )
 
             else:
-                new_X3 = c * previous_established_index_X3 + sczindex_values[period] / (
-                    m + b
-                )
+                new_X3 = c * previous_established_index_X3 + sczindex_values[period] / (m + b)
 
                 # ZE is the Z anomaly required to terminate an established spell.
                 ZE = (m + b) * (wd * 0.5 - c * previous_established_index_X3)
