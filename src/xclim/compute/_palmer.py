@@ -22,16 +22,19 @@ from __future__ import annotations
 
 import collections
 from dataclasses import dataclass
+from xclim.core.calendar import compare_offsets
 
 import numpy as np
 import xarray as xr
 
 __all__ = [
-    "compute_pdsi_from_zindex",
-    "compute_scpdsi_from_zindex",
-    "palmer_drought_indices",
+    "pdsi",
+    "phdi",
+    "pmdi",
+    "scpdsi",
+    "z_index",
+    "palmer_indices",
 ]
-
 
 _PDSI_MIN = -4.0
 _PDSI_MAX = 4.0
@@ -57,27 +60,225 @@ class PalmerWaterBalanceState:
     under_storage: xr.DataArray
 
 
-def palmer_drought_indices(
+def pdsi(
     pr: xr.DataArray,
-    pet: xr.DataArray,
+    evspsblpot: xr.DataArray,
     awhc: xr.DataArray,
     *,
     soil_mask: xr.DataArray | None = None,
     calibration_start_year: int | None = None,
     calibration_end_year: int | None = None,
-    monthly_inputs: bool = False,
-) -> xr.Dataset:
+) -> xr.DataArray:
     """
-    Compute Palmer drought indices and supporting water-balance variables.
+    Palmer Drought Severity Index (PDSI).
 
     Parameters
     ----------
     pr : xr.DataArray
-        Precipitation. Daily values are aggregated to monthly totals
-        unless ``monthly_inputs=True``.
-    pet : xr.DataArray
+        Precipitation.
+    evspsblpot : xr.DataArray
+        Potential evapotranspiration.
+    awhc : xr.DataArray
+        Available water holding capacity.
+    soil_mask : xr.DataArray, optional
+        Mask identifying valid soil cells.
+    calibration_start_year : int, optional
+        First year of the calibration period.
+    calibration_end_year : int, optional
+        Last year of the calibration period.
+
+    Returns
+    -------
+    xr.DataArray
+        Palmer Drought Severity Index.
+    """
+    ds = palmer_indices(
+        pr=pr,
+        evspsblpot=evspsblpot,
+        awhc=awhc,
+        soil_mask=soil_mask,
+        calibration_start_year=calibration_start_year,
+        calibration_end_year=calibration_end_year,
+    )
+
+    out = ds["pdsi"]
+
+    out.attrs.update(
+        units="",
+        long_name="Palmer Drought Severity Index",
+        description=(
+            "Monthly Palmer Drought Severity Index computed from "
+            "precipitation, potential evapotranspiration, and "
+            "available water holding capacity."
+        ),
+    )
+
+    return out
+
+
+def phdi(
+    pr: xr.DataArray,
+    evspsblpot: xr.DataArray,
+    awhc: xr.DataArray,
+    *,
+    soil_mask: xr.DataArray | None = None,
+    calibration_start_year: int | None = None,
+    calibration_end_year: int | None = None,
+) -> xr.DataArray:
+    """
+    Palmer Hydrological Drought Index (PHDI).
+    """
+    ds = palmer_indices(
+        pr=pr,
+        evspsblpot=evspsblpot,
+        awhc=awhc,
+        soil_mask=soil_mask,
+        calibration_start_year=calibration_start_year,
+        calibration_end_year=calibration_end_year,
+    )
+
+    out = ds["phdi"]
+
+    out.attrs.update(
+        units="",
+        long_name="Palmer Hydrological Drought Index",
+        description=(
+            "Monthly Palmer Hydrological Drought Index "
+            "computed from precipitation, potential "
+            "evapotranspiration, and available water "
+            "holding capacity."
+        ),
+    )
+
+    return out
+
+
+def pmdi(
+    pr: xr.DataArray,
+    evspsblpot: xr.DataArray,
+    awhc: xr.DataArray,
+    *,
+    soil_mask: xr.DataArray | None = None,
+    calibration_start_year: int | None = None,
+    calibration_end_year: int | None = None,
+) -> xr.DataArray:
+    """
+    Palmer Modified Drought Index (PMDI).
+    """
+    ds = palmer_indices(
+        pr=pr,
+        evspsblpot=evspsblpot,
+        awhc=awhc,
+        soil_mask=soil_mask,
+        calibration_start_year=calibration_start_year,
+        calibration_end_year=calibration_end_year,
+    )
+
+    out = ds["pmdi"]
+
+    out.attrs.update(
+        units="",
+        long_name="Palmer Modified Drought Index",
+        description=(
+            "Monthly Palmer Modified Drought Index "
+            "computed from precipitation, potential "
+            "evapotranspiration, and available water "
+            "holding capacity."
+        ),
+    )
+
+    return out
+
+
+def scpdsi(
+    pr: xr.DataArray,
+    evspsblpot: xr.DataArray,
+    awhc: xr.DataArray,
+    *,
+    soil_mask: xr.DataArray | None = None,
+    calibration_start_year: int | None = None,
+    calibration_end_year: int | None = None,
+) -> xr.DataArray:
+    """
+    Self-Calibrated Palmer Drought Severity Index (SC-PDSI).
+    """
+    ds = palmer_indices(
+        pr=pr,
+        evspsblpot=evspsblpot,
+        awhc=awhc,
+        soil_mask=soil_mask,
+        calibration_start_year=calibration_start_year,
+        calibration_end_year=calibration_end_year,
+    )
+
+    out = ds["scpdsi"]
+
+    out.attrs.update(
+        units="",
+        long_name="Self-Calibrated Palmer Drought Severity Index",
+        description=(
+            "Monthly self-calibrated Palmer Drought Severity "
+            "Index computed following Wells et al. (2004)."
+        ),
+    )
+
+    return out
+
+
+def z_index(
+    pr: xr.DataArray,
+    evspsblpot: xr.DataArray,
+    awhc: xr.DataArray,
+    *,
+    soil_mask: xr.DataArray | None = None,
+    calibration_start_year: int | None = None,
+    calibration_end_year: int | None = None,
+) -> xr.DataArray:
+    """
+    Palmer moisture anomaly index (Z-index).
+    """
+    ds = palmer_indices(
+        pr=pr,
+        evspsblpot=evspsblpot,
+        awhc=awhc,
+        soil_mask=soil_mask,
+        calibration_start_year=calibration_start_year,
+        calibration_end_year=calibration_end_year,
+    )
+
+    out = ds["Z"]
+
+    out.attrs.update(
+        units="",
+        long_name="Palmer Moisture Anomaly Index",
+        description=(
+            "Monthly Palmer moisture anomaly (Z-index) "
+            "computed from Palmer water-balance departures."
+        ),
+    )
+
+    return out
+
+
+def palmer_indices(
+    pr: xr.DataArray,
+    evspsblpot: xr.DataArray,
+    awhc: xr.DataArray,
+    *,
+    soil_mask: xr.DataArray | None = None,
+    calibration_start_year: int | None = None,
+    calibration_end_year: int | None = None,
+) -> xr.Dataset:
+    """
+    Compute Palmer drought indices and diagnostics.
+
+    Parameters
+    ----------
+    pr : xr.DataArray
+        Precipitation. Daily values are aggregated to monthly totals.
+    evspsblpot : xr.DataArray
         Potential evapotranspiration. Daily values are aggregated to
-        monthly totals unless ``monthly_inputs=True``.
+        monthly totals.
     awhc : xr.DataArray
         Available water-holding capacity of the soil profile.
     soil_mask : xr.DataArray, optional
@@ -87,16 +288,13 @@ def palmer_drought_indices(
         First year of the Palmer calibration period.
     calibration_end_year : int, optional
         Last year of the Palmer calibration period.
-    monthly_inputs : bool, default: False
-        Indicates that ``pr`` and ``pet`` are already monthly values and
-        should not be resampled.
 
     Returns
     -------
     xr.Dataset
-        Dataset containing Palmer drought indices, self-calibrated
-        Palmer drought indices, Palmer water-balance components, CAFEC
-        coefficients, and supporting diagnostic variables.
+        Dataset containing Palmer drought indices,
+        water-balance components,
+        and supporting diagnostic variables.
 
     Notes
     -----
@@ -115,7 +313,22 @@ def palmer_drought_indices(
     Palmer, W. C. (1965)
     Wells, N., Goddard, S., and Hayes, M. J. (2004)
     """
-    if monthly_inputs:
+
+    # Internal alias for readability.
+    pet = evspsblpot
+
+    pr_freq = xr.infer_freq(pr.indexes["time"])
+    pet_freq = xr.infer_freq(pet.indexes["time"])
+    if pr_freq is None:
+        raise ValueError("Could not infer the frequency of `pr`.")
+    if pet_freq is None:
+        raise ValueError("Could not infer the frequency of `evspsblpot`.")
+
+    if not compare_offsets(pr_freq, "==", pet_freq):
+        raise ValueError("pr and evspsblpot must have the same temporal frequency.")
+    freq = pr_freq
+
+    if compare_offsets(freq, "==", "MS"):
         monthly = xr.Dataset(
             {
                 "P": pr,
@@ -128,11 +341,17 @@ def palmer_drought_indices(
             pet,
         )
 
+    # Restrict Palmer calculations to cells with valid
+    # soil water-holding capacity.
+    awhc = awhc.where(np.isfinite(awhc) & (awhc > 0))
+
     wb = palmer_water_balance(
         awhc=awhc,
         monthly_pr=monthly["P"],
         monthly_pet=monthly["PET"],
     )
+
+    valid_mask = awhc.notnull()
 
     monthly["AET"] = wb.et
     monthly["PR"] = wb.pr
@@ -142,9 +361,6 @@ def palmer_drought_indices(
     monthly["L"] = wb.l
     monthly["PL"] = wb.pl
 
-    # Restrict Palmer calculations to cells with valid
-    # soil water-holding capacity.
-    valid_mask = np.isfinite(awhc)
     for var in [
         "P",
         "PET",
@@ -528,16 +744,7 @@ def palmer_water_balance(
         p = monthly_pr.isel(time=i)
         pet = monthly_pet.isel(time=i)
 
-        (
-            state,
-            et,
-            pr,
-            r,
-            ro,
-            pro,
-            l,
-            pl,
-        ) = step_palmer_water_balance(
+        (state, et, pr, r, ro, pro, l, pl,) = step_palmer_water_balance(
             state,
             awhc,
             p,
@@ -558,9 +765,13 @@ def palmer_water_balance(
 
         pl_list.append(pl.expand_dims(time=[monthly_pr.time.values[i]]))
 
-        surface_storage_list.append(state.surface_storage.expand_dims(time=[monthly_pr.time.values[i]]))
+        surface_storage_list.append(
+            state.surface_storage.expand_dims(time=[monthly_pr.time.values[i]])
+        )
 
-        under_storage_list.append(state.under_storage.expand_dims(time=[monthly_pr.time.values[i]]))
+        under_storage_list.append(
+            state.under_storage.expand_dims(time=[monthly_pr.time.values[i]])
+        )
 
     surface_storage = xr.concat(
         surface_storage_list,
@@ -599,9 +810,17 @@ def subset_calibration_period(
     if calibration_start_year is None and calibration_end_year is None:
         return monthly
 
-    start_year = calibration_start_year if calibration_start_year is not None else int(monthly.time.dt.year.min())
+    start_year = (
+        calibration_start_year
+        if calibration_start_year is not None
+        else int(monthly.time.dt.year.min())
+    )
 
-    end_year = calibration_end_year if calibration_end_year is not None else int(monthly.time.dt.year.max())
+    end_year = (
+        calibration_end_year
+        if calibration_end_year is not None
+        else int(monthly.time.dt.year.max())
+    )
 
     return monthly.where(
         (monthly.time.dt.year >= start_year) & (monthly.time.dt.year <= end_year),
@@ -678,7 +897,12 @@ def compute_monthly_departure(
     gamma = cafec.gamma.sel(month=month)
     delta = cafec.delta.sel(month=month)
 
-    cafec_precip = alpha * monthly["PET"] + beta * monthly["PR"] + gamma * monthly["PRO"] - delta * monthly["PL"]
+    cafec_precip = (
+        alpha * monthly["PET"]
+        + beta * monthly["PR"]
+        + gamma * monthly["PRO"]
+        - delta * monthly["PL"]
+    )
 
     departure = monthly["P"] - cafec_precip
 
@@ -870,7 +1094,9 @@ def _pdsi_from_zindex(
                 PPe[k] = 0
                 PX3[k] = 0
 
-                PX1, PX2, PX3, X, BT = _compute_X(Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight)
+                PX1, PX2, PX3, X, BT = _compute_X(
+                    Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight
+                )
 
             elif X3 > 0.5:
                 if Z[k] >= 0.15:
@@ -1221,7 +1447,6 @@ def _wet_spell_abatement(
     # Accumulate evidence that the established wet spell
     # should terminate.
     PV = Ud + min(V, 0)
-    PV = Ud + min(V, 0)
 
     if PV >= 0:
         return _between_0s(k, Z, X3, PX1, PX2, PX3, PPe, BT, X, persistence, z_weight)
@@ -1239,7 +1464,9 @@ def _wet_spell_abatement(
     else:
         PX3[k] = persistence * X3 + z_weight * Z[k]
 
-    PX1, PX2, PX3, X, BT = _compute_X(Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight)
+    PX1, PX2, PX3, X, BT = _compute_X(
+        Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight
+    )
 
     return PV, PPe, PX1, PX2, PX3, X, BT
 
@@ -1267,7 +1494,6 @@ def _dry_spell_abatement(
     Uw = Z[k] + 0.15
     # Accumulate evidence that the established drought
     # should terminate.
-    PV = Uw + max(V, 0)
     PV = Uw + max(V, 0)
 
     if PV <= 0:
@@ -1402,13 +1628,7 @@ def _scpdsi_from_zindex(
     calibration_start_year: int,
     calibration_end_year: int,
     input_start_year: int,
-) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,]:
     """
     Apply self-calibration to a monthly Z-index series.
     """
@@ -1440,14 +1660,7 @@ def _scpdsi_from_zindex(
     # Compute baseline Palmer indices prior to self-calibration.
     pdsi, _, _ = _pdsi_from_zindex(Z)
 
-    (
-        scz,
-        pdsi,
-        scpdsi,
-        X1,
-        X2,
-        X3,
-    ) = _self_calibrate(
+    (scz, pdsi, scpdsi, X1, X2, X3,) = _self_calibrate(
         pdsi_values=pdsi.copy(),
         sczindex_values=Z.copy(),
         calibration_start_year=calibration_start_year,
@@ -1606,14 +1819,7 @@ def _self_calibrate(
     calibration_start_year: int,
     calibration_end_year: int,
     input_start_year: int,
-) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,]:
     """
     Apply Wells-style self-calibration to Palmer drought indices.
 
@@ -1756,13 +1962,7 @@ def _compute_scpdsi(
     dry_B: float,
     calibration_complete: bool,
     tolerance: float = 0.0,
-) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,]:
     """
     Compute the self-calibrated Palmer Drought Severity Index (SC-PDSI).
 
@@ -1839,7 +2039,9 @@ def _compute_scpdsi(
                 )
 
             else:
-                new_X3 = c * previous_established_index_X3 + sczindex_values[period] / (m + b)
+                new_X3 = c * previous_established_index_X3 + sczindex_values[period] / (
+                    m + b
+                )
 
                 # ZE is the Z anomaly required to terminate an established spell.
                 ZE = (m + b) * (wd * 0.5 - c * previous_established_index_X3)
@@ -2066,15 +2268,3 @@ def _backtrack_self_calibrated(
             num1 = num2
 
         pdsi_values[month_index] = num1
-
-
-def _is_monthly(data: xr.DataArray) -> bool:
-    """
-    Determine whether a time series is monthly frequency.
-    """
-    if data.time.size < 2:
-        return False
-
-    delta = data.time.values[1] - data.time.values[0]
-
-    return delta.astype("timedelta64[D]").astype(int) > 27
