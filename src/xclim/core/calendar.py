@@ -596,7 +596,7 @@ def parse_offset(freq: Freq) -> tuple[int, str, bool, str | None]:
     """
     # Useful to raise on invalid frequencies, convert Y to A and get default anchor (A, Q)
     offset = pd.tseries.frequencies.to_offset(freq)
-    base, *anchor = offset.name.split("-")
+    base, *anchor = offset.rule_code.split("-")
     anchor = anchor[0] if len(anchor) > 0 else None
     start = ("S" in base) or (base[0] not in "AYQM")
     if base.endswith("S") or base.endswith("E"):
