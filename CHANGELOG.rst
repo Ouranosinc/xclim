@@ -13,6 +13,7 @@ Users are strongly encouraged to review the breaking changes section below to en
 Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version.
 See :ref:`transition_v1:Differences between v0 and v1` for a summary of the breaking changes and guidance on how to transition to xclim v1.
 The `xclim` library is now considered to be production-level stable.
+`xclim` functions and objects have been fully overhauled for `mypy`/`ty` typing-compliance (:issue:`1719`, :pull:`2425`).
 
 Major changes
 ^^^^^^^^^^^^^
@@ -42,6 +43,7 @@ New indicators and features
     * Fields ``base`` and ``compute`` can now be a "qualified name" of an object to be imported dynamically, or the qualified name of an indicator with its submodule/realm. Ex: ``atmos.precip_accumulation``, which was previously referred by its identifier ``prcptot`` (:pull:`2415`).
 * New arguments ``validity_ranges`` and ``hurs_cap_min`` in indicator ``universal_thermal_climate_index`` (UTCI).
   In accordance with recommendations from Bröde et al. (2012), default validity upper bounds were increased for ``tas - mrt`` (from 30°C to 70°C) and ``sfcWind`` (from 17 to 30.3 m/s) and capping is now enabled by default (``sfcWind`` to a minimum of 0.5 ms and of ``hurs`` to a minimum of 5 %). (:issue:`2400`, :pull:`2432`).
+* `xclim` supports passing of all `Quantified`-like objects to all functions (:issue:`1726`, :pull:`2425`)
 
 Bug fixes
 ^^^^^^^^^
@@ -98,6 +100,7 @@ Internal changes
 * `make autodoc-custom-index` has been removed in favour of `make autodoc-noindex`. `make docs` and other `sphinx` targets now use the new 'noindex' variant. (:pull:`2424`).
 * Testing of ``standardized_precipitation_index`` (SPI) was adjusted to re-enable bottleneck, which was disabled by xarray 2026.09. (:pull:`2446`).
 * The mypy type checking has been added to the pre-commit configurations (:issue:`1719`, :pull:`2425`).
+* Many docstring, call signatures, and returns have been revised to ensure that internal typing is consistent across the entire library (:pull:`2425`).
 * `xclim` is now fully compliant with Semantic Versioning v2.0. The `dev` tag has been retired while `-beta` and `-rc` version tags will be used moving forward. (:pull:`2434`):
     * `bump-my-version` has been updated to `>=1.6.0` to make use of the `bump version --to` flag.
 
