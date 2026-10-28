@@ -1686,7 +1686,7 @@ def canadian_hardiness_zones(
     x4 = statistics(_tasmax, statistic="mean", freq="MS").resample(time="YS").max().resample(time=freq).mean()
 
     # Winter factor
-    x5 = (0 - x1) * select_time(_pr, month=1).resample(time="YS").sum().resample(time=freq).mean()
+    x5 = (0 - x1) * select_time(_pr, month=months[0]).resample(time="YS").sum().resample(time=freq).mean()
 
     # Mean maximum snow depth
     snd_above_0 = _snd.resample(time="YS").max().resample(time=freq).mean()
