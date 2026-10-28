@@ -929,8 +929,10 @@ def climatological_mean_doy(arr: xr.DataArray, window: int = 5) -> tuple[xr.Data
 
     Returns
     -------
-    tuple of xr.DataArrays and xr.DataArray
-        Mean and standard deviation.
+    xr.DataArray
+        Climatological mean for each day of the year.
+    xr.DataArray
+        Climatological standard deviation for each day of the year.
     """
     rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
 

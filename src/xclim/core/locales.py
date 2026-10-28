@@ -117,9 +117,10 @@ def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str,
 
     Returns
     -------
-    tuple of str and CaseInsensitiveDict
-        - The best fitting locale string.
-        - The available translations in this locale.
+    str and CaseInsensitiveDict
+        The best fitting locale string.
+    CaseInsensitiveDict
+        The available translations in this locale.
 
     Raises
     ------

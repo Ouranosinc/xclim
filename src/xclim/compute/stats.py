@@ -598,7 +598,10 @@ def _fit_start(
 
     Returns
     -------
-    tuple of tuple and dict
+    tuple
+        Initial shape parameter estimates.
+    dict
+        Initial location and scale parameter estimates.
 
     References
     ----------

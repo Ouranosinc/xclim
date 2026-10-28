@@ -499,8 +499,10 @@ def _get_indexes(
 
     Returns
     -------
-    tuple of np.ndarray and np.ndarray
-        A tuple of virtual_indexes neighbouring indexes (previous and next).
+    np.ndarray
+        Previous virtual_indexes neighbouring indexes.
+    np.ndarray
+        Next virtual_indexes neighbouring indexes.
 
     Notes
     -----
@@ -790,9 +792,10 @@ def split_auxiliary_coordinates(
 
     Returns
     -------
-    tuple of xr.DataArray or xr.Dataset and xr.DataArray
-        - Same as `obj` but without any auxiliary coordinate.
-        - The auxiliary coordinates as a dataset. Might be empty.
+    clean_obj : xr.DataArray or xr.Dataset
+        Same as `obj` but without any auxiliary coordinate.
+    aux_crd_ds  xr.Dataset
+        The auxiliary coordinates as a dataset. Might be empty.
 
     Notes
     -----

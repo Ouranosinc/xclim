@@ -123,8 +123,10 @@ def standardize(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
     Returns
     -------
-    tuple of ndarray and ndarray
-        Standardized arrays.
+    np.ndarray
+        Standardized array of `x`.
+    np.ndarray
+        Standardized array of `y`.
     """
     s = np.sqrt(x.std(0, ddof=1) * y.std(0, ddof=1))
     return x / s, y / s
