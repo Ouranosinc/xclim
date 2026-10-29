@@ -1101,7 +1101,7 @@ def days_since_to_doy(
     ----------
     da : xr.DataArray
         The result of :py:func:`doy_to_days_since`.
-    start : DateOfYearStr, optional
+    start : DayOfYearStr, optional
         `da` is considered as days since that start date (in the year of the time index).
         If None (default), it is read from the attributes.
     calendar : str, optional
