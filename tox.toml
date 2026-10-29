@@ -1,5 +1,5 @@
 env_list = [
-  "{ product = [{ prefix = 'py3.', start = 11, stop = 14 }] }",
+  { product = [{ prefix = "py3.", start = 11, stop = 14 }] },
   "docs",
   "doctests",
   "lint",
