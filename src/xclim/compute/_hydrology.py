@@ -9,7 +9,6 @@ import numpy as np
 import xarray as xr
 from scipy.stats import rv_continuous
 
-# from xarray import DataArray
 from xclim.compute import generic
 from xclim.compute.helpers import resample_map
 from xclim.compute.stats import standardized_index

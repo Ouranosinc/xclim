@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import IntEnum
 from importlib.resources import as_file, files
 from inspect import _empty
-from typing import Literal, NewType, TypeAlias, TypeVar
+from typing import Annotated, Literal, TypeAlias, TypeVar
 
 import xarray as xr
 from pint import Quantity
@@ -31,13 +31,13 @@ __all__ = [
 DataType = TypeVar("DataType", xr.DataArray, xr.Dataset)
 
 #: Type annotation for strings representing full dates (YYYY[-MM[-DD[THH[:MM]]]]), may include time.
-DateStr = NewType("DateStr", str)
+DateStr = Annotated[str, "YYYY[-MM[-DD[THH[:MM]]]]"]
 
 #: Type annotation for a range between to full dates (YYYY[-MM[-DD]])
 TimeRange = tuple[DateStr, DateStr]
 
 #: Type annotation for strings representing dates without a year (MM-DD).
-DayOfYearStr = NewType("DayOfYearStr", str)
+DayOfYearStr = Annotated[str, "MM-DD"]
 
 #: Type annotation for frequency strings
 Freq = Literal[

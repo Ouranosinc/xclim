@@ -155,8 +155,8 @@ def huglin_index(
     thresh: Quantified = "10 degC",
     method: Literal["huglin", "interpolated", "jones"] = "huglin",
     cap_value: float = 1.0,
-    start_date: DayOfYearStr | Literal["default"] = "default",
-    end_date: DayOfYearStr | Literal["default"] = "default",
+    start_date: DayOfYearStr = "04-01",
+    end_date: DayOfYearStr = "10-01",
     freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
 ) -> xr.DataArray:
     r"""
@@ -190,10 +190,12 @@ def huglin_index(
         The value to use for the latitude coefficient when latitude is above 50°N or below 50°S.
         Only applicable for methods "huglin" and "interpolated".
         Default: 1.0.
-    start_date : DayOfYearStr, defaults to "04-01"
+    start_date : DayOfYearStr
         The hemisphere-based start date to consider (north = April, south = October).
-    end_date : DayOfYearStr, defaults to "10-01"
+        Default: "04-01".
+    end_date : DayOfYearStr
         The hemisphere-based start date to consider (north = October, south = April). This date is non-inclusive.
+        Default: "10-01".
     freq : {"YS", "YS-JAN", "YS-JUL"}
         Resampling frequency (For Southern Hemisphere, should be "YS-JUL").
         Default: "YS".
@@ -251,11 +253,6 @@ def huglin_index(
             "Method is not implemented. Only 'huglin', 'interpolated', and 'jones' are supported."
         )
 
-    if start_date == "default":
-        start_date = DayOfYearStr("04-01")
-    if end_date == "default":
-        end_date = DayOfYearStr("10-01")
-
     if method in ["huglin", "interpolated"]:
         k = huglin_day_length_latitude_coefficient(lat, method=method, cap_value=cap_value)
     elif method == "jones":
@@ -296,8 +293,8 @@ def biologically_effective_degree_days(
     low_dtr: Quantified = "10 degC",
     high_dtr: Quantified = "13 degC",
     max_daily_degree_days: Quantified = "9 degC",
-    start_date: DayOfYearStr | Literal["default"] = "default",
-    end_date: DayOfYearStr | Literal["default"] = "default",
+    start_date: DayOfYearStr = "04-01",
+    end_date: DayOfYearStr = "11-01",
     freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
 ) -> xr.DataArray:
     r"""
@@ -349,11 +346,12 @@ def biologically_effective_degree_days(
     max_daily_degree_days : Quantified
         The maximum number of biologically effective degrees days that can be summed daily.
         Default: "9 degC".
-    start_date : DayOfYearStr, defaults to "04-01"
+    start_date : DayOfYearStr
         The hemisphere-based start date to consider (north = April, south = October).
-    end_date : DayOfYearStr, defaults to "11-01"
-        The hemisphere-based start date to consider (north = October, south = April).
-        This date is non-inclusive.
+        Default: "04-01".
+    end_date : DayOfYearStr
+        The hemisphere-based start date to consider (north = October, south = April). This date is non-inclusive.
+        Default: "11-01".
     freq : {"YS", "YS-JAN", "YS-JUL"}
         Resampling frequency (For Southern Hemisphere, should be "YS-JUL").
         Default: "YS".
@@ -414,11 +412,6 @@ def biologically_effective_degree_days(
     tasmax = convert_units_to(tasmax, "degC")
     thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
     max_daily_degree_days = convert_units_to(max_daily_degree_days, "degC")
-
-    if start_date == "default":
-        start_date = DayOfYearStr("04-01")
-    if end_date == "default":
-        end_date = DayOfYearStr("11-01")
 
     k: int | xr.DataArray = 1
     k_aggregated: xr.DataArray | None = None
@@ -826,13 +819,13 @@ def rain_season(
     thresh_dry_start: Quantified = "1.0 mm",
     window_dry_start: int = 7,
     method_dry_start: Literal["per_day", "total"] = "per_day",
-    date_min_start: DayOfYearStr | Literal["default"] | None = "default",
-    date_max_start: DayOfYearStr | Literal["default"] | None = "default",
+    date_min_start: DayOfYearStr | None = "05-01",
+    date_max_start: DayOfYearStr | None = "12-31",
     thresh_dry_end: Quantified = "0.0 mm",
     window_dry_end: int = 20,
     method_dry_end: Literal["per_day", "total"] = "per_day",
-    date_min_end: DayOfYearStr | Literal["default"] | None = "default",
-    date_max_end: DayOfYearStr | Literal["default"] | None = "default",
+    date_min_end: DayOfYearStr | None = "09-01",
+    date_max_end: DayOfYearStr | None = "12-31",
     freq: Freq = "YS-JAN",
 ) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray]:
     """
@@ -873,12 +866,14 @@ def rain_season(
         (`method_dry_start == "per_day"`) or to total precipitations (`method_dry_start == "total"`) in the sequence
         `window_dry_start` days.
         Default: "per_day".
-    date_min_start : DayOfYearStr, optional, defaults to "05-01"
+    date_min_start : DayOfYearStr or None
         First day of year when season can start ("mm-dd").
         Setting `None` removes that constraint.
-    date_max_start : DayOfYearStr, optional, defaults to "12-31"
+        Default: "05-01".
+    date_max_start : DayOfYearStr or None
         Last day of year when season can start ("mm-dd").
         Setting `None` removes that constraint.
+        Default: "12-31".
     thresh_dry_end : Quantified
         Threshold length defining a dry day in the sequence related to `window_dry_end`.
         Default: "0.0 mm".
@@ -893,12 +888,14 @@ def rain_season(
         The threshold `thresh_dry_end` is either compared to every daily precipitation (`method_dry_end == "per_day"`)
         or to total precipitations (`method_dry_end == "total"`) in the sequence `window_dry` days.
         Default: "per_day".
-    date_min_end : DayOfYearStr, optional, defaults to "09-01"
+    date_min_end : DayOfYearStr or None
         First day of year when season can end ("mm-dd").
         Setting `None` removes that constraint.
-    date_max_end : DayOfYearStr, optional, defaults to "12-31"
+        Default: "09-01".
+    date_max_end : DayOfYearStr or None
         Last day of year when season can end ("mm-dd").
         Setting `None` removes that constraint.
+        Default: "12-31".
     freq : Freq
       Resampling frequency. Default: "YS".
 
@@ -925,15 +922,6 @@ def rain_season(
     ----------
     :cite:cts:`sivakumar_predicting_1998`
     """
-    # Set default dates
-    if date_min_start == "default":
-        date_min_start = DayOfYearStr("05-01")
-    if date_max_start == "default":
-        date_max_start = DayOfYearStr("12-31")
-    if date_min_end == "default":
-        date_min_end = DayOfYearStr("09-01")
-    if date_max_end == "default":
-        date_max_end = DayOfYearStr("12-31")
     # Unit conversion.
     pram = rate2amount(pr, out_units="mm")
     thresh_wet_start = convert_units_to(thresh_wet_start, pram)
@@ -1350,7 +1338,7 @@ def effective_growing_degree_days(
     *,
     thresh: Quantified = "5 degC",
     method: Literal["bootsma", "qian"] = "bootsma",
-    after_date: DayOfYearStr | Literal["default"] | None = "default",
+    after_date: DayOfYearStr | None = "07-01",
     dim: str = "time",
     freq: Freq = "YS",
 ) -> xr.DataArray:
@@ -1373,9 +1361,10 @@ def effective_growing_degree_days(
         For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold.
         For "qian", the start date is based on a weighted 5-day rolling average, based on :py:func`qian_weighted_mean_average`.
         Default: "bootsma".
-    after_date : DayOfYearStr, optional, defaults to "07-01"
+    after_date : DayOfYearStr or None
         Date of the year after which to look for the first frost event. Should have the format "%m-%d".
         Setting `None` removes that constraint.
+        Default: "07-01".
     dim : str
         Time dimension. Default: "time".
     freq : Freq
@@ -1405,9 +1394,6 @@ def effective_growing_degree_days(
     ----------
     :cite:cts:`bootsma_impacts_2005`
     """
-    if after_date == "default":
-        after_date = DayOfYearStr("07-01")
-
     tasmax = convert_units_to(tasmax, "degC")
     tasmin = convert_units_to(tasmin, "degC")
 
