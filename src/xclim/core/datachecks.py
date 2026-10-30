@@ -25,14 +25,14 @@ def check_freq(var: xr.DataArray, freq: Freq | Sequence[Freq], strict: bool = Tr
     ----------
     var : xr.DataArray
         Input array.
-    freq : str or sequence of str
+    freq : Freq or Sequence of Freq
         The expected temporal frequencies, using Pandas frequency terminology
-        (e.g. {'Y', 'M', 'D', 'h', 'min', 's', 'ms', 'us'}) and multiples thereof.
-        To test strictly for 'W', pass '7D' with `strict=True`.
-        This ignores the start/end flag and the anchor (ex: 'YS-JUL' will validate against 'Y').
+        (e.g. {"Y", "M", "D", "h", "min", "s", "ms", "us"}) and multiples thereof.
+        To test strictly for "W", pass "7D" with `strict=True`.
+        This ignores the start/end flag and the anchor (ex: "YS-JUL2 will validate against "Y").
     strict : bool
-        Whether multiples of the frequencies are considered invalid or not. With `strict` set to False, a '3h' series
-        will not raise an error if freq is set to 'h'.
+        Whether multiples of the frequencies are considered invalid or not. With `strict` set to False, a "3h" series
+        will not raise an error if freq is set to "h".
 
     Raises
     ------

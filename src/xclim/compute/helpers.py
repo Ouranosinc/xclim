@@ -10,18 +10,16 @@ from __future__ import annotations
 
 import operator
 import warnings
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from datetime import timedelta
 from inspect import stack
-from typing import Any, Literal, TypeVar, cast
+from typing import Literal, TypeVar, cast
 
 import cftime
 import numba as nb
 import numpy as np
 import xarray as xr
-from packaging.version import Version
 from xarray import CFTimeIndex
-from xarray import __version__ as __xr_version__
 
 from xclim.compute import run_length as rl
 from xclim.compute.reducers import XCLIM_OPS
@@ -31,10 +29,10 @@ from xclim.core.options import MAP_BLOCKS, OPTIONS
 from xclim.core.units import convert_units_to
 from xclim.core.utils import _chunk_like, uses_dask
 
-if Version(__xr_version__) >= Version("24.9.0"):
-    XR2409 = True
-else:
-    XR2409 = False
+try:
+    from xarray.coding.calendar_ops import _datetime_to_decimal_year  # type: ignore[attr-defined]
+except ImportError:
+    _datetime_to_decimal_year = None
 
 try:
     from flox.xarray import rechunk_for_blockwise
@@ -77,7 +75,7 @@ def get_binary_op(condition: Condition, constrain: Sequence[Condition] | None = 
     ----------
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Comparison binary operator name of symbol.
-    constrain : sequence of {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
+    constrain : Sequence of {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
         A tuple of allowed operators. Or None to allow all known operators.
 
     Returns
@@ -132,7 +130,7 @@ def compare(
         Logical comparison operator.
     right : float, int, np.ndarray, or xr.DataArray
         A value or array-like being evaluated against left`.
-    constrain : sequence of str, optional
+    constrain : Sequence of {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
         Optionally allowed conditions.
 
     Returns
@@ -151,7 +149,7 @@ def spell_mask(
     thresh: float | Sequence[float] | xr.DataArray | Sequence[xr.DataArray],
     constrain: Sequence[Condition] | None = None,
     min_gap: int = 1,
-    weights: Sequence[float] | None = None,
+    weights: Sequence[float] | xr.DataArray | None = None,
     var_reducer: Literal["any", "all"] = "all",
 ) -> xr.DataArray:
     """
@@ -161,46 +159,47 @@ def spell_mask(
 
     Parameters
     ----------
-    data : DataArray or sequence of DataArray
+    data : xr.DataArray or sequence of xr.DataArray
         The input data. Can be a list, in which case the condition is checked on all variables.
         See var_reducer for the latter case.
     window : int
         The length of the rolling window in which to compute statistics.
-    window_statistic : {'min', 'max', 'sum', 'mean', 'std', 'var'}
+    window_statistic : {"min", "max", "sum", "mean", "std", "var"}
         The statistics to compute on the rolling window.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         The comparison operator to use when finding spells. Comparison is done as ``rolled_data {condition} thresh``.
-    thresh : float or sequence of floats or DataArray or sequence of DataArray
+    thresh : float or Sequence of floats or DataArray or Sequence of DataArray
         The threshold(s) to compare the rolling statistics against.
-        If data is a list, this must be a list of the same length as ``data``,
-        with a threshold for each variable. This function does not handle units and can't accept Quantified objects.
-    constrain : sequence of str, optional
+        If data is a list, this must be a list of the same length as ``data``, with a threshold for each variable.
+        This function does not handle units and can't accept Quantified objects.
+    constrain : Sequence of str, optional
         Optionally allowed conditions.
     min_gap : int
         The shortest possible gap between two spells.
         Spells closer than this are merged by assigning the gap steps to the merged spell.
-    weights : sequence of floats, optional
+    weights : Sequence of floats, optional
         A list of weights of the same length as the window.
-        Only supported if ``window_statistic`` is ``"mean"``.
-    var_reducer : {'all', 'any'}
+        Only supported if `window_statistic` is "mean".
+    var_reducer : {"all", "any"}
         If the data is a list, the condition must either be fulfilled on *all*
         or *any* variables for the period to be considered a spell.
+        Default: "all".
 
     Returns
     -------
     xr.DataArray
-        Same shape as ``data``, but boolean.
-        If ``data`` was a list, this is a DataArray of the same shape as the alignment of all variables.
+        Same shape as `data`, but boolean.
+        If `data` was a list, this is a DataArray of the same shape as the alignment of all variables.
     """
     _singlevar = True
     # Checks
     if not isinstance(data, xr.DataArray):
         # thus a sequence
-        if np.isscalar(thresh) or isinstance(thresh, xr.DataArray) or len(data) != len(thresh):
+        if isinstance(thresh, (float, int, xr.DataArray)) or (len(data) != len(thresh)):
             raise ValueError("When ``data`` is given as a list, ``thresh`` must be a sequence of the same length.")
         data = xr.concat(data, "variable")
         if isinstance(thresh[0], xr.DataArray):
-            thresh = xr.concat(thresh, "variable")
+            thresh = xr.concat(thresh, "variable")  # type: ignore[assignment, arg-type]
         else:
             thresh = xr.DataArray(thresh, dims=("variable",))
         _singlevar = False
@@ -213,6 +212,11 @@ def spell_mask(
         if len(weights) != window:
             raise ValueError(f"Weights have a different length ({len(weights)}) than the window ({window}).")
         weights = xr.DataArray(weights, dims=("window",))
+
+    if isinstance(thresh, Sequence):
+        raise TypeError(
+            f"'thresh' can only be a sequence if 'data' is one. Got {thresh} but 'data' is of type  {type(data)}"
+        )
 
     if window == 1:  # Fast path
         is_in_spell = compare(data, condition, thresh, constrain=constrain)
@@ -267,9 +271,9 @@ def detrend(ds: DataType, dim="time", deg=1) -> DataType:
     ds : xr.Dataset or xr.DataArray
       The data to detrend. If a Dataset, detrending is done on all data variables.
     dim : str
-      Dimension along which to compute the trend.
+      Dimension along which to compute the trend. Default: "time".
     deg : int
-      Degree of the polynomial to fit.
+      Degree of the polynomial to fit. Default: 1.
 
     Returns
     -------
@@ -338,18 +342,14 @@ def day_angle(time: xr.DataArray) -> xr.DataArray:
     xr.DataArray, [rad]
         Day angle.
     """
-    if XR2409:
+    if _datetime_to_decimal_year is None:
         decimal_year = time.dt.decimal_year
     else:
-        from xarray.coding.calendar_ops import (  # pylint: disable=import-outside-toplevel
-            _datetime_to_decimal_year,  # ty: ignore[unresolved-import]
-        )
-
         decimal_year = _datetime_to_decimal_year(times=time, calendar=time.dt.calendar)
     return ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
 
 
-def solar_declination(time: xr.DataArray, method="spencer") -> xr.DataArray:
+def solar_declination(time: xr.DataArray, method: Literal["spencer", "simple"] = "spencer") -> xr.DataArray:
     """
     Solar declination.
 
@@ -360,11 +360,12 @@ def solar_declination(time: xr.DataArray, method="spencer") -> xr.DataArray:
     ----------
     time : xr.DataArray
         Time coordinate.
-    method : {'spencer', 'simple'}
-        Which approximation to use. The default ("spencer") uses the first seven (7) terms of the
+    method : {"spencer", "simple"}
+        Which approximation to use. "spencer" uses the first seven (7) terms of the
         Fourier series representing the observed declination, while "simple" assumes the orbit is
         a circle with a fixed obliquity and that the solstice/equinox happen at fixed angles on
         the orbit (the exact calendar date changes for leap years).
+        Default: "simple".
 
     Returns
     -------
@@ -418,8 +419,8 @@ def time_correction_for_solar_angle(time: xr.DataArray) -> xr.DataArray:
     :cite:cts:`di_napoli_mean_2020`
     """
     da = convert_units_to(day_angle(time), "rad")
-    tc = (
-        0.004297 + 0.107029 * np.cos(da) - 1.837877 * np.sin(da) - 0.837378 * np.cos(2 * da) - 2.340475 * np.sin(2 * da)
+    tc: xr.DataArray = (
+        0.004297 + 0.107029 * np.cos(da) - 1.837877 * np.sin(da) - 0.837378 * np.cos(2 * da) - 2.340475 * np.sin(2 * da)  # type: ignore[assignment]
     )
     tc = tc.assign_attrs(units="degrees")
     return _wrap_radians(convert_units_to(tc, "rad"))
@@ -438,10 +439,11 @@ def eccentricity_correction_factor(
     ----------
     time : xr.DataArray
         Time coordinate.
-    method : {'spencer', 'simple'}
+    method : {"spencer", "simple"}
         Which approximation to use.
-        The default ("spencer") uses the first five (5) terms of the fourier series of the eccentricity.
+        "spencer" uses the first five (5) terms of the fourier series of the eccentricity.
         The "simple" method approximates with only the first two (2).
+        Default: "spencer".
 
     Returns
     -------
@@ -475,7 +477,7 @@ def cosine_of_solar_zenith_angle(
     time: xr.DataArray,
     declination: xr.DataArray,
     lat: Quantified | xr.DataTree,
-    lon: Quantified = "0 °",
+    lon: Quantified = "0 deg",
     time_correction: xr.DataArray | None = None,
     stat: Literal["average", "integral", "instant"] = "average",
     sunlit: bool = False,
@@ -502,17 +504,19 @@ def cosine_of_solar_zenith_angle(
         Latitude coordinate. Expects units of "degree_north".
     lon : Quantified
         Longitude. Needed if the input timeseries is subdaily.
+        Default: "0 deg".
     time_correction : xr.DataArray, optional
         Time correction for solar angle. See :py:func:`time_correction_for_solar_angle`
         This is necessary if stat is "instant".
-    stat : {'average', 'integral', 'instant'}
+    stat : {"average", "integral", "instant"}
         Which daily statistic to return.
-        If "average", this returns the average of the cosine of the zenith angle
-        If "integral", this returns the integral of the cosine of the zenith angle
-        If "instant", this returns the instantaneous cosine of the zenith angle
+        If "average", this returns the average of the cosine of the zenith angle.
+        If "integral", this returns the integral of the cosine of the zenith angle.
+        If "instant", this returns the instantaneous cosine of the zenith angle.
+        Default: "average".
     sunlit : bool
         If True, only the sunlit part of the interval is considered in the integral or average.
-        Does nothing if stat is "instant".
+        Does nothing if stat is "instant". Default: False.
     chunks : dict
         When `time`,  `lat` and `lon` originate from coordinates of a large chunked dataset, this dataset's chunking
         can be passed here to ensure the computation is also chunked.
@@ -539,6 +543,8 @@ def cosine_of_solar_zenith_angle(
 
     S_IN_D = 24 * 3600
 
+    h_s: xr.DataArray | float
+    h_e: xr.DataArray | float
     if len(time) < 3 or xr.infer_freq(time) == "D":
         h_s = -np.pi if stat != "instant" else 0.0
         h_e = np.pi - 1e-9  # just below pi
@@ -564,6 +570,8 @@ def cosine_of_solar_zenith_angle(
         ).clip(0, None)
     if stat not in {"average", "integral"}:
         raise NotImplementedError("Argument 'stat' must be one of 'integral', 'average' or 'instant'.")
+
+    h_ss: np.ndarray | float
     if sunlit:
         # hour angle of sunset (eq. 2.15), with NaNs inside the polar day/night
         tantan = cast(xr.DataArray, -np.tan(lat) * np.tan(declination))
@@ -637,7 +645,7 @@ def extraterrestrial_solar_radiation(
     lat: xr.DataArray,
     solar_constant: Quantified = "1361 W m-2",
     method: Literal["spencer", "simple"] = "spencer",
-    chunks: Mapping[Any, tuple] | None = None,
+    chunks: dict[str, int] | None = None,
 ) -> xr.DataArray:
     """
     Extraterrestrial solar radiation.
@@ -654,9 +662,11 @@ def extraterrestrial_solar_radiation(
         Latitude coordinate. Expects units of "degree_north".
     solar_constant : str
         The solar constant, the energy received on earth from the sun per surface per time.
-    method : {'spencer', 'simple'}
+        Default: "1361 W m-2".
+    method : {"spencer", "simple"}
         Which method to use when computing the solar declination and the eccentricity correction factor.
         See :py:func:`solar_declination` and :py:func:`eccentricity_correction_factor`.
+        Default: "spencer".
     chunks : dict
         When `times` and `lat` originate from coordinates of a large chunked dataset, passing the dataset's chunks here
         will ensure the computation is chunked as well.
@@ -674,7 +684,7 @@ def extraterrestrial_solar_radiation(
     ds = solar_declination(times, method=method)
     gsc = convert_units_to(solar_constant, "J m-2 d-1")
     rad_to_day = 1 / (2 * np.pi)  # convert radians of the "day circle" to day
-    esr: xr.DataArray = (
+    esr = (
         gsc
         * rad_to_day
         * cosine_of_solar_zenith_angle(times, ds, lat=lat, stat="integral", sunlit=True, chunks=chunks)
@@ -700,20 +710,22 @@ def day_lengths(
     dates : xr.DataArray
         Daily datetime data.
         This function makes no sense with data of other time frequencies.
-    lat : Quantified or xarray.Dataset or xarray.DataTree
+    lat : Quantified or xr.Dataset or xr.DataTree
         Latitude coordinate. Expects units of "degree_north".
-    method : {'spencer', 'simple'}
+    method : {"spencer", "simple"}
         Which approximation to use when computing the solar declination angle.
         See :py:func:`xclim.compute.helpers.solar_declination`.
+        Default: "spencer".
     infill_polar_days : bool
         Whether to use a mask of 24 hours for polar days and 0 hours for polar nights.
         If False, polar days and nights will be NaN.
         If True, they will be filled with 24 and 0 hours, respectively,
         dependent on latitude and solar declination at the given date.
+        Default: False.
 
     Returns
     -------
-    xarray.DataArray, [hours]
+    xr.DataArray, [hours]
         Day-lengths in hours per individual day.
 
     Raises
@@ -744,7 +756,8 @@ def day_lengths(
         day_length_hours = ((24 / np.pi) * np.arccos(-np.tan(radians) * np.tan(declination))).assign_attrs(units="h")
 
     if infill_polar_days:
-        lat_broadcast, decl_broadcast = xr.broadcast(lat_deg, declination)
+        lat_da = lat_deg if isinstance(lat_deg, xr.DataArray) else xr.DataArray(lat_deg)
+        lat_broadcast, decl_broadcast = xr.broadcast(lat_da, declination)
         # Polar day: sun never sets; Polar night: sun never rises.
         polar_day = ((lat_broadcast > 66.5) & (decl_broadcast > 0)) | ((lat_broadcast < -66.5) & (decl_broadcast < 0))
         polar_night = ((lat_broadcast > 66.5) & (decl_broadcast < 0)) | ((lat_broadcast < -66.5) & (decl_broadcast > 0))
@@ -775,22 +788,24 @@ def huglin_day_length_latitude_coefficient(
 
     Parameters
     ----------
-    lat : xarray.DataArray, str
+    lat : xr.DataArray or str
         Latitude coordinate. Expects units of "degree_north".
-        If provided a string (e.g. "45 degree_north"), it is converted to an xarray.DataArray.
+        If provided a string (e.g. "45 degree_north"), it is converted to an xr.DataArray.
     method : {"huglin", "interpolated"}
         The method to use for the coefficient calculation.
+        Default: "interpolated".
     cap_value : float
         For latitudes north of 50° N and south of 50° S, the value for the coefficient.
+        Default: np.nan.
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Coefficient for the day length based on latitude.
 
     Notes
     -----
-    For the original `"huglin"` implementation :cite:p:`huglin_nouveau_1978`, the day-length multiplication factor,
+    For the original "huglin" implementation :cite:p:`huglin_nouveau_1978`, the day-length multiplication factor,
     :math:`k`, is calculated as follows:
 
     .. math::
@@ -805,8 +820,8 @@ def huglin_day_length_latitude_coefficient(
                      m, & \text{if } | lat | > 50 \\
                      \end{cases}
 
-    An alternative implementation (`"interpolated"`) uses smoothing to reduce the stepwise behaviour of the
-    "huglin"` method. The day-length multiplication factor (:math:`k`) for the `"interpolated"` method then is
+    An alternative implementation ("interpolated") uses smoothing to reduce the stepwise behaviour of the
+    "huglin" method. The day-length multiplication factor (:math:`k`) for the "interpolated" method then is
     calculated as follows:
 
     .. math::
@@ -854,7 +869,7 @@ def huglin_day_length_latitude_coefficient(
 def gladstones_day_length_latitude_coefficient(
     dates: xr.DataArray,
     lat: xr.DataArray | int | float,
-    neutral_latitude: str = "40.0 deg",
+    neutral_latitude: str = "40 deg",
     constrain: str | None = None,
     day_length_method: Literal["simple", "spencer"] = "spencer",
 ) -> xr.DataArray:
@@ -867,27 +882,29 @@ def gladstones_day_length_latitude_coefficient(
 
     Parameters
     ----------
-    dates : xarray.DataArray
+    dates : xr.DataArray
         The dates for which the day length latitude coefficient is computed.
-    lat : xarray.DataArray or int or float
+    lat : xr.DataArray or int or float
         Latitude coordinate. Expects units of "degree_north".
-        If a single value is given, it is converted to an xarray.DataArray.
+        If a single value is given, it is converted to an xr.DataArray.
     neutral_latitude : str
         The latitude at which the day length coefficient is 1.0.
         Latitudes between this value and 0 degrees North will have a coefficient below 1.0 during the growing season,
         while latitudes above this value will have a coefficient greater than 1.0.
         This negative absolute value of this latitude is used for calculating coefficients in the Southern Hemisphere.
+        Default: "40 deg".
     constrain : str, optional
         The lower latitude limit for applying the latitude coefficient.
-        If a str is given (e.g. '25 degree_north`), values below this threshold will be set to '1.0'.
-    day_length_method : {'simple', 'spencer'}
+        If a str is given (e.g. "25 degree_north"), values below this threshold will be set to "1.0".
+    day_length_method : {"simple", "spencer"}
         The method to use for the day length calculation.
         The "simple" method uses a simple approximation of the day length based on latitude and time of year.
         The "spencer" method uses a more complex approximation based on the Fourier series of the solar declination.
+        Default: "spencer".
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Coefficient for the day length based on latitude.
     """
     if not isinstance(lat, xr.DataArray):
@@ -926,8 +943,8 @@ def jones_day_length_latitude_coefficient(
     lat: xr.DataArray | xr.Dataset | xr.DataTree,
     method: Literal["gladstones", "jones"],
     floor: bool = False,
-    start_date: str | DayOfYearStr = "04-01",
-    end_date: str | DayOfYearStr = "11-01",
+    start_date: DayOfYearStr = "04-01",
+    end_date: DayOfYearStr = "11-01",
     freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
 ) -> xr.DataArray:
     r"""
@@ -938,30 +955,34 @@ def jones_day_length_latitude_coefficient(
 
     Parameters
     ----------
-    dates : xarray.DataArray
+    dates : xr.DataArray
         The dates for which the day length latitude coefficient is computed.
     lat : xr.DataArray or xr.Dataset or xr.DataTree
         Latitude coordinate. Expects units of "degree_north".
-        If a single value is given, it is converted to an xarray.DataArray.
+        If a single value is given, it is converted to an xr.DataArray.
     method : {"gladstones", "jones"}
         The method to use for the coefficient calculation.
-        The "jones" method .
-        The "gladstones" method uses an approximation of the Gladstones methodology for day length latitude coefficient.
+        The "jones" method uses a temperature range adjustment and integrates axial tilt, latitude, and day-of-year
+        based on :cite:t:`hall_spatial_2010`.
+        The "gladstones" method uses a temperature range adjustment and a latitude coefficient
+        based on :cite:t:`gladstones_wine_2011`.
     floor : bool, optional
-        If True, latitudes where the day length latitude coefficient would be below '1.0', the value is set to '1.0'.
-        if False, coefficient can be below '1.0' for latitudes where the day length is less than the reference latitude.
-    start_date : str or DayOfYearStr
+        If True, latitudes where the day length latitude coefficient would be below "1.0", the value is set to "1.0".
+        if False, coefficient can be below "1.0" for latitudes where the day length is less than the reference latitude.
+    start_date : DayOfYearStr
         The start date of the growing season.
-    end_date : str or DayOfYearStr
+        Default: "04-01".
+    end_date : DayOfYearStr
         The end date of the growing season. Date is not included in the aggregation.
+        Default: "11-01".
     freq : {"YS", "YS-JAN", "YS-JUL"}
         The frequency at which to aggregate the day lengths.
         Must be an annual frequency, such as "YS" or "YS-JAN" (yearly start in January)
-        or "YS-JUL" (yearly start in July).
+        or "YS-JUL" (yearly start in July). Default: "YS".
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Coefficient for the day length based on latitude, aggregated over the growing season.
 
     Raises
@@ -971,7 +992,7 @@ def jones_day_length_latitude_coefficient(
 
     Notes
     -----
-    For the `"jones"` method, A more robust day-length calculation based on latitude, calendar, day-of-year, and
+    For the "jones" method, a more robust day-length calculation based on latitude, calendar, day-of-year, and
     obliquity is used. This algorithm requires a calculation of the sum of the day lengths over the growing season
     at each latitude, :math:`totalSeasonDayLength_{Lat}`, which is then used to calculate the day length latitude
     coefficient :math:`k`:
@@ -1017,7 +1038,7 @@ def jones_day_length_latitude_coefficient(
             .resample(time=freq)
             .sum()
         )
-        k_jones: xr.DataArray = (2.8311e-4 * day_length) + 0.30834
+        k_jones = (2.8311e-4 * day_length) + 0.30834
 
         all_below_1 = (k_jones < 1.0).all(dim="lat")
         k_jones = k_jones.where(~all_below_1, np.nan)
@@ -1053,18 +1074,18 @@ def wind_speed_height_conversion(
 
     Parameters
     ----------
-    ua : xarray.DataArray
+    ua : xr.DataArray
         Wind speed at height `h`.
     h_source : str
         Height of the input wind speed `ua` (e.g. `h == "10 m"` for a wind speed at `10 meters`).
     h_target : str
         Height of the output wind speed.
     method : {"log"}
-        Method used to convert wind speed from one height to another.
+        Method used to convert wind speed from one height to another. Default: "log".
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Wind speed at height `h_target`.
 
     References
@@ -1091,12 +1112,12 @@ def _gather_lat(da: xr.DataArray) -> xr.DataArray:
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         CF-conformant DataArray with a "latitude" coordinate.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Latitude coordinate.
     """
     try:
@@ -1114,12 +1135,12 @@ def _gather_lon(da: xr.DataArray) -> xr.DataArray:
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         CF-conformant DataArray with a "longitude" coordinate.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Longitude coordinate.
     """
     try:
@@ -1134,8 +1155,8 @@ def _gather_lon(da: xr.DataArray) -> xr.DataArray:
 def resample_map(
     obj: DataType,
     dim: str,
-    freq: Freq,
-    func: Callable | str,
+    freq: Freq | None,
+    func: Callable | Reducer,
     map_blocks: bool | Literal["from_context"] = "from_context",
     resample_kwargs: dict | None = None,
     map_kwargs: dict | None = None,
@@ -1147,11 +1168,11 @@ def resample_map(
 
     Parameters
     ----------
-    obj : DataArray or Dataset
+    obj : xr.DataArray or xr.Dataset
         The xarray object to resample.
     dim : str
         Dimension over which to resample.
-    freq : str
+    freq : str, optional
         Resampling frequency along `dim`.
     func : callable or str
         Function to map on each resampled group.
@@ -1161,6 +1182,7 @@ def resample_map(
         If False, this does not do anything special.
         If "from_context", xclim's "resample_map_blocks" option is used.
         If the object is not using dask, this is set to False.
+        Default: "from_context".
     resample_kwargs : dict, optional
         Other arguments to pass to `obj.resample()`.
     map_kwargs : dict, optional
@@ -1180,7 +1202,7 @@ def resample_map(
     if isinstance(func, str):
         map_kwargs["dim"] = dim
         if freq is not None:
-            obj = obj.resample({dim: freq})
+            obj = obj.resample({dim: freq})  # type: ignore[assignment]
         return getattr(obj, func)(*map_args, **map_kwargs)
     else:
         if freq is None:
@@ -1238,18 +1260,18 @@ def _compute_daytime_temperature(
 
     Parameters
     ----------
-    hour_after_sunrise : xarray.DataArray
+    hour_after_sunrise : xr.DataArray
         Hours after the last sunrise.
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Daily minimum temperature.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Daily maximum temperature.
-    daylength : xarray.DataArray
+    daylength : xr.DataArray
         Length of the day in hours.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Hourly daytime temperature.
     """
     return (tasmax - tasmin) * np.sin((np.pi * hour_after_sunrise) / (daylength + 4)) + tasmin
@@ -1269,18 +1291,18 @@ def _compute_nighttime_temperature(
 
     Parameters
     ----------
-    hours_after_sunset : xarray.DataArray
+    hours_after_sunset : xr.DataArray
         Hours after the last sunset.
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Daily minimum temperature.
-    tas_sunset : xarray.DataArray
+    tas_sunset : xr.DataArray
         Temperature at last sunset.
-    daylength : xarray.DataArray
+    daylength : xr.DataArray
         Length of the day in hours.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Hourly nighttime temperature.
     """
     return tas_sunset - ((tas_sunset - tasmin) / np.log(24 - daylength)) * np.log(hours_after_sunset)
@@ -1303,7 +1325,7 @@ def _add_one_day(time: xr.DataArray) -> xr.DataArray:
         Next day.
     """
     if time.dtype == "O":
-        return time + timedelta(days=1)
+        return time + timedelta(days=1)  # type: ignore[operator]
     return time + np.timedelta64(1, "D")
 
 
@@ -1323,19 +1345,20 @@ def make_hourly_temperature(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Daily minimum temperature.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Daily maximum temperature.
     infill_polar_days : bool
         Whether to use a mask of 24 hours for polar days and 0 hours for polar nights.
         If False, polar days and nights will be NaN.
         If True, they will be filled with 24 and 0 hours, respectively,
         dependent on latitude and solar declination at the given date.
+        Default: False.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Hourly temperature.
     """
     data = xr.merge([tasmin, tasmax])

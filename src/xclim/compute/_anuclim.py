@@ -6,7 +6,7 @@ from collections.abc import Callable
 from typing import Literal, cast
 
 import numpy as np
-import xarray
+import xarray as xr
 
 from xclim.compute.generic import difference_statistics, extreme_range, statistics
 from xclim.compute.run_length import lazy_indexing
@@ -40,14 +40,14 @@ __all__ = [
 ]
 
 _xr_argops = {
-    "wettest": xarray.DataArray.argmax,
-    "warmest": xarray.DataArray.argmax,
-    "dryest": xarray.DataArray.argmin,  # "dryest" is a common enough spelling mistake
-    "driest": xarray.DataArray.argmin,
-    "coldest": xarray.DataArray.argmin,
+    "wettest": xr.DataArray.argmax,
+    "warmest": xr.DataArray.argmax,
+    "dryest": xr.DataArray.argmin,  # "dryest" is a common enough spelling mistake
+    "driest": xr.DataArray.argmin,
+    "coldest": xr.DataArray.argmin,
 }
 
-_np_ops = {
+_np_ops: dict[str, str] = {
     "wettest": "max",
     "warmest": "max",
     "dryest": "min",  # "dryest" is a common enough spelling mistake
@@ -57,7 +57,7 @@ _np_ops = {
 
 
 @declare_units(tasmin="[temperature]", tasmax="[temperature]")
-def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
+def isothermality(tasmin: xr.DataArray, tasmax: xr.DataArray, freq: Freq = "YS") -> xr.DataArray:
     r"""
     Isothermality.
 
@@ -65,16 +65,16 @@ def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: Freq
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Average daily minimum temperature at daily, weekly, or monthly frequency.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Average daily maximum temperature at daily, weekly, or monthly frequency.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray, [%]
+    xr.DataArray, [%]
        Isothermality.
 
     Notes
@@ -90,13 +90,13 @@ def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: Freq
     """
     dtr = difference_statistics(tasmin, tasmax, statistic="mean", freq=freq)
     etr = extreme_range(tasmin, tasmax, freq=freq)
-    iso: xarray.DataArray = dtr / etr * 100
+    iso = dtr / etr * 100
     iso = iso.assign_attrs(units="%")
     return iso
 
 
 @declare_units(tas="[temperature]")
-def temperature_seasonality(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
+def temperature_seasonality(tas: xr.DataArray, freq: Freq = "YS") -> xr.DataArray:
     r"""
     Temperature seasonality (coefficient of variation).
 
@@ -105,14 +105,14 @@ def temperature_seasonality(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean temperature at daily, weekly, or monthly frequency.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray, [%]
+    xr.DataArray, [%]
         Mean temperature coefficient of variation.
 
     Notes
@@ -137,7 +137,7 @@ def temperature_seasonality(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.
 
 
 @declare_units(pr="[precipitation]")
-def precip_seasonality(pr: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
+def precip_seasonality(pr: xr.DataArray, freq: Freq = "YS") -> xr.DataArray:
     r"""
     Precipitation Seasonality (C of V).
 
@@ -146,15 +146,15 @@ def precip_seasonality(pr: xarray.DataArray, freq: Freq = "YS") -> xarray.DataAr
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Total precipitation rate at daily, weekly, or monthly frequency.
         Units need to be defined as a rate (e.g. mm d-1, mm week-1).
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray, [%]
+    xr.DataArray, [%]
         Precipitation coefficient of variation.
 
     Notes
@@ -182,10 +182,10 @@ def precip_seasonality(pr: xarray.DataArray, freq: Freq = "YS") -> xarray.DataAr
 
 @declare_units(tas="[temperature]")
 def tg_mean_warmcold_quarter(
-    tas: xarray.DataArray,
+    tas: xr.DataArray,
     op: Literal["warmest", "coldest"],
     freq: Freq = "YS",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Mean temperature of warmest/coldest quarter.
 
@@ -195,18 +195,18 @@ def tg_mean_warmcold_quarter(
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean temperature at daily, weekly, or monthly frequency.
-    op : {'warmest', 'coldest'}
+    op : {"warmest", "coldest"}
         Operation to perform:
-        'warmest' calculates the warmest quarter.
-        'coldest' calculates the coldest quarter.
-    freq : str
-        Resampling frequency.
+        "warmest" calculates the warmest quarter.
+        "coldest" calculates the coldest quarter.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray, [same as tas]
+    xr.DataArray, [same as tas]
        Mean temperature of {op} quarter.
 
     Notes
@@ -232,19 +232,19 @@ def tg_mean_warmcold_quarter(
     out = _to_quarter(tas=tas)
 
     if op not in ["warmest", "coldest"]:
-        raise NotImplementedError('op parameter may only be one of "warmest" or "coldest"')
+        raise NotImplementedError("`op` parameter may only be one of 'warmest' or 'coldest'")
     np_op = _np_ops[op]
 
-    return statistics(out, statistic=np_op, freq=freq)
+    return statistics(out, statistic=np_op, freq=freq)  # type: ignore[arg-type]
 
 
 @declare_units(tas="[temperature]", pr="[precipitation]")
 def tg_mean_wetdry_quarter(
-    tas: xarray.DataArray,
-    pr: xarray.DataArray,
+    tas: xr.DataArray,
+    pr: xr.DataArray,
     op: Literal["wettest", "driest", "dryest"],
     freq: Freq = "YS",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Mean temperature of wettest/driest quarter.
 
@@ -254,20 +254,20 @@ def tg_mean_wetdry_quarter(
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean temperature at daily, weekly, or monthly frequency.
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Total precipitation rate at daily, weekly, or monthly frequency.
-    op : {"wettest", "driest"}
+    op : {"wettest", "driest", "dryest"}
         Operation to perform:
-        'wettest' calculates the wettest quarter.
-        'driest' calculates the driest quarter.
-    freq : str
-        Resampling frequency.
+        "wettest" calculates the wettest quarter.
+        "driest" or "dryest" calculates the driest quarter.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray, [same as tas]
+    xr.DataArray, [same as tas]
        Mean temperature of {op} quarter.
 
     Notes
@@ -287,7 +287,7 @@ def tg_mean_wetdry_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["wettest", "driest", "dryest"]:
-        raise NotImplementedError('op parameter may only be one of "wettest" or "driest"')
+        raise NotImplementedError("`op` parameter may only be one of 'wettest' or 'driest''")
     xr_op = _xr_argops[op]
 
     out = _from_other_arg(criteria=pr_qrt, output=tas_qrt, op=xr_op, freq=freq)
@@ -296,8 +296,8 @@ def tg_mean_wetdry_quarter(
 
 @declare_units(pr="[precipitation]")
 def prcptot_wetdry_quarter(
-    pr: xarray.DataArray, op: Literal["wettest", "driest", "dryest"], freq: Freq = "YS"
-) -> xarray.DataArray:
+    pr: xr.DataArray, op: Literal["wettest", "driest", "dryest"], freq: Freq = "YS"
+) -> xr.DataArray:
     r"""
     Total precipitation of wettest/driest quarter.
 
@@ -307,18 +307,18 @@ def prcptot_wetdry_quarter(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Total precipitation rate at daily, weekly, or monthly frequency.
-    op : {"wettest", "driest"}
+    op : {"wettest", "driest", "dryest"}
         Operation to perform:
-        'wettest' calculates the wettest quarter.
-        'driest' calculates the driest quarter.
-    freq : str
-        Resampling frequency.
+        "wettest" calculates the wettest quarter.
+        "driest" or "dryest" calculates the driest quarter.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray, [length]
+    xr.DataArray, [length]
        Precipitation of {op} quarter.
 
     Notes
@@ -344,19 +344,19 @@ def prcptot_wetdry_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["wettest", "driest", "dryest"]:
-        raise NotImplementedError('op parameter may only be one of "wettest" or "driest"')
+        raise NotImplementedError("`op` parameter may only be one of 'wettest' or 'driest'")
     np_op = _np_ops[op]
 
-    return statistics(pr_qrt, statistic=np_op, freq=freq)
+    return statistics(pr_qrt, statistic=np_op, freq=freq)  # type: ignore[arg-type]
 
 
 @declare_units(pr="[precipitation]", tas="[temperature]")
 def prcptot_warmcold_quarter(
-    pr: xarray.DataArray,
-    tas: xarray.DataArray,
+    pr: xr.DataArray,
+    tas: xr.DataArray,
     op: Literal["warmest", "coldest"],
     freq: Freq = "YS",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""
     Total precipitation of warmest/coldest quarter.
 
@@ -366,20 +366,20 @@ def prcptot_warmcold_quarter(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Total precipitation rate at daily, weekly, or monthly frequency.
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean temperature at daily, weekly, or monthly frequency.
     op : {"warmest", "coldest"}
         Operation to perform:
-        "warmest" calculates for the warmest quarter;
+        "warmest" calculates for the warmest quarter.
         "coldest" calculates for the coldest quarter.
-    freq : str
-        Resampling frequency.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray, [mm]
+    xr.DataArray, [mm]
        Precipitation of {op} quarter.
 
     Notes
@@ -399,7 +399,7 @@ def prcptot_warmcold_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["warmest", "coldest"]:
-        raise NotImplementedError('op parameter may only be one of "warmest" or "coldest"')
+        raise NotImplementedError("`op` parameter may only be one of 'warmest' or 'coldest'")
     xr_op = _xr_argops[op]
 
     out = _from_other_arg(criteria=tas_qrt, output=pr_qrt, op=xr_op, freq=freq)
@@ -408,7 +408,7 @@ def prcptot_warmcold_quarter(
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
-def prcptot(pr: xarray.DataArray, thresh: Quantified = "0 mm/d", freq: Freq = "YS") -> xarray.DataArray:
+def prcptot(pr: xr.DataArray, thresh: Quantified = "0 mm/d", freq: Freq = "YS") -> xr.DataArray:
     r"""
     Accumulated total precipitation.
 
@@ -417,28 +417,28 @@ def prcptot(pr: xarray.DataArray, thresh: Quantified = "0 mm/d", freq: Freq = "Y
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar.
-    thresh : str
-        Threshold over which precipitation starts being cumulated.
-    freq : str
-        Resampling frequency.
+    thresh : Quantified
+        Threshold over which precipitation starts being cumulated. Default: "0 mm/d".
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray, [length]
+    xr.DataArray, [length]
        Total {freq} precipitation.
     """
     thresh = convert_units_to(thresh, pr, context="hydro")
-    pram: xarray.DataArray = rate2amount(pr.where(pr >= thresh, 0))
-    pram = pram.resample(time=freq).sum().assign_attrs(units=pram.units)
+    pr = rate2amount(pr.where(pr >= thresh, 0))
+    pram = pr.resample(time=freq).sum().assign_attrs(units=pr.units)
     return pram
 
 
 @declare_units(pr="[precipitation]")
 def prcptot_wetdry_period(
-    pr: xarray.DataArray, *, op: Literal["wettest", "driest", "dryest"], freq: Freq = "YS"
-) -> xarray.DataArray:
+    pr: xr.DataArray, *, op: Literal["wettest", "driest", "dryest"], freq: Freq = "YS"
+) -> xr.DataArray:
     r"""
     Precipitation of the wettest/driest day, week, or month, depending on the time step.
 
@@ -446,18 +446,18 @@ def prcptot_wetdry_period(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr : xr.DataArray
         Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar.
-    op : {"wettest", "driest"}
+    op : {"wettest", "driest", "dryest"}
         Operation to perform:
         "wettest" calculates the wettest quarter.
-        "driest" calculates the driest quarter.
-    freq : str
-        Resampling frequency.
+        "driest" or "dryest" calculates the driest quarter.
+    freq : Freq
+        Resampling frequency. Default: "YS".
 
     Returns
     -------
-    xarray.DataArray, [length]
+    xr.DataArray, [length]
         Precipitation of {op} period.
 
     Notes
@@ -474,45 +474,45 @@ def prcptot_wetdry_period(
     pram = rate2amount(pr)
 
     if op not in ["wettest", "driest", "dryest"]:
-        raise NotImplementedError('op parameter may only be one of "wettest" or "driest"')
+        raise NotImplementedError("`op` parameter may only be one of 'wettest' or 'driest'")
     np_op = _np_ops[op]
 
-    pwp: xarray.DataArray = getattr(pram.resample(time=freq), np_op)(dim="time")
+    pwp = getattr(pram.resample(time=freq), np_op)(dim="time")
     pwp = pwp.assign_attrs(units=pram.units)
     return pwp
 
 
-def _anuclim_coeff_var(arr: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
+def _anuclim_coeff_var(arr: xr.DataArray, freq: Freq = "YS") -> xr.DataArray:
     """Calculate the annual coefficient of variation for ANUCLIM indices."""
     std = arr.resample(time=freq).std(dim="time")
     mu = arr.resample(time=freq).mean(dim="time")
     return std / mu
 
 
-def _from_other_arg(criteria: xarray.DataArray, output: xarray.DataArray, op: Callable, freq: Freq) -> xarray.DataArray:
+def _from_other_arg(criteria: xr.DataArray, output: xr.DataArray, op: Callable, freq: Freq) -> xr.DataArray:
     """
     Pick values from output based on operation returning an index from criteria.
 
     Parameters
     ----------
-    criteria : xarray.DataArray
+    criteria : xr.DataArray
         Series on which operation returning index is applied.
-    output : xarray.DataArray
+    output : xr.DataArray
         Series to be indexed.
     op : Callable
         Function returning an index, for example, `np.argmin`, `np.argmax`, `np.nanargmin`, `np.nanargmax`.
-    freq : str
+    freq : Freq
         Temporal grouping.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Output values where criteria are met at the given frequency.
     """
-    ds = xarray.Dataset(data_vars={"criteria": criteria, "output": output})
+    ds = xr.Dataset(data_vars={"criteria": criteria, "output": output})
     dim = "time"
 
-    def _get_other_op(dataset: xarray.Dataset) -> xarray.DataArray:
+    def _get_other_op(dataset: xr.Dataset) -> xr.DataArray:
         all_nans = dataset.criteria.isnull().all(dim=dim)
         index = op(dataset.criteria.where(~all_nans, 0), dim=dim)
         other_op = lazy_indexing(dataset.output, index=index, dim=dim).where(~all_nans)
@@ -520,31 +520,32 @@ def _from_other_arg(criteria: xarray.DataArray, output: xarray.DataArray, op: Ca
 
     resampled = ds.resample(time=freq)
     # Manually casting here since the mapping returns a DataArray and not a Dataset
-    out = cast(xarray.DataArray, resampled.map(_get_other_op))
+    out = cast(xr.DataArray, resampled.map(_get_other_op))
     return out
 
 
 def _to_quarter(
-    pr: xarray.DataArray | None = None,
-    tas: xarray.DataArray | None = None,
-) -> xarray.DataArray:
+    pr: xr.DataArray | None = None,
+    tas: xr.DataArray | None = None,
+) -> xr.DataArray:
     """
     Convert daily, weekly or monthly time series to quarterly time series according to ANUCLIM specifications.
 
     Parameters
     ----------
-    pr : xarray.DataArray, optional
+    pr : xr.DataArray, optional
         Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar.
-    tas : xarray.DataArray, optional
+    tas : xr.DataArray, optional
         Mean temperature at daily, weekly, or monthly frequency.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Quarterly time series.
     """
+    # ts_var: xarray.DataArray
     if pr is not None and tas is not None:
-        raise ValueError("Supply only one variable, 'tas' (exclusive) or 'pr'.")
+        raise ValueError("Supply only one variable, `tas` (exclusive) or `pr`.")
     if tas is not None:
         ts_var = tas
     elif pr is not None:
@@ -552,7 +553,7 @@ def _to_quarter(
     else:
         raise ValueError("Supply one variable, `tas` or `pr`.")
 
-    freq = xarray.infer_freq(ts_var.time)
+    freq = xr.infer_freq(ts_var.time)
     if freq is None:
         raise ValueError("Cannot infer sampling frequency of the input data.")
     freq_upper = freq.upper()
@@ -565,14 +566,15 @@ def _to_quarter(
             # Ensure units are back to a "rate" for rate2amount below
             pram = rate2amount(ts_var)
             ts_var = statistics(pram, statistic="sum", freq="7D")
-            ts_var = convert_units_to(ts_var, "mm", context="hydro").assign_attrs(units="mm/week")
+            ts_var = convert_units_to(ts_var, "mm", context="hydro")
+            ts_var = ts_var.assign_attrs(units="mm/week")
         freq_upper = "W"
     if freq_upper.startswith("W"):
         window = 13
     elif freq_upper.startswith("M"):
         window = 3
     else:
-        raise NotImplementedError('Unknown input time frequency: must be one of "D", "W" or "M".')
+        raise NotImplementedError("Unknown input time frequency: must be one of 'D', 'W' or 'M'.")
 
     ts_var = ensure_chunk_size(ts_var, time=np.ceil(window / 2))
     if tas is not None:
