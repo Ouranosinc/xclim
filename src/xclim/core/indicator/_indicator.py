@@ -448,10 +448,10 @@ class IndexWrapper:  # numpydoc ignore=PR01
             abstract = ""
         elif "\n\n" in doc.description:
             title, abstract, *_ = doc.description.split("\n\n")
-            title = title.replace("\n", " ")
-            abstract = abstract.replace("\n", " ")
+            title = title.replace("\n", " ").replace('"', "'")
+            abstract = abstract.replace("\n", " ").replace('"', "'")
         else:
-            title = doc.description.replace("\n", " ")
+            title = doc.description.replace("\n", " ").replace('"', "'")
             abstract = ""
 
         doc_params = {p.arg_name.replace("*", ""): p for p in doc.params}
@@ -476,7 +476,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
             description = ""
             choices = _empty
             if name in doc_params:
-                description = doc_params[name].description.replace("\n", " ")
+                description = doc_params[name].description.replace("\n", " ").replace('"', "'")
 
                 choices_raw = None
                 docannot = doc_params[name].type_name.strip()
@@ -523,9 +523,9 @@ class IndexWrapper:  # numpydoc ignore=PR01
         references = ""
         for section in doc.meta:
             if section.args == ["notes"]:
-                notes = section.description
+                notes = section.description.replace('"', "'")
             elif section.args == ["references"]:
-                references = section.description
+                references = section.description.replace('"', "'")
 
         new = type(
             cls.__name__,
@@ -1839,7 +1839,7 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02 # pylint: d
 
     def _extra_doc(self):
         extra = super()._extra_doc()
-        extra.append(f'This indicator will check for missing values according to the method "{self.missing}".')
+        extra.append(f"This indicator will check for missing values according to the method '{self.missing}'.")
         return extra
 
     def _gen_xclim_description(self, das, params, meta):
