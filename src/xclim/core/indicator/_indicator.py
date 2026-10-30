@@ -214,6 +214,9 @@ class Parameter:
         if self.units is not _empty:
             unit = f" [Required units : {self.units}]"
 
+        if "Default: " in default and "Default: " in self.description:
+            self.description = re.sub(r"Default: .*?\.(?!\d)", "", self.description)
+
         return f"{name or self.compute_name} : {annot}\n {self.description}{default}{unit}"
 
     def _gen_signature(self, name: str | None = None) -> inspect.Parameter:
