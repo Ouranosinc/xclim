@@ -575,8 +575,8 @@ def robustness_coefficient(fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | x
     R.attrs.update(
         name="R",
         long_name="Ensemble robustness coefficient",
-        description="Ensemble robustness coefficient as defined by Knutti and Sedlacek (2013).",
-        reference="Knutti, R. and Sedlacek, J. (2013) Robustness and uncertainties in the new CMIP5 climate "
+        description="Ensemble robustness coefficient as defined by Knutti and Sedláček (2013).",
+        reference="Knutti, R. and Sedláček, J. (2013) Robustness and uncertainties in the new CMIP5 climate "
         "model projections. Nat. Clim. Change.",
         units="",
     )
