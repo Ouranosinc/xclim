@@ -1135,7 +1135,7 @@ def amount2lwethickness(amount: xr.DataArray, out_units: str | None = None) -> x
     if old_name and (new_name := cf_conversion(old_name, "amount2lwethickness", "to")):
         out.attrs["standard_name"] = new_name
     if out_units:
-        out = cast(xr.DataArray, convert_units_to(out, out_units))
+        out = convert_units_to(out, out_units)
     return out
 
 
@@ -1170,7 +1170,7 @@ def lwethickness2amount(thickness: xr.DataArray, out_units: str | None = None) -
     if old_name and (new_name := cf_conversion(old_name, "amount2lwethickness", "from")):
         out.attrs["standard_name"] = new_name
     if out_units:
-        out = cast(xr.DataArray, convert_units_to(out, out_units))
+        out = convert_units_to(out, out_units)
     return out
 
 
