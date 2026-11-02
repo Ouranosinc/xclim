@@ -428,7 +428,7 @@ def robustness_categories(
         If a point is mapped to two categories, priority is given to the first one in this list.
     ops : list of tuples of str, optional
         For each category, the comparison operators for `change_frac` and `agree_frac`.
-        None or an empty string means the variable is not needed for this category.
+        None means the variable is not needed for this category.
     thresholds : list of tuples of float, optional
         For each category, the threshold to be used with the corresponding operator. All should be between 0 and 1.
 
