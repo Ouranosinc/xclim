@@ -14,7 +14,7 @@ from collections.abc import Callable
 from copy import deepcopy
 from importlib.resources import files
 from inspect import signature
-from typing import Any, Literal, cast, overload
+from typing import Literal, cast, overload
 
 import cf_xarray.units
 import numpy as np
@@ -108,7 +108,7 @@ pint.set_application_registry(units)
 with (files("xclim.data") / "variables.yml").open() as variables:
     CF_CONVERSIONS = safe_load(variables)["conversions"]
 CF_AMOUNTS, CF_RATES = list(zip(*CF_CONVERSIONS["amount2rate"]["valid_names"], strict=True))
-_CONVERSIONS: dict[Any, Any] = {}
+_CONVERSIONS: dict[tuple[str, str], Callable] = {}
 
 
 TEMPERATURE_DELTA_UNITS = {
@@ -119,9 +119,7 @@ TEMPERATURE_DELTA_UNITS = {
 """Mapping from "delta_" difference temperature units to "on scale" units."""
 
 
-# FIXME: This needs to be properly annotated for mypy compliance.
-# See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
-def _register_conversion(conversion, direction):
+def _register_conversion(conversion: str, direction: str) -> Callable:
     """
     Register a conversion function to be automatically picked up in `convert_units_to`.
 
@@ -383,7 +381,6 @@ def convert_units_to(  # numpydoc ignore=GL08
 ) -> float: ...
 
 
-# FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(
     source: Quantified | xr.Dataset | xr.DataTree,  # ty: ignore[invalid-type-form]
     target: Quantified | pint.Unit | dict[str, Quantified | pint.Unit],
@@ -1423,8 +1420,6 @@ def _check_output_has_units(
         outd.attrs["units"] = ensure_cf_units(outd.attrs["units"])
 
 
-# FIXME: This needs to be properly annotated for mypy compliance.
-# See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
 def declare_relative_units(**units_by_name: str) -> Callable:
     r"""
     Function decorator checking the units of arguments.
@@ -1534,9 +1529,7 @@ def declare_relative_units(**units_by_name: str) -> Callable:
     return dec
 
 
-# FIXME: This needs to be properly annotated for mypy compliance.
-# See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
-def declare_units(**units_by_name) -> Callable:
+def declare_units(**units_by_name: str) -> Callable:
     r"""
     Create a decorator to check units of function arguments.
 
