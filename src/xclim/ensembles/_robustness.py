@@ -466,7 +466,7 @@ def robustness_categories(
     for i, ((chg_op, agr_op), (chg_thresh, agr_thresh)) in reversed(  # ty: ignore[not-iterable]
         list(enumerate(zip(ops, thresholds, strict=False), 1))
     ):
-        if not agr_op:
+        if agr_op is None:
             cond = compare(changed, chg_op, chg_thresh)
         # FIXME: Non-empty strings are always truthy. What is this testing exactly?
         elif not chg_op:  # type: ignore[ty:redundant-condition]
