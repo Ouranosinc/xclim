@@ -399,7 +399,7 @@ def robustness_categories(
     valid: xr.DataArray | None = None,
     *,
     categories: list[str] | None = None,
-    ops: list[tuple[Condition, Condition | None]] | None = None,
+    ops: list[tuple[Condition | None, Condition | None]] | None = None,
     thresholds: list[tuple[float, float | None]] | None = None,
 ) -> xr.DataArray:
     """
