@@ -42,7 +42,7 @@ dependencies = [
   "click >=8.1",
   "dask[array] >=2024.8.1",
   "docstring_parser",
-  "filelock >=3.14.0",
+  "filelock >=4.2.1",
   "numba >=0.60.0",
   "numpy >=2.0",
   "packaging >=24.0",
@@ -52,7 +52,7 @@ dependencies = [
   "pyyaml >=6.0.1",
   "scikit-learn >=1.2.0",
   "scipy >=1.11.0",
-  "xarray >=2023.11.0,!=2024.10.0",
+  "xarray >=2024.6.0,!=2024.10.0",
   "yamale >=5.0.0"
 ]
 
@@ -116,7 +116,7 @@ test = [
   "coverage[toml] >=7.5.0",
   "nbval >=0.11.0",
   "pooch >=1.8.0",
-  "pytest >=9.0.0",
+  "pytest >=9.2.0",
   "pytest-cov >=5.0.0",
   "pytest-socket >=0.6.0",
   "pytest-timeout >=2.4.0",
@@ -151,18 +151,19 @@ test-notebooks = [
   { include-group = "test" }
 ]
 tox = [
-  "tox >=4.52.0",
-  "tox-gh >=1.7.1"
+  "tox >=4.64.1",
+  "tox-gh >=1.8.0"
 ]
 dev = [
   # Development and testing tools
   "bump-my-version >=1.6.0",
   "flit >=4.0,<5.0",
-  "pip >=26.1",
+  "pip >=26.2.1",
   "prek >=0.5.0",
   { include-group = "docs" },
   { include-group = "lint" },
-  { include-group = "test-notebooks" },
+  { include-group = "notebooks" },
+  { include-group = "test" },
   { include-group = "tox" }
 ]
 
