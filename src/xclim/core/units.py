@@ -382,7 +382,7 @@ def convert_units_to(  # numpydoc ignore=GL08
 
 
 def convert_units_to(
-    source: Quantified | xr.Dataset | xr.DataTree,  # ty: ignore[invalid-type-form]
+    source: Quantified | xr.Dataset | xr.DataTree,
     target: Quantified | pint.Unit | dict[str, Quantified | pint.Unit],
     context: Literal["infer", "hydro", "none"] | None = None,
 ) -> xr.DataArray | float | xr.Dataset | xr.DataTree:
