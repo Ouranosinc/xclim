@@ -467,14 +467,18 @@ def robustness_categories(
         list(enumerate(zip(ops, thresholds, strict=False), 1))
     ):
         if agr_op is None:
+            if chg_op is None:
+                raise ValueError(f"Invalid ops parameter: {ops}")
             cond = compare(changed, chg_op, chg_thresh)
+        elif agree is None:
+            raise ValueError("'agree' must be provided.")
+        elif agr_thresh is None:
+            raise ValueError(f"Invalid second thresholds parameter: {thresholds}.")
         elif chg_op is None:
             cond = compare(agree, agr_op, agr_thresh)
+        elif chg_thresh is None:
+            raise ValueError(f"Invalid first thresholds parameter: {thresholds}.")
         else:
-            if agree is None:
-                raise ValueError("'agree' must be provided.")
-            if agr_thresh is None or chg_thresh is None:
-                raise ValueError(f"Invalid threshold parameters: {thresholds}.")
             cond = compare(changed, chg_op, chg_thresh) & compare(agree, agr_op, agr_thresh)
         robustness = xr.where(~cond, robustness, i, keep_attrs=True)
 
