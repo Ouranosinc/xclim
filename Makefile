@@ -78,13 +78,13 @@ lint: install-lint ## check style with flake8 and black
 
 typing: install-typing  ## check typing with pylint and ty
 	python -m pylint -j=0 --rcfile=.pylintrc.toml --disable=import-error --exit-zero src/xclim
-	python -m ty check --ignore=unresolved-import src/xclim
+	ty check --ignore=unresolved-import src/xclim
 
 test: install-test ## run tests quickly with the default Python
 	python -m pytest --numprocesses=auto
 
 test-doctests: install-test ## run doctests
-	python -m pytest --rootdir=src/xclim/testing --config-file=src/xclim/testing/conftest.py --numprocesses=auto --doctest-modules src/xclim
+	python -m pytest --rootdir=src/xclim/testing --confcutdir=src/xclim/testing --numprocesses=auto --doctest-modules src/xclim
 
 test-notebooks: install-test-notebooks
 	python -m pytest --no-cov --nbval --numprocesses=auto --dist=loadscope --rootdir=tests/ docs/notebooks --ignore=docs/notebooks/example.ipynb

@@ -15,7 +15,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 import scipy.stats
-import xarray
+import xarray as xr
 from scipy.spatial import distance
 from sklearn.cluster import KMeans
 
@@ -23,7 +23,7 @@ from sklearn.cluster import KMeans
 MPL_INSTALLED = bool(_util.find_spec("matplotlib"))
 
 
-def make_criteria(ds: xarray.Dataset | xarray.DataArray):
+def make_criteria(ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
     """
     Reshape the input into a criteria 2D DataArray.
 
@@ -63,14 +63,14 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
         """Variable version : stack non-realization dims."""
         return da.stack(criteria=set(da.dims) - {"realization"})
 
-    if isinstance(ds, xarray.Dataset):
+    if isinstance(ds, xr.Dataset):
         # When variables have different set of dims, missing dims on one variable results in duplicated values
         # when a simple stack is done. To avoid that: stack each variable independently add a new "variables" dim
         stacked = {da.name: _make_crit(da.expand_dims(variables=[da.name])) for da in ds.data_vars.values()}
         # Get name of all stacked coords
         stacked_coords = set.union(*[set(da.indexes["criteria"].names) for da in stacked.values()])
         # Concat the variables by dropping old stacked index and related coords
-        crit = xarray.concat(
+        crit = xr.concat(
             [da.reset_index("criteria").drop_vars(stacked_coords, errors="ignore") for k, da in stacked.items()],
             "criteria",
         )
@@ -85,7 +85,7 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
             for crd in stacked_coords
         ]
         crit = crit.assign_coords(
-            xarray.Coordinates.from_pandas_multiindex(
+            xr.Coordinates.from_pandas_multiindex(
                 pd.MultiIndex.from_arrays([arr for name, arr in coords], names=[name for name, arr in coords]),
                 "criteria",
             )
@@ -102,7 +102,7 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
 
 
 def kkz_reduce_ensemble(
-    data: xarray.DataArray,
+    data: xr.DataArray,
     num_select: int,
     *,
     dist_method: str = "euclidean",
@@ -121,24 +121,26 @@ def kkz_reduce_ensemble(
     Parameters
     ----------
     data : xr.DataArray
-        Selection criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and 'criteria' (P).
+        Selection criteria data : 2-D xr.DataArray with dimensions "realization" (N) and "criteria" (P).
         These are the values used for clustering. Realizations represent the individual original
         ensemble members and criteria the variables/indicators used in the grouping algorithm.
     num_select : int
         The number of members to select.
     dist_method : str
         Any distance metric name accepted by `scipy.spatial.distance.cdist`.
+        Default: "euclidean".
     standardize : bool
         Whether to standardize the input before running the selection or not.
         Standardization consists in translation as to have a zero mean and scaling as to have a unit
         standard deviation.
+        Default: True.
     **cdist_kwargs : Any
         All extra arguments are passed as-is to `scipy.spatial.distance.cdist`, see its docs for more information.
 
     Returns
     -------
     list
-        Selected model indices along the `realization` dimension.
+        Selected model indices along the "realization" dimension.
 
     References
     ----------
@@ -175,7 +177,7 @@ def kkz_reduce_ensemble(
 
 
 def kmeans_reduce_ensemble(
-    data: xarray.DataArray,
+    data: xr.DataArray,
     *,
     method: dict | None = None,
     make_graph: bool = MPL_INSTALLED,
@@ -196,8 +198,8 @@ def kmeans_reduce_ensemble(
     Parameters
     ----------
     data : xr.DataArray
-        Selection criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
-        'criteria' (P). These are the values used for clustering. Realizations represent the individual original
+        Selection criteria data : 2-D xr.DataArray with dimensions "realization" (N) and
+        "criteria" (P). These are the values used for clustering. Realizations represent the individual original
         ensemble members and criteria the variables/indicators used in the grouping algorithm.
     method : dict, optional
         Dictionary defining selection method and associated value when required. See Notes.
@@ -206,7 +208,7 @@ def kmeans_reduce_ensemble(
         Defaults to True if matplotlib is installed in the runtime environment.
     max_clusters : int, optional
         Maximum number of members to include in the output ensemble selection.
-        When using 'rsq_optimize' or 'rsq_cutoff' methods, limit the final selection to a maximum number
+        When using "rsq_optimize" or 'rsq_cutoff' methods, limit the final selection to a maximum number
         even if method results indicate a higher value. Defaults to N.
     variable_weights : np.ndarray, optional
         An array of size P.
@@ -232,7 +234,7 @@ def kmeans_reduce_ensemble(
     np.ndarray
         KMeans clustering results.
     dict
-        Dictionary of input data for creating R² profile plot. 'None' when make_graph=False.
+        Dictionary of input data for creating R² profile plot. "None" when make_graph=False.
 
     Notes
     -----
@@ -306,12 +308,7 @@ def kmeans_reduce_ensemble(
             data=crit, method={"rsq_optimize": None}, random_state=42, make_graph=True
         )
     """
-    if make_graph:
-        fig_data = {}
-        if max_clusters is not None:
-            fig_data["max_clusters"] = max_clusters
-    else:
-        fig_data = None
+    fig_max_clusters = max_clusters
 
     data = data.transpose("realization", "criteria")
     # initialize the variables
@@ -346,7 +343,11 @@ def kmeans_reduce_ensemble(
 
     n_clusters = _get_nclust(method=method, n_sim=n_sim, rsq=rsq, max_clusters=max_clusters)
 
+    fig_data: dict[str, Any] = {}
     if make_graph:
+        if fig_max_clusters is not None:
+            fig_data["max_clusters"] = fig_max_clusters
+
         fig_data["method"] = method
         fig_data["rsq"] = rsq
         fig_data["n_clusters"] = n_clusters
@@ -379,16 +380,16 @@ def kmeans_reduce_ensemble(
             argmax = np.argmax(like)  # index of the maximum likelihood
 
         else:
-            argmax = 0
+            argmax = np.argmax(0)
 
         r_clust = r[clusters == i]  # index of the cluster simulations within the full ensemble
 
         out[i] = r_clust[argmax]
 
-    out = sorted(out.astype(int))
+    output = sorted(out.astype(int))
     # display graph - don't block code execution
 
-    return out, clusters, fig_data
+    return output, clusters, fig_data
 
 
 def _calc_rsq(z, method: dict, make_graph: bool, n_sim: np.ndarray | int, random_state, sample_weights):
@@ -444,7 +445,7 @@ def _get_nclust(method: dict, n_sim: int, rsq: float, max_clusters: int):
             UserWarning,
             stacklevel=2,
         )
-        n_clusters = max_clusters
+        return max_clusters
     return n_clusters
 
 
