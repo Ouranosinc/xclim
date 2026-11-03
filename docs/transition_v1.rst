@@ -1,8 +1,9 @@
 Differences between v0 and v1
 =============================
-In September 2026, a major overhaul of `xclim` was implemented. While most of the functionalities were preserved, the internals were modified in many breaking ways.
+During mid-to-late 2026, `xclim` underwent a major overhaul of its code base;
+While most of the functionalities were preserved, the internals were modified in many breaking ways.
 The goal was to modernize the lower-level API, aiming to ease development and favour contributions to `xclim` by the larger community.
-As of `xclim` v1.0, not all planned changes have been performed, but only non-breaking changes remain.
+As of `xclim` v1.0.0, not all planned changes have been performed, but only non-breaking changes are planned in the near future.
 
 This page aims to summarize the largest and most breaking changes, to help transition to v1.
 
@@ -32,9 +33,12 @@ The :py:mod:`xclim.core.indicator` submodule was refactored in hopes of making t
 The main breaking changes are:
 
 - Attribute `cf_attrs` was renamed to `outputs` and is now a list of :py:class:`~xclim.core.indicator.Output` objects.
-  These are stores for metadata, with the following properties: `var_name`, `units`, `units_metadata`, `dimensionality` and `attrs`. The latest is the dictionary holding the attributes that populate the ``Indicator``'s output. See below for impacts on indicator module YAML files.
-- Function ``xclim.build_indicator_module_from_yaml`` is changed to :py:meth:`xclim.core.collection.IndicatorCollection.from_yaml`, see below. The ``module`` argument of the :py:func:`~xclim.core.indicator.Indicator` constructor is not needed anymore in most cases.
-- When creating an indicator from an existing one, the ``var_name`` of the output of an indicator with a single output now only defaults to the indicator's identifier if the parent does not have a ``var_name``. Previously, the identifier would always be used as the ``var_name``, regardless of the parent's attributes.
+  These are stores for metadata, with the following properties: `var_name`, `units`, `units_metadata`, `dimensionality` and `attrs`.
+  The latest is the dictionary holding the attributes that populate the ``Indicator``'s output. See below for impacts on indicator module YAML files.
+- Function ``xclim.build_indicator_module_from_yaml`` is changed to :py:meth:`xclim.core.collection.IndicatorCollection.from_yaml`, see below.
+  The ``module`` argument of the :py:func:`~xclim.core.indicator.Indicator` constructor is not needed anymore in most cases.
+- When creating an indicator from an existing one, the ``var_name`` of the output of an indicator with a single output now only defaults to the indicator's identifier if the parent does not have a ``var_name``.
+  Previously, the identifier would always be used as the ``var_name``, regardless of the parent's attributes.
 - The :py:meth:`xclim.core.indicator.Indicator.from_dict` method is deprecated. Use :py:meth:`xclim.core.indicator.Indicator.copy` instead, calling it on the indicator object you want to subclass/copy.
   This new method doesn't parse ``compute`` function names given as string, instead passing the function directly.
 
@@ -48,7 +52,8 @@ These are dictionary-like in structure, holding a collection of indicators and t
 - Collections are standalone objects, they don't automatically register as python submodules of ``xclim.indicators`` anymore, which makes the ``module`` argument of the :py:func:`~xclim.core.indicator.Indicator` no really useful anymore, as said above.
 - Indicators defined within a collection are not registered by default into the indicators registry.
 
-To update an existing YAML file, only replacing ``cf_attrs`` with ``outputs`` will usually be enough as the yaml structure accepts multiples patterns. However, for new YAML files it is recommended to change the way output metadata is defined like so:
+To update an existing YAML file, only replacing ``cf_attrs`` with ``outputs`` will usually be enough as the yaml structure accepts multiples patterns.
+However, for new YAML files it is recommended to change the way output metadata is defined like so:
 
 .. code-block:: yaml
 
@@ -69,6 +74,21 @@ See the updated :ref:`notebooks/extendxclim:Extending xclim` page for more detai
 
 Indicator registry
 ------------------
-The indicator registry :py:data:`xclim.core.indicator.registry` is now case-insensitive and holds indicator *instances*, not *classes*. No need to call ``ind.get_instance()`` to get a working object anymore. As noted above, creating a derived indicator from another is now done by calling :py:meth:`~xclim.core.indicator.Indicator.copy()` on the parent instance.
+The indicator registry :py:data:`xclim.core.indicator.registry` is now case-insensitive and holds indicator *instances*, not *classes*.
+No need to call ``ind.get_instance()`` to get a working object anymore.
+As noted above, creating a derived indicator from another is now done by calling :py:meth:`~xclim.core.indicator.Indicator.copy()` on the parent instance.
 
 The base classes registry :py:data:`xclim.core.indicator_base_registry` is preserved.
+
+Static Typing
+-------------
+The entire library, including function signatures, classes, constants, and variables, has undergone a comprehensive revision to ensure compatibility with static type checkers such as `mypy` and `ty`.
+In many cases, existing functions required updated type annotations. In others, functions whose type annotations previously indicated support for certain variable types were corrected to more accurately reflect the data structures they actually support.
+These typing conventions are now systematically checked and enforced via the linting suite:
+
+- *For users*: IDEs should provide clearer guidance on acceptable variable types and the expected conventions for classes and function calls.
+- *For developers and contributors*: New computations and indicators must have consistent type annotations, both in their function signatures and throughout the internal logic of the functions and sub-functions they comprise.
+
+Consult the `PEP 483 <https://peps.python.org/pep-0483/>`_ and `PEP 484 <https://peps.python.org/pep-0484/>`_ for more information on the standards for type hints.
+
+The `xclim` development team wishes to thank :user:`ludwiglierhammer` for his efforts in implementing this feature.
