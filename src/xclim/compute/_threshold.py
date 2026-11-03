@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """Threshold indice definitions."""
 
 from __future__ import annotations

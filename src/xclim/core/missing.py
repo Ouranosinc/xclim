@@ -438,8 +438,8 @@ class MissingWMO(MissingTwoSteps):
         return src_timestep is not None and src_timestep == "D"
 
     def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: Freq | None) -> xr.DataArray:
-        from xclim.compute import run_length as rl
-        from xclim.compute.helpers import resample_map
+        from xclim.compute import run_length as rl  # pylint: disable=import-outside-toplevel
+        from xclim.compute.helpers import resample_map  # pylint: disable=import-outside-toplevel
 
         validr = valid.resample(time=freq)
 

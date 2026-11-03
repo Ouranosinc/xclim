@@ -434,7 +434,7 @@ def _ens_align_datasets(
     if isinstance(datasets, str):
         datasets_list = list(glob(datasets))
     else:
-        datasets_list = [d for d in datasets]
+        datasets_list = list(datasets)
 
     ds_all: list[xr.Dataset] = []
     calendars = []

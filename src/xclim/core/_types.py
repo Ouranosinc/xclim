@@ -233,7 +233,7 @@ class InputKind(IntEnum):
     """
 
 
-def infer_kind_from_parameter(param) -> InputKind:
+def infer_kind_from_parameter(param) -> InputKind:  # pylint: disable=too-many-return-statements
     """
     Return the appropriate InputKind constant from an `inspect.Parameter` object.
 

@@ -711,7 +711,6 @@ def antecedent_precipitation_index(pr: xr.DataArray, window: int = 7, p_exp: flo
     return out
 
 
-# TODO: change a to `area`?
 @declare_units(rivo="[discharge]", pr="[precipitation]", area="[area]")
 def runoff_ratio(
     rivo: xr.DataArray,
@@ -936,11 +935,15 @@ def sen_slope(rivo: xr.DataArray, freq: Freq = "YS") -> tuple[xr.DataArray, xr.D
 
     import pymannkendall as mk  # pylint: disable=import-outside-toplevel
 
+    def _mann_kendall_test(q):
+        mk_output = mk.original_test(q)
+        return np.array([mk_output.slope, mk_output.p])
+
     def _mann_kendall(q, freq):
         qr = q.resample(time=freq).mean()
         qr = split_time_to_season_year(qr, freq)
         out = xr.apply_ufunc(
-            lambda q: (lambda mk_output: np.array([mk_output.slope, mk_output.p]))(mk.original_test(q)),
+            _mann_kendall_test,
             qr,
             input_core_dims=[["time"]],
             output_core_dims=[["var"]],

@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """Indicator class definition."""
 
 from __future__ import annotations
@@ -85,7 +86,7 @@ class _empty:  # pylint: disable=too-few-public-methods
 
 
 @dataclass
-class Parameter:
+class Parameter:  # pylint: disable=too-many-instance-attributes
     """
     Object representing an indicator's parameter.
 
@@ -1467,8 +1468,6 @@ class _InputChecker(_DeprecationWarner):
                 cfcheck_from_name(varname, vardata)
             except KeyError:
                 logging.info("Variable unknown. Ignoring cf check.")
-                # Silently ignore unknown variables.
-                pass
 
     def datacheck(self, **das: xr.DataArray) -> None:
         r"""
@@ -1609,7 +1608,7 @@ class _Convenience(_InputChecker):
                         f"Requested base class {data['base']} is neither in the "
                         "indicators registry nor in base classes registry."
                     )
-                elif isinstance(cls, Indicator):
+                if isinstance(cls, Indicator):
                     cls = cls.copy
             else:
                 cls = data["base"]
@@ -1618,8 +1617,8 @@ class _Convenience(_InputChecker):
         # data.compute refers to a function in xclim.compute.generic or xclim.compute (in this order of priority).
         # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
         if isinstance(compute, str):
-            from xclim import compute as _compute
-            from xclim.compute import generic as _generic
+            from xclim import compute as _compute  # pylint: disable=import-outside-toplevel
+            from xclim.compute import generic as _generic  # pylint: disable=import-outside-toplevel
 
             compute_func = getattr(_generic, compute, getattr(_compute, compute, None))
             if compute_func is None:

@@ -451,3 +451,4 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         if k in self.keys():
             return self[k]
         super().__getattribute__(k)
+        return None
