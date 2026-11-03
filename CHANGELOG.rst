@@ -103,6 +103,8 @@ Internal changes
 * Many docstring, call signatures, and returns have been revised to ensure that internal typing is consistent across the entire library (:pull:`2425`).
 * `xclim` is now fully compliant with Semantic Versioning v2.0. The `dev` tag has been retired while `-beta` and `-rc` version tags will be used moving forward. (:pull:`2434`):
     * `bump-my-version` has been updated to `>=1.6.0` to make use of the `bump version --to` flag.
+* Publishing workflows now use a two-step process and generate SLSA build provenance attestations (using `actions/attest`) when publishing distributions to TestPyPI and PyPI. (:pull:`2455`)
+* The minimum support version of `pytest` is now `>=9.2.0`. Running doctests now uses the new `--confcutdir` flag for selectively loading `xclim/testing/conftest.py` configurations. (:pull:`2455`).
 
 v0.62.0 (2026-08-17)
 --------------------
