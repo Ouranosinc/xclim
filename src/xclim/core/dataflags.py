@@ -10,15 +10,16 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from functools import reduce
 from inspect import signature
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
-import xarray
+import xarray as xr
 
 from xclim.compute.helpers import BINARY_OPS
 from xclim.compute.run_length import suspicious_run
 from xclim.core import (
     VARIABLES,
+    Freq,
     InputKind,
     MissingVariableError,
     Quantified,
@@ -29,7 +30,7 @@ from xclim.core.calendar import climatological_mean_doy, within_bnds_doy
 from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to, declare_units, infer_context, str2pint
 
-_REGISTRY = {}
+_REGISTRY: dict[str, Callable[..., Any]] = {}
 
 ALL_OPERATORS = Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"]
 
@@ -40,17 +41,17 @@ class DataQualityException(Exception):
 
     Parameters
     ----------
-    flag_array : xarray.Dataset
-        Xarray.Dataset of Data Flags.
+    flag_array : xr.Dataset
+        Dataset of Data Flags.
     message : str
         Message prepended to the error messages.
     """
 
-    flag_array: xarray.Dataset | None = None
+    flag_array: xr.Dataset | None = None
 
     def __init__(
         self,
-        flag_array: xarray.Dataset,
+        flag_array: xr.Dataset,
         message="Data quality flags indicate suspicious values. Flags raised are:\n  - ",
     ):
         self.message = message
@@ -103,7 +104,7 @@ def register_methods(variable_name: str | None = None) -> Callable:
 
     Returns
     -------
-    callable
+    Callable
         The function being registered.
     """
 
@@ -116,7 +117,7 @@ def register_methods(variable_name: str | None = None) -> Callable:
     return _register_methods
 
 
-def _sanitize_attrs(da: xarray.DataArray) -> xarray.DataArray:
+def _sanitize_attrs(da: xr.DataArray) -> xr.DataArray:
     to_remove = []
     for attr in da.attrs.keys():
         if str(attr) != "history":
@@ -130,22 +131,22 @@ def _sanitize_attrs(da: xarray.DataArray) -> xarray.DataArray:
 @update_xclim_history
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
 def tasmax_below_tasmin(
-    tasmax: xarray.DataArray,
-    tasmin: xarray.DataArray,
-) -> xarray.DataArray:
+    tasmax: xr.DataArray,
+    tasmin: xr.DataArray,
+) -> xr.DataArray:
     """
     Check if tasmax values are below tasmin values for any given day.
 
     Parameters
     ----------
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Maximum temperature.
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Minimum temperature.
 
     Returns
     -------
-    xarray.DataArray, [bool]
+    xr.DataArray, [bool]
         Boolean array of True where tasmax is below tasmin.
 
     Examples
@@ -167,22 +168,22 @@ def tasmax_below_tasmin(
 @update_xclim_history
 @declare_units(tas="[temperature]", tasmax="[temperature]")
 def tas_exceeds_tasmax(
-    tas: xarray.DataArray,
-    tasmax: xarray.DataArray,
-) -> xarray.DataArray:
+    tas: xr.DataArray,
+    tasmax: xr.DataArray,
+) -> xr.DataArray:
     """
     Check if tas values tasmax values for any given day.
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean temperature.
-    tasmax : xarray.DataArray
+    tasmax : xr.DataArray
         Maximum temperature.
 
     Returns
     -------
-    xarray.DataArray, [bool]
+    xr.DataArray, [bool]
         Boolean array of True where tas is above tasmax.
 
     Examples
@@ -203,20 +204,20 @@ def tas_exceeds_tasmax(
 @register_methods()
 @update_xclim_history
 @declare_units(tas="[temperature]", tasmin="[temperature]")
-def tas_below_tasmin(tas: xarray.DataArray, tasmin: xarray.DataArray) -> xarray.DataArray:
+def tas_below_tasmin(tas: xr.DataArray, tasmin: xr.DataArray) -> xr.DataArray:
     """
     Check if tas values are below tasmin values for any given day.
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas : xr.DataArray
         Mean temperature.
-    tasmin : xarray.DataArray
+    tasmin : xr.DataArray
         Minimum temperature.
 
     Returns
     -------
-    xarray.DataArray, [bool]
+    xr.DataArray, [bool]
         Boolean array of True where tas is below tasmin.
 
     Examples
@@ -237,21 +238,21 @@ def tas_below_tasmin(tas: xarray.DataArray, tasmin: xarray.DataArray) -> xarray.
 @register_methods()
 @update_xclim_history
 @declare_units(da="[temperature]", thresh="[temperature]")
-def temperature_extremely_low(da: xarray.DataArray, *, thresh: Quantified = "-90 degC") -> xarray.DataArray:
+def temperature_extremely_low(da: xr.DataArray, *, thresh: Quantified = "-90 degC") -> xr.DataArray:
     """
     Check if temperature values are below -90 degrees Celsius for any given day.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Temperature.
-    thresh : str
+    thresh : Quantified
         Threshold below which temperatures are considered problematic and a flag is raised.
-        Default is -90 degrees Celsius.
+        Default: "-90 degC".
 
     Returns
     -------
-    xarray.DataArray, [bool]
+    xr.DataArray, [bool]
         Boolean array of True where temperatures are below the threshold.
 
     Examples
@@ -274,21 +275,21 @@ def temperature_extremely_low(da: xarray.DataArray, *, thresh: Quantified = "-90
 @register_methods()
 @update_xclim_history
 @declare_units(da="[temperature]", thresh="[temperature]")
-def temperature_extremely_high(da: xarray.DataArray, *, thresh: Quantified = "60 degC") -> xarray.DataArray:
+def temperature_extremely_high(da: xr.DataArray, *, thresh: Quantified = "60 degC") -> xr.DataArray:
     """
     Check if temperature values exceed 60 degrees Celsius for any given day.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Temperature.
-    thresh : str
+    thresh : Quantified
         Threshold above which temperatures are considered problematic and a flag is raised.
-        Default is 60 degrees Celsius.
+        Default: "60 degC".
 
     Returns
     -------
-    xarray.DataArray, [bool]
+    xr.DataArray, [bool]
         Boolean array of True where temperatures are above the threshold.
 
     Examples
@@ -311,19 +312,19 @@ def temperature_extremely_high(da: xarray.DataArray, *, thresh: Quantified = "60
 @register_methods()
 @update_xclim_history
 def negative_accumulation_values(
-    da: xarray.DataArray,
-) -> xarray.DataArray:
+    da: xr.DataArray,
+) -> xr.DataArray:
     """
     Check if variable values are negative for any given day.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Variable array.
 
     Returns
     -------
-    xarray.DataArray, [bool]
+    xr.DataArray, [bool]
         Boolean array of True where values are negative.
 
     Examples
@@ -344,20 +345,21 @@ def negative_accumulation_values(
 @register_methods()
 @update_xclim_history
 @declare_units(da="[precipitation]", thresh="[precipitation]")
-def very_large_precipitation_events(da: xarray.DataArray, *, thresh: Quantified = "300 mm d-1") -> xarray.DataArray:
+def very_large_precipitation_events(da: xr.DataArray, *, thresh: Quantified = "300 mm d-1") -> xr.DataArray:
     """
     Check if precipitation values exceed 300 mm/day for any given day.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Precipitation.
-    thresh : str
+    thresh : Quantified
         Threshold to search an array for that will trigger flag if any day exceeds value.
+        Default: "300 mm d-1".
 
     Returns
     -------
-    xarray.DataArray, [bool]
+    xr.DataArray, [bool]
         Boolean array of True where precipitation values exceed the threshold.
 
     Examples
@@ -380,26 +382,27 @@ def very_large_precipitation_events(da: xarray.DataArray, *, thresh: Quantified 
 @register_methods("values_{op}_{thresh}_repeating_for_{n}_or_more_days")
 @update_xclim_history
 def values_op_thresh_repeating_for_n_or_more_days(
-    da: xarray.DataArray, *, n: int, thresh: Quantified, op: ALL_OPERATORS = "=="
-) -> xarray.DataArray:
+    da: xr.DataArray, *, n: int, thresh: Quantified, op: ALL_OPERATORS = "=="
+) -> xr.DataArray:
     """
-    Check if array values repeat at a given threshold for `N` or more days.
+    Check if array values repeat at a given threshold for `n` or more days.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Variable array.
     n : int
         Number of repeating days needed to trigger data flag.
-    thresh : str
+    thresh : Quantified
         Repeating values to search for that will trigger data flag.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Operator used for comparison with thresh.
+        Default: "==".
 
     Returns
     -------
-    xarray.DataArray, [bool]
-        Boolean array of True where values repeat at threshold for `N` or more days.
+    xr.DataArray, [bool]
+        Boolean array of True where values repeat at threshold for `n` or more days.
 
     Examples
     --------
@@ -425,26 +428,26 @@ def values_op_thresh_repeating_for_n_or_more_days(
 @update_xclim_history
 @declare_units(da="[speed]", lower="[speed]", upper="[speed]")
 def wind_values_outside_of_bounds(
-    da: xarray.DataArray,
+    da: xr.DataArray,
     *,
     lower: Quantified = "0 m s-1",
     upper: Quantified = "46 m s-1",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     """
     Check if wind speed values exceed reasonable bounds for any given day.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Wind speed.
-    lower : str
-        The lower limit for wind speed. Default is 0 m s-1.
-    upper : str
-        The upper limit for wind speed. Default is 46 m s-1.
+    lower : Quantified
+        The lower limit for wind speed. Default" 0 m s-1".
+    upper : Quantified
+        The upper limit for wind speed. Default: "46 m s-1".
 
     Returns
     -------
-    xarray.DataArray, [bool]
+    xr.DataArray, [bool]
         The boolean array of True where values exceed the bounds.
 
     Examples
@@ -469,26 +472,26 @@ def wind_values_outside_of_bounds(
 @register_methods("outside_{n}_standard_deviations_of_climatology")
 @update_xclim_history
 def outside_n_standard_deviations_of_climatology(
-    da: xarray.DataArray,
+    da: xr.DataArray,
     *,
     n: int,
     window: int = 5,
-) -> xarray.DataArray:
+) -> xr.DataArray:
     """
     Check if any daily value is outside `n` standard deviations from the day of year mean.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Variable array.
     n : int
         Number of standard deviations.
     window : int
-        Moving window used in determining the climatological mean. Default: `5`.
+        Moving window used in determining the climatological mean. Default: "5".
 
     Returns
     -------
-    xarray.DataArray, [bool]
+    xr.DataArray, [bool]
         The boolean array of True where values exceed the bounds.
 
     Notes
@@ -523,20 +526,20 @@ def outside_n_standard_deviations_of_climatology(
 
 @register_methods("values_repeating_for_{n}_or_more_days")
 @update_xclim_history
-def values_repeating_for_n_or_more_days(da: xarray.DataArray, *, n: int) -> xarray.DataArray:
+def values_repeating_for_n_or_more_days(da: xr.DataArray, *, n: int) -> xr.DataArray:
     """
     Check if exact values are found to be repeating for at least 5 or more days.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Variable array.
     n : int
         Number of days to trigger flag.
 
     Returns
     -------
-    xarray.DataArray, [bool]
+    xr.DataArray, [bool]
         The boolean array of True where values repeat for `n` or more days.
 
     Examples
@@ -556,18 +559,18 @@ def values_repeating_for_n_or_more_days(da: xarray.DataArray, *, n: int) -> xarr
 
 @register_methods()
 @update_xclim_history
-def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArray:
+def percentage_values_outside_of_bounds(da: xr.DataArray) -> xr.DataArray:
     """
     Check if variable values fall below 0% or exceed 100% for any given day.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Variable array.
 
     Returns
     -------
-    xarray.DataArray, [bool]
+    xr.DataArray, [bool]
         The boolean array of True where values exceed the bounds.
 
     Examples
@@ -584,13 +587,13 @@ def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArra
 
 
 def data_flags(  # noqa: C901
-    da: xarray.DataArray,
-    ds: xarray.Dataset | None = None,
+    da: xr.DataArray,
+    ds: xr.Dataset | None = None,
     flags: dict | None = None,
-    dims: None | str | Sequence[str] = "all",
-    freq: str | None = None,
+    dims: str | Sequence[str] | set[str] | None = "all",
+    freq: Freq | None = None,
     raise_flags: bool = False,
-) -> xarray.Dataset:
+) -> xr.Dataset:
     """
     Evaluate the supplied DataArray for a set of data flag checks.
 
@@ -599,18 +602,18 @@ def data_flags(  # noqa: C901
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         The variable to check.
         Must have a name that is a valid CMIP6 variable name and appears in :py:obj:`xclim.core.VARIABLES`.
-    ds : xarray.Dataset, optional
+    ds : xr.Dataset, optional
         An optional dataset with extra variables needed by some checks.
     flags : dict, optional
         A dictionary where the keys are the name of the flags to check and the values are parameter dictionaries.
         The value can be None if there are no parameters to pass (i.e. default will be used).
         The default, None, means that the data flags list will be taken from :py:obj:`xclim.core.VARIABLES`.
-    dims : {"all", None} or str or a sequence of strings
+    dims : str or a sequence of str or set of str or None
         Dimensions upon which the aggregation should be performed. Default: "all".
-    freq : str, optional
+    freq : Freq, optional
         Resampling frequency to have data_flags aggregated over periods.
         Defaults to None, which means the "time" axis is treated as any other dimension (see `dims`).
     raise_flags : bool
@@ -618,7 +621,7 @@ def data_flags(  # noqa: C901
 
     Returns
     -------
-    xarray.Dataset
+    xr.Dataset
         The Dataset of boolean flag arrays.
 
     Examples
@@ -658,7 +661,7 @@ def data_flags(  # noqa: C901
             ]:
                 format_args[arg] = val
             elif kind == InputKind.QUANTIFIED:
-                if isinstance(val, xarray.DataArray):
+                if isinstance(val, xr.DataArray):
                     format_args[arg] = "array"
                 else:
                     val = str2pint(val).magnitude
@@ -670,7 +673,7 @@ def data_flags(  # noqa: C901
                     format_args[arg] = str(val)
         return function.variable_name.format(**format_args)
 
-    def _missing_vars(function, dataset: xarray.Dataset, var_provided: str):
+    def _missing_vars(function, dataset: xr.Dataset, var_provided: str):
         """Handle missing variables in passed datasets."""
         sig = signature(function)
         sig_params = sig.parameters
@@ -688,7 +691,7 @@ def data_flags(  # noqa: C901
 
     var = str(da.name)
     if dims == "all":
-        dims = da.dims
+        dims = tuple(str(dim) for dim in da.dims)
     elif isinstance(dims, str):
         # Thus, a single dimension name, we allow this option to mirror xarray.
         dims = {dims}
@@ -705,30 +708,30 @@ def data_flags(  # noqa: C901
                 msg=f"Data quality checks do not exist for '{var}' variable.",
                 err_type=NotImplementedError,
             )
-            return xarray.Dataset()
+            return xr.Dataset()
     else:
         flag_funcs = [flags]
 
-    ds = ds or xarray.Dataset()
+    ds = ds or xr.Dataset()
 
     flags = {}
     for flag_func in flag_funcs:
         for name, kwargs in flag_func.items():
             func = _REGISTRY[name]
             variable_name = _get_variable_name(func, kwargs)
-            named_da_variable = None
+            named_da_variable: dict[str, xr.DataArray] | None = None
 
             try:
                 extras = _missing_vars(func, ds, str(da.name))
                 # Entries in extras implies that there are two variables being compared
                 # Both variables will be sent in as dict entries
                 if extras:
-                    named_da_variable = {da.name: da}
+                    named_da_variable = {str(da.name): da}
 
             except MissingVariableError:
                 flags[variable_name] = None
             else:
-                with xarray.set_options(keep_attrs=True):
+                with xr.set_options(keep_attrs=True):
                     if named_da_variable:
                         out = func(**named_da_variable, **extras, **(kwargs or {}))
                     else:
@@ -742,7 +745,7 @@ def data_flags(  # noqa: C901
 
                 flags[variable_name] = out
 
-    ds_flags = xarray.Dataset(data_vars=flags)
+    ds_flags = xr.Dataset(data_vars=flags)
 
     if raise_flags:
         if np.any([ds_flags[dv] for dv in ds_flags.data_vars]):
@@ -752,11 +755,11 @@ def data_flags(  # noqa: C901
 
 
 def ecad_compliant(
-    ds: xarray.Dataset,
-    dims: None | str | Sequence[str] = "all",
+    ds: xr.Dataset,
+    dims: str | Sequence[str] | None = "all",
     raise_flags: bool = False,
     append: bool = True,
-) -> xarray.DataArray | xarray.Dataset | None:
+) -> xr.DataArray | xr.Dataset | None:
     """
     Run ECAD compliance tests.
 
@@ -764,22 +767,23 @@ def ecad_compliant(
 
     Parameters
     ----------
-    ds : xarray.Dataset
+    ds : xr.Dataset
         Variable-containing dataset.
-    dims : {"all"} or str or a sequence of strings, optional
-        Dimensions upon which aggregation should be performed. Default: ``"all"``.
+    dims : str or sequence of str or None
+        Dimensions upon which aggregation should be performed. Default: "all".
     raise_flags : bool
-        Raise exception if any of the quality assessment flags are raised, otherwise returns None. Default: ``False``.
+        Raise exception if any of the quality assessment flags are raised, otherwise returns None. Default: False.
     append : bool
-        If `True`, return the Dataset with the `ecad_qc_flag` array appended to data_vars.
-        If `False`, return the DataArray of the `ecad_qc_flag` variable.
+        If True, return the Dataset with the `ecad_qc_flag` array appended to data_vars.
+        If False, return the DataArray of the `ecad_qc_flag` variable.
+        Default: True.
 
     Returns
     -------
-    xarray.DataArray or xarray.Dataset or None
+    xr.DataArray or xr.Dataset or None
         Flag array or Dataset with flag array(s) appended.
     """
-    flags = xarray.Dataset()
+    flags = xr.Dataset()
     history: list[str] = []
     for var in ds.data_vars:
         df = data_flags(ds[var], ds, dims=dims)
@@ -806,12 +810,10 @@ def ecad_compliant(
             raise DataQualityException(flags)
         return None
 
-    ecad_flag = xarray.DataArray(
+    bool_flags = filter(lambda x: x.dtype == bool, flags.data_vars.values())
+    ecad_flag = xr.DataArray(
         # TODO: Test for this change concerning data of type None in dataflag variables
-        ~reduce(
-            np.logical_or,
-            filter(lambda x: x.dtype == bool, flags.data_vars.values()),
-        ),
+        ~reduce(lambda x, y: x | y, bool_flags),
         name="ecad_qc_flag",
         attrs={
             "comment": "Adheres to ECAD quality control checks.",
@@ -820,25 +822,26 @@ def ecad_compliant(
     )
 
     if append:
-        return xarray.merge([ds, ecad_flag])
+        return xr.merge([ds, ecad_flag])
     return ecad_flag
 
 
 @declare_units(da="[speed]", thresh="[speed]")
-def specific_discharge_extremely_high(da: xarray.DataArray, *, thresh: Quantified = "100 mm d-1") -> xarray.DataArray:
+def specific_discharge_extremely_high(da: xr.DataArray, *, thresh: Quantified = "100 mm d-1") -> xr.DataArray:
     """
     Check if specific discharge values exceed 100 mm per day for any given day.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Specific discharge.
-    thresh : str
+    thresh : Quantified
         Threshold above which specific discharges are considered problematic and a flag is raised.
+        Default: "100 mm d-1".
 
     Returns
     -------
-    xarray.DataArray, [bool]
+    xr.DataArray, [bool]
         Boolean array of True where specific discharges are above the threshold.
 
     Examples

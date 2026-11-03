@@ -605,7 +605,7 @@ def test_IndexWrapper():
     assert doc.title == "Mean of daily average temperature."
     assert doc.abstract == "Resample the original daily mean temperature series by taking the mean over each period."
     assert doc.parameters["tas"].description == "Mean daily temperature."
-    assert doc.parameters["freq"].description == "Resampling frequency."
+    assert "Resampling frequency." in doc.parameters["freq"].description
     assert doc.notes.startswith("Let")
     assert "math::" in doc.notes
     assert doc.references == ""
@@ -873,6 +873,7 @@ def test_all_inputs_known():
             "dmc0",
             "kbdi0",
             "drought_factor",
+            "params",
         }  # FWI optional inputs
         - {var for var in var_and_inds.keys() if var.endswith("_per")}  # percentiles
         - {"pr_annual", "pr_cal", "wb_cal"}  # other optional or uncommon
