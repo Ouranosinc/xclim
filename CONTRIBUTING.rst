@@ -166,7 +166,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     .. code-block:: shell
 
         pytest --no-cov --nbval --dist=loadscope --rootdir=tests/ docs/notebooks --ignore=docs/notebooks/example.ipynb  # for notebooks, exclusively.
-        pytest --no-cov --rootdir=tests/ --xdoctest src/xclim  # for doctests, exclusively.
+        pytest --no-cov --rootdir=src/xclim/testing --confcutdir=src/xclim/testing --numprocesses=auto --doctest-modules src/xclim  # for doctests, exclusively.
         pytest  # for all unit tests, excluding doctests and notebooks.
         pytest -m "not slow"  # for all unit tests, excluding doctests, notebooks, and "slow" marked tests.
 

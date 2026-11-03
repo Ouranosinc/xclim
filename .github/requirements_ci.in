@@ -10,3 +10,4 @@ tox==4.64.1
 tox-gh==1.8.0
 ty==0.0.84
 urllib3==2.8.0
+virtualenv==21.15.2
