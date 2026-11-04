@@ -2,8 +2,27 @@
 Changelog
 =========
 
-`Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
-------------------------------------------------------------
+..
+    `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
+    ------------------------------------------------------------
+    Contributors to this version:
+
+    New indicators and features
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    * N/A
+
+    Breaking changes
+    ^^^^^^^^^^^^^^^^
+    * N/A
+
+    Internal changes
+    ^^^^^^^^^^^^^^^^
+    * N/A
+
+.. _changes_1.0.0:
+
+`v1.0.0 <https://github.com/Ouranosinc/xclim/tree/v1.0.0>`_ (2026-11-04)
+--------------------------------------------------------------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Baptiste Hamon (:user:`baptistehamon`), Juliette Lavoie (:user:`juliettelavoie`), Charles Lu (:user:`Lu-Charles`), Kobe Vandelanotte (:user:`kobebryant432`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
 Announcements
