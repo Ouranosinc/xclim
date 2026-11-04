@@ -170,7 +170,7 @@ dev = [
 [tool]
 
 [tool.bumpversion]
-current_version = "1.0.0"
+current_version = "1.0.1-beta.0"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
