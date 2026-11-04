@@ -170,7 +170,7 @@ dev = [
 [tool]
 
 [tool.bumpversion]
-current_version = "0.99.5-beta.0"
+current_version = "1.0.0"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -209,7 +209,7 @@ replace = """\
 .. _changes_{new_version}:
 
 `v{new_version} <https://github.com/Ouranosinc/xclim/tree/v{new_version}>`_ ({now:%Y-%m-%d})
---------------------------------------------------------------------------
+------------------------------------------------------------------------
 """
 
 [[tool.bumpversion.files]]
