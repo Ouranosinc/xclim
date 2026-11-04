@@ -52,8 +52,8 @@ These are dictionary-like in structure, holding a collection of indicators and t
 - Collections are standalone objects, they don't automatically register as python submodules of ``xclim.indicators`` anymore, which makes the ``module`` argument of the :py:func:`~xclim.core.indicator.Indicator` no really useful anymore, as said above.
 - Indicators defined within a collection are not registered by default into the indicators registry.
 
-To update an existing YAML file, only replacing ``cf_attrs`` with ``outputs`` will usually be enough as the yaml structure accepts multiples patterns.
-However, for new YAML files it is recommended to change the way output metadata is defined like so:
+To update an existing YAML file, only replacing ``cf_attrs`` with ``outputs`` will usually be enough as the YAML structure accepts multiples patterns.
+However, when creating new YAML files, we recommend that developers adopt the new structural convention:
 
 .. code-block:: yaml
 
