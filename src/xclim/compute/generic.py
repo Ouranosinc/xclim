@@ -758,8 +758,8 @@ def spell_length_statistics(
 
     See Also
     --------
-    spell_mask : The lower level functions that finds spells.
     bivariate_spell_length_statistics : The bivariate version of this function.
+    xclim.compute.helpers.spell_mask : The lower level functions that finds spells.
 
     Examples
     --------
