@@ -114,6 +114,21 @@ def statistics(
     -------
     xr.DataArray
         {statistic} of the data.
+
+    Examples
+    --------
+    The following would compute for each grid cell the minimum wind speed
+    at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.compute import statistics
+    >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
+    >>> fg_min = statistics(fg, statistic="min", freq="QS-DEC")
+
+    The following would compute for each grid cell of file `tas.day.nc` the mean temperature
+    at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> t = xr.open_dataset(path_to_tas_file).tas
+    >>> tg = statistics(t, statistic="mean", freq="QS-DEC")
     """
     data = select_time(data, **indexer)
     if isinstance(statistic, str):
@@ -222,6 +237,15 @@ def thresholded_statistics(
     -------
     xr.DataArray
         {statistic} of data where it is {condition} {thresh}.
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the average precipitation fallen over days with
+    precipitation >= 5 mm at seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.compute import thresholded_statistics
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> daily_int = thresholded_statistics(pr, condition=">=", thresh="5 mm/day", statistic="mean", freq="QS-DEC")
     """
     thresh = convert_units_to(thresh, data, context="infer")
 
@@ -451,6 +475,17 @@ def bivariate_count_occurrences(
     Notes
     -----
     Sampling length is derived from `data1`.
+
+    Examples
+    --------
+    To compute the number of days with intense rainfall while minimum temperatures dip below -0.2C:
+
+    >>> from xclim.atmos import bivariate_count_occurrences
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+    >>> hplt = bivariate_count_occurrences(
+    >>>    data1=pr, data2=tasmin, condition1=">=", condition2="<", thresh1="10 mm/d", thresh2="-0.2 degC"
+    >>> )
     """
     if thresh2 is None:
         thresh2 = thresh1
@@ -723,7 +758,7 @@ def spell_length_statistics(
 
     See Also
     --------
-    xclim.compute.helpers.spell_mask : The lower level functions that finds spells.
+    spell_mask : The lower level functions that finds spells.
     bivariate_spell_length_statistics : The bivariate version of this function.
 
     Examples
@@ -916,9 +951,9 @@ def season(
     --------
     >>> s = season(tas, thresh="0 °C", window=5, condition=">", aspect="start", freq="YS")
 
-    Returns the start of the "frost-free" season. The season starts with 5 consecutive days with mean temperature
-    above 0°C and ends with as many days under or equal to 0°C, and end does not need to be found for a
-    start to be valid.
+    Returns the start of the "frost-free" season.
+    The season starts with five (5) consecutive days with mean temperature above 0°C and ends with as many days under
+    or equal to 0°C, and end does not need to be found for a start to be valid.
 
     >>> s = season(
     ...     pr,
@@ -930,8 +965,8 @@ def season(
     ...     freq="YS",
     ... )
 
-    Returns the length of the "dry" season. The season starts with 7 consecutive days with precipitation under or
-    equal to 2 mm/d and ends with as many days above 2 mm/d. If no start is found before the first of august,
+    Returns the length of the "dry" season. The season starts with seven (7) consecutive days with precipitation under
+    or equal to 2 mm/d and ends with as many days above 2 mm/d. If no start is found before the first of august,
     the season is invalid. If a start is found but no end, the end is set to the last day of the period
     (December 31st if the dataset is complete).
     """
@@ -1405,6 +1440,12 @@ def day_threshold_reached(
     -------
     xr.DataArray, [dimensionless]
         Day-of-year of the {which} time where data {condition} {thresh}.
+
+    Notes
+    -----
+    When setting the ``date`` parameter, be sure to check that the desired date corresponds with the region of interest.
+    For example, when attempting to determine the date of a final frost event in the Northern Hemisphere, consider
+    specifying that this date should be found prior to July 1st ("07-01") in order to exclude later frost events.
     """
     thresh = convert_units_to(thresh, data, context="infer")
 
