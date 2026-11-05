@@ -120,7 +120,7 @@ def statistics(
     The following would compute for each grid cell the minimum wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.compute import statistics
+    >>> from xclim.compute.generic import statistics
     >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
     >>> fg_min = statistics(fg, statistic="min", freq="QS-DEC")
 
@@ -243,7 +243,7 @@ def thresholded_statistics(
     The following would compute for each grid cell of file `pr.day.nc` the average precipitation fallen over days with
     precipitation >= 5 mm at seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.compute import thresholded_statistics
+    >>> from xclim.compute.generic import thresholded_statistics
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> daily_int = thresholded_statistics(pr, condition=">=", thresh="5 mm/day", statistic="mean", freq="QS-DEC")
     """
@@ -480,12 +480,12 @@ def bivariate_count_occurrences(
     --------
     To compute the number of days with intense rainfall while minimum temperatures dip below -0.2C:
 
-    >>> from xclim.atmos import bivariate_count_occurrences
+    >>> from xclim.compute.generic import bivariate_count_occurrences
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
     >>> hplt = bivariate_count_occurrences(
-    >>>    data1=pr, data2=tasmin, condition1=">=", condition2="<", thresh1="10 mm/d", thresh2="-0.2 degC"
-    >>> )
+    ...     data1=pr, data2=tasmin, condition1=">=", condition2="<", thresh1="10 mm/d", thresh2="-0.2 degC", freq="YS"
+    ... )
     """
     if thresh2 is None:
         thresh2 = thresh1
@@ -763,6 +763,7 @@ def spell_length_statistics(
 
     Examples
     --------
+    >>> from xclim.compute.generic import spell_length_statistics
     >>> sls = spell_length_statistics(
     ...     tas,
     ...     window=7,
