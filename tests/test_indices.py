@@ -1449,7 +1449,7 @@ class TestPrecipAverage:
         time_std = pd.date_range("2000-01-01", "2010-12-31", freq="D")
         da_std = xr.DataArray(time_std.year, coords=[time_std], dims="time", attrs={"units": "mm d-1"})
         out_std = xcc.precip_average(da_std)
-        target = [y for y in np.unique(da_std.time.dt.year)]
+        target = [*np.unique(da_std.time.dt.year)]
         np.testing.assert_allclose(out_std.values, target)
 
     def test_mixed_phases(self, pr_series, tas_series):
