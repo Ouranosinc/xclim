@@ -20,8 +20,6 @@ import pandas as pd
 import pytest
 import scipy.stats
 import xarray as xr
-from numpy import __version__ as __numpy_version__
-from packaging.version import Version
 
 import xclim.compute as xcc
 from xclim.compute import generic
@@ -567,9 +565,6 @@ class TestStandardizedIndices:
     def test_standardized_precipitation_index(
         self, freq, window, dist, method, values, diff_tol, open_dataset, no_numbagg
     ):
-        if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
-            pytest.skip("Skipping SPI/ML/D for numpy below v2.0.")
-
         # change `dist` to a lmoments3 object if needed
         if method == "PWM":
             lmom = pytest.importorskip("lmoments3.distr")
@@ -723,9 +718,6 @@ class TestStandardizedIndices:
     def test_standardized_precipitation_evapotranspiration_index(
         self, freq, window, dist, method, values, diff_tol, open_dataset
     ):
-        if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
-            pytest.skip("Skipping SPI/ML/D for numpy below v2.0")
-
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "2000"))
         pr = ds.pr
         # generate water budget
@@ -969,8 +961,6 @@ class TestStandardizedIndices:
         ],
     )
     def test_standardized_groundwater_index(self, freq, window, dist, method, values, diff_tol, open_dataset):
-        if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
-            pytest.skip("Skipping SPI/ML/D for numpy below v2.0")
         ds = open_dataset("Raven/gwl_obs.nc")
         gwl0 = ds.gwl
 
