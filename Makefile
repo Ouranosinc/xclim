@@ -84,10 +84,10 @@ test: install-test ## run tests quickly with the default Python
 	python -m pytest --numprocesses=auto
 
 test-doctests: install-test ## run doctests
-	python -m pytest --rootdir=src/xclim/testing --confcutdir=src/xclim/testing --numprocesses=auto --doctest-modules src/xclim
+	python -m pytest --numprocesses=auto --rootdir=src/xclim/testing --doctest-modules src/xclim
 
 test-notebooks: install-test-notebooks
-	python -m pytest --no-cov --nbval --numprocesses=auto --dist=loadscope --rootdir=tests/ docs/notebooks --ignore=docs/notebooks/example.ipynb
+	python -m pytest --numprocesses=auto --dist=loadscope --no-cov --nbval --rootdir=tests/ docs/notebooks --ignore=docs/notebooks/example.ipynb
 
 test-all: test test-doctests test-notebooks ## run all tests
 

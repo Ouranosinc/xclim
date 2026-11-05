@@ -64,7 +64,6 @@ __all__ = [
     "open_dataset",
     "populate_testing_data",
     "publish_release_notes",
-    "run_doctests",
     "show_versions",
     "testing_setup_warnings",
 ]
@@ -354,27 +353,6 @@ def show_versions(
 
 
 # Test Data Utilities ###
-
-
-def run_doctests():
-    """Run the doctests for the module."""
-    if not HAS_PYTEST_SOCKET:
-        raise ImportError(
-            "The development dependencies are needed to run the doctests. "
-            "You can install them with `pip install --group test` or `conda env create -f environment-dev.yml`."
-        )
-
-    import pytest  # pylint: disable=import-outside-toplevel
-
-    cmd = [
-        f"--rootdir={Path(__file__).absolute().parent}",
-        f"--config-file={Path(__file__).absolute().parent.joinpath('conftest.py')}",
-        "--numprocesses=0",
-        "--doctest-modules",
-        f"{Path(__file__).absolute().parents[1]}",
-    ]
-
-    sys.exit(pytest.main(cmd))
 
 
 def testing_setup_warnings():
