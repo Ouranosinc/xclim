@@ -109,7 +109,7 @@ indicators:
     parameters:
       thresh: 25 degC
   CSU:
-    base: maximum_consecutive_warm_days
+    base: hot_spell_max_length
     outputs:
     - attrs:
         long_name: Maximum number of consecutive summer day
