@@ -127,13 +127,13 @@ Energy and Carbon Usage
 The `xclim` development team is interested in thoroughly testing our software while also reducing the environmental impact of the software we develop.
 This repository uses the `ECO-CI`_ tool to estimate and track the energy use and carbon emissions of our continuous integration workflows.
 
-+---------------------------------------------------------------------------------------+
-| `ECO-CI`_ Energy Use and Carbon Emissions from CI Workflows (since November 2024)     |
-+------------------+------------------+-------------------------------------------------+
-| Testing suite    | Energy Usage     | |energy-last| |energy-average| |energy-total|   |
-|                  +------------------+-------------------------------------------------+
-| (*main* branch)  | Carbon Emissions | |carbon-last| |carbon-average| |carbon-total|   |
-+------------------+------------------+-------------------------------------------------+
++------------------------------------------------------------------------------------+
+| `ECO-CI`_ Energy Use and Carbon Emissions from CI Workflows (since November 2024)  |
++------------------+------------------+----------------------------------------------+
+| Testing suite    | Energy Usage     | |energy-last| |energy-total|                 |
+|                  +------------------+----------------------------------------------+
+| (*main* branch)  | Carbon Emissions | |carbon-last| |carbon-total|                 |
++------------------+------------------+----------------------------------------------+
 
 Credits
 -------
