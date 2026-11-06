@@ -8,7 +8,7 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* N/A
+* New indicator ``canadian_hardiness_zones`` for calculating climate hardiness suitability index of regions according to Canadian categorization standards has been added. (:issue:`1290`, :pull:`2398`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
