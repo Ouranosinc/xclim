@@ -2,22 +2,24 @@
 Changelog
 =========
 
-..
-    `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
-    ------------------------------------------------------------
-    Contributors to this version:
+`Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
+------------------------------------------------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
-    New indicators and features
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    * N/A
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* N/A
 
-    Breaking changes
-    ^^^^^^^^^^^^^^^^
-    * N/A
+Breaking changes
+^^^^^^^^^^^^^^^^
+* N/A
 
-    Internal changes
-    ^^^^^^^^^^^^^^^^
-    * N/A
+Internal changes
+^^^^^^^^^^^^^^^^
+* CI and boilerplate housekeeping adjustments. (:pull:`2460`):
+    * Clearer directives concerning AI involvement have been added to `AGENTS.md` and `PULL_REQUEST_TEMPLATE.md`.
+    * The suggested invocation for running doctests has been simplified in `CONTRIBUTING.rst` and `Makefile`.
+    * Corrections made to CI triggers and deployment environments.
 
 .. _changes_1.0.0:
 
