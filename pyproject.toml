@@ -36,7 +36,6 @@ classifiers = [
 dynamic = ["description", "version"]
 dependencies = [
   "boltons >=20.1",
-  "bottleneck >=1.3.1",
   "cf-xarray >=0.9.3", # cf-xarray is differently named on conda-forge
   "cftime >=1.4.1",
   "click >=8.1",
@@ -44,6 +43,7 @@ dependencies = [
   "docstring_parser",
   "filelock >=4.2.1",
   "numba >=0.60.0",
+  "numbagg >=0.8", # numbagg required for ffill/bfill in xarray
   "numpy >=2.0",
   "packaging >=24.0",
   "pandas >=2.2.0",
@@ -58,8 +58,8 @@ dependencies = [
 
 [project.optional-dependencies]
 performance = [
-  "flox >=0.9",
-  "numbagg >=0.8"
+  "bottleneck >=1.4",
+  "flox >=0.9"
 ]
 plot = [
   "matplotlib >=3.8.0"
