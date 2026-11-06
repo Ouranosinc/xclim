@@ -12,7 +12,7 @@ New indicators and features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Moved `numbagg` from an optional dependency to a required one, moved `bottleneck` from a required one to a "performance" optional one (:issue:`2459`, :pull:`2461`).
+* Moved `numbagg` from an optional dependency to a required one, moved `bottleneck` from a required to an optional "performance" dependency (`xclim[performance]`). (:issue:`2459`, :pull:`2461`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
