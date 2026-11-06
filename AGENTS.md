@@ -10,6 +10,7 @@ Rules for AI coding agents working in this repository.
 - Do not add dependencies without explicit approval
 - Keep changes atomic -- one concern per commit
 - Ask for clarification when requirements are ambiguous
+- Do not create new files or public APIs without explicit approval
 - Do not generate PR descriptions or review comments on others' code
 
 ## Code Style
@@ -26,7 +27,7 @@ The package can be installed in developer mode in Python using the `$ make devel
 - Write tests for new functionality.
 - Any `pytest` fixtures common to tests across multiple `test_*.py` files should be found within `conftest.py`.
 - Run the full suite before submitting.
-- Test coverage must not significantly drop between PRs and main.
+- Test coverage must not significantly drop between PRs and `main` branch.
 
 ## Restricted Paths
 
@@ -40,8 +41,8 @@ Do not modify:
 ## Changelog
 
 - Changes must be summarized in one or two sentences within the `CHANGELOG.rst` file.
-- New additions must be placed under the section labelled "(unreleased)".
-- Acceptable category types are all previously categories found in `CHANGELOG.rst`
+- New additions must be placed under the relevant category under the section labelled "(unreleased)".
+- Acceptable category types are all previously categories found in `CHANGELOG.rst`.
 - Entries must end with the issue number and PR number appended to the end: "(:issue:`#`, :pull:`#`)".
 
 ## Commits
@@ -56,7 +57,7 @@ Do not modify:
 
 ## Review
 
-All changes to code require human review.
+All pull requests require human review before merging, regardless of scope.
 
 ______________________________________________________________________
 

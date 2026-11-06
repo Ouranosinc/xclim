@@ -5,11 +5,13 @@ Ensemble filters for data processing
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import xarray as xr
 
 
-def _concat_hist(da: xr.DataArray, **hist) -> xr.DataArray:
+def _concat_hist(da: xr.DataArray, **hist: Any) -> xr.DataArray:
     r"""
     Concatenate historical scenario with future scenarios along the time dimension.
 
@@ -17,7 +19,7 @@ def _concat_hist(da: xr.DataArray, **hist) -> xr.DataArray:
     ----------
     da : xr.DataArray
         Input data where the historical scenario is stored alongside other, future, scenarios.
-    **hist : dict
+    **hist : Any
         Mapping of the scenario dimension name to the historical scenario coordinate, e.g. `scenario="historical"`.
 
     Returns
@@ -74,7 +76,8 @@ def _model_in_all_scens(da: xr.DataArray, dimensions: dict | None = None) -> xr.
     da : xr.DataArray
         Input data with dimensions for time, member, model and scenario.
     dimensions : dict, optional
-        Mapping from original dimension names to standard dimension names: scenario, model, member.
+        Mapping from original dimension names to standard dimension names:
+        "scenario", "model", "member".
 
     Returns
     -------
@@ -115,8 +118,9 @@ def _single_member(da: xr.DataArray, dimensions: dict | None = None) -> xr.DataA
     ----------
     da : xr.DataArray
         Input data with dimensions for time, member, model and scenario.
-    dimensions : dict
-        Mapping from original dimension names to standard dimension names: scenario, model, member.
+    dimensions : dict, optional
+        Mapping from original dimension names to standard dimension names:
+        "scenario", "model", "member".
 
     Returns
     -------

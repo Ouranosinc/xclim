@@ -43,6 +43,13 @@ body:
       options:
         - label: I would be willing/able to open a Pull Request to address this bug.
   - type: checkboxes
+    id: ai-disclosure
+    attributes:
+      label: AI Disclosure
+      description: Have you used an AI model or agent to either discover this bug or generate the content of this report?
+      options:
+        - label: I have used AI in the process of preparing/drafting this bug report.
+  - type: checkboxes
     id: terms
     attributes:
       label: Code of Conduct

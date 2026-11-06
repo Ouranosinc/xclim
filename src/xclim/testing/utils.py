@@ -22,7 +22,7 @@ from importlib.metadata import PackageNotFoundError
 from io import StringIO
 from pathlib import Path
 from shutil import copytree
-from typing import IO, Any, TextIO
+from typing import IO, Any, Literal, TextIO
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
 from urllib.request import urlretrieve
@@ -42,9 +42,10 @@ if HAS_PYTEST_SOCKET:
     from pytest_socket import SocketBlockedError
 else:
 
-    class SocketBlockedError(Exception):
+    class _SocketBlockedError(Exception):
         """Stand-in exception for when pytest_socket is not available."""
 
+    SocketBlockedError = _SocketBlockedError
 
 logger = logging.getLogger("xclim")
 
@@ -63,7 +64,6 @@ __all__ = [
     "open_dataset",
     "populate_testing_data",
     "publish_release_notes",
-    "run_doctests",
     "show_versions",
     "testing_setup_warnings",
 ]
@@ -75,6 +75,7 @@ default_testdata_repo_url = "https://raw.githubusercontent.com/Ouranosinc/xclim-
 """Default URL of the testing data repository to use when fetching datasets."""
 
 HAS_POOCH = bool(ilu.find_spec("pooch"))
+default_testdata_cache: Path | None
 if HAS_POOCH:
     import pooch
 
@@ -153,7 +154,7 @@ def list_input_variables(submodules: Sequence[str] | None = None, realms: Sequen
 
     Parameters
     ----------
-    submodules : str, optional
+    submodules : Sequence of str, optional
         Restrict the output to indicators of a list of submodules only. Default None, which parses all indicators.
     realms : Sequence of str, optional
         Restrict the output to indicators of a list of realms only. Default None, which parses all indicators.
@@ -200,9 +201,10 @@ def list_input_variables(submodules: Sequence[str] | None = None, realms: Sequen
 
 
 def publish_release_notes(
-    style: str = "md",
+    style: Literal["rst", "md"] = "md",
     file: os.PathLike[str] | StringIO | TextIO | None = None,
     changes: str | os.PathLike[str] | None = None,
+    last_release: bool = False,
 ) -> str | None:
     """
     Format release notes in Markdown or ReStructuredText.
@@ -211,15 +213,17 @@ def publish_release_notes(
     ----------
     style : {"rst", "md"}
         Use ReStructuredText formatting or Markdown. Default: Markdown.
-    file : {os.PathLike, StringIO, TextIO}, optional
+    file : os.PathLike of str or StringIO or TextIO, optional
         If provided, prints to the given file-like object. Otherwise, returns a string.
-    changes : str or os.PathLike[str], optional
+    changes : str or os.PathLike of str, optional
         If provided, manually points to the file where the changelog can be found.
         Assumes a relative path otherwise.
+    last_release : bool
+        Whether to truncate the release message to the last release. Default: False.
 
     Returns
     -------
-    str, optional
+    str or None
         If `file` not provided, the formatted release notes.
 
     Notes
@@ -250,7 +254,7 @@ def publish_release_notes(
             r":user:`([a-zA-Z0-9_.-]+)`": r"[@\1](https://github.com/\1)",
         }
     else:
-        msg = f"Formatting style not supported: {style}"
+        msg = "Formatting style not supported."
         raise NotImplementedError(msg)
 
     for search, replacement in hyperlink_replacements.items():
@@ -275,6 +279,10 @@ def publish_release_notes(
             replacement = f"[{str(grouping[0]).strip()}]({grouping[1]})"
             changes = re.sub(search, replacement, changes)
 
+    if last_release:
+        changes = changes.split(".. _changes_")[1].split("Contributors to this version:")[1].split("\n## ")[0]
+        changes = f"Contributors to this version:{changes}".strip()
+
     if not file:
         return changes
     if isinstance(file, Path | os.PathLike):
@@ -294,7 +302,7 @@ def show_versions(
 
     Parameters
     ----------
-    file : {os.PathLike, StringIO, TextIO}, optional
+    file : os.PathLike or StringIO or TextIO, optional
         If provided, prints to the given file-like object. Otherwise, returns a string.
     deps : list of str, optional
         A list of dependencies to gather and print version information from.
@@ -352,27 +360,6 @@ def show_versions(
 
 
 # Test Data Utilities ###
-
-
-def run_doctests():
-    """Run the doctests for the module."""
-    if not HAS_PYTEST_SOCKET:
-        raise ImportError(
-            "The development dependencies are needed to run the doctests. "
-            "You can install them with `pip install --group test` or `conda env create -f environment-dev.yml`."
-        )
-
-    import pytest  # pylint: disable=import-outside-toplevel
-
-    cmd = [
-        f"--rootdir={Path(__file__).absolute().parent}",
-        f"--config-file={Path(__file__).absolute().parent.joinpath('conftest.py')}",
-        "--numprocesses=0",
-        "--doctest-modules",
-        f"{Path(__file__).absolute().parents[1]}",
-    ]
-
-    sys.exit(pytest.main(cmd))
 
 
 def testing_setup_warnings():
@@ -459,7 +446,7 @@ def nimbus(
     branch: str = TESTDATA_BRANCH,
     cache_dir: str | Path | None = TESTDATA_CACHE_DIR,
     allow_updates: bool = True,
-):
+) -> pooch.Pooch:
     """
     Pooch registry instance for xclim test data.
 
@@ -472,7 +459,7 @@ def nimbus(
     cache_dir : str or Path, optional
         The path to the directory where the data files are stored.
     allow_updates : bool
-        If True, allow updates to the data files. Default is True.
+        If True, allow updates to the data files. Default: True.
 
     Returns
     -------
@@ -482,13 +469,13 @@ def nimbus(
     Notes
     -----
     There are three environment variables that can be used to control the behaviour of this registry:
-        - ``XCLIM_TESTDATA_CACHE_DIR``: If this environment variable is set, it will be used as the
+        - `XCLIM_TESTDATA_CACHE_DIR`: If this environment variable is set, it will be used as the
           base directory to store the data files.
-          The directory should be an absolute path (i.e., it should start with ``/``).
-          Otherwise, the default location will be used (based on ``platformdirs``, see :py:func:`pooch.os_cache`).
-        - ``XCLIM_TESTDATA_REPO_URL``: If this environment variable is set, it will be used as the URL of
+          The directory should be an absolute path (i.e., it should start with "/").
+          Otherwise, the default location will be used (based on `platformdirs`, see :py:func:`pooch.os_cache`).
+        - `XCLIM_TESTDATA_REPO_URL`: If this environment variable is set, it will be used as the URL of
           the repository to use when fetching datasets. Otherwise, the default repository will be used.
-        - ``XCLIM_TESTDATA_BRANCH``: If this environment variable is set, it will be used as the branch of
+        - `XCLIM_TESTDATA_BRANCH`: If this environment variable is set, it will be used as the branch of
           the repository to use when fetching datasets. Otherwise, the default branch will be used.
 
     Examples
@@ -571,7 +558,7 @@ def open_dataset(name: str, nimbus_kwargs: dict[str, Any] | None = None, **xr_kw
     ----------
     name : str
         Name of the file containing the dataset.
-    nimbus_kwargs : dict
+    nimbus_kwargs : dict, optional
         Keyword arguments passed to the nimbus function.
     **xr_kwargs : Any
         Keyword arguments passed to xarray.open_dataset.
@@ -604,9 +591,9 @@ def populate_testing_data(
     ----------
     temp_folder : Path, optional
         Path to a temporary folder to use as the local cache. If not provided, the default location will be used.
-    repo : str, optional
+    repo : str
         URL of the repository to use when fetching testing datasets.
-    branch : str, optional
+    branch : str
         Branch of xclim-testdata to use when fetching testing datasets.
     local_cache : Path or str, optional
         The path to the local cache. Defaults to the location set by the platformdirs library.
