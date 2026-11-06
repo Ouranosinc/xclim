@@ -2,22 +2,21 @@
 Changelog
 =========
 
-..
-    `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
-    ------------------------------------------------------------
-    Contributors to this version:
+`Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
+------------------------------------------------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 
-    New indicators and features
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    * N/A
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* N/A
 
-    Breaking changes
-    ^^^^^^^^^^^^^^^^
-    * N/A
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Moved `numbagg` from an optional dependency to a required one, moved `bottleneck` from a required one to a "performance" optional one (:issue:`2459`, :pull:`2461`).
 
-    Internal changes
-    ^^^^^^^^^^^^^^^^
-    * N/A
+Internal changes
+^^^^^^^^^^^^^^^^
+* N/A
 
 .. _changes_1.0.0:
 
