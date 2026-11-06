@@ -24,7 +24,7 @@ dependencies:
   - xarray >=2024.11.0
   - yamale >=5.0.0
   # Extras
-  - bottleneck >=1.3.1
+  - bottleneck >=1.4
   - flox >=0.9
   - pymannkendall >=1.4.0
   # lmoments3 - Not an official dependency but required for some Jupyter notebooks
