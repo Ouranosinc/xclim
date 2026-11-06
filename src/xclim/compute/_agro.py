@@ -1474,9 +1474,7 @@ def hardiness_zones(
     flag_means = ", ".join([f"{(n // 2) + 1}{'a' if n % 2 == 0 else 'b'}" for n in range(0, 28)])
 
     tn_min_rolling = statistics(tasmin, statistic="min", freq=freq).rolling(time=window).mean()
-    zones = get_zones(tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step).clip(
-        min=0
-    )
+    zones = get_zones(tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step).clip(min=0)
     zones = zones.assign_attrs(units="", flag_values=flag_vals, flag_meanings=flag_means)
     return zones
 
