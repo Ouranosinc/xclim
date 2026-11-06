@@ -20,6 +20,7 @@ Internal changes
     * Clearer directives concerning AI involvement have been added to `AGENTS.md` and `PULL_REQUEST_TEMPLATE.md`.
     * The suggested invocation for running doctests has been simplified in `CONTRIBUTING.rst` and `Makefile`.
     * Corrections made to CI triggers and deployment environments.
+* Convenience CLI tool `$ xclim release_notes` now supports a ``-l/--last-release`` flag for truncating the changelog to entries found in the last stable release. (:pull:`2460`).
 
 .. _changes_1.0.0:
 
