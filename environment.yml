@@ -10,7 +10,7 @@ dependencies:
   - click >=8.1
   - dask >=2024.8.1
   - docstring_parser
-  - filelock >=3.14.0
+  - filelock >=4.2.1
   - numba >=0.60.0
   - numbagg >=0.8
   - numpy >=2.0

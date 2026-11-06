@@ -201,9 +201,10 @@ def prefetch_testing_data(ctx, repo, branch, cache_dir):  # numpydoc ignore=PR01
 @click.command(short_help="Print history for publishing purposes.")
 @click.option("-m", "--md", is_flag=True, help="Prints the history in Markdown format.")
 @click.option("-r", "--rst", is_flag=True, help="Prints the history in ReStructuredText format.")
+@click.option("-l", "--last-release", is_flag=True, help="Return the truncated content of the last release.")
 @click.option("-c", "--changes", help="Pass a custom changelog file to be used instead.")
 @click.pass_context
-def release_notes(ctx, md, rst, changes):  # numpydoc ignore=PR01
+def release_notes(ctx, md, rst, last_release, changes):  # numpydoc ignore=PR01
     """Generate the release notes history for publishing purposes."""
     if md and rst:
         raise click.BadArgumentUsage("Cannot return both Markdown and ReStructuredText in same release_notes call.")
@@ -215,9 +216,9 @@ def release_notes(ctx, md, rst, changes):  # numpydoc ignore=PR01
         raise click.BadArgumentUsage("Must specify Markdown (-m) or ReStructuredText (-r).")
 
     if changes:
-        click.echo(f"{publish_release_notes(style, changes=changes)}")
+        click.echo(f"{publish_release_notes(style, changes=changes, last_release=last_release)}")
     else:
-        click.echo(f"{publish_release_notes(style)}")
+        click.echo(f"{publish_release_notes(style, last_release=last_release)}")
     ctx.exit()
 
 

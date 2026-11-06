@@ -64,7 +64,6 @@ __all__ = [
     "open_dataset",
     "populate_testing_data",
     "publish_release_notes",
-    "run_doctests",
     "show_versions",
     "testing_setup_warnings",
 ]
@@ -205,6 +204,7 @@ def publish_release_notes(
     style: Literal["rst", "md"] = "md",
     file: os.PathLike[str] | StringIO | TextIO | None = None,
     changes: str | os.PathLike[str] | None = None,
+    last_release: bool = False,
 ) -> str | None:
     """
     Format release notes in Markdown or ReStructuredText.
@@ -218,6 +218,8 @@ def publish_release_notes(
     changes : str or os.PathLike of str, optional
         If provided, manually points to the file where the changelog can be found.
         Assumes a relative path otherwise.
+    last_release : bool
+        Whether to truncate the release message to the last release. Default: False.
 
     Returns
     -------
@@ -252,7 +254,7 @@ def publish_release_notes(
             r":user:`([a-zA-Z0-9_.-]+)`": r"[@\1](https://github.com/\1)",
         }
     else:
-        msg = f"Formatting style not supported: {style}"
+        msg = "Formatting style not supported."
         raise NotImplementedError(msg)
 
     for search, replacement in hyperlink_replacements.items():
@@ -276,6 +278,10 @@ def publish_release_notes(
             search = rf"`{grouping[0]} <.+>`\_"
             replacement = f"[{str(grouping[0]).strip()}]({grouping[1]})"
             changes = re.sub(search, replacement, changes)
+
+    if last_release:
+        changes = changes.split(".. _changes_")[1].split("Contributors to this version:")[1].split("\n## ")[0]
+        changes = f"Contributors to this version:{changes}".strip()
 
     if not file:
         return changes
@@ -354,27 +360,6 @@ def show_versions(
 
 
 # Test Data Utilities ###
-
-
-def run_doctests():
-    """Run the doctests for the module."""
-    if not HAS_PYTEST_SOCKET:
-        raise ImportError(
-            "The development dependencies are needed to run the doctests. "
-            "You can install them with `pip install --group test` or `conda env create -f environment-dev.yml`."
-        )
-
-    import pytest  # pylint: disable=import-outside-toplevel
-
-    cmd = [
-        f"--rootdir={Path(__file__).absolute().parent}",
-        f"--config-file={Path(__file__).absolute().parent.joinpath('conftest.py')}",
-        "--numprocesses=0",
-        "--doctest-modules",
-        f"{Path(__file__).absolute().parents[1]}",
-    ]
-
-    sys.exit(pytest.main(cmd))
 
 
 def testing_setup_warnings():

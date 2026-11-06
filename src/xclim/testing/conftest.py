@@ -1,10 +1,11 @@
 """Specialized setup for running xclim doctests."""
 
-# This file is the setup for the doctest suite.
-# This must be run using the following statements from Python:
-# python -c "from xclim.testing.utils import run_doctests; run_doctests()"
-# Alternatively, doctests can be run from the command line via the following command:
-# python -m pytest --rootdir=tests/ --doctest src/xclim
+# This file is the testing setup for the doctest suite.
+
+# Doctests must be run from the command line via the following command:
+# $ python -m pytest --numprocesses=auto --rootdir=src/xclim/testing --doctest-modules src/xclim
+# or, alternatively:
+# $ make test-doctests
 
 from __future__ import annotations
 

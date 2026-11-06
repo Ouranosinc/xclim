@@ -7,16 +7,14 @@ on:
     paths-ignore:
       - .*
       - .github/*.in
-      - .github/*.md
       - .github/*.txt
-      - .github/*.yml
-      - .github/*/*.md
-      - .github/*/*.yml
+      - .github/**/*.md
+      - .github/**/*.yml
       - CHANGELOG.rst
       - Makefile
-      - docs/*/*.ipynb
-      - docs/*/*.py
-      - docs/*/*.rst
+      - docs/**/*.ipynb
+      - docs/**/*.py
+      - docs/**/*.rst
       - docs/Makefile
       - docs/make.bat
       - docs/references.bib

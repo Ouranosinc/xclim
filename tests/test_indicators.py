@@ -20,11 +20,6 @@ from xclim.core.indicator import Daily, IndexWrapper, Indicator, ResamplingIndic
 from xclim.core.units import convert_units_to, declare_units, units
 from xclim.testing import list_input_variables
 
-try:
-    from xarray import DataTree
-except ImportError:
-    DataTree = False
-
 
 @declare_units(da="[temperature]", thresh="[temperature]")
 def uniindtemp_compute(
@@ -221,7 +216,6 @@ def test_as_dataset_multi(tas_series):
     assert "tmax" in dsout.data_vars
 
 
-@pytest.mark.skipif(DataTree is False, reason="Old xarray doesn't have DataTree")
 def test_datatree(tasmin_series, tasmax_series):
     ds1 = xr.Dataset({"tasmax": tasmax_series(np.arange(360)), "tasmin": tasmin_series(np.arange(360))})
     ds2 = ds1.expand_dims(lat=[45, 46])
@@ -232,7 +226,7 @@ def test_datatree(tasmin_series, tasmax_series):
         }
     )
 
-    dt = DataTree.from_dict({"/base": ds1, "/base/withlats": ds2, "/noleap": ds3})
+    dt = xr.DataTree.from_dict({"/base": ds1, "/base/withlats": ds2, "/noleap": ds3})
 
     dtout = multiOptVar(ds=dt)
     ds1out = multiOptVar(ds=ds1)
@@ -240,13 +234,12 @@ def test_datatree(tasmin_series, tasmax_series):
     xr.testing.assert_equal(dtout["base"].dataset.multiopt, ds1out.multiopt)
 
 
-@pytest.mark.skipif(DataTree is False, reason="Old xarray doesn't have DataTree")
 def test_datatree_error(tas_series, tasmax_series):
     ds1 = xr.Dataset({"tasmax": tasmax_series(np.arange(360)), "tas": tas_series(np.arange(360))})
     ds2 = ds1.expand_dims(lat=[45, 46])
     ds3 = xr.Dataset({"tasmax": tasmax_series(np.arange(720), start="1950-01-01", calendar="noleap")})
 
-    dt = DataTree.from_dict({"/base": ds1, "/base/withlats": ds2, "/noleap": ds3})
+    dt = xr.DataTree.from_dict({"/base": ds1, "/base/withlats": ds2, "/noleap": ds3})
 
     with pytest.raises(MissingVariableError):
         multiTemp(ds=dt, freq="MS")

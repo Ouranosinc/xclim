@@ -4,7 +4,7 @@ Changelog
 
 `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
 ------------------------------------------------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -12,11 +12,15 @@ New indicators and features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Moved `numbagg` from an optional dependency to a required one, moved `bottleneck` from a required to an optional "performance" dependency (`xclim[performance]`). (:issue:`2459`, :pull:`2461`).
+* `numbagg` is now a required dependency, replacing `bottleneck` (now an optional "performance" dependency; `$ pip install xclim[performance]`). (:issue:`2459`, :pull:`2461`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* N/A
+* CI and boilerplate housekeeping adjustments. (:pull:`2460`):
+    * Clearer directives concerning AI involvement have been added to `AGENTS.md` and `PULL_REQUEST_TEMPLATE.md`.
+    * The suggested invocation for running doctests has been simplified in `CONTRIBUTING.rst` and `Makefile`.
+    * Corrections made to CI triggers and deployment environments.
+* Convenience CLI tool `$ xclim release_notes` now supports a ``-l/--last-release`` flag for truncating the changelog to entries found in the last stable release. (:pull:`2460`).
 
 .. _changes_1.0.0:
 
