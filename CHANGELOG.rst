@@ -4,7 +4,7 @@ Changelog
 
 `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
 ------------------------------------------------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -12,7 +12,7 @@ New indicators and features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* N/A
+* `numbagg` is now a required dependency, replacing `bottleneck` (now an optional "performance" dependency; `$ pip install xclim[performance]`). (:issue:`2459`, :pull:`2461`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
