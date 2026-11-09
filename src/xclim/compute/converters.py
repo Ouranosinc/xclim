@@ -27,7 +27,7 @@ from xclim.compute.helpers import (
     time_correction_for_solar_angle,
     wind_speed_height_conversion,
 )
-from xclim.core import Quantified
+from xclim.core import DateStr, Quantified
 from xclim.core.units import (
     amount2rate,
     convert_units_to,
@@ -2048,6 +2048,8 @@ def _pet_thornthwaite(  # numpydoc ignore=GL08
     tasmin: xr.DataArray | None,
     tasmax: xr.DataArray | None,
     lat: xr.DataArray,
+    ref_start: DateStr | None = None,
+    ref_end: DateStr | None = None,
 ) -> xr.DataArray:
     if tas is None:
         provided = _require({"tasmin": tasmin, "tasmax": tasmax}, "thornthwaite48")
@@ -2064,23 +2066,17 @@ def _pet_thornthwaite(  # numpydoc ignore=GL08
     dl = day_lengths(time_d, lat) / 12
     dl_m = dl.resample(time="MS").mean(dim="time")
 
-    # annual heat index
-    id_m = (tas / 5) ** 1.514
-    id_y = id_m.resample(time="YS").sum(dim="time")
+    # Annual heat index, a site constant computed from the normal (climatological) monthly
+    # temperatures of the reference period, as in Thornthwaite (1948).
+    tas_norm = tas.sel(time=slice(ref_start, ref_end)).groupby("time.month").mean(dim="time")
+    heat_idx = ((tas_norm / 5) ** 1.514).sum(dim="month")
+    a = 6.75e-7 * heat_idx**3 - 7.71e-5 * heat_idx**2 + 0.01791 * heat_idx + 0.49239
 
-    tas_idy_a = []
-    for base_time, indexes in tas.resample(time="YS").groups.items():
-        tas_y = tas.isel(time=indexes)
-        id_v = id_y.sel(time=base_time)
-        a = 6.75e-7 * id_v**3 - 7.71e-5 * id_v**2 + 0.01791 * id_v + 0.49239
-
-        frac = (10 * tas_y / id_v) ** a
-        tas_idy_a.append(frac)
-
-    tas_idy_a_array = xr.concat(tas_idy_a, dim="time")
+    # Correction for the number of days in the month (the formula assumes 30-day months)
+    n_days = tas.time.dt.days_in_month
 
     # Thornthwaite(1948) formula
-    pet = 1.6 * dl_m * tas_idy_a_array  # cm/month
+    pet = 1.6 * dl_m * (n_days / 30) * (10 * tas / heat_idx) ** a  # cm/month
     return 10 * pet  # mm/month
 
 
@@ -2180,6 +2176,8 @@ def potential_evapotranspiration(  # pylint: disable=too-many-statements
     ] = "BR65",
     peta: float = 0.00516409319477,
     petb: float = 0.0874972822289,
+    ref_start: DateStr | None = None,
+    ref_end: DateStr | None = None,
 ) -> xr.DataArray:
     r"""
     Potential evapotranspiration.
@@ -2223,6 +2221,14 @@ def potential_evapotranspiration(  # pylint: disable=too-many-statements
         Used only with method MB05 as :math:`b` for calculation of PET, see Notes section.
         Default value resulted from calibration of PET over the UK.
         Default: 0.0874972822289.
+    ref_start : DateStr, optional
+        Used only with method TW48. Start date of the reference period from which the climatological heat index
+        is computed. A `DateStr` is expected, that is a `str` in format "YYYY-MM-DD".
+        `None` means that the reference period begins at the start of the input dataset.
+    ref_end : DateStr, optional
+        Used only with method TW48. End date of the reference period from which the climatological heat index
+        is computed. A `DateStr` is expected, that is a `str` in format "YYYY-MM-DD".
+        `None` means that the reference period finishes at the end of the input dataset.
 
     Returns
     -------
@@ -2245,6 +2251,9 @@ def potential_evapotranspiration(  # pylint: disable=too-many-statements
         - "thornthwaite48" or "TW48", based on :cite:t:`thornthwaite_approach_1948`.
           Requires tasmin and tasmax, monthly [MS] or daily [D] freq.
           (optional: tas can be given instead of tasmin and tasmax).
+          The annual heat index and its exponent are computed once, from the mean monthly temperatures of the
+          reference period (`ref_start` to `ref_end`, by default the whole input), and the result is scaled by
+          the number of days in each month.
 
         - "allen98" or "FAO_PM98", based on :cite:t:`allen_crop_1998`. Modification of Penman-Monteith method.
           Requires tasmin and tasmax, relative humidity, radiation flux and wind speed (10 m wind will be converted to 2 m).
@@ -2291,7 +2300,7 @@ def potential_evapotranspiration(  # pylint: disable=too-many-statements
         pet = _pet_mcguinness_bordne(tas, tasmin, tasmax, lat, peta, petb)
 
     elif method in ["thornthwaite48", "TW48"]:
-        pet = _pet_thornthwaite(tas, tasmin, tasmax, lat)
+        pet = _pet_thornthwaite(tas, tasmin, tasmax, lat, ref_start, ref_end)
 
     elif method in ["allen98", "FAO_PM98"]:
         pet = _pet_fao_allen(tasmin, tasmax, hurs, sfcWind, rsds, rsus, rlds, rlus)

@@ -4,7 +4,7 @@ Changelog
 
 `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
 ------------------------------------------------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Mark L. Morrissey (:user:`klemmeri`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -13,6 +13,10 @@ New indicators and features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `numbagg` is now a required dependency, replacing `bottleneck` (now an optional "performance" dependency; `$ pip install xclim[performance]`). (:issue:`2459`, :pull:`2461`).
+
+Bug fixes
+^^^^^^^^^
+* ``potential_evapotranspiration`` with method "TW48" now computes the Thornthwaite heat index once, from the monthly normals of a reference period set by the new ``ref_start`` and ``ref_end`` arguments (default: the whole input), instead of recomputing it each year, which damped warming-driven PET trends. Monthly totals are also scaled by the number of days in the month. (:issue:`2463`, :pull:`XXXX`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

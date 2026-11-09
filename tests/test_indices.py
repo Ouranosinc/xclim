@@ -2322,6 +2322,7 @@ def test_heat_index(tas_series, hurs_series):
     np.testing.assert_array_almost_equal(hf, expected.to("fahrenheit"), 0)
 
 
+
 @pytest.mark.parametrize("op,exp", [("max", 11), ("sum", 21), ("count", 3), ("mean", 7)])
 def test_freezethaw_spell(tasmin_series, tasmax_series, op, exp):
     tmin = np.ones(365)
@@ -2496,6 +2497,44 @@ class TestPotentialEvapotranspiration:
         # find lat implicitly
         out = xcc.potential_evapotranspiration(tas=tm, method="TW48")
         np.testing.assert_allclose(out.isel(lat=0, time=1), [42.7619242 / (86400 * 30)], rtol=1e-1)
+
+    @staticmethod
+    def _tw48_exponent(heat_idx):
+        return 6.75e-7 * heat_idx**3 - 7.71e-5 * heat_idx**2 + 0.01791 * heat_idx + 0.49239
+
+    def test_thornthwaite_climatological_heat_index(self, tas_series, lat_series):
+        # A year at 10 degC followed by a year at 20 degC: with a single climatological heat index,
+        # PET in the second year is (20/10)**a times PET in the first, for every month.
+        lat = lat_series([45])
+        tm = (
+            tas_series(np.repeat([10.0, 20.0], 12), start="1990-01-01", freq="MS", units="degC")
+            .expand_dims(lat=lat)
+            .assign_coords(lat=lat)
+        )
+
+        # Reference period = whole input (default): normals are 15 degC in every month
+        out = xcc.potential_evapotranspiration(tas=tm, method="TW48").isel(lat=0)
+        a = self._tw48_exponent(12 * 3**1.514)
+        np.testing.assert_allclose(out[12:].values / out[:12].values, 2**a, rtol=1e-5)
+
+        # Reference period = first year only: normals are 10 degC in every month
+        out = xcc.potential_evapotranspiration(
+            tas=tm, method="TW48", ref_start="1990-01-01", ref_end="1990-12-31"
+        ).isel(lat=0)
+        a = self._tw48_exponent(12 * 2**1.514)
+        np.testing.assert_allclose(out[12:].values / out[:12].values, 2**a, rtol=1e-5)
+
+    def test_thornthwaite_month_length(self, tas_series, lat_series):
+        # Thornthwaite assumes 30-day months; scaling the monthly total by days/30 makes the daily rate
+        # independent of month length. At the equator, with constant temperature, February and March agree.
+        lat = lat_series([0])
+        tm = (
+            tas_series(np.full(12, 25.0), start="1990-01-01", freq="MS", units="degC")
+            .expand_dims(lat=lat)
+            .assign_coords(lat=lat)
+        )
+        out = xcc.potential_evapotranspiration(tas=tm, method="TW48").isel(lat=0)
+        np.testing.assert_allclose(out.isel(time=1), out.isel(time=2), rtol=1e-2)
 
     def test_mcguinnessbordne(self, tasmin_series, tasmax_series, lat_series):
         lat = lat_series([45])
