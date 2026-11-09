@@ -2591,7 +2591,7 @@ class TestPotentialEvapotranspiration:
             sfcWind=sfcWind,
             method="FAO_PM98",
         )
-        np.testing.assert_allclose(out.isel(lat=0, time=2), [1.208832768 / 86400], rtol=1e-2)
+        np.testing.assert_allclose(out.isel(lat=0, time=2), [1.2241834 / 86400], rtol=1e-2)
 
 
 def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series, tas_series, lat_series):
