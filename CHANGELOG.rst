@@ -17,6 +17,7 @@ Breaking changes
 Bug fixes
 ^^^^^^^^^
 * ``potential_evapotranspiration`` with method "TW48" now computes the Thornthwaite heat index once, from the monthly normals of a reference period set by the new ``ref_start`` and ``ref_end`` arguments (default: the whole input), instead of recomputing it each year, which damped warming-driven PET trends. Monthly totals are also scaled by the number of days in the month. (:issue:`2463`, :pull:`XXXX`).
+* ``heat_index`` now follows the full NWS procedure (simple formula below 80 °F, low- and high-humidity adjustments) instead of applying the Rothfusz regression alone, which erred by up to about 5 °C between 20 °C and 27 °C. (:issue:`2463`, :pull:`XXXX`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

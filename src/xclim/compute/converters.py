@@ -200,27 +200,50 @@ def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
     heat balance equations which account for many variables other than vapour pressure, which is used exclusively in the
     Humidex calculation.
 
+    The calculation follows the procedure of the US National Weather Service (NWS), in °F
+    (https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml).
+    A simple formula is computed first. If its average with the air temperature is below 80 °F, it is the result.
+    Otherwise, the regression of Rothfusz (1990, NWS Technical Attachment SR 90-23) is used, with an adjustment
+    subtracted when the relative humidity is below 13 % and the temperature is between 80 °F and 112 °F,
+    and an adjustment added when the relative humidity is above 85 % and the temperature is between 80 °F and 87 °F.
+    The regression alone is not valid when the heat index is below about 80 °F (27 °C).
+
     References
     ----------
     :cite:cts:`blazejczyk_comparison_2012`
     """
     thresh = 20  # degC
-    t = convert_units_to(tas, "degC")
-    t = t.where(t > thresh)
+    valid = convert_units_to(tas, "degC") > thresh
+    t = convert_units_to(tas, "degF").where(valid)
     r = convert_units_to(hurs, "%")
 
-    hi = (
-        -8.78469475556
-        + 1.61139411 * t
-        + 2.33854883889 * r
-        - 0.14611605 * t * r
-        - 0.012308094 * t * t
-        - 0.0164248277778 * r * r
-        + 0.002211732 * t * t * r
-        + 0.00072546 * t * r * r
-        - 0.000003582 * t * t * r * r
+    # Simple formula, used when the heat index is below 80 degF
+    hi_simple = 0.5 * (t + 61.0 + (t - 68.0) * 1.2 + r * 0.094)
+
+    # Rothfusz (1990) regression
+    hi_rothfusz = (
+        -42.379
+        + 2.04901523 * t
+        + 10.14333127 * r
+        - 0.22475541 * t * r
+        - 0.00683783 * t * t
+        - 0.05481717 * r * r
+        + 0.00122874 * t * t * r
+        + 0.00085282 * t * r * r
+        - 0.00000199 * t * t * r * r
     )
-    hi = hi.assign_attrs(units="degC")
+    # Adjustment for low relative humidity
+    low_rh = (r < 13) & (t >= 80) & (t <= 112)
+    adj_low = ((13 - r) / 4) * np.sqrt((17 - abs(t - 95.0)).clip(min=0) / 17)
+    hi_rothfusz = xr.where(low_rh, hi_rothfusz - adj_low, hi_rothfusz)
+    # Adjustment for high relative humidity
+    high_rh = (r > 85) & (t >= 80) & (t <= 87)
+    adj_high = ((r - 85) / 10) * ((87 - t) / 5)
+    hi_rothfusz = xr.where(high_rh, hi_rothfusz + adj_high, hi_rothfusz)
+
+    hi = xr.where((hi_simple + t) / 2 < 80, hi_simple, hi_rothfusz)
+    hi = hi.where(t.notnull())
+    hi = hi.assign_attrs(units="degF")
     out = convert_units_to(hi, tas.units)
     return out
 

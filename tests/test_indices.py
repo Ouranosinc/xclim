@@ -2322,6 +2322,17 @@ def test_heat_index(tas_series, hurs_series):
     np.testing.assert_array_almost_equal(hf, expected.to("fahrenheit"), 0)
 
 
+def test_heat_index_nws(tas_series, hurs_series):
+    # Values from the NWS procedure (simple formula below 80 degF, regression with adjustments above)
+    # Cases: simple formula (saturated and moderate), low-RH adjustment, high-RH adjustment, regression only
+    tas = tas_series(np.array([69.8, 75.2, 100.0, 85.0, 96.0]), units="degF")
+    hurs = hurs_series(np.array([100, 50, 10, 90, 65]))
+
+    expected = np.array([71.18, 74.77, 94.12, 101.78, 121.03])
+
+    hf = xcc.heat_index(tas, hurs)
+    np.testing.assert_allclose(hf, expected, atol=0.01)
+
 
 @pytest.mark.parametrize("op,exp", [("max", 11), ("sum", 21), ("count", 3), ("mean", 7)])
 def test_freezethaw_spell(tasmin_series, tasmax_series, op, exp):
