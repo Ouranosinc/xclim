@@ -203,14 +203,14 @@ def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
     The calculation follows the procedure of the US National Weather Service (NWS), in °F
     (https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml).
     A simple formula is computed first. If its average with the air temperature is below 80 °F, it is the result.
-    Otherwise, the regression of Rothfusz (1990, NWS Technical Attachment SR 90-23) is used, with an adjustment
+    Otherwise, the regression of Rothfusz :cite:p:`rothfusz_heat_1990` is used, with an adjustment
     subtracted when the relative humidity is below 13 % and the temperature is between 80 °F and 112 °F,
     and an adjustment added when the relative humidity is above 85 % and the temperature is between 80 °F and 87 °F.
     The regression alone is not valid when the heat index is below about 80 °F (27 °C).
 
     References
     ----------
-    :cite:cts:`blazejczyk_comparison_2012`
+    :cite:cts:`blazejczyk_comparison_2012,rothfusz_heat_1990`
     """
     thresh = 20  # degC
     valid = convert_units_to(tas, "degC") > thresh
