@@ -2145,7 +2145,7 @@ def _pet_fao_allen(  # numpydoc ignore=GL08
         ea = (es * hurs).assign_attrs(units="kPa")
 
         # slope of saturation vapour pressure curve at the mean temperature, FAO-56 Eq. 13 [kPa degC-1]
-        es_tas_m = 0.6108 * np.exp(17.27 * tas_m / (tas_m + 237.3))
+        es_tas_m: xr.DataArray = 0.6108 * np.exp(17.27 * tas_m / (tas_m + 237.3))
         delta = (4098 * es_tas_m / (tas_m + 237.3) ** 2).assign_attrs(units="kPa degC-1")
         # net radiation
         rsds = convert_units_to(provided["rsds"], "MJ m-2 d-1")
