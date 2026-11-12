@@ -14,6 +14,10 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * `numbagg` is now a required dependency, replacing `bottleneck` (now an optional "performance" dependency; `$ pip install xclim[performance]`). (:issue:`2459`, :pull:`2461`).
 
+Bug fixes
+^^^^^^^^^
+* Fixed links in indicator search page. (:issue:`2466`, :pull:`2467`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * CI and boilerplate housekeeping adjustments. (:pull:`2460`):
