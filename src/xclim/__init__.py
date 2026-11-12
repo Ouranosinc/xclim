@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.resources as _resources
+from pathlib import Path
 
 from xclim import compute, ensembles
 from xclim import indicators as _indicators
@@ -14,7 +15,7 @@ from xclim.indicators import atmos, convert, generic, land, seaIce
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.99.2-beta.0"
+__version__ = "1.0.1-beta.1"
 
 with _resources.as_file(_resources.files("xclim.data")) as _module_data:
     # Load official locales
@@ -23,6 +24,6 @@ with _resources.as_file(_resources.files("xclim.data")) as _module_data:
         _load_locale(_filename, _filename.stem)
 
     # Virtual modules creation:
-    _indicators.icclim = IndicatorCollection.from_yaml(_module_data / "icclim", mode="raise", register=True)
-    _indicators.anuclim = IndicatorCollection.from_yaml(_module_data / "anuclim", mode="raise", register=True)
-    _indicators.cf = IndicatorCollection.from_yaml(_module_data / "cf", mode="raise", register=True)
+    _indicators.icclim = IndicatorCollection.from_yaml(_module_data / "icclim", mode="raise", register=True)  # type: ignore[attr-defined]
+    _indicators.anuclim = IndicatorCollection.from_yaml(_module_data / "anuclim", mode="raise", register=True)  # type: ignore[attr-defined]
+    _indicators.cf = IndicatorCollection.from_yaml(_module_data / "cf", mode="raise", register=True)  # type: ignore[attr-defined]

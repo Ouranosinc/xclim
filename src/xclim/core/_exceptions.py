@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import warnings
+from typing import Literal
 
 logger = logging.getLogger("xclim")
 
@@ -24,11 +25,11 @@ class MissingVariableError(ValueError):
 
 def raise_warn_or_log(
     err: Exception,
-    mode: str,
+    mode: Literal["ignore", "log", "warn", "raise"],
     msg: str | None = None,
     err_type: type = ValueError,
     stacklevel: int = 1,
-):
+) -> None:
     """
     Raise, warn or log an error according.
 
@@ -36,22 +37,34 @@ def raise_warn_or_log(
     ----------
     err : Exception
         An error.
-    mode : {'ignore', 'log', 'warn', 'raise'}
+    mode : {"ignore", "log", "warn", "raise"}
         What to do with the error.
     msg : str, optional
         The string used when logging or warning.
         Defaults to the `msg` attr of the error (if present) or to "Failed with <err>".
     err_type : type
         The type of error/exception to raise.
+        Default: ValueError.
     stacklevel : int
         Stacklevel when warning. Relative to the call of this function (1 is added).
+        Default: 1.
+
+    Raises
+    ------
+    ValueError
+        If `mode` is not one of ["ignore", "log", "warn", "raise"].
+        If error message is not a valid string.
     """
     message = msg or getattr(err, "msg", f"Failed with {err!r}.")
+    if not isinstance(message, str):
+        raise ValueError(f"Error message: {message} is not a string.")
     if mode == "ignore":
         pass
     elif mode == "log":
         logger.info(message)
     elif mode == "warn":
         warnings.warn(message, stacklevel=stacklevel + 1)
-    else:  # mode == "raise"
+    elif mode == "raise":
         raise err from err_type(message)
+    else:
+        raise ValueError(f"mode: {mode} is not valid. Must be one of ['ignore', 'log', 'warn', 'raise'].")

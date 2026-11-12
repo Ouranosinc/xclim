@@ -5,14 +5,14 @@ on:
     branches:
       - main
     paths-ignore:
-      - .github/*/*.yml
+      - .github/**/*.yml
       - .pre-commit-config.yaml
       - CHANGELOG.rst
       - CI/*.txt
       - Makefile
-      - docs/*/*.ipynb
-      - docs/*/*.py
-      - docs/*/*.rst
+      - docs/**/*.ipynb
+      - docs/**/*.py
+      - docs/**/*.rst
       - pyproject.toml
       - src/xclim/__init__.py
       - tox.ini

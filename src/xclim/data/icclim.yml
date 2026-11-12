@@ -109,7 +109,7 @@ indicators:
     parameters:
       thresh: 25 degC
   CSU:
-    base: maximum_consecutive_warm_days
+    base: hot_spell_max_length
     outputs:
     - attrs:
         long_name: Maximum number of consecutive summer day
@@ -166,14 +166,14 @@ indicators:
     parameters:
       thresh: 17 degC
   CDD:
-    base: cdd
+    base: cdd # FIXME: Replace with dry_spell_max_length
     outputs:
     - attrs:
         long_name: Maximum number of consecutive dry days (RR<1 mm)
     parameters:
       thresh: 1 mm/day
   CWD:
-    base: cwd
+    base: cwd # FIXME: Replace with wet_spell_max_length
     outputs:
     - attrs:
         long_name: Maximum number of consecutive wet days (RR≥1 mm)

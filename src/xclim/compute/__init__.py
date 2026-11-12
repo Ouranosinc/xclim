@@ -53,7 +53,7 @@ The following example shows the structure of a compute function definition:
 
        Parameters
        ----------
-       var1 : xarray.DataArray
+       var1 : xr.DataArray
          Description of variable (no need to specify units, the signature and decorator carry this information).
          <var1> is a short name like "tas", "pr" or "sfcWind".
        thresh : str
@@ -64,7 +64,7 @@ The following example shows the structure of a compute function definition:
 
        Returns
        -------
-       <var_name> : xarray.DataArray, [output units dimension]
+       <var_name> : xr.DataArray, [output units dimension]
          Output's <long_name>
          Specifying <var_name> is optional.
        \"\"\"
