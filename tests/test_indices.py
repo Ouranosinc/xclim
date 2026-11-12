@@ -344,7 +344,6 @@ class TestAgroclimaticIndices:
         np.testing.assert_array_equal(out, np.array([np.nan, expected]))
 
 
-# @pytest.mark.usefixtures("use_bottleneck")
 class TestStandardizedIndices:
     # gamma/APP reference results: Obtained with `monocongo/climate_indices` library
     # MS/fisk/ML reference results: Obtained with R package `SPEI`
