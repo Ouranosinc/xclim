@@ -132,7 +132,7 @@
     },
     {
       "name": "Whelan, Chistopher",
-      "affiliation": "Independent Researcher, United States"
+      "affiliation": "Independent Researcher, United States of America"
     },
     {
       "name": "Braun, Marco",
@@ -186,6 +186,11 @@
       "name": "Vandelanotte, Kobe",
       "affiliation": "Royal Meteorological Institute of Belgium (RMI), Brussels, Belgium",
       "orcid": "0009-0001-1252-7315"
+    },
+    {
+      "name": "Morrissey, Mark L.",
+      "affiliation": "School of Meteorology, University of Oklahoma, Norman, Oklahoma, United States of America",
+      "orcid": "0009-0009-7400-2475"
     }
   ],
   "keywords": [
