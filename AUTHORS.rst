@@ -55,3 +55,4 @@ Contributors
 * Armin Hofmann `@HofmannGeo <https://github.com/HofmannGeo>`_
 * Eve Larose <eve.larose.r@gmail.com> `@e-larose <https://github.com/e-larose>`_
 * Kobe Vandelanotte <kobe.ande@gmail.com> `@kobebryant432 <https://github.com/kobebryant432>`_
+* Richard Warren <richard.warren@agr.gc.ca> `@C15H24 <https://github.com/C15H24>` _

@@ -8,7 +8,7 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* N/A
+* Added ``xclim.compute.palmer_drought_indices`` for computing Palmer drought metrics, including the Palmer Z-index, PDSI, PHDI, PMDI, and self-calibrated PDSI (scPDSI). The implementation supports gridded xarray inputs and returns Palmer drought indices together with associated water-balance diagnostics and calibration variables. (:pull:`2450`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
