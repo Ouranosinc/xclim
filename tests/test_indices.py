@@ -526,6 +526,9 @@ class TestStandardizedIndices:
     @pytest.mark.parametrize(
         "freq, window, dist, method,  values, diff_tol",
         [
+            # reference results: Obtained with R package `standaRdized`
+            ("D", 1, "genextreme", "ML", [0.5331, 0.5338, 0.5098, 0.4656, 0.4937], 9e-2),
+            ("D", 12, "genextreme", "ML", [0.4414, 0.4695, 0.4861, 0.4838, 0.4877], 9e-2),
             # reference results : xclim version where the test was implemented
             ("D", 1, "genextreme", "ML", [0.6105, 0.6167, 0.5957, 0.5520, 0.5794], 2e-2),
             ("D", 1, "fisk", "ML", [0.3514, 0.3741, 0.1349, 0.4332, 0.1724], 2e-2),
