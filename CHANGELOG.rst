@@ -4,7 +4,7 @@ Changelog
 
 `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
 ------------------------------------------------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Mark L. Morrissey (:user:`klemmeri`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Mark L. Morrissey (:user:`klemmeri`), Éric Dupuis (:user:`coxipi`), Richard Warren (:user:`C15H24`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
