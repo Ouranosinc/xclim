@@ -1405,16 +1405,22 @@ class _LocaleMetadataFormatter(_MetadataFormatter):
 class _DeprecationWarner(_LocaleMetadataFormatter):
     """Adds possibility to warn about a deprecated indicator."""
 
-    _version_deprecated = ""
+    version_deprecated: tuple[str, str] | None = None
+    """
+    If set, this indicator is deprecated and an alternative should be used.
+
+    This is a 2 strings tuple giving the first xclim version in which this indicator was deprecated
+    and the name of an alternative, if any.
+    """
 
     def __call__(self, *args, **kwargs):
-        if self._version_deprecated:
-            alternative = ""
-            if isinstance(self._version_deprecated, tuple):
-                vv, other = self._version_deprecated
+        if self.version_deprecated:
+            vv, other = self.version_deprecated
+            if other:
                 alternative = f"Please use {other} instead. "
             else:
-                vv = self._version_deprecated
+                alternative = ""
+
             warnings.warn(
                 f"`{self.title}` is deprecated as of `xclim` v{vv} and will be removed in a future release. "
                 f"{alternative} See the `xclim` release notes for more information: "
