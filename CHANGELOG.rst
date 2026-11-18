@@ -13,6 +13,7 @@ New indicators and features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `numbagg` is now a required dependency, replacing `bottleneck` (now an optional "performance" dependency; `$ pip install xclim[performance]`). (:issue:`2459`, :pull:`2461`).
+* `xclim.atmos.standardized_precipitation_index` now defaults to the two-parameter gamma distribution. ()
 
 Bug fixes
 ^^^^^^^^^
