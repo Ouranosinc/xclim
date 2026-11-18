@@ -2,11 +2,14 @@
 # Tests for `xclim.core.options`
 from __future__ import annotations
 
+import threading
+import time
+
 import pytest
 
 from xclim import set_options
 from xclim.core.missing import MissingBase
-from xclim.core.options import OPTIONS, register_missing_method
+from xclim.core.options import get_options, register_missing_method
 
 
 @pytest.mark.parametrize(
@@ -28,15 +31,15 @@ from xclim.core.options import OPTIONS, register_missing_method
     ],
 )
 def test_set_options_valid(option, value):
-    old = OPTIONS[option]
+    old = get_options()[option]
     with set_options(**{option: value}):
         if option != "missing_options":
-            assert OPTIONS[option] == value
+            assert get_options()[option] == value
         else:
             for k, opts in value.items():
-                curr_opts = OPTIONS["missing_options"][k].copy()
+                curr_opts = get_options()["missing_options"][k].copy()
                 assert curr_opts == opts
-    assert OPTIONS[option] == old
+    assert get_options()[option] == old
 
 
 @pytest.mark.parametrize(
@@ -60,10 +63,10 @@ def test_set_options_valid(option, value):
     ],
 )
 def test_set_options_invalid(option, value):
-    old = OPTIONS[option]
+    old = get_options()[option]
     with pytest.raises(ValueError):
         set_options(**{option: value})
-    assert old == OPTIONS[option]
+    assert old == get_options()[option]
 
 
 def test_register_missing_method():
@@ -80,4 +83,22 @@ def test_register_missing_method():
         set_options(missing_options={"test": {"a_param": 5}})
 
     with set_options(check_missing="test"):
-        assert OPTIONS["check_missing"] == "test"
+        assert get_options()["check_missing"] == "test"
+
+
+def test_setting_options_threadsafe():
+    def set_check_missing():
+        set_options(check_missing="wmo")
+        time.sleep(2)
+
+    def assert_option_unchanged():
+        time.sleep(0.5)
+        assert get_options()["check_missing"] == "any"
+
+    t1 = threading.Thread(target=set_check_missing)
+    t2 = threading.Thread(target=assert_option_unchanged)
+
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()

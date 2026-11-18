@@ -8,7 +8,6 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* N/A
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -20,6 +19,7 @@ Bug fixes
 * ``heat_index`` now follows the full NWS procedure (simple formula below 80 °F, low- and high-humidity adjustments) instead of applying the Rothfusz regression alone, which erred by up to about 5 °C between 20 °C and 27 °C. (:issue:`2463`, :pull:`2464`).
 * ``potential_evapotranspiration`` with method "FAO_PM98" now computes the slope of the saturation vapour pressure curve at the mean temperature (FAO-56 Eq. 13). (:issue:`2463`, :pull:`2464`).
 * Fixed links in indicator search page. (:issue:`2466`, :pull:`2467`).
+* Setting options with ``set_options`` is now thread-safe. New top-level function ``get_options`` to retrieve values. (:issue:`2470`, :pull:`2477`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
