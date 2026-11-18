@@ -43,12 +43,14 @@ _PDSI_MAX = 4.0
 
 @dataclass
 class PalmerWaterBalance:
+    """Palmer Water Balance class."""
+
     et: xr.DataArray
     pr: xr.DataArray
     r: xr.DataArray
     ro: xr.DataArray
     pro: xr.DataArray
-    l: xr.DataArray
+    l: xr.DataArray  # ruff: ignore[ambiguous-variable-name]
     pl: xr.DataArray
     soil_water: xr.DataArray
     surface_storage: xr.DataArray
@@ -57,6 +59,8 @@ class PalmerWaterBalance:
 
 @dataclass
 class PalmerWaterBalanceState:
+    """Palmer Water Balance state."""
+
     surface_storage: xr.DataArray
     under_storage: xr.DataArray
 
@@ -126,9 +130,7 @@ def phdi(
     calibration_start_year: int | None = None,
     calibration_end_year: int | None = None,
 ) -> xr.DataArray:
-    """
-    Palmer Hydrological Drought Index (PHDI).
-    """
+    """Palmer Hydrological Drought Index (PHDI)."""
     ds = palmer_indices(
         pr=pr,
         evspsblpot=evspsblpot,
@@ -163,9 +165,7 @@ def pmdi(
     calibration_start_year: int | None = None,
     calibration_end_year: int | None = None,
 ) -> xr.DataArray:
-    """
-    Palmer Modified Drought Index (PMDI).
-    """
+    """Palmer Modified Drought Index (PMDI)."""
     ds = palmer_indices(
         pr=pr,
         evspsblpot=evspsblpot,
@@ -200,9 +200,7 @@ def scpdsi(
     calibration_start_year: int | None = None,
     calibration_end_year: int | None = None,
 ) -> xr.DataArray:
-    """
-    Self-Calibrated Palmer Drought Severity Index (SC-PDSI).
-    """
+    """Self-Calibrated Palmer Drought Severity Index (SC-PDSI)."""
     ds = palmer_indices(
         pr=pr,
         evspsblpot=evspsblpot,
@@ -232,9 +230,7 @@ def z_index(
     calibration_start_year: int | None = None,
     calibration_end_year: int | None = None,
 ) -> xr.DataArray:
-    """
-    Palmer moisture anomaly index (Z-index).
-    """
+    """Palmer moisture anomaly index (Z-index)."""
     ds = palmer_indices(
         pr=pr,
         evspsblpot=evspsblpot,
@@ -468,9 +464,7 @@ def monthly_water_balance(
     potential_runoff: xr.DataArray | None = None,
     potential_loss: xr.DataArray | None = None,
 ) -> xr.Dataset:
-    """
-    Aggregate Palmer water-balance variables to monthly totals.
-    """
+    """Aggregate Palmer water-balance variables to monthly totals."""
     monthly = {
         "P": pr.resample(time="MS").sum(),
         "PET": pet.resample(time="MS").sum(),
@@ -745,7 +739,7 @@ def palmer_water_balance(
             r,
             ro,
             pro,
-            l,
+            l,  # ruff: ignore[ambiguous-variable-name]
             pl,
         ) = step_palmer_water_balance(
             state,
@@ -928,7 +922,7 @@ def compute_k_factor(
     ro_bar = monthly["RO"].groupby("time.month").mean("time")
     l_bar = monthly["L"].groupby("time.month").mean("time")
 
-    d_hat = np.abs(departure).groupby("time.month").mean("time")
+    d_hat = np.abs(departure).groupby("time.month").mean("time")  # FIXME: mypy: is `abs()` an appropriate alternative?
     t_hat = (pet_bar + r_bar + ro_bar) / (p_bar + l_bar)
     k_hat = 1.5 * np.log10((t_hat + 2.8) / d_hat) + 0.5
     z_hat_month = d_hat * k_hat
@@ -1171,7 +1165,7 @@ def _pdsi_from_zindex(
                     z_weight,
                 )
 
-        V = PV
+        # V = PV
         Pe = PPe[k]
         X1 = PX1[k]
         X2 = PX2[k]
@@ -1200,9 +1194,7 @@ def _pdsi_from_zindex(
 
 
 def _pmdi(probability, X1, X2, X3):
-    """
-    Compute the Palmer Modified Drought Index (PMDI).
-    """
+    """Compute the Palmer Modified Drought Index (PMDI)."""
     if X3 == 0:
         return X2 if abs(X2) > abs(X1) else X1
 
@@ -1216,16 +1208,12 @@ def _pmdi(probability, X1, X2, X3):
 
 
 def _phdi_select(px3, x):
-    """
-    Select the Palmer Hydrological Drought Index (PHDI) series.
-    """
+    """Select the Palmer Hydrological Drought Index (PHDI) series."""
     return np.where(px3 == 0, x, px3)
 
 
 def _find_previous_nonzero(backtrack, k_index):
-    """
-    Locate the previous nonzero backtracking marker.
-    """
+    """Locate the previous nonzero backtracking marker."""
     index = 0
     for c in range(k_index - 1, 0, -1):
         if backtrack[c] != 0:
@@ -1234,7 +1222,7 @@ def _find_previous_nonzero(backtrack, k_index):
     return index
 
 
-def _assign_X_backtracking(
+def _assign_X_backtracking(  # ruff: ignore[invalid-function-name]
     X,
     backtrack,
     preliminary_X1,
@@ -1242,9 +1230,7 @@ def _assign_X_backtracking(
     current_month_index,
     previous_nonzero_index,
 ):
-    """
-    Propagate backtracked Palmer index assignments.
-    """
+    """Propagate backtracked Palmer index assignments."""
     # Follow the stored backtracking path and assign the
     # appropriate preliminary wet or dry index.
     for i in range(current_month_index - 1, previous_nonzero_index - 1, -1):
@@ -1265,7 +1251,7 @@ def _assign_X_backtracking(
                 X[i] = preliminary_X1[i]
 
 
-def _assign_X(
+def _assign_X(  # ruff: ignore[invalid-function-name]
     k,
     number_of_months,
     BT,
@@ -1274,9 +1260,7 @@ def _assign_X(
     PX3,
     X,
 ):
-    """
-    Finalize Palmer index assignments after backtracking.
-    """
+    """Finalize Palmer index assignments after backtracking."""
     # Apply deferred backtracking when a spell assignment
     # could not be resolved in the previous timestep.
     if k > 0:
@@ -1296,9 +1280,7 @@ def _assign_X(
 
 
 def _backtrack(k, PPe, PX1, PX2, PX3, X, BT):
-    """
-    Perform Palmer spell backtracking.
-    """
+    """Perform Palmer spell backtracking."""
     r = 0
 
     # Find the most recent timestep where spell-ending
@@ -1336,10 +1318,8 @@ def _backtrack(k, PPe, PX1, PX2, PX3, X, BT):
     return X, BT
 
 
-def _compute_X(Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight):
-    """
-    Update preliminary and established Palmer drought indices.
-    """
+def _compute_X(Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight):  # ruff: ignore[invalid-function-name]
+    """Update preliminary and established Palmer drought indices."""
     # Apply the Palmer recurrence using configurable
     # persistence and Z-index weighting factors.
     PX1[k] = max(0.0, persistence * X1 + z_weight * Z[k])
@@ -1377,9 +1357,7 @@ def _compute_X(Z, k, PPe, X1, X2, PX1, PX2, PX3, X, BT, persistence, z_weight):
 
 
 def _between_0s(k, Z, X3, PX1, PX2, PX3, PPe, BT, X, persistence, z_weight):
-    """
-    Handle transitions between established Palmer spells.
-    """
+    """Handle transitions between established Palmer spells."""
     PV = 0
     # Continue the established spell while resetting
     # competing preliminary spell indices.
@@ -1424,9 +1402,7 @@ def _wet_spell_abatement(
     persistence,
     z_weight,
 ):
-    """
-    Update an established wet spell following Palmer's procedure.
-    """
+    """Update an established wet spell following Palmer's procedure."""
     Ud = Z[k] - 0.15
     # Accumulate evidence that the established wet spell
     # should terminate.
@@ -1470,9 +1446,7 @@ def _dry_spell_abatement(
     persistence,
     z_weight,
 ):
-    """
-    Update an established drought following Palmer's procedure.
-    """
+    """Update an established drought following Palmer's procedure."""
     Uw = Z[k] + 0.15
     # Accumulate evidence that the established drought
     # should terminate.
@@ -1617,9 +1591,7 @@ def _scpdsi_from_zindex(
     np.ndarray,
     np.ndarray,
 ]:
-    """
-    Apply self-calibration to a monthly Z-index series.
-    """
+    """Apply self-calibration to a monthly Z-index series."""
     if np.all(np.isnan(Z)):
         return (
             np.full_like(Z, np.nan),
@@ -1701,10 +1673,7 @@ def _z_sum(
     calibration_end_year: int,
     input_start_year: int,
 ) -> float:
-    """
-    Return the most extreme rolling accumulated Z value for the
-    specified interval length within the calibration period.
-    """
+    """The most extreme rolling accumulated Z-value for the specified interval length within the calibration period."""
     cal_slice = _calibration_slice(
         calibration_start_year,
         calibration_end_year,
@@ -1796,9 +1765,7 @@ def _calibration_slice(
     input_start_year: int,
     periods_per_year: int = 12,
 ) -> slice:
-    """
-    Return the calibration-period slice within a monthly series.
-    """
+    """Return the calibration-period slice within a monthly series."""
     start = (calibration_start_year - input_start_year) * periods_per_year
     n_periods = (calibration_end_year - calibration_start_year + 1) * periods_per_year
 
@@ -2129,7 +2096,7 @@ def _compute_scpdsi(
     )
 
 
-def _choose_X(
+def _choose_X(  # ruff: ignore[invalid-function-name]
     pdsi_values: np.ndarray,
     established_index_values: np.ndarray,
     wet_index_values: np.ndarray,
