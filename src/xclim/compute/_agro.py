@@ -1022,7 +1022,7 @@ def standardized_precipitation_index(
     pr: xr.DataArray,
     freq: Freq | None = "MS",
     window: int = 1,
-    dist: Literal["gamma", "fisk", "genextreme", "lognorm"] | rv_continuous = "gamma",
+    dist: Literal["gamma", "fisk", "genextreme", "lognorm"] | rv_continuous | None = None,
     method: Literal["APP", "ML", "PWM"] = "ML",
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
