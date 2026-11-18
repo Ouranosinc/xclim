@@ -36,6 +36,7 @@ __all__ = [
     "daily_temperature_range_variability",
     "day_to_day_temperature_variability",
     "degree_days_exceedance_date",
+    "effective_growing_degree_days",
     "extreme_temperature_range",
     "fire_season",
     "first_day_tg_above",
