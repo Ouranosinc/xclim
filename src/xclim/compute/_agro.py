@@ -1152,7 +1152,8 @@ def standardized_precipitation_index(
             "The default behaviour of the SPI indicator has changed in xclim v1.0.1:"
             'If `dist` and `fitkwargs` are both unspecified, a two-parameter "gamma" distribution is fitted, constraining scipy "gamma" distribution '
             "to have `loc=0`. If `dist` is specified, the default for `fitkwargs` is an empty dict, i.e. no constraint. "
-            'To obtain the previous behaviour with the three-parameters gamma distribution (equivalent to Pearson-III), specify `dist="gamma"` and `fitkwargs={}`.'
+            'To obtain the previous behaviour with the three-parameters gamma distribution (equivalent to Pearson-III), specify `dist="gamma"` and `fitkwargs={}`.',
+            DeprecationWarning,
         )
         dist, fitkwargs = "gamma", {"floc": 0}
     dist = dist or "gamma"
