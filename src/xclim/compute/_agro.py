@@ -1148,7 +1148,6 @@ def standardized_precipitation_index(
     """
     # special default if both `dist` and `fitkwargs` are not specified: 2-parameter gamma
     if dist is None and fitkwargs is None:
-        # TODO: Change behaviour in v1.0.2
         warnings.warn(
             "The default behaviour of the SPI indicator has changed in xclim v1.0.1:"
             'If `dist` and `fitkwargs` are both unspecified, a two-parameter "gamma" distribution is fitted, constraining scipy "gamma" distribution '
