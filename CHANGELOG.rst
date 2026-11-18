@@ -8,6 +8,7 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* N/A
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

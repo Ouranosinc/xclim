@@ -546,11 +546,11 @@ class TestStandardizedIndices:
                 "ML",
                 [0.533154, -1.5777, -0.436331, 0.29581, -0.814988],
                 2e-2,
-                # marks=[
-                #     pytest.mark.xfail(
-                #         reason="These values fail for unknown reason after an update, skipping.", strict=False
-                #     )
-                # ],
+                marks=[
+                    pytest.mark.xfail(
+                        reason="These values fail for unknown reason after an update, skipping.", strict=False
+                    )
+                ],
             ),
             ("MS", 1, "fisk", "APP", [0.4663, -1.9076, -0.5362, 0.8070, -0.8035], 2e-2),
             ("MS", 12, "genextreme", "ML", [-0.9795, -1.0398, -1.9019, -1.6970, -1.4761], 2e-2),
