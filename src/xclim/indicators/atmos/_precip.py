@@ -275,7 +275,7 @@ maximum_consecutive_wet_days = Precip(
         "constrain": (">=", ">"),
         "freq": {"default": "YS"},
     },
-    _version_deprecated=("1.0", "wet_spell_max_length"),
+    version_deprecated=("1.0", "wet_spell_max_length"),
 )
 
 maximum_consecutive_dry_days = Precip(
@@ -298,7 +298,7 @@ maximum_consecutive_dry_days = Precip(
         "constrain": ("<", "<="),
         "freq": {"default": "YS"},
     },
-    _version_deprecated=("1.0", "dry_spell_max_length"),
+    version_deprecated=("1.0", "dry_spell_max_length"),
 )
 
 daily_pr_intensity = Precip(

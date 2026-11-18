@@ -36,6 +36,7 @@ __all__ = [
     "daily_temperature_range_variability",
     "day_to_day_temperature_variability",
     "degree_days_exceedance_date",
+    "effective_growing_degree_days",
     "extreme_temperature_range",
     "fire_season",
     "first_day_tg_above",
@@ -416,7 +417,7 @@ heat_wave_index = Temp(
         "window": {"default": 5},
         "thresh": {"default": "25 degC"},
     },
-    _version_deprecated=("1.0", "hot_spell_total_length"),
+    version_deprecated=("1.0", "hot_spell_total_length"),
 )
 
 heat_spell_frequency = Temp(
@@ -820,7 +821,7 @@ cold_spell_days = Temp(
         "min_gap": 1,
         "freq": {"default": "YS-JUL"},
     },
-    _version_deprecated=("1.0", "cold_spell_total_length"),
+    version_deprecated=("1.0", "cold_spell_total_length"),
 )
 
 cold_spell_frequency = Temp(
@@ -1713,7 +1714,7 @@ maximum_consecutive_warm_days = Temp(
     cell_methods="time: maximum over days",
     compute=compute.hot_spell_max_length,
     parameters={"thresh": {"default": "25 °C"}, "window": 1},
-    _version_deprecated=("1.0", "hot_spell_max_length"),
+    version_deprecated=("1.0", "hot_spell_max_length"),
 )
 
 

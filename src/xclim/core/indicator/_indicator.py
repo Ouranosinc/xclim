@@ -1405,16 +1405,22 @@ class _LocaleMetadataFormatter(_MetadataFormatter):
 class _DeprecationWarner(_LocaleMetadataFormatter):
     """Adds possibility to warn about a deprecated indicator."""
 
-    _version_deprecated = ""
+    version_deprecated: tuple[str, str] | None = None
+    """
+    If set, this indicator is deprecated and an alternative should be used.
+
+    This is a two-string tuple giving the first version of xclim in which this indicator was deprecated
+    as well as the name of a suggested alternative indicator, if any.
+    """
 
     def __call__(self, *args, **kwargs):
-        if self._version_deprecated:
-            alternative = ""
-            if isinstance(self._version_deprecated, tuple):
-                vv, other = self._version_deprecated
+        if self.version_deprecated:
+            vv, other = self.version_deprecated
+            if other:
                 alternative = f"Please use {other} instead. "
             else:
-                vv = self._version_deprecated
+                alternative = ""
+
             warnings.warn(
                 f"`{self.title}` is deprecated as of `xclim` v{vv} and will be removed in a future release. "
                 f"{alternative} See the `xclim` release notes for more information: "
@@ -1423,6 +1429,30 @@ class _DeprecationWarner(_LocaleMetadataFormatter):
                 stacklevel=3,
             )
         return super().__call__(*args, **kwargs)
+
+    def json(self, args: dict | None = None) -> dict:
+        """
+        Return a serializable dictionary representation of the indicator.
+
+        Parameters
+        ----------
+        args : dict, optional
+            Arguments as passed to the call method of the indicator.
+            If not given, the default arguments will be used when formatting the attributes.
+
+        Returns
+        -------
+        dict
+            A dictionary representation of the indicator.
+
+        Notes
+        -----
+        This is meant to be used by a third-party library wanting to wrap this indicator into another interface.
+        """
+        out = super().json(args)
+        if self.version_deprecated:
+            out["version_deprecated"] = list(self.version_deprecated)
+        return out
 
 
 class _InputChecker(_DeprecationWarner):
