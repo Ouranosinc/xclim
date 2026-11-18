@@ -8,7 +8,7 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* N/A
+* New ``version_deprecated`` attribute now indicates when Indicators are being deprecated. It optionally accepts a tuple with the version of `xclim` when the deprecation was announced along with the name of an alternative Indicator or 'None'. (:issue:`2471`, :pull:`2475`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
