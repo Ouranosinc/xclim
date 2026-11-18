@@ -20,7 +20,7 @@ Bug fixes
 * ``heat_index`` now follows the full NWS procedure (simple formula below 80 °F, low- and high-humidity adjustments) instead of applying the Rothfusz regression alone, which erred by up to about 5 °C between 20 °C and 27 °C. (:issue:`2463`, :pull:`2464`).
 * ``potential_evapotranspiration`` with method "FAO_PM98" now computes the slope of the saturation vapour pressure curve at the mean temperature (FAO-56 Eq. 13). (:issue:`2463`, :pull:`2464`).
 * Fixed links in indicator search page. (:issue:`2466`, :pull:`2467`).
-* Re-added ``xclim.indicators.atmos.effective_growing_degree_days`` and ``xclim.indicators.landmelt_and_precip_max`` to their respective `__all__` configurations. These were mistakenly omitted during the migration effort to `xclim` v1.0. (:issue:`2469`, :pull:`2474`).
+* Re-added ``xclim.indicators.atmos.effective_growing_degree_days`` and ``xclim.indicators.land.melt_and_precip_max`` to their respective `__all__` configurations. These were mistakenly omitted during the migration effort to `xclim` v1.0. (:issue:`2469`, :pull:`2474`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
