@@ -1430,6 +1430,30 @@ class _DeprecationWarner(_LocaleMetadataFormatter):
             )
         return super().__call__(*args, **kwargs)
 
+    def json(self, args: dict | None = None) -> dict:
+        """
+        Return a serializable dictionary representation of the indicator.
+
+        Parameters
+        ----------
+        args : dict, optional
+            Arguments as passed to the call method of the indicator.
+            If not given, the default arguments will be used when formatting the attributes.
+
+        Returns
+        -------
+        dict
+            A dictionary representation of the indicator.
+
+        Notes
+        -----
+        This is meant to be used by a third-party library wanting to wrap this indicator into another interface.
+        """
+        out = super().json(args)
+        if self.version_deprecated:
+            out["version_deprecated"] = list(self.version_deprecated)
+        return out
+
 
 class _InputChecker(_DeprecationWarner):
     """Adds some checks on the inputs."""
