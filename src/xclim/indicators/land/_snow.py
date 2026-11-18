@@ -10,6 +10,7 @@ __all__ = [
     "blowing_snow",
     "holiday_snow_and_snowfall_days",
     "holiday_snow_days",
+    "melt_and_precip_max",
     "snd_days_above",
     "snd_max",
     "snd_max_doy",

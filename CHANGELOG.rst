@@ -4,15 +4,24 @@ Changelog
 
 `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
 ------------------------------------------------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Mark L. Morrissey (:user:`klemmeri`), Éric Dupuis (:user:`coxipi`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New ``version_deprecated`` attribute now indicates when Indicators are being deprecated. It optionally accepts a tuple with the version of `xclim` when the deprecation was announced along with the name of an alternative Indicator or 'None'. (:issue:`2471`, :pull:`2475`).
 * Added ``xclim.compute.palmer_drought_indices`` for computing Palmer drought metrics, including the Palmer Z-index, PDSI, PHDI, PMDI, and self-calibrated PDSI (scPDSI). The implementation supports gridded xarray inputs and returns Palmer drought indices together with associated water-balance diagnostics and calibration variables. (:pull:`2450`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `numbagg` is now a required dependency, replacing `bottleneck` (now an optional "performance" dependency; `$ pip install xclim[performance]`). (:issue:`2459`, :pull:`2461`).
+
+Bug fixes
+^^^^^^^^^
+* ``potential_evapotranspiration`` with method "TW48" now computes the Thornthwaite heat index once, from the monthly normals of a reference period set by the new ``ref_start`` and ``ref_end`` arguments (default: the whole input), instead of recomputing it each year, which damped warming-driven PET trends. Monthly totals are also scaled by the number of days in the month. (:issue:`2463`, :pull:`2464`).
+* ``heat_index`` now follows the full NWS procedure (simple formula below 80 °F, low- and high-humidity adjustments) instead of applying the Rothfusz regression alone, which erred by up to about 5 °C between 20 °C and 27 °C. (:issue:`2463`, :pull:`2464`).
+* ``potential_evapotranspiration`` with method "FAO_PM98" now computes the slope of the saturation vapour pressure curve at the mean temperature (FAO-56 Eq. 13). (:issue:`2463`, :pull:`2464`).
+* Fixed links in indicator search page. (:issue:`2466`, :pull:`2467`).
+* Re-added ``xclim.indicators.atmos.effective_growing_degree_days`` and ``xclim.indicators.land.melt_and_precip_max`` to their respective `__all__` configurations. These were mistakenly omitted during the migration effort to `xclim` v1.0. (:issue:`2469`, :pull:`2474`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -20,7 +29,9 @@ Internal changes
     * Clearer directives concerning AI involvement have been added to `AGENTS.md` and `PULL_REQUEST_TEMPLATE.md`.
     * The suggested invocation for running doctests has been simplified in `CONTRIBUTING.rst` and `Makefile`.
     * Corrections made to CI triggers and deployment environments.
-* Convenience CLI tool `$ xclim release_notes` now supports a ``-l/--last-release`` flag for truncating the changelog to entries found in the last stable release. (:pull:`2460`).
+* Convenience CLI tool ``$ xclim release_notes`` now supports a ``-l/--last-release`` flag for truncating the changelog to entries found in the last stable release. (:pull:`2460`).
+* Standardized indices are now tested against `numbagg` instead of `bottleneck`. (:pull:`2468`).
+* `xclim` now includes a `py.typed` file to signal to downstream code analysis tools that the library is fully type-checked. (:issue:`2472`, :pull:`2473`).
 
 .. _changes_1.0.0:
 
