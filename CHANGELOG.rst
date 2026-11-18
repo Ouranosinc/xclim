@@ -8,12 +8,12 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* N/A
+* New ``version_deprecated`` attribute now indicates when Indicators are being deprecated. It optionally accepts a tuple with the version of `xclim` when the deprecation was announced along with the name of an alternative Indicator or 'None'. (:issue:`2471`, :pull:`2475`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `numbagg` is now a required dependency, replacing `bottleneck` (now an optional "performance" dependency; `$ pip install xclim[performance]`). (:issue:`2459`, :pull:`2461`).
-* `xclim.atmos.standardized_precipitation_index` now defaults to the two-parameter gamma distribution. (:issue:`2456`, :pull:`2476`).
+* ``xclim.atmos.standardized_precipitation_index`` now defaults to the two-parameter gamma distribution. (:issue:`2456`, :pull:`2476`).
 
 Bug fixes
 ^^^^^^^^^
