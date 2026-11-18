@@ -4,7 +4,7 @@ Changelog
 
 `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
 ------------------------------------------------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Mark L. Morrissey (:user:`klemmeri`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Mark L. Morrissey (:user:`klemmeri`), Éric Dupuis (:user:`coxipi`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -28,6 +28,7 @@ Internal changes
     * The suggested invocation for running doctests has been simplified in `CONTRIBUTING.rst` and `Makefile`.
     * Corrections made to CI triggers and deployment environments.
 * Convenience CLI tool `$ xclim release_notes` now supports a ``-l/--last-release`` flag for truncating the changelog to entries found in the last stable release. (:pull:`2460`).
+* Standardized indices are now tested against `numbagg` instead of `bottleneck`. (:pull:`2468`).
 
 .. _changes_1.0.0:
 
