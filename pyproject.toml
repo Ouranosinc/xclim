@@ -170,7 +170,7 @@ dev = [
 [tool]
 
 [tool.bumpversion]
-current_version = "1.0.1-beta.3"
+current_version = "1.0.1-beta.5"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -274,6 +274,7 @@ include = [
   "src/xclim/**/*.py",
   "src/xclim/**/*.txt",
   "src/xclim/**/*.yml",
+  "src/xclim/py.typed",
   "tests/**/*.py",
   "tests/**/*.txt",
   "tox.toml"
