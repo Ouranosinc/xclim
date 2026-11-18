@@ -1409,8 +1409,8 @@ class _DeprecationWarner(_LocaleMetadataFormatter):
     """
     If set, this indicator is deprecated and an alternative should be used.
 
-    This is a 2 strings tuple giving the first xclim version in which this indicator was deprecated
-    and the name of an alternative, if any.
+    This is a two-string tuple giving the first version of xclim in which this indicator was deprecated
+    as well as the name of a suggested alternative indicator, if any.
     """
 
     def __call__(self, *args, **kwargs):
