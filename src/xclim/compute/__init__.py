@@ -7,6 +7,7 @@ from xclim.compute._agro import *
 from xclim.compute._anuclim import *
 from xclim.compute._hydrology import *
 from xclim.compute._multivariate import *
+from xclim.compute._palmer import *
 from xclim.compute._simple import *
 from xclim.compute._synoptic import *
 from xclim.compute._threshold import *

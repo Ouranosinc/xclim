@@ -56,3 +56,4 @@ Contributors
 * Eve Larose <eve.larose.r@gmail.com> `@e-larose <https://github.com/e-larose>`_
 * Kobe Vandelanotte <kobe.ande@gmail.com> `@kobebryant432 <https://github.com/kobebryant432>`_
 * Mark L. Morrissey `@klemmeri <https://github.com/klemmeri>`_
+* Richard Warren <richard.warren@agr.gc.ca> `@C15H24 <https://github.com/C15H24>` _
