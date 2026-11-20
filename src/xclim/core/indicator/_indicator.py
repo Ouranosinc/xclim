@@ -49,7 +49,7 @@ from xclim.core.options import (
     METADATA_LOCALES,
     MISSING_METHODS,
     MISSING_OPTIONS,
-    OPTIONS,
+    get_options,
     set_options,
 )
 from xclim.core.units import check_units, convert_units_to, declare_units, units
@@ -1153,7 +1153,7 @@ class _DatasetIO(IndicatorBase):
         return das, params, meta
 
     def _finalize(self, outs, das, params, meta):
-        if OPTIONS[AS_DATASET]:
+        if get_options()[AS_DATASET]:
             out = xr.Dataset({o.name: o for o in outs})
             if xr.get_options()["keep_attrs"] is not False:
                 out.attrs.update(meta.get("dsattrs", {}))
@@ -1359,7 +1359,7 @@ class _LocaleMetadataFormatter(_MetadataFormatter):
 
     def _format_attrs(self, attrs, fmtargs, meta=None, var_name=None, formatter=default_formatter):
         out = super()._format_attrs(attrs, fmtargs, meta, formatter)
-        for loc in OPTIONS[METADATA_LOCALES]:
+        for loc in get_options()[METADATA_LOCALES]:
             out.update(
                 super()._format_attrs(
                     xloc.get_local_attrs(
@@ -1873,13 +1873,13 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02 # pylint: d
 
     def _gen_xclim_description(self, das, params, meta):
         if self.missing == "from_context":
-            missing = OPTIONS[CHECK_MISSING]
+            missing = get_options()[CHECK_MISSING]
         else:
             missing = self.missing
         opt_str = f" with options check_missing={missing}"
 
         if missing != "skip":
-            mopts = self.missing_options or OPTIONS[MISSING_OPTIONS].get(missing).copy()
+            mopts = self.missing_options or get_options()[MISSING_OPTIONS].get(missing).copy()
             if mopts.get("subfreq", "absent") is None:
                 mopts.pop("subfreq")  # impertinent default
             if mopts:
@@ -1896,11 +1896,11 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02 # pylint: d
         outs, meta = super()._postprocess(outs, das, params, meta)
 
         freq = self._get_missing_freq(params)
-        method = self.missing if self.missing != "from_context" else OPTIONS[CHECK_MISSING]
+        method = self.missing if self.missing != "from_context" else get_options()[CHECK_MISSING]
         if method != "skip" and freq is not False:
             # Mask results that do not meet criteria defined by the `missing` method.
             # This means all outputs must have the same dimensions as the broadcasted inputs (excluding time)
-            options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(method, {})
+            options = self.missing_options or get_options()[MISSING_OPTIONS][method]
             misser = MISSING_METHODS[method](**options)
 
             # We flag periods according to the missing method. skip variables without a time coordinate.

@@ -8,7 +8,7 @@ Global or contextual options for xclim, similar to xarray.set_options.
 from __future__ import annotations
 
 from collections.abc import Callable
-from copy import deepcopy
+from contextvars import ContextVar
 from inspect import signature
 from typing import Any
 
@@ -27,17 +27,22 @@ AS_DATASET = "as_dataset"
 MAP_BLOCKS = "resample_map_blocks"
 
 MISSING_METHODS: dict[str, Callable] = {}
+DEFAULT_MISSING_OPTIONS: dict[str, dict[str, Any]] = {}
 
 OPTIONS: dict[str, Any] = {
-    METADATA_LOCALES: [],
-    DATA_VALIDATION: "raise",
-    CF_COMPLIANCE: "warn",
-    CHECK_MISSING: "any",
-    MISSING_OPTIONS: {},
-    RUN_LENGTH_UFUNC: "auto",
-    AS_DATASET: True,
-    MAP_BLOCKS: False,
+    METADATA_LOCALES: ContextVar(METADATA_LOCALES, default=None),
+    DATA_VALIDATION: ContextVar(DATA_VALIDATION, default="raise"),
+    CF_COMPLIANCE: ContextVar(CF_COMPLIANCE, default="warn"),
+    CHECK_MISSING: ContextVar(CHECK_MISSING, default="any"),
+    MISSING_OPTIONS: ContextVar(MISSING_OPTIONS, default=None),
+    RUN_LENGTH_UFUNC: ContextVar(RUN_LENGTH_UFUNC, default="auto"),
+    AS_DATASET: ContextVar(AS_DATASET, default=True),
+    MAP_BLOCKS: ContextVar(MAP_BLOCKS, default=False),
 }
+
+# Initialize contextvar that use mutable objects
+OPTIONS[METADATA_LOCALES].set([])
+OPTIONS[MISSING_OPTIONS].set(DEFAULT_MISSING_OPTIONS)
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
 _RUN_LENGTH_UFUNC_OPTIONS = frozenset(["auto", True, False])
@@ -49,9 +54,9 @@ def _valid_missing_options(mopts):
         # Ensure the method is registered in MISSING_METHODS
         meth in MISSING_METHODS
         # Check if all options provided for the method are valid
-        and all(opt in OPTIONS[MISSING_OPTIONS][meth] for opt in opts.keys())
+        and all(opt in DEFAULT_MISSING_OPTIONS[meth] for opt in opts.keys())
         # Validate the options using the method's validator; defaults to True if no validation is needed
-        and MISSING_METHODS[meth].validate(**(OPTIONS[MISSING_OPTIONS][meth] | opts))
+        and MISSING_METHODS[meth].validate(**(DEFAULT_MISSING_OPTIONS[meth] | opts))
         for meth, opts in mopts.items()  # Iterate over each method and its options in mopts
     )
 
@@ -69,15 +74,19 @@ _VALIDATORS = {
 
 
 def _set_missing_options(mopts):
+    missopts = OPTIONS[MISSING_OPTIONS].get().copy()
+    for meth, opts in DEFAULT_MISSING_OPTIONS.items():
+        missopts.setdefault(meth, {}).update(**opts)
     for meth, opts in mopts.items():
-        OPTIONS[MISSING_OPTIONS][meth].update(**opts)
+        missopts[meth].update(**opts)
+    OPTIONS[MISSING_OPTIONS].set(missopts)
 
 
 def _set_metadata_locales(locales):
     if isinstance(locales, str):
-        OPTIONS[METADATA_LOCALES] = [locales]
+        OPTIONS[METADATA_LOCALES].set([locales])
     else:
-        OPTIONS[METADATA_LOCALES] = locales
+        OPTIONS[METADATA_LOCALES].set(locales)
 
 
 _SETTERS = {
@@ -110,7 +119,7 @@ def register_missing_method(name: str) -> Callable:
         }
 
         MISSING_METHODS[name] = cls
-        OPTIONS[MISSING_OPTIONS][name] = opts
+        DEFAULT_MISSING_OPTIONS[name] = opts
         return cls
 
     return _register_missing_method
@@ -139,7 +148,7 @@ def run_check(func: Callable, option: str, *args: tuple, **kwargs: dict):
     try:
         func(*args, **kwargs)
     except ValidationError as err:
-        raise_warn_or_log(err, OPTIONS[option], stacklevel=4)
+        raise_warn_or_log(err, OPTIONS[option].get(), stacklevel=4)
 
 
 def datacheck(func: Callable) -> Callable:
@@ -188,6 +197,22 @@ def cfcheck(func: Callable) -> Callable:
     return _run_check
 
 
+def get_options():
+    """
+    Retrieve the currently set options.
+
+    Returns
+    -------
+    dict
+        A dictionary of the options as set in the current context.
+
+    See Also
+    --------
+    set_options : Set options.
+    """
+    return {k: cv.get() for k, cv in OPTIONS.items()}
+
+
 class set_options:  # numpydoc ignore=PR01,PR02
     r"""
     Set options for xclim in a controlled context.
@@ -225,6 +250,10 @@ class set_options:  # numpydoc ignore=PR01,PR02
         using :py:func:`xclim.compute.helpers.resample_map`.
         This requires `flox` to be installed in order to ensure the chunking is appropriate.
 
+    See Also
+    --------
+    get_options : Get options.
+
     Examples
     --------
     You can use `set_options` either as a context manager:
@@ -245,6 +274,7 @@ class set_options:  # numpydoc ignore=PR01,PR02
 
     def __init__(self, **kwargs):
         self.old = {}
+        current = get_options()
         for k, v in kwargs.items():
             if k not in OPTIONS:
                 msg = f"Argument name {k!r} is not in the set of valid options {set(OPTIONS)!r}."
@@ -252,7 +282,7 @@ class set_options:  # numpydoc ignore=PR01,PR02
             if k in _VALIDATORS and not _VALIDATORS[k](v):
                 raise ValueError(f"option {k!r} given an invalid value: {v!r}")
 
-            self.old[k] = deepcopy(OPTIONS[k])
+            self.old[k] = current[k]
 
         self._update(kwargs)
 
@@ -267,7 +297,7 @@ class set_options:  # numpydoc ignore=PR01,PR02
             if k in _SETTERS:
                 _SETTERS[k](v)
             else:
-                OPTIONS[k] = v
+                OPTIONS[k].set(v)
 
     def __exit__(self, option_type, value, traceback):  # noqa: F841
         """Context management."""
