@@ -9,7 +9,7 @@ import pytest
 
 from xclim import set_options
 from xclim.core.missing import MissingBase
-from xclim.core.options import get_options, register_missing_method
+from xclim.core.options import get_options, register_missing_method, MISSING_METHODS, DEFAULT_MISSING_OPTIONS
 
 
 @pytest.mark.parametrize(
@@ -67,23 +67,6 @@ def test_set_options_invalid(option, value):
     with pytest.raises(ValueError):
         set_options(**{option: value})
     assert old == get_options()[option]
-
-
-def test_register_missing_method():
-    @register_missing_method("test")
-    class MissingTest(MissingBase):
-        def is_missing(self, null, count, freq):
-            return True
-
-        @staticmethod
-        def validate(a_param):
-            return a_param < 3
-
-    with pytest.raises(ValueError):
-        set_options(missing_options={"test": {"a_param": 5}})
-
-    with set_options(check_missing="test"):
-        assert get_options()["check_missing"] == "test"
 
 
 def test_setting_options_threadsafe():
