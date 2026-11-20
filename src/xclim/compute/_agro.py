@@ -1022,7 +1022,7 @@ def standardized_precipitation_index(
     pr: xr.DataArray,
     freq: Freq | None = "MS",
     window: int = 1,
-    dist: Literal["gamma", "fisk", "genextreme", "lognorm"] | rv_continuous = "gamma",
+    dist: Literal["gamma", "fisk", "genextreme", "lognorm"] | rv_continuous | None = None,
     method: Literal["APP", "ML", "PWM"] = "ML",
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
@@ -1100,6 +1100,8 @@ def standardized_precipitation_index(
 
     Notes
     -----
+    * If `dist` and `fitkwargs` are both unspecified, a two-parameter "gamma" distribution is fitted, constraining scipy "gamma" distribution
+      to have `loc=0`. If `dist` is specified, the default for `fitkwargs` is an empty dict, i.e. no constraint.
     * N-month SPI / N-day SPI is determined by choosing the `window = N` and the appropriate frequency `freq`.
     * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of a log-logistic distribution
     * Supported frequencies are daily ("D"), weekly ("W"), and monthly ("MS").
@@ -1144,6 +1146,17 @@ def standardized_precipitation_index(
     ... )  # First getting params
     >>> spi_3_fitted = standardized_precipitation_index(pr, params=params)
     """
+    # special default if both `dist` and `fitkwargs` are not specified: 2-parameter gamma
+    if dist is None and fitkwargs is None:
+        warnings.warn(
+            "The default behaviour of the SPI indicator has changed in xclim v1.0.1:"
+            'If `dist` and `fitkwargs` are both unspecified, a two-parameter "gamma" distribution is fitted, constraining scipy "gamma" distribution '
+            "to have `loc=0`. If `dist` is specified, the default for `fitkwargs` is an empty dict, i.e. no constraint. "
+            'To obtain the previous behaviour with the three-parameters gamma distribution (equivalent to Pearson-III), specify `dist="gamma"` and `fitkwargs={}`.',
+            DeprecationWarning,
+        )
+        dist, fitkwargs = "gamma", {"floc": 0}
+    dist = dist or "gamma"
     fitkwargs = fitkwargs or {}
 
     dist_methods = {

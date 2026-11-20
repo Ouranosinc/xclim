@@ -367,6 +367,7 @@ class TestStandardizedIndices:
             ("D", 1, "gamma", "APP", [-0.18618353, 1.44582971, 0.95985043, 0.15779587, -0.37801587], 2e-2),
             ("D", 12, "gamma", "APP", [-0.24417774, -0.11404418, 0.64997039, 1.07670517, 0.6462852], 2e-2),
             ("D", 1, "gamma", "ML", [-0.083785, 1.457647, 0.993296, 0.271894, -0.449684], 2e-2),
+            ("D", 1, "gamma2", "ML", [-0.153372, 1.43749, 0.960068, 0.174604, -0.36779], 2e-2),
             # Numbagg: [-0.158154, -0.04865 ,  0.672241,  1.083522,  0.661365]
             # Bottleneck: [-0.158854, -0.049165, 0.675863, >0.960247<, 0.660831]
             ("D", 12, "gamma", "ML", [-0.158154, -0.04865, 0.672241, 1.083522, 0.661365], 2e-2),
@@ -391,6 +392,7 @@ class TestStandardizedIndices:
     def test_standardized_precipitation_index(
         self, freq, window, dist, method, values, diff_tol, open_dataset, no_numbagg, no_bottleneck
     ):
+
         # change `dist` to a lmoments3 object if needed
         if method == "PWM":
             lmom = pytest.importorskip("lmoments3.distr")
@@ -406,8 +408,14 @@ class TestStandardizedIndices:
             ds = ds.convert_calendar("standard", missing=np.nan, align_on="year", use_cftime=False)
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
+
         fitkwargs = {}
         if method == "APP":
+            fitkwargs["floc"] = 0
+
+        # just a little shortcut notation so I don't have to add a new `fitkwargs` option above
+        if dist == "gamma2":
+            dist = "gamma"
             fitkwargs["floc"] = 0
 
         params = standardized_index_fit_params(
@@ -421,6 +429,45 @@ class TestStandardizedIndices:
         )
 
         spi = xcc.standardized_precipitation_index(pr, params=params)
+        # Only a few moments before year 2000 are tested
+        spi = spi.isel(time=slice(-11, -1, 2))
+        # [Guttman, 1999]: The number of precipitation events (over a month/season or
+        # other time period) is generally less than 100 in the US. This suggests that
+        # bounds of ± 3.09 correspond to 0.999 and 0.001 probabilities. SPI indices outside
+        # [-3.09, 3.09] might be non-statistically relevant. In `climate_indices` the SPI
+        # index is clipped outside this region of value. In the values chosen above,
+        # this doesn't play role, but let's clip it anyway to avoid future problems.
+        # The last few values in time are tested
+        spi = spi.clip(-3.09, 3.09)
+
+        np.testing.assert_allclose(spi.values, values, rtol=0, atol=diff_tol)
+
+    @pytest.mark.slow
+    @pytest.mark.parametrize(
+        "freq, window, method,  values, diff_tol",
+        [
+            ("D", 1, "ML", [-0.153372, 1.43749, 0.960068, 0.174604, -0.36779], 2e-2),
+        ],
+    )
+    def test_standardized_precipitation_index_default_option(
+        self, freq, window, method, values, diff_tol, open_dataset, no_numbagg
+    ):
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
+        if freq == "D":
+            # to compare with ``climate_indices``
+            ds = ds.convert_calendar("366_day", missing=np.nan)
+        elif freq == "W":
+            # only standard calendar supported with freq="W"
+            ds = ds.convert_calendar("standard", missing=np.nan, align_on="year", use_cftime=False)
+        pr = ds.pr
+        spi = xcc.standardized_precipitation_index(
+            pr,
+            freq=freq,
+            window=window,
+            method=method,
+            cal_start="1950",
+            cal_end="1980",
+        ).sel(time=slice("1998", "2000"))
         # Only a few moments before year 2000 are tested
         spi = spi.isel(time=slice(-11, -1, 2))
         # [Guttman, 1999]: The number of precipitation events (over a month/season or
