@@ -8,8 +8,7 @@ import time
 import pytest
 
 from xclim import set_options
-from xclim.core.missing import MissingBase
-from xclim.core.options import get_options, register_missing_method, MISSING_METHODS, DEFAULT_MISSING_OPTIONS
+from xclim.core.options import get_options
 
 
 @pytest.mark.parametrize(
