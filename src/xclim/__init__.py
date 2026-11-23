@@ -10,7 +10,7 @@ from xclim import indicators as _indicators
 from xclim.core import calendar, units
 from xclim.core.collection import IndicatorCollection
 from xclim.core.locales import load_locale as _load_locale
-from xclim.core.options import set_options
+from xclim.core.options import get_options, set_options
 from xclim.indicators import atmos, convert, generic, land, seaIce
 
 __author__ = """Travis Logan"""

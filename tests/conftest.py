@@ -462,6 +462,12 @@ def no_numbagg():
 
 
 @pytest.fixture
+def no_bottleneck():
+    with xr.set_options(use_bottleneck=False):
+        yield
+
+
+@pytest.fixture
 def use_bottleneck():
     pytest.importorskip(
         "bottleneck", reason="This test requires bottleneck or has been written with bottleneck expected values."

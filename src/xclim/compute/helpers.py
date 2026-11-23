@@ -25,7 +25,7 @@ from xclim.compute import run_length as rl
 from xclim.compute.reducers import XCLIM_OPS
 from xclim.core import Condition, DayOfYearStr, Freq, Quantified, Reducer
 from xclim.core.calendar import ensure_cftime_array, get_calendar, parse_offset, select_time
-from xclim.core.options import MAP_BLOCKS, OPTIONS
+from xclim.core.options import MAP_BLOCKS, get_options
 from xclim.core.units import convert_units_to
 from xclim.core.utils import _chunk_like, uses_dask
 
@@ -1208,7 +1208,7 @@ def resample_map(
     if freq is None:
         return func(obj, *map_args, **map_kwargs)
     if map_blocks == "from_context":
-        map_blocks = OPTIONS[MAP_BLOCKS]
+        map_blocks = get_options()[MAP_BLOCKS]
 
     if not uses_dask(obj) or not map_blocks:
         return obj.resample({dim: freq}, **resample_kwargs).map(func, *map_args, **map_kwargs)

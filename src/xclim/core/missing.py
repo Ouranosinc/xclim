@@ -42,7 +42,7 @@ from xclim.core.options import (
     CHECK_MISSING,
     MISSING_METHODS,
     MISSING_OPTIONS,
-    OPTIONS,
+    get_options,
     register_missing_method,
 )
 
@@ -313,6 +313,7 @@ class MissingBase:
 class MissingAny(MissingBase):
     """Mask periods as missing if any of its elements is missing or invalid."""
 
+    # override of init to remove **options from signature
     def __init__(self) -> None:
         """Create a MissingAny object."""
         super().__init__()
@@ -327,6 +328,11 @@ class MissingAny(MissingBase):
 @register_missing_method("some_but_not_all")
 class MissingSomeButNotAll(MissingBase):
     """Mask periods as missing if some but not all of its elements is missing or invalid."""
+
+    # override of init to remove **options from signature
+    def __init__(self) -> None:
+        """Create a MissingSomeButNotAll object."""
+        super().__init__()
 
     def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: Freq | None) -> xr.DataArray:
         if freq is not None:
@@ -603,10 +609,11 @@ def missing_from_context(da: xr.DataArray, freq: Freq, src_timestep: Freq | None
         Boolean array at the resampled frequency,
         True on the periods that should be considered missing or invalid.
     """
-    method = OPTIONS[CHECK_MISSING]
+    opts = get_options()
+    method = opts[CHECK_MISSING]
+    miss_opts = opts[MISSING_OPTIONS].get(method, {})
     MissCls = MISSING_METHODS[method]
-    opts = OPTIONS[MISSING_OPTIONS].get(method, {})
-    return MissCls(**opts)(da, freq, src_timestep, **indexer)
+    return MissCls(**miss_opts)(da, freq, src_timestep, **indexer)
 
 
 def _get_convenient_doc(cls):

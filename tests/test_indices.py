@@ -390,7 +390,7 @@ class TestStandardizedIndices:
         ],
     )
     def test_standardized_precipitation_index(
-        self, freq, window, dist, method, values, diff_tol, open_dataset, no_numbagg
+        self, freq, window, dist, method, values, diff_tol, open_dataset, no_numbagg, no_bottleneck
     ):
 
         # change `dist` to a lmoments3 object if needed
@@ -606,7 +606,7 @@ class TestStandardizedIndices:
         ],
     )
     def test_standardized_streamflow_index(
-        self, freq, window, dist, method, values, diff_tol, open_dataset, no_numbagg
+        self, freq, window, dist, method, values, diff_tol, open_dataset, no_numbagg, no_bottleneck
     ):
         ds = open_dataset("Raven/q_sim.nc")
         q = ds.q_obs.rename("q")

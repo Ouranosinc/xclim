@@ -20,7 +20,7 @@ from numba import njit
 
 from xclim.compute.helpers import resample_map
 from xclim.core import Condition, DateStr, DayOfYearStr, Freq, Reducer
-from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
+from xclim.core.options import RUN_LENGTH_UFUNC, get_options
 from xclim.core.utils import lazy_indexing, uses_dask
 
 npts_opt = 9000
@@ -69,11 +69,9 @@ def use_ufunc(
         raise ValueError("Resampling after run length operations is not implemented for 1d method")
 
     if ufunc_1dim == "from_context":
-        ufunc_1dim = OPTIONS[RUN_LENGTH_UFUNC]
+        ufunc_1dim = get_options()[RUN_LENGTH_UFUNC]
     if ufunc_1dim == "auto":
         ufunc_1dim = not uses_dask(da) and (da.size // da[dim].size) < npts_opt
-    if isinstance(ufunc_1dim, bool):
-        _ufunc_1dim = ufunc_1dim
     # If resampling after run length is set up for the computation, the 1d method is not implemented
     # Unless ufunc_1dim is specifically set to False (in which case we flag an error above),
     # we simply forbid this possibility.
