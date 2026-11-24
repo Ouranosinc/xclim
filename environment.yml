@@ -13,7 +13,7 @@ dependencies:
   - filelock >=4.2.1
   - numba >=0.60.0
   - numbagg >=0.8
-  - numpy >=2.0
+  - numpy >=2.2.0
   - packaging >=24.0
   - pandas >=2.2.0
   - pint >=0.24.4
@@ -36,9 +36,9 @@ dependencies:
   - flake8-rst-docstrings >=0.4.0
   - numpydoc >=1.10.0
   - pylint >=4.0
-  - ruff >=0.13.3
-  - ty >=0.0.79
-  - vulture >=2.14
+  - ruff >=0.15.9
+  - ty >=0.0.100
+  - vulture >=2.16
   - yamllint >=1.35.1
   # Testing and development dependencies
   - bump-my-version >=1.6.0
@@ -50,7 +50,7 @@ dependencies:
   - h5netcdf >=1.5.0
   - h5py >=3.12.1
   - ipykernel
-  - ipython >=8.25.0
+  - ipython >=8.30.0
   - matplotlib >=3.9.0
   - nbconvert >=7.16.4
   - nbsphinx >=0.9.5
@@ -58,7 +58,6 @@ dependencies:
   - nc-time-axis >=1.4.1
   - netcdf4
   - notebook
-  - pandas-stubs >=2.2
   - pip >=26.2.1
   - pooch >=1.8.0
   - prek >=0.5.0
@@ -83,3 +82,5 @@ dependencies:
   - yamllint >=1.35.1
   # Temporary Fixes
   - importlib-metadata <8.7.0 # Issues with dask >=2025.5.1 on Python3.11
+  # Typing Stubs
+  - pandas-stubs >=2.2

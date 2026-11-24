@@ -44,13 +44,13 @@ dependencies = [
   "filelock >=4.2.1",
   "numba >=0.60.0",
   "numbagg >=0.8", # numbagg required for ffill/bfill in xarray
-  "numpy >=2.0",
+  "numpy >=2.2.0",
   "packaging >=24.0",
   "pandas >=2.2.0",
   "pint >=0.24.4",
   "pyarrow >=15.0", # Strongly encouraged for pandas v2.2.0+
   "pyyaml >=6.0.1",
-  "scikit-learn >=1.2.0",
+  "scikit-learn >=1.5.0",
   "scipy >=1.11.0",
   "xarray >=2024.11.0",
   "yamale >=5.0.0"
@@ -98,7 +98,7 @@ lint = [
 ]
 typing = [
   "pylint >=4.0",
-  "ty >=0.0.79"
+  "ty >=0.0.100"
 ]
 io = [
   "h5netcdf >=1.5.0",
@@ -130,10 +130,9 @@ docs = [
   "flox >=0.9",
   "furo >=2023.9.10",
   "ipykernel",
-  "ipython >=8.10.0",
+  "ipython >=8.30.0",
   "nbconvert >=7.16.4",
   "nbsphinx >=0.9.5",
-  "numbagg >=0.8",
   "pooch >=1.8.0",
   "pybtex >=0.24.0",
   "sphinx >=8.2.0",
