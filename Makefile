@@ -131,7 +131,7 @@ dist: clean ## builds source and wheel package
 install: clean ## install the package to the active Python's site-packages
 	python -m pip install --no-user .
 
-development: clean ## install the package and development dependencies in editable mode to the active Python's site-packages
+dev: clean ## install the package and development dependencies in editable mode to the active Python's site-packages
 	python -m pip install --group dev
 	python -m pip install --no-user --editable ".[complete]"
 	prek install
