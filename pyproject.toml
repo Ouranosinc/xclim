@@ -471,18 +471,15 @@ convention = "numpy"
 sort_first = ["build-system", "project"]
 
 [tool.ty.rules]
-call-non-callable = "ignore"
+incompatible-method-override = "ignore"
 invalid-argument-type = "ignore"
 invalid-assignment = "ignore"
-invalid-method-override = "ignore"
 invalid-parameter-default = "ignore"
-invalid-return-type = "ignore"
+missing-attribute = "ignore"
+missing-union-attribute = "ignore"
 no-matching-overload = "ignore"
 not-subscriptable = "ignore"
-possibly-missing-implicit-call = "ignore"
-unresolved-attribute = "ignore"
 unsupported-operator = "ignore"
-unused-ignore-comment = "ignore"
 
 [tool.ty.src]
 exclude = ["docs", "tests"]
