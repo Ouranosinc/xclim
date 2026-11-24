@@ -844,8 +844,8 @@ def time_bnds(
     """
     if isinstance(time, xr.DataArray | xr.Dataset):
         time = time.indexes[time.name]
-    elif hasattr(time, "groupers"):
-        for grouper in time.groupers:  # ty: ignore[not-iterable]
+    elif isinstance(time, DataArrayResample | DatasetResample):
+        for grouper in time.groupers:
             if "time" in grouper.codes.dims:
                 datetime = grouper.unique_coord.data
                 freq = freq or getattr(grouper.grouper, "freq", None)
@@ -895,7 +895,7 @@ def time_bnds(
         is_on_offset = period.is_on_offset
         day = pd.Timedelta("1D")
 
-    def shift_time(t):  # numpydoc ignore=GL08
+    def shift_time(t: Any) -> Any:  # numpydoc ignore=GL08
         if not is_on_offset(t):
             if freq_is_start:
                 t = period.rollback(t)
@@ -905,7 +905,7 @@ def time_bnds(
 
     time_real = list(map(shift_time, time))
 
-    cls = time.__class__
+    cls: type[xr.CFTimeIndex | pd.DatetimeIndex] = time.__class__  # type: ignore[assignment]
     if freq_is_start:
         tbnds = [cls(time_real), cls([t + period for t in time_real])]
     else:
