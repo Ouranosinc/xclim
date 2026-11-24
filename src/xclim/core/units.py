@@ -22,6 +22,7 @@ import pandas as pd
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
+from pint.facets.plain import PlainQuantity
 from xarray.coding import cftime_offsets
 from yaml import safe_load
 
@@ -317,9 +318,9 @@ def pint_multiply(da: xr.DataArray, q: pint.Quantity, out_units: str | None = No
     return out
 
 
-def str2pint(val: str) -> pint.Quantity:
+def str2pint(val: str) -> PlainQuantity:
     """
-    Convert a string to a pint.Quantity, splitting the magnitude and the units.
+    Convert a string to a pint PlainQuantity, splitting the magnitude and the units.
 
     Parameters
     ----------
@@ -329,7 +330,7 @@ def str2pint(val: str) -> pint.Quantity:
 
     Returns
     -------
-    pint.Quantity
+    PlainQuantity
         Magnitude is 1 if no magnitude was present in the string.
     """
     mstr, *ustr = val.split(" ", maxsplit=1)
