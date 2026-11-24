@@ -477,10 +477,13 @@ class IndexWrapper:  # numpydoc ignore=PR01
             description = ""
             choices = _empty
             if name in doc_params:
-                description = doc_params[name].description.replace("\n", " ").replace('"', "'")
-
+                doc_param = doc_params[name]
+                if doc_param.description is not None:
+                    description = doc_param.description.replace("\n", " ").replace('"', "'")
                 choices_raw = None
-                docannot = doc_params[name].type_name.strip()
+                docannot = ""
+                if doc_param.type_name is not None:
+                    docannot = doc_param.type_name.strip()
                 # To string to cover both cases where it is a Literal type or a string already
                 sigannot = str(sigparam.annotation)
                 if "dim: indexer" not in docannot and (match := re.match(r"(\{.*\})", docannot)):
@@ -490,7 +493,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
                 if choices_raw:
                     try:
                         choices = literal_eval(choices_raw)
-                        if doc_params[name].is_optional or default is None:
+                        if doc_param.is_optional or default is None:
                             choices.add(None)
                     except ValueError:
                         # If the literal_eval fails, we just ignore the choices.
@@ -516,7 +519,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
         outputs = []
         for r in doc.many_returns:
             dimensionality = None
-            if ", " in r.type_name:
+            if r.type_name and ", " in r.type_name:
                 _, dimensionality = r.type_name.split(", ")
             outputs.append(Output(var_name=r.return_name, dimensionality=dimensionality, long_name=r.description or ""))
 
@@ -524,9 +527,11 @@ class IndexWrapper:  # numpydoc ignore=PR01
         references = ""
         for section in doc.meta:
             if section.args == ["notes"]:
-                notes = section.description.replace('"', "'")
+                if section.description is not None:
+                    notes = section.description.replace('"', "'")
             elif section.args == ["references"]:
-                references = section.description.replace('"', "'")
+                if section.description is not None:
+                    references = section.description.replace('"', "'")
 
         new = type(
             cls.__name__,
@@ -1098,7 +1103,7 @@ class IndicatorBase(IndexWrapper):
             if getattr(cl, "identifier", None) is not None:
                 parents.append(cl.identifier)
             if hasattr(cl, "get_parent_ids"):
-                parents.extend(cl.get_parent_ids())
+                parents.extend(cl.get_parent_ids())  # ty: ignore[not-callable]
         return parents
 
 

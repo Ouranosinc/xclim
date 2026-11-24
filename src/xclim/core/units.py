@@ -914,6 +914,7 @@ def _rate_and_amount_converter(
         else:
             m, u = infer_sampling_units(da, freq)
 
+    out: xr.DataArray
     # Freq is month, season or year, which are not constant units, or simply freq is not inferrable.
     if u is None:
         # Get sampling period lengths in nanoseconds

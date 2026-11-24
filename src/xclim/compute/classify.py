@@ -104,7 +104,10 @@ def get_zones(
     # Get zone bins (if necessary)
     zone_bins: xr.DataArray | list[Quantity]
     if bins is None:
-        zone_bins = _get_zone_bins(zone_min, zone_max, zone_step)
+        if zone_min is not None and zone_max is not None and zone_step is not None:
+            zone_bins = _get_zone_bins(zone_min, zone_max, zone_step)
+        else:
+            raise NotImplementedError("zone_min, zone_max, and zone_step must be provided if bins is None.")
     else:
         zone_bins = bins
     if isinstance(zone_bins, list):

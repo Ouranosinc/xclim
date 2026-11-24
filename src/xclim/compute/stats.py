@@ -827,15 +827,15 @@ def preprocess_standardized_index(da: xr.DataArray, freq: Freq | None, window: i
     if freq is not None and xr.infer_freq(da.time) != freq:
         da = da.resample(time=freq).mean(keep_attrs=True)
 
-    if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:  # type: ignore[index]
-        warnings.warn(
-            "The input data is chunked on time dimension and must be fully rechunked to"
-            " run `fit` on groups ."
-            " Beware, this operation can significantly increase the number of tasks dask"
-            " has to handle.",
-            stacklevel=2,
-        )
-        da = da.chunk({"time": -1})
+    if uses_dask(da):
+        chunks = da.chunks
+        if chunks is not None and len(chunks[da.get_axis_num("time")]) > 1:
+            warnings.warn(
+                "The input data is chunked on time dimension and must be fully rechunked to run `fit` on groups. "
+                "Beware, this operation can significantly increase the number of tasks dask must handle.",
+                stacklevel=2,
+            )
+            da = da.chunk({"time": -1})
 
     if window > 1:
         da = da.rolling(time=window).mean(skipna=False, keep_attrs=True)

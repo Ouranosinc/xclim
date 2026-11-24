@@ -134,7 +134,7 @@ from __future__ import annotations
 
 from collections import OrderedDict, namedtuple
 from collections.abc import Sequence
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import numpy as np
 import xarray as xr
@@ -1215,7 +1215,7 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
             das = [da.squeeze(dummy_dim, drop=True) for da in das]
 
     if len(outputs) == 1:
-        return {outputs[0]: das}
+        return {outputs[0]: cast(xr.DataArray, das)}
 
     return dict(zip(outputs, das, strict=False))
 

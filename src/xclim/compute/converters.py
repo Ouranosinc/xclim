@@ -435,10 +435,11 @@ Where :math:`T` is the air temperature in K and :math:`T_0` is the freezing temp
 
 def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str) -> xr.DataArray:
     """Saturation vapor pressure with reference to water."""
+    e_sat: xr.DataArray
     if method == "ecmwf":
         method = "buck81"
     if method == "sonntag90":
-        e_sat: xr.DataArray = 100 * np.exp(  # type: ignore[assignment]
+        e_sat = 100 * np.exp(  # type: ignore[assignment]
             -6096.9385 / tas
             + 16.635794
             + -2.711193e-2 * tas
@@ -476,10 +477,11 @@ def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str) -> xr.
 
 def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str) -> xr.DataArray:
     """Saturation vapor pressure with reference to ice."""
+    e_sat: xr.DataArray
     if method == "ecmwf":
         method = "aerk96"
     if method in "sonntag90":
-        e_sat: xr.DataArray = 100 * np.exp(  # type: ignore[assignment]
+        e_sat = 100 * np.exp(  # type: ignore[assignment]
             -6024.5282 / tas + 24.7219 + 1.0613868e-2 * tas + -1.3198825e-5 * tas**2 + -0.49382577 * np.log(tas)
         )
     elif method in "goffgratch46":

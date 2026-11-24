@@ -121,19 +121,19 @@ def corn_heat_units(
     ----------
     :cite:cts:`audet_atlas_2012,bootsma_risk_1999`
     """
-    tasmin = convert_units_to(tasmin, "degC")
-    tasmax = convert_units_to(tasmax, "degC")
-    thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
-    thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
+    _tasmin = convert_units_to(tasmin, "degC")
+    _tasmax = convert_units_to(tasmax, "degC")
+    _thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
+    _thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
 
-    mask_tasmin = tasmin > thresh_tasmin
-    mask_tasmax = tasmax > thresh_tasmax
+    mask_tasmin = _tasmin > _thresh_tasmin
+    mask_tasmax = _tasmax > _thresh_tasmax
 
     chu = (
-        xr.where(mask_tasmin, 1.8 * (tasmin - thresh_tasmin), 0)
+        xr.where(mask_tasmin, 1.8 * (_tasmin - _thresh_tasmin), 0)
         + xr.where(
             mask_tasmax,
-            (3.33 * (tasmax - thresh_tasmax) - 0.084 * (tasmax - thresh_tasmax) ** 2),
+            (3.33 * (_tasmax - _thresh_tasmax) - 0.084 * (_tasmax - _thresh_tasmax) ** 2),
             0,
         )
     ) / 2
@@ -238,7 +238,7 @@ def huglin_index(
 
     tas = convert_units_to(tas, "degC")
     tasmax = convert_units_to(tasmax, "degC")
-    thresh = convert_units_to(thresh, "degC")
+    _thresh = convert_units_to(thresh, "degC")
 
     if lat is None:
         lat = _gather_lat(tas)
@@ -253,7 +253,7 @@ def huglin_index(
             "Method is not implemented. Only 'huglin', 'interpolated', and 'jones' are supported."
         )
 
-    if method in ["huglin", "interpolated"]:
+    if method == "huglin" or method == "interpolated":
         k = huglin_day_length_latitude_coefficient(lat, method=method, cap_value=cap_value)
     elif method == "jones":
         k_aggregated = jones_day_length_latitude_coefficient(
@@ -265,7 +265,7 @@ def huglin_index(
             freq=freq,
         )
 
-    hi = (((tas + tasmax) / 2) - thresh).clip(min=0) * k
+    hi = (((tas + tasmax) / 2) - _thresh).clip(min=0) * k
     hi = select_time(hi, date_bounds=(start_date, end_date), include_bounds=(True, False)).resample(time=freq).sum()
     if k_aggregated is not None:
         hi = hi * k_aggregated
@@ -410,8 +410,8 @@ def biologically_effective_degree_days(
 
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
-    thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
-    max_daily_degree_days = convert_units_to(max_daily_degree_days, "degC")
+    _thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
+    _max_daily_degree_days = convert_units_to(max_daily_degree_days, "degC")
 
     k: int | xr.DataArray = 1
     k_aggregated: xr.DataArray | None = None
@@ -424,19 +424,19 @@ def biologically_effective_degree_days(
         tr_adj = 0
     elif method in ["gladstones", "huglin", "interpolated", "jones"]:
         # Temperature range adjustment
-        low_dtr = convert_units_to(low_dtr, "degC")
-        high_dtr = convert_units_to(high_dtr, "degC")
+        _low_dtr = convert_units_to(low_dtr, "degC")
+        _high_dtr = convert_units_to(high_dtr, "degC")
         dtr = tasmax - tasmin
         tr_adj = 0.25 * xr.where(
-            dtr > high_dtr,
-            dtr - high_dtr,
-            xr.where(dtr < low_dtr, dtr - low_dtr, 0),
+            dtr > _high_dtr,
+            dtr - _high_dtr,
+            xr.where(dtr < _low_dtr, dtr - _low_dtr, 0),
         )
 
         if lat is None:
             lat = _gather_lat(tasmin)
 
-        if method in ["huglin", "interpolated"]:
+        if method == "huglin" or method == "interpolated":
             k = huglin_day_length_latitude_coefficient(lat, method=method, cap_value=cap_value)
         elif method == "gladstones":
             k = gladstones_day_length_latitude_coefficient(dates=tasmin.time, lat=lat)
@@ -455,7 +455,7 @@ def biologically_effective_degree_days(
             "Method is not implemented. Only 'gladstones', 'huglin', 'icclim', 'interpolated', and 'jones' are supported."
         )
 
-    bedd = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(max=max_daily_degree_days)
+    bedd = ((((tasmin + tasmax) / 2) - _thresh_tasmin).clip(min=0) * k + tr_adj).clip(max=_max_daily_degree_days)
     bedd = select_time(bedd, date_bounds=(start_date, end_date), include_bounds=(True, False)).resample(time=freq).sum()
     if k_aggregated is not None:
         bedd = bedd * k_aggregated
@@ -660,7 +660,7 @@ def dryness_index(  # numpydoc ignore=SS05
     # Resample all variables to monthly totals in mm units.
     evspsblpot = amount2lwethickness(rate2amount(evspsblpot), out_units="mm").resample(time="MS").sum()
     pr = amount2lwethickness(rate2amount(pr), out_units="mm").resample(time="MS").sum()
-    wo = convert_units_to(wo, "mm")
+    _wo = convert_units_to(wo, "mm")
 
     # Different potential evapotranspiration rates for northern hemisphere and southern hemisphere.
     # wo_adjustment is the initial soil moisture rate at beginning of season.
@@ -722,9 +722,9 @@ def dryness_index(  # numpydoc ignore=SS05
     di_north: xr.DataArray
     di_south: xr.DataArray
     if has_north:
-        di_north = wo + (pr_masked - t_v - e_s).resample(time="YS-JAN").sum()
+        di_north = _wo + (pr_masked - t_v - e_s).resample(time="YS-JAN").sum()
     if has_south:
-        di_south = wo + (pr_masked - t_v - e_s).resample(time="YS-JUL").sum()
+        di_south = _wo + (pr_masked - t_v - e_s).resample(time="YS-JUL").sum()
         # Shift time for Southern Hemisphere to allow for concatenation with Northern Hemisphere
         di_south = di_south.shift(time=1).isel(time=slice(1, None))
         di_south["time"] = di_south.indexes["time"].shift(-6, "MS")
@@ -924,9 +924,9 @@ def rain_season(
     """
     # Unit conversion.
     pram = rate2amount(pr, out_units="mm")
-    thresh_wet_start = convert_units_to(thresh_wet_start, pram)
-    thresh_dry_start = convert_units_to(thresh_dry_start, pram)
-    thresh_dry_end = convert_units_to(thresh_dry_end, pram)
+    _thresh_wet_start = convert_units_to(thresh_wet_start, pram)
+    _thresh_dry_start = convert_units_to(thresh_dry_start, pram)
+    _thresh_dry_end = convert_units_to(thresh_dry_end, pram)
 
     # should we flag date_min_end  < date_max_start?
     def _get_first_run(run_positions, start_date, end_date):
@@ -940,14 +940,14 @@ def rain_season(
         _pram = select_time(_pram, date_bounds=(date_min_start, last_doy))
 
         # First condition: Start with enough precipitation
-        da_start = _pram.rolling({"time": window_wet_start}).sum() >= thresh_wet_start
+        da_start = _pram.rolling({"time": window_wet_start}).sum() >= _thresh_wet_start
 
         # Second condition: No dry period after
         if method_dry_start == "per_day":
-            da_stop = _pram <= thresh_dry_start
+            da_stop = _pram <= _thresh_dry_start
             window_dry = window_dry_start
         elif method_dry_start == "total":
-            da_stop = _pram.rolling({"time": window_dry_start}).sum() <= thresh_dry_start
+            da_stop = _pram.rolling({"time": window_dry_start}).sum() <= _thresh_dry_start
             # equivalent to rolling forward in time instead, i.e. end date will be at beginning of dry run
             da_stop = da_stop.shift({"time": -(window_dry_start - 1)}, fill_value=False)
             window_dry = 1
@@ -964,10 +964,10 @@ def rain_season(
     # FIXME: This function mixes local and parent-level variables. It should be refactored.
     def _get_first_run_end(_pram):
         if method_dry_end == "per_day":
-            da_stop = _pram <= thresh_dry_end
+            da_stop = _pram <= _thresh_dry_end
             run_positions = rl.rle(da_stop) >= window_dry_end
         elif method_dry_end == "total":
-            run_positions = _pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
+            run_positions = _pram.rolling({"time": window_dry_end}).sum() <= _thresh_dry_end
         else:
             raise ValueError(f"Unknown method_dry_end: {method_dry_end}.")
         return _get_first_run(run_positions, date_min_end, date_max_end)
