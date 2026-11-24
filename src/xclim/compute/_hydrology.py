@@ -188,7 +188,7 @@ def standardized_streamflow_index(
 
     See Also
     --------
-    xclim.compute._agro.standardized_precipitation_index : Standardized Precipitation Index.
+    xclim.compute.standardized_precipitation_index : Standardized Precipitation Index.
     xclim.compute.stats.standardized_index : Standardized Index.
     xclim.compute.stats.standardized_index_fit_params : Standardized Index Fit Params.
 
@@ -501,7 +501,7 @@ def standardized_groundwater_index(
 
     See Also
     --------
-    xclim.compute._agro.standardized_precipitation_index : Standardized Precipitation Index.
+    xclim.compute.standardized_precipitation_index : Standardized Precipitation Index.
     xclim.compute.stats.standardized_index : Standardized Index.
     xclim.compute.stats.standardized_index_fit_params : Standardized Index Fit Params.
 
