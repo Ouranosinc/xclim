@@ -78,8 +78,6 @@ dependencies:
   - tokenize-rt >=5.2.0
   - tox >=4.64.1
   - tox-gh >=1.8.0
-  - vulture =2.14
-  - yamllint >=1.35.1
   # Temporary Fixes
   - importlib-metadata <8.7.0 # Issues with dask >=2025.5.1 on Python3.11
   # Typing Stubs
