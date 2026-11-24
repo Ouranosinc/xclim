@@ -791,13 +791,13 @@ def spell_length_statistics(
     Here, a day is part of a spell if it is in any five (5) day period where the total accumulated precipitation
     reaches or exceeds 20 mm. We then return the length of the longest of such spells.
     """
-    thresh = convert_units_to(thresh, data, context="infer")
+    _thresh = convert_units_to(thresh, data, context="infer")
     return _spell_length_statistics(
         data,
         window,
         window_statistic,
         condition,
-        thresh,
+        _thresh,
         statistic,
         freq,
         constrain=constrain,
@@ -1045,7 +1045,7 @@ def season_length_from_boundaries(season_start: xr.DataArray, season_end: xr.Dat
 def difference_statistics(
     data1: xr.DataArray,
     data2: xr.DataArray,
-    statistic: Literal["max", "min", "mean", "sum"],
+    statistic: Literal["max", "min", "mean", "std", "var", "sum"],
     freq: Freq | None,
     absolute: bool = False,
     **indexer,
@@ -1061,7 +1061,7 @@ def difference_statistics(
         The lowest variable (ex: tasmin)).
     data2 : xr.DataArray
         The highest variable (ex: tasmax).
-    statistic : {"max", "min", "mean", "sum"}
+    statistic : {"max", "min", "mean", "std", "var", "sum"}
         The statistic to compute over the difference between the two variables.
     freq : Freq, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
