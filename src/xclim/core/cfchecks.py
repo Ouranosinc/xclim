@@ -77,7 +77,7 @@ def cfcheck_from_name(varname: str, vardata: xr.DataArray | None, attrs: list[st
     if "cell_methods" in data and "cell_methods" in attrs:
         _check_cell_methods(getattr(vardata, "cell_methods", None), data["cell_methods"])
     if "standard_name" in data and "standard_name" in attrs:
-        check_valid(vardata, "standard_name", data["standard_name"])
+        check_valid(vardata, "standard_name", [data["standard_name"]] + data.get("compatible_standard_names", []))
 
 
 @cfcheck

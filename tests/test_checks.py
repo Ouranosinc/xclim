@@ -8,7 +8,8 @@ import pytest
 import xarray as xr
 
 from xclim import set_options
-from xclim.core import ValidationError, cfchecks, datachecks
+from xclim.core import VARIABLES, ValidationError, cfchecks, datachecks
+from xclim.core.units import amount2lwethickness, rate2amount
 from xclim.indicators.atmos import tg_mean
 
 K2C = 273.15
@@ -88,6 +89,34 @@ def test_check_cell_methods_nok(value, expected):
 def test_check_cell_methods_ok(value, expected):
     # No error raise so all is good
     assert None is cfchecks._check_cell_methods(value, expected)
+
+
+def test_cfcheck_from_name_compatible_standard_names(atmosds):
+    # this test is based on this, assertion in case atmosds or variables.yml are changed
+    assert atmosds.pr.standard_name == "precipitation_flux"
+    assert VARIABLES["pr"]["standard_name"] == "precipitation_flux"
+
+    # doesn't raise, pr has correct precipitation_flux standard name
+    cfchecks.cfcheck_from_name("pr", atmosds.pr)
+
+    # raises as pr_amount has lwe_thickness_of_precipitation_amount standard name
+    # even with hydro context, we don't do rate <> amount conversion automatically
+    pr_amount = rate2amount(atmosds.pr)
+    with pytest.raises(ValidationError):
+        cfchecks.cfcheck_from_name("pr", pr_amount)
+
+    # Doesn't raise as pr_rate has lwe_precipitation_rate standard_name
+    # hydro context does rate <> flux conversion automatically, so cf should
+    pr_rate = amount2lwethickness(atmosds.pr)
+    cfchecks.cfcheck_from_name("pr", pr_rate)
+
+    # this test is based on this, assertion in case atmosds is changed
+    assert atmosds.rsds.standard_name == "surface_downwelling_shortwave_flux"
+    assert VARIABLES["rsds"]["standard_name"] == "surface_downwelling_shortwave_flux_in_air"
+
+    # Doesn't raise even if that standard name is not the principal one
+    # because aliases are included
+    cfchecks.cfcheck_from_name("rsds", atmosds.rsds)
 
 
 class TestDateHandling:
