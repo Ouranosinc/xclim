@@ -30,11 +30,6 @@ from xclim.core.units import convert_units_to
 from xclim.core.utils import _chunk_like, uses_dask
 
 try:
-    from xarray.coding.calendar_ops import _datetime_to_decimal_year  # type: ignore[attr-defined]  # pylint: disable=ungrouped-imports
-except ImportError:
-    _datetime_to_decimal_year = None
-
-try:
     from flox.xarray import rechunk_for_blockwise
 
     flox_err = None
@@ -342,11 +337,7 @@ def day_angle(time: xr.DataArray) -> xr.DataArray:
     xr.DataArray, [rad]
         Day angle.
     """
-    if _datetime_to_decimal_year is None:
-        decimal_year = time.dt.decimal_year
-    else:
-        decimal_year = _datetime_to_decimal_year(times=time, calendar=time.dt.calendar)
-    return ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
+    return ((time.dt.decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
 
 
 def solar_declination(time: xr.DataArray, method: Literal["spencer", "simple"] = "spencer") -> xr.DataArray:
