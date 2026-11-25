@@ -722,7 +722,7 @@ def _mannwhitney_utest(ref, fut, pool_dim, *, p_change=0.05):
     def mwu_wrapper(f, r):  # This specific test can't manage an all-NaN slice
         if np.isnan(f).all() or np.isnan(r).all():
             return np.nan
-        return spstats.mannwhitneyu(f, r, axis=-1, nan_policy="omit")[1]
+        return spstats.mannwhitneyu(f, r, axis=-1, nan_policy="omit")[1]  # pylint: disable=unexpected-keyword-arg
 
     pvals = xr.apply_ufunc(
         mwu_wrapper,

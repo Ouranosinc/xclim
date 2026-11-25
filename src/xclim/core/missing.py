@@ -314,7 +314,7 @@ class MissingAny(MissingBase):
     """Mask periods as missing if any of its elements is missing or invalid."""
 
     # override of init to remove **options from signature
-    def __init__(self) -> None:
+    def __init__(self) -> None:  # pylint: disable=useless-parent-delegation
         """Create a MissingAny object."""
         super().__init__()
 
@@ -330,7 +330,7 @@ class MissingSomeButNotAll(MissingBase):
     """Mask periods as missing if some but not all of its elements is missing or invalid."""
 
     # override of init to remove **options from signature
-    def __init__(self) -> None:
+    def __init__(self) -> None:  # pylint: disable=useless-parent-delegation
         """Create a MissingSomeButNotAll object."""
         super().__init__()
 
