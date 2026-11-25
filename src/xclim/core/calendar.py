@@ -11,7 +11,7 @@ import datetime as pydt
 import warnings
 from collections.abc import Sequence
 from importlib.util import find_spec
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import cftime
 import numpy as np
@@ -1807,7 +1807,7 @@ def unstack_periods(da: DataType, dim: str = "period") -> DataType:
                 .isel(time=slice(0, length))
                 .assign_coords(time=real_time.isel(time=slice(0, length)))
             )
-        return xr.concat(periods, "time")
+        return cast(DataType, xr.concat(periods, "time"))
 
     # Difficult and ambiguous case
     if (window / stride) % 2 != 1:
@@ -1835,7 +1835,7 @@ def unstack_periods(da: DataType, dim: str = "period") -> DataType:
             slc = slice(slices[mid].start, min(slices[mid].stop, length))
         periods.append(da.isel({dim: i}, drop=True).isel(time=slc).assign_coords(time=real_time.isel(time=slc)))
 
-    return xr.concat(periods, "time")
+    return cast(DataType, xr.concat(periods, "time"))
 
 
 def add_season_coord(ds: DataType, freq: Freq) -> DataType:
@@ -1845,11 +1845,11 @@ def add_season_coord(ds: DataType, freq: Freq) -> DataType:
     Parameters
     ----------
     ds : xr.Dataset or xr.DataArray
-      The xarray object with a "time" coordinate.
-      Only supports daily or coarser frequencies (excluding weekly).
-      The time axis must be complete and regular (`xr.infer_freq(ds.time)` doesn't fail).
+        The xarray object with a "time" coordinate.
+        Only supports daily or coarser frequencies (excluding weekly).
+        The time axis must be complete and regular (`xr.infer_freq(ds.time)` doesn't fail).
     freq : Freq
-      Resampling frequency. Must be between "MS" and "YS" and divide a year evenly.
+        Resampling frequency. Must be between "MS" and "YS" and divide a year evenly.
 
     Returns
     -------
@@ -1888,11 +1888,11 @@ def split_time_to_season_year(ds: DataType, freq: Freq) -> DataType:
     Parameters
     ----------
     ds : xr.Dataset or xr.DataArray
-      The xarray object with a "time" coordinate.
-      Only supports daily or coarser frequencies (excluding weekly).
-      The time axis must be complete and regular (`xr.infer_freq(ds.time)` doesn't fail).
+        The xarray object with a "time" coordinate.
+        Only supports daily or coarser frequencies (excluding weekly).
+        The time axis must be complete and regular (`xr.infer_freq(ds.time)` doesn't fail).
     freq : Freq
-      Resampling frequency. Must be between "MS" and "YS" and divide a year evenly.
+        Resampling frequency. Must be between "MS" and "YS" and divide a year evenly.
 
     Returns
     -------
