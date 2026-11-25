@@ -23,12 +23,16 @@ dependencies:
   - scipy >=1.11.0
   - xarray >=2024.11.0
   - yamale >=5.0.0
-  # Extras
+  # Performance
   - bottleneck >=1.4
   - flox >=0.9
+  # plot
+  - matplotlib >=3.9.0
+  # stats
+  - lmoments3 >=1.0.7  # Not an official dependency but required for some Jupyter notebooks
   - pymannkendall >=1.4.0
-  # lmoments3 - Not an official dependency but required for some Jupyter notebooks
-  - lmoments3 >=1.0.7
+  # Typing
+  - pandas-stubs >=2.2
   # Linting dependencies
   - codespell >=2.4.1
   - deptry >=0.25.1
@@ -51,7 +55,6 @@ dependencies:
   - h5py >=3.12.1
   - ipykernel
   - ipython >=8.30.0
-  - matplotlib >=3.9.0
   - nbconvert >=7.16.4
   - nbsphinx >=0.9.5
   - nbval >=0.11.0
@@ -80,5 +83,3 @@ dependencies:
   - tox-gh >=1.8.0
   # Temporary Fixes
   - importlib-metadata <8.7.0 # Issues with dask >=2025.5.1 on Python3.11
-  # Typing Stubs
-  - pandas-stubs >=2.2

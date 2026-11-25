@@ -62,7 +62,10 @@ performance = [
   "flox >=0.9"
 ]
 plot = [
-  "matplotlib >=3.8.0"
+  "matplotlib >=3.9.0"
+]
+sbck = [
+  "sbck >=1.4.2"
 ]
 stats = [
   "lmoments3 >=1.0.7",

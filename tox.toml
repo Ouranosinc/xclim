@@ -72,10 +72,8 @@ commands = [
 ]
 
 [env.sbck]
-commands_pre = [
-  ["python", "-c", "print('The sbck dependency requires the \"libeigen3-dev\" package to be installed on the system.')"],
-  ["python", "-m", "pip", "install", "sbck>=1.4.2"]
-]
+description = "Run tests with pytest under {basepython} with sbck (requires the \"eigen\" conda package or \"libeigen3-dev\" system library)."
+extras = ["sbck"]
 
 [env.upstream]
 deps = ["-r CI{/}requirements_upstream.txt"]

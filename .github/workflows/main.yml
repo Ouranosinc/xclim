@@ -360,7 +360,7 @@ jobs:
 
   test-conda:
     needs: lint
-    name: Python${{ matrix.python-version }} (${{ matrix.os }}, conda)
+    name: Python${{ matrix.python-version }} (${{ matrix.os }}, conda, sbck=${{ matrix.sbck }})
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
@@ -368,9 +368,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ 'ubuntu-latest' ]
-        python-version: [ "3.11", "3.14" ]
-        testdata-cache: [ '~/.cache/xclim-testdata' ]
+        include:
+          - os: 'ubuntu-latest'
+            python-version: "3.11"
+            sbck: false
+            testdata-cache: [ '~/.cache/xclim-testdata' ]
+          - os: 'ubuntu-latest'
+            python-version: "3.14"
+            sbck: true
+            testdata-cache: [ '~/.cache/xclim-testdata' ]
     defaults:
       run:
         shell: bash -l {0}
@@ -421,9 +427,13 @@ jobs:
           path: |
             ${{ matrix.testdata-cache }}
           key: ${{ runner.os }}-xclim-testdata-${{ env.XCLIM_TESTDATA_BRANCH }}-conda-${{ hashFiles('pyproject.toml', 'tox.ini') }}-Python${{ matrix.python-version }}
+      - name: Install sbck
+        if: ${{ matrix.sbck }}
+        run: |
+          micromamba install eigen "sbck>=1.4.2"
       - name: Install xclim
         run: |
-          python -m pip install --no-user --editable .
+          python -m pip install --no-deps --no-user --editable .
       - name: Check versions
         run: |
           micromamba list
