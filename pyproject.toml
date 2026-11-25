@@ -249,7 +249,7 @@ optional_dependencies_dev_groups = ["types"]
 
 [tool.deptry.per_rule_ignores]
 DEP001 = ["pymannkendall"]
-DEP002 = ["bottleneck", "lmoments3", "numbagg", "pyarrow"]
+DEP002 = ["bottleneck", "lmoments3", "numbagg", "pyarrow", "sbck"]
 DEP004 = ["pip", "pooch", "pytest", "pytest_socket"]
 
 [tool.flit.sdist]
