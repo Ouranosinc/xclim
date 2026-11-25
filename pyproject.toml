@@ -64,9 +64,6 @@ performance = [
 plot = [
   "matplotlib >=3.9.0"
 ]
-sbck = [
-  "sbck >=1.4.2"
-]
 stats = [
   "lmoments3 >=1.0.7",
   "pymannkendall >=1.4.0"
@@ -249,7 +246,7 @@ optional_dependencies_dev_groups = ["types"]
 
 [tool.deptry.per_rule_ignores]
 DEP001 = ["pymannkendall"]
-DEP002 = ["bottleneck", "lmoments3", "numbagg", "pyarrow", "sbck"]
+DEP002 = ["bottleneck", "lmoments3", "numbagg", "pyarrow"]
 DEP004 = ["pip", "pooch", "pytest", "pytest_socket"]
 
 [tool.flit.sdist]
