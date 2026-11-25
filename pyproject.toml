@@ -479,7 +479,6 @@ missing-attribute = "ignore"
 missing-union-attribute = "ignore"
 no-matching-overload = "ignore"
 not-subscriptable = "ignore"
-unsupported-operator = "ignore"
 
 [tool.ty.src]
 exclude = ["docs", "tests"]

@@ -1081,7 +1081,7 @@ class IndicatorBase(IndexWrapper):
             return outs[0]
 
         # Return a NamedTuple for multiple outputs but not as dataset
-        name = (self.identifier or ".UnnamedIndicator").split(".")[-1]
+        name = (self.identifier or ".UnnamedIndicator").split(".", maxsplit=1)[-1]
         NamedOuts = namedtuple(  # type: ignore[misc]
             name,
             [str(o.name) for o in outs],
@@ -1216,7 +1216,7 @@ class _MetadataFormatter(_DataTreeIterator):
                 formatted["cell_methods"] = f"{parent_attrs['cell_methods']} {formatted['cell_methods']}"
             out.attrs.update(formatted)
 
-            if "{" in outmeta.var_name:
+            if "{" in str(outmeta.var_name):
                 out.name = default_formatter.format(outmeta.var_name, **fmtargs).replace(" ", "")
 
             # Add an history-like attribute summarizing computation

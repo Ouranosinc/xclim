@@ -3022,12 +3022,12 @@ def wind_profile(
     desired, and :math:`h_r` is the reference height.
     """
     # Convert units to meters
-    h = convert_units_to(h, "m")
-    h_r = convert_units_to(h_r, "m")
+    _h = convert_units_to(h, "m")
+    _h_r = convert_units_to(h_r, "m")
 
     if method == "power_law":
         alpha = kwargs.pop("alpha", 1 / 7)
-        out = wind_speed * (h / h_r) ** alpha
+        out = wind_speed * (_h / _h_r) ** alpha
         out = out.assign_attrs(units=wind_speed.attrs["units"])
         return out
     raise NotImplementedError(f"Method {method} not implemented.")

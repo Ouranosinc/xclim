@@ -1319,8 +1319,8 @@ def _add_one_day(time: xr.DataArray) -> xr.DataArray:
         Next day.
     """
     if time.dtype == "O":
-        return time + timedelta(days=1)  # type: ignore[operator]
-    return time + np.timedelta64(1, "D")
+        return time.copy(data=time.values + timedelta(days=1))
+    return time.copy(data=time.values + np.timedelta64(1, "D"))
 
 
 def make_hourly_temperature(
