@@ -417,6 +417,13 @@ def convert_units_to(
         Attributes are preserved unless an automatic CF conversion is performed,
         in which case only the new `standard_name` appears in the result.
 
+    Raises
+    ------
+    TypeError
+        If `source` or `target` are of type 'int' or 'float' (missing units).
+    NotImplementedError
+        If `source` is an unsupported conversion type.
+
     See Also
     --------
     cf_conversion : Get the standard name of the specific conversion for the given standard name.
@@ -425,6 +432,8 @@ def convert_units_to(
     amount2lwethickness : Convert an amount to a liquid water equivalent thickness.
     lwethickness2amount : Convert a liquid water equivalent thickness to an amount.
     """
+    if isinstance(source, float | int):
+        raise TypeError("Please specify source units explicitly.")
     if isinstance(source, xr.DataTree):
         return source.map_over_datasets(convert_units_to, target, kwargs={"context": context})
     if isinstance(source, xr.Dataset):
@@ -506,10 +515,6 @@ def convert_units_to(
             )
             out = out.assign_attrs(**target_cf_attrs)
             return out
-
-    # TODO remove backwards compatibility of int/float thresholds after v1.0 release
-    if isinstance(source, float | int):
-        raise TypeError("Please specify units explicitly.")
 
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
