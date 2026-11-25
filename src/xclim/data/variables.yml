@@ -1,4 +1,16 @@
+# This file is based on version 95 of the standard name table of the CF conventions.
 variables:
+  # Structure:
+  # var_name : str, should be CMIP compliant ("physical parameter" of CMIP7) as much as possible, or very frequent in its domain
+  #   canonical_units : units that we expect this variable in ("units" of physical parameter of CMIP7, or "canonical units" of CF standard name table)
+  #   cell_methods : usual cell methods
+  #   description : human-readable description for docstrings
+  #   dimensions : pint dimensions for data checks and units compatibility checks
+  #   standard_name : CF standard name
+  #   compatible_standard_names: list of other standard names, either aliases (as in CF's table)
+  #                              or standard names of quantities implicitly convertible to this one
+  #                              (for example pairs in conversions.amount2lwethickness.valid_names below)
+  #   data_flags: name and arguments of data flags of xc.core.dataflags that are commonly used with this variable
   air_density:
     canonical_units: kg m-3
     cell_methods: "time: mean"
@@ -40,6 +52,8 @@ variables:
     description: Actual evapotranspiration flux.
     dimensions: "[discharge]"
     standard_name: water_evapotranspiration_flux
+    compatible_standard_names:
+      - water_evaporation_flux
   evspsblpot:
     canonical_units: kg m-2 s-1
     cell_methods: "time: mean"
@@ -77,6 +91,8 @@ variables:
     description: Surface precipitation flux (all phases).
     dimensions: "[precipitation]"
     standard_name: precipitation_flux
+    compatible_standard_names:
+      - lwe_precipitation_rate
     data_flags:
       - negative_accumulation_values:
       - very_large_precipitation_events:
@@ -95,6 +111,8 @@ variables:
     description: Precipitation flux due to the convection schemes of the model (all phases).
     dimensions: "[precipitation]"
     standard_name: convective_precipitation_flux
+    compatible_standard_names:
+      - lwe_convective_precipitation_rate
     data_flags:
       - negative_accumulation_values:
   prra:
@@ -103,6 +121,8 @@ variables:
     description: Surface rain flux.
     dimensions: "[precipitation]"
     standard_name: rainfall_flux
+    compatible_standard_names:
+      - rainfall_rate
     data_flags:
       - negative_accumulation_values:
   prsn:
@@ -111,6 +131,8 @@ variables:
     description: Surface snowfall flux.
     dimensions: "[mass]/([area]*[time])"  # Not precipitation because it's not referring to liquid water
     standard_name: snowfall_flux
+    compatible_standard_names:
+      - lwe_snowfall_rate
     data_flags:
       - negative_accumulation_values:
   prsnd:
@@ -133,7 +155,9 @@ variables:
     cell_methods: "time: mean"
     description: Air pressure at sea level.
     dimensions: "[pressure]"
-    standard_name: air_pressure_at_sea_level
+    standard_name: air_pressure_at_mean_sea_level
+    compatible_standard_names:
+      - air_pressure_at_sea_level
     data_flags:
       - values_repeating_for_n_or_more_days:
           n: 5
@@ -154,25 +178,33 @@ variables:
     cell_methods: "time: mean"
     description: Incoming longwave radiation.
     dimensions: "[radiation]"
-    standard_name: surface_downwelling_longwave_flux
+    standard_name: surface_downwelling_longwave_flux_in_air
+    compatible_standard_names:
+      - surface_downwelling_longwave_flux
   rsds:
     canonical_units: W m-2
     cell_methods: "time: mean"
     description: Incoming shortwave radiation.
     dimensions: "[radiation]"
-    standard_name: surface_downwelling_shortwave_flux
+    standard_name: surface_downwelling_shortwave_flux_in_air
+    compatible_standard_names:
+      - surface_downwelling_shortwave_flux
   rlus:
     canonical_units: W m-2
     cell_methods: "time: mean"
     description: Outgoing longwave radiation.
     dimensions: "[radiation]"
-    standard_name: surface_upwelling_longwave_flux
+    standard_name: surface_upwelling_longwave_flux_in_air
+    compatible_standard_names:
+      - surface_upwelling_longwave_flux
   rsus:
     canonical_units: W m-2
     cell_methods: "time: mean"
     description: Outgoing shortwave radiation.
     dimensions: "[radiation]"
-    standard_name: surface_upwelling_shortwave_flux
+    standard_name: surface_upwelling_shortwave_flux_in_air
+    compatible_standard_names:
+      - surface_upwelling_shortwave_flux
   sfcWind:
     canonical_units: m s-1
     cell_methods: "time: mean"
@@ -221,7 +253,6 @@ variables:
     cell_methods: "time: mean"
     description: Soil moisture deficit.
     dimensions: "[precipitation]"
-    standard_name: soil_moisture_deficit
   snc:
     canonical_units: '%'
     cell_methods: "time: mean"
@@ -236,6 +267,8 @@ variables:
     description: Surface snow thickness.
     dimensions: "[length]"
     standard_name: surface_snow_thickness
+    compatible_standard_names:
+      - surface_snow_thickness_where_sea_ice
     data_flags:
       - negative_accumulation_values:
   snr:
@@ -244,12 +277,16 @@ variables:
     description: Surface snow density.
     dimensions: "[density]"
     standard_name: surface_snow_density
+    compatible_standard_names:
+      - snow_density
   snw:
     canonical_units: kg m-2
     cell_methods: "time: mean"
     description: Surface snow amount.
     dimensions: "[mass]/[area]"
     standard_name: surface_snow_amount
+    compatible_standard_names:
+      - lwe_thickness_of_surface_snow_amount
     data_flags:
       - negative_accumulation_values:
   sund:
@@ -265,6 +302,8 @@ variables:
     description: Surface snow water equivalent amount
     dimensions: "[length]"
     standard_name: lwe_thickness_of_surface_snow_amount
+    compatible_standard_names:
+      - surface_snow_amount
     data_flags:
       - negative_accumulation_values:
   qspec:
@@ -343,14 +382,6 @@ variables:
     description: Mean surface dew point temperature.
     dimensions: "[temperature]"
     standard_name: dew_point_temperature
-  thickness_of_rainfall_amount:
-    canonical_units: m
-    cell_methods: "time: sum"
-    description: >
-      Accumulated depth of rainfall, i.e. the thickness of a layer of liquid water
-      having the same mass per unit area as the rainfall amount.
-    dimensions: "[length]"
-    standard_name: thickness_of_rainfall_amount
   ua:
     canonical_units: m s-1
     cell_methods: "time: mean"

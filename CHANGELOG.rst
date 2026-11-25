@@ -2,22 +2,21 @@
 Changelog
 =========
 
-..
-    `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
-    ------------------------------------------------------------
-    Contributors to this version:
+`Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
+------------------------------------------------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 
-    New indicators and features
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    * N/A
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* The standard name checks of indicators now includes standard name aliases and standard names of quantities that are implicitly convertible to the expected one (for example liquid precipitation rates instead of precipitation flux). (:issue:`2480`, :pull:`2482`).
 
-    Breaking changes
-    ^^^^^^^^^^^^^^^^
-    * N/A
+Breaking changes
+^^^^^^^^^^^^^^^^
+* N/A
 
-    Internal changes
-    ^^^^^^^^^^^^^^^^
-    * N/A
+Internal changes
+^^^^^^^^^^^^^^^^
+* N/A
 
 .. _changes_1.0.1:
 
