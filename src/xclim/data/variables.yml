@@ -1,3 +1,4 @@
+# This file is based on version 95 of the standard name table of the CF conventions.
 variables:
   # Structure:
   # var_name : str, should be CMIP compliant ("physical parameter" of CMIP7) as much as possible, or very frequent in its domain
