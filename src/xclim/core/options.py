@@ -45,7 +45,7 @@ _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
 _RUN_LENGTH_UFUNC_OPTIONS = frozenset(["auto", True, False])
 # Defaults for options using mutable types
 # If the option is None, `get_options` will return this instead.
-_MUTABLE_OPTIONS_DEFAULTS = {MISSING_OPTIONS: DEFAULT_MISSING_OPTIONS}
+_MUTABLE_OPTIONS_DEFAULTS = {METADATA_LOCALES: [], MISSING_OPTIONS: DEFAULT_MISSING_OPTIONS}
 
 
 def _valid_missing_options(mopts):

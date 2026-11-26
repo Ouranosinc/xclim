@@ -1359,7 +1359,7 @@ class _LocaleMetadataFormatter(_MetadataFormatter):
 
     def _format_attrs(self, attrs, fmtargs, meta=None, var_name=None, formatter=default_formatter):
         out = super()._format_attrs(attrs, fmtargs, meta, formatter)
-        for loc in get_options()[METADATA_LOCALES] or []:
+        for loc in get_options()[METADATA_LOCALES]:
             out.update(
                 super()._format_attrs(
                     xloc.get_local_attrs(
