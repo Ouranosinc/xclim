@@ -743,7 +743,7 @@ def relative_humidity(
     huss: xr.DataArray | None = None,
     ps: xr.DataArray | None = None,
     ice_thresh: Quantified | None = None,
-    method: Literal["goffgratch46", "sonntag90", "tetens30", "wmo08", "its90", "ecmwf"] = "sonntag90",
+    method: Literal["bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08", "its90", "ecmwf"] = "sonntag90",
     interp_power: float | None = None,
     water_thresh: Quantified = "0 degC",
     invalid_values: Literal["clip", "mask"] | None = "clip",
@@ -768,7 +768,7 @@ def relative_humidity(
     ice_thresh : Quantified, optional
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water. Does nothing if `method` is "bohren98".
-    method : {"bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08", "ecmwf"}
+    method : {"bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08", "its90", "ecmwf"}
         Which method to use, see notes of this function and of :py:func:`saturation_vapor_pressure`.
         Default: "sonntag90".
     interp_power : int, optional
@@ -844,9 +844,10 @@ def relative_humidity(
     ...     invalid_values="clip",
     ... )
     """
-    if method in ("bohren98", "BA90"):
+    hurs: xr.DataArray
+    if method == "bohren98":
         if tdps is None:
-            raise ValueError("To use method 'bohren98' (BA98), dewpoint must be given.")
+            raise ValueError("To use method 'bohren98', dewpoint temperature must be provided.")
         tdps = convert_units_to(tdps, "K")
         tas = convert_units_to(tas, "K")
         L = 2.501e6
