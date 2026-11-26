@@ -210,7 +210,7 @@ def get_options():
     --------
     set_options : Set options.
     """
-    return {k: cv.get() or _MUTABLE_OPTIONS_DEFAULTS.get(k) for k, cv in OPTIONS.items()}
+    return {k: cv.get() if cv.get() is not None else _MUTABLE_OPTIONS_DEFAULTS.get(k) for k, cv in OPTIONS.items()}
 
 
 class set_options:  # numpydoc ignore=PR01,PR02
