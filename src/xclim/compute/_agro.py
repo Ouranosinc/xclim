@@ -121,19 +121,19 @@ def corn_heat_units(
     ----------
     :cite:cts:`audet_atlas_2012,bootsma_risk_1999`
     """
-    _tasmin = convert_units_to(tasmin, "degC")
-    _tasmax = convert_units_to(tasmax, "degC")
+    tasmin = convert_units_to(tasmin, "degC")
+    tasmax = convert_units_to(tasmax, "degC")
     _thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
     _thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
 
-    mask_tasmin = _tasmin > _thresh_tasmin
-    mask_tasmax = _tasmax > _thresh_tasmax
+    mask_tasmin = tasmin > _thresh_tasmin
+    mask_tasmax = tasmax > _thresh_tasmax
 
     chu = (
-        xr.where(mask_tasmin, 1.8 * (_tasmin - _thresh_tasmin), 0)
+        xr.where(mask_tasmin, 1.8 * (tasmin - _thresh_tasmin), 0)
         + xr.where(
             mask_tasmax,
-            (3.33 * (_tasmax - _thresh_tasmax) - 0.084 * (_tasmax - _thresh_tasmax) ** 2),
+            (3.33 * (tasmax - _thresh_tasmax) - 0.084 * (tasmax - _thresh_tasmax) ** 2),
             0,
         )
     ) / 2

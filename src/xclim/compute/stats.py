@@ -828,8 +828,8 @@ def preprocess_standardized_index(da: xr.DataArray, freq: Freq | None, window: i
         da = da.resample(time=freq).mean(keep_attrs=True)
 
     if uses_dask(da):
-        chunks = da.chunks
-        if chunks is not None and len(chunks[da.get_axis_num("time")]) > 1:
+        chunks: dict = da.chunks  # type: ignore[assignment]
+        if len(chunks[da.get_axis_num("time")]) > 1:
             warnings.warn(
                 "The input data is chunked on time dimension and must be fully rechunked to run `fit` on groups. "
                 "Beware, this operation can significantly increase the number of tasks dask must handle.",

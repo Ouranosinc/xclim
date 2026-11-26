@@ -1127,7 +1127,7 @@ def dewpoint_from_specific_humidity(
     _method = method.casefold()
     A, B, C = ESAT_FORMULAS_COEFFICIENTS[_method][variant]
 
-    f = np.log(e / A) / B
+    f = cast(xr.DataArray, np.log(e / A) / B)
     tdps = (-273.16 - C * f) / (f - 1)
     return tdps.assign_attrs(units="K", units_metadata="temperature: on_scale")
 
@@ -1205,8 +1205,8 @@ def snowfall_approximation(
     :cite:cts:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019,dai_snowfall_2008`
     """
     if method == "binary":
-        thresh = convert_units_to(thresh, tas)
-        prsn = pr.where(tas <= thresh, 0)
+        _thresh = convert_units_to(thresh, tas)
+        prsn = pr.where(tas <= _thresh, 0)
 
     elif method == "brown":
         if not np.isscalar(thresh):
@@ -3111,9 +3111,9 @@ def wind_power_potential(
     :cite:cts:`chen_2020,tobin_2018`.
     """
     # Convert units
-    cut_in = convert_units_to(cut_in, wind_speed)
-    rated = convert_units_to(rated, wind_speed)
-    cut_out = convert_units_to(cut_out, wind_speed)
+    _cut_in = convert_units_to(cut_in, wind_speed)
+    _rated = convert_units_to(rated, wind_speed)
+    _cut_out = convert_units_to(cut_out, wind_speed)
 
     # Correct wind speed for air density
     f: xr.DataArray | int
@@ -3125,7 +3125,7 @@ def wind_power_potential(
 
     v = wind_speed * f
 
-    out = xr.apply_ufunc(_wind_power_factor, v, cut_in, rated, cut_out)
+    out = xr.apply_ufunc(_wind_power_factor, v, _cut_in, _rated, _cut_out)
     out = out.assign_attrs(units="")
     return out
 
