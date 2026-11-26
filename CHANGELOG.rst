@@ -14,6 +14,10 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * N/A
 
+Bug fixes
+^^^^^^^^^
+* Fix computing indicators in threads other than the main one after incomplete thread-safe options implementation in :pull:`2477`. (:issue:`2484`, :pull:`2485`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * N/A
