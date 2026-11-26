@@ -29,6 +29,7 @@ MAP_BLOCKS = "resample_map_blocks"
 MISSING_METHODS: dict[str, Callable] = {}
 DEFAULT_MISSING_OPTIONS: dict[str, dict[str, Any]] = {}
 
+# If an option uses a mutable default, set it to None here and add it to _MUTABLE_OPTIONS_DEFAULTS below
 OPTIONS: dict[str, Any] = {
     METADATA_LOCALES: ContextVar(METADATA_LOCALES, default=None),
     DATA_VALIDATION: ContextVar(DATA_VALIDATION, default="raise"),
@@ -40,12 +41,11 @@ OPTIONS: dict[str, Any] = {
     MAP_BLOCKS: ContextVar(MAP_BLOCKS, default=False),
 }
 
-# Initialize contextvar that use mutable objects
-OPTIONS[METADATA_LOCALES].set([])
-OPTIONS[MISSING_OPTIONS].set(DEFAULT_MISSING_OPTIONS)
-
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
 _RUN_LENGTH_UFUNC_OPTIONS = frozenset(["auto", True, False])
+# Defaults for options using mutable types
+# If the option is None, `get_options` will return this instead.
+_MUTABLE_OPTIONS_DEFAULTS = {METADATA_LOCALES: [], MISSING_OPTIONS: DEFAULT_MISSING_OPTIONS}
 
 
 def _valid_missing_options(mopts):
@@ -74,7 +74,7 @@ _VALIDATORS = {
 
 
 def _set_missing_options(mopts):
-    missopts = OPTIONS[MISSING_OPTIONS].get().copy()
+    missopts = (OPTIONS[MISSING_OPTIONS].get() or {}).copy()
     for meth, opts in DEFAULT_MISSING_OPTIONS.items():
         missopts.setdefault(meth, {}).update(**opts)
     for meth, opts in mopts.items():
@@ -210,7 +210,7 @@ def get_options():
     --------
     set_options : Set options.
     """
-    return {k: cv.get() for k, cv in OPTIONS.items()}
+    return {k: cv.get() if cv.get() is not None else _MUTABLE_OPTIONS_DEFAULTS.get(k) for k, cv in OPTIONS.items()}
 
 
 class set_options:  # numpydoc ignore=PR01,PR02

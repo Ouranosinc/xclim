@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 from inspect import signature
+from multiprocessing.pool import ThreadPool
 
 import dask
 import numpy as np
@@ -214,6 +215,18 @@ def test_as_dataset_multi(tas_series):
     assert isinstance(dsout, xr.Dataset)
     assert "tmin" in dsout.data_vars
     assert "tmax" in dsout.data_vars
+
+
+def test_compute_in_other_thread(random):
+    pr = xr.DataArray(
+        random.gamma(0.8, 4, 730),
+        dims="time",
+        coords={"time": xr.date_range("2000-01-01", periods=730, freq="D")},
+        attrs={"units": "mm/d"},
+    )
+    # ThreadPool will re-raise an exception in the thread
+    with ThreadPool(processes=1) as pool:
+        pool.apply(atmos.dry_spell_max_length, (pr,))
 
 
 def test_datatree(tasmin_series, tasmax_series):

@@ -14,6 +14,10 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * Deprecated argument ``copy`` of ``xclim.core.calendar.percentile_doy``. It now defaults to not copying in the percentile calculation if a copy was already done in the data preparation or to copy if the preparation yielded a read-only array (only possible with xarray > 2026.09). (:issue:`2390`, :pull:`2483`).
 
+Bug fixes
+^^^^^^^^^
+* Fix computing indicators in threads other than the main one after incomplete thread-safe options implementation in :pull:`2477`. (:issue:`2484`, :pull:`2485`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * ``xclim.core.utils.calc_perc`` ignores ``copy=False`` if the passed array is read-only. (:issue:`2390`, :pull:`2483`).
