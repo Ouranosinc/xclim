@@ -2673,7 +2673,10 @@ def universal_thermal_climate_index(
     if hurs_cap_min:
         hurs = hurs.clip(0.05, None)
     if mrt is None:
-        mrt = mean_radiant_temperature(rsds=rsds, rsus=rsus, rlds=rlds, rlus=rlus, stat=stat)
+        if rsds is None or rsus is None or rlds is None or rlus is None:
+            raise ValueError("Radiation variables must be provided if `mrt` is `None`.")
+        else:
+            mrt = mean_radiant_temperature(rsds=rsds, rsus=rsus, rlds=rlds, rlus=rlus, stat=stat)
     mrt = convert_units_to(mrt, "degC")
 
     delta = mrt - tas
