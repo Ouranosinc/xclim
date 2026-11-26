@@ -433,7 +433,7 @@ def percentile_doy(
     beta : float
         Plotting position parameter. Default: 1.0 / 3.0.
     copy : bool
-        Deprecated and ignored. Copying is only done is necessary.
+        Deprecated and ignored. Copying is only done if necessary.
 
     Returns
     -------
