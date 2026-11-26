@@ -408,7 +408,7 @@ def percentile_doy(
     per: float | Sequence[float] = 10.0,
     alpha: float = 1.0 / 3.0,
     beta: float = 1.0 / 3.0,
-    copy: bool = True,
+    copy: bool | None = None,
 ) -> xr.DataArray:
     """
     Percentile value for each day of the year.
@@ -433,12 +433,7 @@ def percentile_doy(
     beta : float
         Plotting position parameter. Default: 1.0 / 3.0.
     copy : bool
-        If True (default) the input array will be deep-copied. It's a necessary step
-        to keep the data integrity, but it can be costly.
-        If False, no copy is made of the input array. It will be mutated and rendered
-        unusable, but performances may significantly improve.
-        Put this flag to False only if you understand the consequences.
-        Default: True.
+        Deprecated and ignored. Copying is only done if necessary.
 
     Returns
     -------
@@ -451,6 +446,13 @@ def percentile_doy(
     :cite:cts:`hyndman_sample_1996`
     """
     from .utils import calc_perc  # pylint: disable=import-outside-toplevel
+
+    if copy is not None:
+        warnings.warn(
+            "Argument copy of `percentile_doy` was deprecated in xclim v1.0.2, it will be removed in a future version."
+            " Array copy is now only done if necessary, automatically.",
+            FutureWarning,
+        )
 
     # Ensure arr sampling frequency is daily or coarser
     # but cowardly escape the non-inferrable case.
@@ -467,6 +469,7 @@ def percentile_doy(
         "time",
     )
     rr = rr.drop_vars("time").assign_coords(crd)
+    # unstack-stack will either copy the array or return a read-only view (xr > 2026.9)
     rrr = rr.unstack("time").stack(stack_dim=("year", "window"))
 
     if rrr.chunks is not None and len(rrr.chunks[rrr.get_axis_num("stack_dim")]) > 1 and arr.chunks is not None:
@@ -485,7 +488,7 @@ def percentile_doy(
         input_core_dims=[["stack_dim"]],
         output_core_dims=[["percentiles"]],
         keep_attrs=True,
-        kwargs={"percentiles": per_list, "alpha": alpha, "beta": beta, "copy": copy},
+        kwargs={"percentiles": per_list, "alpha": alpha, "beta": beta, "copy": False},
         dask="parallelized",
         output_dtypes=[rrr.dtype],
         dask_gufunc_kwargs={"output_sizes": {"percentiles": len(per_list)}},

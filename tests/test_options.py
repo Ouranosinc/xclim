@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import threading
 import time
+from multiprocessing.pool import ThreadPool
 
 import pytest
+import xarray as xr
 
-from xclim import set_options
+from xclim import atmos, set_options
 from xclim.core.options import get_options
 
 
@@ -68,14 +70,16 @@ def test_set_options_invalid(option, value):
     assert old == get_options()[option]
 
 
-def test_setting_options_threadsafe():
+def test_setting_options_threadsafe(random):
+    results = [None]
+
     def set_check_missing():
         set_options(check_missing="wmo")
         time.sleep(2)
 
     def assert_option_unchanged():
         time.sleep(0.5)
-        assert get_options()["check_missing"] == "any"
+        results[0] = get_options()["check_missing"] == "any"
 
     t1 = threading.Thread(target=set_check_missing)
     t2 = threading.Thread(target=assert_option_unchanged)
@@ -84,3 +88,20 @@ def test_setting_options_threadsafe():
     t2.start()
     t1.join()
     t2.join()
+    # pytest doesn't fail if a thread fails, must assert outside of it
+    assert results[0]
+
+    # Similar test, but with indicator computation and ThreadPool
+    # ThreadPool will re-raise an exception in the thread
+    # testing that changes to the main thread are not seen by children threads
+    pr = xr.DataArray(
+        random.gamma(0.8, 4, 730),
+        dims="time",
+        coords={"time": xr.date_range("2000-01-01", periods=730, freq="D")},
+        attrs={"units": "mm/d"},
+    )
+    with ThreadPool(processes=1) as pool:
+        # This set_options has no effect on the pool which was created from an earlier context
+        with set_options(as_dataset=False):
+            out = pool.apply(atmos.dry_spell_max_length, (pr,))
+        assert isinstance(out, xr.Dataset)

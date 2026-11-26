@@ -2,22 +2,25 @@
 Changelog
 =========
 
-..
-    `Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
-    ------------------------------------------------------------
-    Contributors to this version:
+`Unreleased <https://github.com/Ouranosinc/xclim>`_ (latest)
+------------------------------------------------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 
-    New indicators and features
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    * N/A
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* The standard name checks of indicators now includes standard name aliases and standard names of quantities that are implicitly convertible to the expected one (for example liquid precipitation rates instead of precipitation flux). (:issue:`2480`, :pull:`2482`).
 
-    Breaking changes
-    ^^^^^^^^^^^^^^^^
-    * N/A
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Deprecated argument ``copy`` of ``xclim.core.calendar.percentile_doy``. It now defaults to not copying in the percentile calculation if a copy was already done in the data preparation or to copy if the preparation yielded a read-only array (only possible with xarray > 2026.09). (:issue:`2390`, :pull:`2483`).
 
-    Internal changes
-    ^^^^^^^^^^^^^^^^
-    * N/A
+Bug fixes
+^^^^^^^^^
+* Fix computing indicators in threads other than the main one after incomplete thread-safe options implementation in :pull:`2477`. (:issue:`2484`, :pull:`2485`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* ``xclim.core.utils.calc_perc`` ignores ``copy=False`` if the passed array is read-only. (:issue:`2390`, :pull:`2483`).
 
 .. _changes_1.0.1:
 

@@ -359,7 +359,7 @@ def calc_perc(
     beta : float
         A constant used to correct the index computed. Default: 1.0.
     copy : bool
-        If True, the input array is copied before computation. Default: True.
+        If True or if the input array is not writeable, the input array is copied before computation. Default: True.
 
     Returns
     -------
@@ -412,7 +412,7 @@ def nan_calc_percentiles(
     beta : float
         A constant used to correct the index computed. Default: 1.0.
     copy : bool
-        If True, the input array is copied before computation. Default: True.
+        If True or if the input array is not writeable, the input array is copied before computation. Default: True.
 
     Returns
     -------
@@ -422,9 +422,10 @@ def nan_calc_percentiles(
     if percentiles is None:
         percentiles = [50.0]
 
-    if copy:
+    if copy or not arr.flags["WRITEABLE"]:
         # bootstrapping already works on a data's copy
         # doing it again is extremely costly, especially with dask.
+        # In certain cases, xarray makes read-only views of the data so copying becomes necessary
         arr = arr.copy()
     quantiles = np.array([per / 100.0 for per in percentiles])
     return _nan_quantile(arr, quantiles, axis, alpha, beta)
