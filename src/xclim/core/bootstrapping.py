@@ -199,7 +199,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs: Any) -> xr.DataArray:
                 # strip history update from percentile_doy
                 percentile_doy.__wrapped__,  # type: ignore[attr-defined]
                 obj=bda,
-                kwargs={**pdoy_args, "copy": False},
+                kwargs=pdoy_args,
                 template=per_template,
             )
             if "percentiles" not in per_da.dims:
