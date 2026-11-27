@@ -13,14 +13,24 @@ New indicators and features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Deprecated argument ``copy`` of ``xclim.core.calendar.percentile_doy``. It now defaults to not copying in the percentile calculation if a copy was already done in the data preparation or to copy if the preparation yielded a read-only array (only possible with xarray > 2026.09). (:issue:`2390`, :pull:`2483`).
+* A handful of dependencies have been updated to better follow SciPy SPEC-0 recommendations (`ipython >=8.30.0`, `numpy >=2.2.0`, `scikit-learn >=1.5.0`). (:pull:`2481`).
 
 Bug fixes
 ^^^^^^^^^
 * Fix computing indicators in threads other than the main one after incomplete thread-safe options implementation in :pull:`2477`. (:issue:`2484`, :pull:`2485`).
+* The ``bohren98`` approach in ``xclim.compute.converters.relative_humidity`` was mistakenly left out of its available ``methods`` type signature and docstring. This has been relisted. (:pull:`2478`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * ``xclim.core.utils.calc_perc`` ignores ``copy=False`` if the passed array is read-only. (:issue:`2390`, :pull:`2483`).
+* Documentation adjustments. (:pull:`2478`):
+    * Removed warning in README.rst concerning breaking changes in `xclim` v1.0.
+    * Corrected the ``Makefile`` and ``AGENTS.md`` files on the name of the development install recipe.
+    * Corrected a handful of LaTeX formulae in ``xclim.compute`` docstrings.
+    * Removed all abstracts from entries in ``references.bib`` (unused in the rendered documentation).
+* Removed several obsolete `numpy` and `xarray` workarounds within the code base. (:pull:`2478`).
+* CI-related configurations for running builds using `eigen3` and `sbck` have been removed. This functionality has fully migrated to `xsdba`. No installation recipes are affected. (:pull:`2478`).
+* Several `ty` and `pyright` type-checking issues have been addressed via more code guards and more accurate type-hinting. (:pull:`2478`).
 
 .. _changes_1.0.1:
 
