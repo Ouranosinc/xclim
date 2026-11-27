@@ -22,6 +22,7 @@ import pandas as pd
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
+from pint.facets.plain import PlainQuantity
 from xarray.coding import cftime_offsets
 from yaml import safe_load
 
@@ -317,9 +318,9 @@ def pint_multiply(da: xr.DataArray, q: pint.Quantity, out_units: str | None = No
     return out
 
 
-def str2pint(val: str) -> pint.Quantity:
+def str2pint(val: str) -> PlainQuantity:
     """
-    Convert a string to a pint.Quantity, splitting the magnitude and the units.
+    Convert a string to a pint PlainQuantity, splitting the magnitude and the units.
 
     Parameters
     ----------
@@ -329,7 +330,7 @@ def str2pint(val: str) -> pint.Quantity:
 
     Returns
     -------
-    pint.Quantity
+    PlainQuantity
         Magnitude is 1 if no magnitude was present in the string.
     """
     mstr, *ustr = val.split(" ", maxsplit=1)
@@ -416,6 +417,13 @@ def convert_units_to(
         Attributes are preserved unless an automatic CF conversion is performed,
         in which case only the new `standard_name` appears in the result.
 
+    Raises
+    ------
+    TypeError
+        If `source` or `target` are of type 'int' or 'float' (missing units).
+    NotImplementedError
+        If `source` is an unsupported conversion type.
+
     See Also
     --------
     cf_conversion : Get the standard name of the specific conversion for the given standard name.
@@ -424,6 +432,8 @@ def convert_units_to(
     amount2lwethickness : Convert an amount to a liquid water equivalent thickness.
     lwethickness2amount : Convert a liquid water equivalent thickness to an amount.
     """
+    if isinstance(source, float | int):
+        raise TypeError("Please specify source units explicitly.")
     if isinstance(source, xr.DataTree):
         return source.map_over_datasets(convert_units_to, target, kwargs={"context": context})
     if isinstance(source, xr.Dataset):
@@ -505,10 +515,6 @@ def convert_units_to(
             )
             out = out.assign_attrs(**target_cf_attrs)
             return out
-
-    # TODO remove backwards compatibility of int/float thresholds after v1.0 release
-    if isinstance(source, float | int):
-        raise TypeError("Please specify units explicitly.")
 
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
@@ -914,6 +920,7 @@ def _rate_and_amount_converter(
         else:
             m, u = infer_sampling_units(da, freq)
 
+    out: xr.DataArray
     # Freq is month, season or year, which are not constant units, or simply freq is not inferrable.
     if u is None:
         # Get sampling period lengths in nanoseconds

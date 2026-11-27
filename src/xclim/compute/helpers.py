@@ -30,11 +30,6 @@ from xclim.core.units import convert_units_to
 from xclim.core.utils import _chunk_like, uses_dask
 
 try:
-    from xarray.coding.calendar_ops import _datetime_to_decimal_year  # type: ignore[attr-defined]  # pylint: disable=ungrouped-imports
-except ImportError:
-    _datetime_to_decimal_year = None
-
-try:
     from flox.xarray import rechunk_for_blockwise
 
     flox_err = None
@@ -342,11 +337,7 @@ def day_angle(time: xr.DataArray) -> xr.DataArray:
     xr.DataArray, [rad]
         Day angle.
     """
-    if _datetime_to_decimal_year is None:
-        decimal_year = time.dt.decimal_year
-    else:
-        decimal_year = _datetime_to_decimal_year(times=time, calendar=time.dt.calendar)
-    return ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
+    return ((time.dt.decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
 
 
 def solar_declination(time: xr.DataArray, method: Literal["spencer", "simple"] = "spencer") -> xr.DataArray:
@@ -1203,15 +1194,15 @@ def resample_map(
         map_kwargs["dim"] = dim
         if freq is not None:
             obj = obj.resample({dim: freq})  # type: ignore[assignment]
-        return getattr(obj, func)(*map_args, **map_kwargs)
+        return cast(DataType, getattr(obj, func)(*map_args, **map_kwargs))
 
     if freq is None:
-        return func(obj, *map_args, **map_kwargs)
+        return cast(DataType, func(obj, *map_args, **map_kwargs))
     if map_blocks == "from_context":
         map_blocks = get_options()[MAP_BLOCKS]
 
     if not uses_dask(obj) or not map_blocks:
-        return obj.resample({dim: freq}, **resample_kwargs).map(func, *map_args, **map_kwargs)
+        return cast(DataType, obj.resample({dim: freq}, **resample_kwargs).map(func, *map_args, **map_kwargs))
 
     if rechunk_for_blockwise is None:
         msg = f"Using {MAP_BLOCKS}=True requires flox."
@@ -1242,8 +1233,11 @@ def resample_map(
         i += chunksize
     template = template.chunk({dim: tuple(new_chunks)})
 
-    return obj_rechunked.map_blocks(
-        _resample_map, (dim, freq, resample_kwargs, func, map_args, map_kwargs), template=template
+    return cast(
+        DataType,
+        obj_rechunked.map_blocks(
+            _resample_map, (dim, freq, resample_kwargs, func, map_args, map_kwargs), template=template
+        ),
     )
 
 
@@ -1325,8 +1319,8 @@ def _add_one_day(time: xr.DataArray) -> xr.DataArray:
         Next day.
     """
     if time.dtype == "O":
-        return time + timedelta(days=1)  # type: ignore[operator]
-    return time + np.timedelta64(1, "D")
+        return time.copy(data=time.values + timedelta(days=1))
+    return time.copy(data=time.values + np.timedelta64(1, "D"))
 
 
 def make_hourly_temperature(

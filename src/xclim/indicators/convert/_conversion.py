@@ -41,8 +41,6 @@ __all__ = [
 class Converter(Indicator):
     """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)."""
 
-    pass
-
 
 humidex = Converter(
     title="Humidex",

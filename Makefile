@@ -78,7 +78,7 @@ lint: install-lint ## check style with flake8 and black
 
 typing: install-typing  ## check typing with pylint and ty
 	python -m pylint -j=0 --rcfile=.pylintrc.toml --disable=import-error --exit-zero src/xclim
-	ty check --ignore=unresolved-import src/xclim
+	ty check --ignore=import-not-found src/xclim
 
 test: install-test ## run tests quickly with the default Python
 	python -m pytest --numprocesses=auto
@@ -131,7 +131,7 @@ dist: clean ## builds source and wheel package
 install: clean ## install the package to the active Python's site-packages
 	python -m pip install --no-user .
 
-development: clean ## install the package and development dependencies in editable mode to the active Python's site-packages
+dev: clean ## install the package and development dependencies in editable mode to the active Python's site-packages
 	python -m pip install --group dev
 	python -m pip install --no-user --editable ".[complete]"
 	prek install

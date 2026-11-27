@@ -435,10 +435,11 @@ Where :math:`T` is the air temperature in K and :math:`T_0` is the freezing temp
 
 def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str) -> xr.DataArray:
     """Saturation vapor pressure with reference to water."""
+    e_sat: xr.DataArray
     if method == "ecmwf":
         method = "buck81"
     if method == "sonntag90":
-        e_sat: xr.DataArray = 100 * np.exp(  # type: ignore[assignment]
+        e_sat = 100 * np.exp(  # type: ignore[assignment]
             -6096.9385 / tas
             + 16.635794
             + -2.711193e-2 * tas
@@ -476,10 +477,11 @@ def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str) -> xr.
 
 def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str) -> xr.DataArray:
     """Saturation vapor pressure with reference to ice."""
+    e_sat: xr.DataArray
     if method == "ecmwf":
         method = "aerk96"
     if method in "sonntag90":
-        e_sat: xr.DataArray = 100 * np.exp(  # type: ignore[assignment]
+        e_sat = 100 * np.exp(  # type: ignore[assignment]
             -6024.5282 / tas + 24.7219 + 1.0613868e-2 * tas + -1.3198825e-5 * tas**2 + -0.49382577 * np.log(tas)
         )
     elif method in "goffgratch46":
@@ -741,7 +743,7 @@ def relative_humidity(
     huss: xr.DataArray | None = None,
     ps: xr.DataArray | None = None,
     ice_thresh: Quantified | None = None,
-    method: Literal["goffgratch46", "sonntag90", "tetens30", "wmo08", "its90", "ecmwf"] = "sonntag90",
+    method: Literal["bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08", "its90", "ecmwf"] = "sonntag90",
     interp_power: float | None = None,
     water_thresh: Quantified = "0 degC",
     invalid_values: Literal["clip", "mask"] | None = "clip",
@@ -766,7 +768,7 @@ def relative_humidity(
     ice_thresh : Quantified, optional
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water. Does nothing if `method` is "bohren98".
-    method : {"bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08", "ecmwf"}
+    method : {"bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08", "its90", "ecmwf"}
         Which method to use, see notes of this function and of :py:func:`saturation_vapor_pressure`.
         Default: "sonntag90".
     interp_power : int, optional
@@ -842,9 +844,10 @@ def relative_humidity(
     ...     invalid_values="clip",
     ... )
     """
-    if method in ("bohren98", "BA90"):
+    hurs: xr.DataArray
+    if method == "bohren98":
         if tdps is None:
-            raise ValueError("To use method 'bohren98' (BA98), dewpoint must be given.")
+            raise ValueError("To use method 'bohren98', dewpoint temperature must be provided.")
         tdps = convert_units_to(tdps, "K")
         tas = convert_units_to(tas, "K")
         L = 2.501e6
@@ -1125,7 +1128,7 @@ def dewpoint_from_specific_humidity(
     _method = method.casefold()
     A, B, C = ESAT_FORMULAS_COEFFICIENTS[_method][variant]
 
-    f = np.log(e / A) / B
+    f = cast(xr.DataArray, np.log(e / A) / B)
     tdps = (-273.16 - C * f) / (f - 1)
     return tdps.assign_attrs(units="K", units_metadata="temperature: on_scale")
 
@@ -1203,8 +1206,8 @@ def snowfall_approximation(
     :cite:cts:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019,dai_snowfall_2008`
     """
     if method == "binary":
-        thresh = convert_units_to(thresh, tas)
-        prsn = pr.where(tas <= thresh, 0)
+        _thresh = convert_units_to(thresh, tas)
+        prsn = pr.where(tas <= _thresh, 0)
 
     elif method == "brown":
         if not np.isscalar(thresh):
@@ -1662,9 +1665,9 @@ def clearness_index(rsds: xr.DataArray) -> xr.DataArray:
     -----
     Clearness Index (ci) is defined as:
 
-    .. math :
+    .. math::
 
-       ci = rsds / \text{extraterrestrial_solar_radiation}
+       ci = rsds / \text{extraterrestrial\_solar\_radiation}
 
     References
     ----------
@@ -1701,9 +1704,9 @@ def shortwave_downwelling_radiation_from_clearness_index(ci: xr.DataArray) -> xr
     -----
     The conversion from Clearness Index is defined as:
 
-    .. math :
+    .. math::
 
-       rsds = ci * \text{extraterrestrial_solar_radiation}
+       rsds = ci * \text{extraterrestrial\_solar\_radiation}
     """
     rtop = extraterrestrial_solar_radiation(ci.time, ci.lat)
     with xr.set_options(keep_attrs=True):
@@ -2670,7 +2673,10 @@ def universal_thermal_climate_index(
     if hurs_cap_min:
         hurs = hurs.clip(0.05, None)
     if mrt is None:
-        mrt = mean_radiant_temperature(rsds=rsds, rsus=rsus, rlds=rlds, rlus=rlus, stat=stat)
+        if rsds is None or rsus is None or rlds is None or rlus is None:
+            raise ValueError("Radiation variables must be provided if `mrt` is `None`.")
+        else:
+            mrt = mean_radiant_temperature(rsds=rsds, rsus=rsus, rlds=rlds, rlus=rlus, stat=stat)
     mrt = convert_units_to(mrt, "degC")
 
     delta = mrt - tas
@@ -3020,12 +3026,12 @@ def wind_profile(
     desired, and :math:`h_r` is the reference height.
     """
     # Convert units to meters
-    h = convert_units_to(h, "m")
-    h_r = convert_units_to(h_r, "m")
+    _h = convert_units_to(h, "m")
+    _h_r = convert_units_to(h_r, "m")
 
     if method == "power_law":
         alpha = kwargs.pop("alpha", 1 / 7)
-        out = wind_speed * (h / h_r) ** alpha
+        out = wind_speed * (_h / _h_r) ** alpha
         out = out.assign_attrs(units=wind_speed.attrs["units"])
         return out
     raise NotImplementedError(f"Method {method} not implemented.")
@@ -3109,9 +3115,9 @@ def wind_power_potential(
     :cite:cts:`chen_2020,tobin_2018`.
     """
     # Convert units
-    cut_in = convert_units_to(cut_in, wind_speed)
-    rated = convert_units_to(rated, wind_speed)
-    cut_out = convert_units_to(cut_out, wind_speed)
+    _cut_in = convert_units_to(cut_in, wind_speed)
+    _rated = convert_units_to(rated, wind_speed)
+    _cut_out = convert_units_to(cut_out, wind_speed)
 
     # Correct wind speed for air density
     f: xr.DataArray | int
@@ -3123,7 +3129,7 @@ def wind_power_potential(
 
     v = wind_speed * f
 
-    out = xr.apply_ufunc(_wind_power_factor, v, cut_in, rated, cut_out)
+    out = xr.apply_ufunc(_wind_power_factor, v, _cut_in, _rated, _cut_out)
     out = out.assign_attrs(units="")
     return out
 

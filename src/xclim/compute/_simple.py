@@ -369,7 +369,7 @@ def hot_days(
     Notes
     -----
     Let :math:`TX_{ij}` be the daily maximum temperature at day :math:`i` of period :math:`j`
-    and :math`TT` the threshold. Then counted is the number of days where:
+    and :math:`TT` the threshold. Then counted is the number of days where:
 
     .. math::
 
@@ -407,7 +407,7 @@ def frost_days(
     Notes
     -----
     Let :math:`TN_{ij}` be the daily minimum temperature at day :math:`i` of period :math:`j`
-    and :math`TT` the threshold. Then counted is the number of days where:
+    and :math:`TT` the threshold. Then counted is the number of days where:
 
     .. math::
 

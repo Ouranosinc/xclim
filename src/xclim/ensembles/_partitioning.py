@@ -20,26 +20,26 @@ Implemented partitioning algorithms:
 
 # References for other more recent algorithms that could be added here.
 
-Yip, S., Ferro, C. A. T., Stephenson, D. B., and Hawkins, E. (2011). A Simple, Coherent Framework for Partitioning
-Uncertainty in Climate Predictions. Journal of Climate 24, 17, 4634-4643, doi:10.1175/2011JCLI4085.1
+Yip, S., Ferro, C. A. T., Stephenson, D. B., & Hawkins, E. (2011). A Simple, Coherent Framework for Partitioning
+Uncertainty in Climate Predictions. Journal of Climate 24, 17, 4634–4643, doi:10.1175/2011JCLI4085.1
 
 Northrop, P. J., & Chandler, R. E. (2014). Quantifying sources of uncertainty in projections of future climate.
 Journal of Climate, 27(23), 8793–8808, doi:10.1175/JCLI-D-14-00265.1
 
 Goldenson, N., Mauger, G., Leung, L. R., Bitz, C. M., & Rhines, A. (2018). Effects of ensemble configuration on
-estimates of regional climate uncertainties. Geophysical Research Letters, 45, 926– 934.
+estimates of regional climate uncertainties. Geophysical Research Letters, 45, 926–934.
 https://doi.org/10.1002/2017GL076297
 
-Lehner, F., Deser, C., Maher, N., Marotzke, J., Fischer, E. M., Brunner, L., Knutti, R., and Hawkins,
-E. (2020). Partitioning climate projection uncertainty with multiple large ensembles and CMIP5/6, Earth Syst. Dynam.,
+Lehner, F., Deser, C., Maher, N., Marotzke, J., Fischer, E. M., Brunner, L., Knutti, R., & Hawkins, E. (2020).
+Partitioning climate projection uncertainty with multiple large ensembles and CMIP5/6, Earth Syst. Dynam.,
 11, 491–508, https://doi.org/10.5194/esd-11-491-2020.
 
 Evin, G., Hingray, B., Blanchet, J., Eckert, N., Morin, S., & Verfaillie, D. (2019). Partitioning Uncertainty
 Components of an Incomplete Ensemble of Climate Projections Using Data Augmentation, Journal of Climate, 32(8),
-2423-2440, https://doi.org/10.1175/JCLI-D-18-0606.1
+2423–2440, https://doi.org/10.1175/JCLI-D-18-0606.1
 
-Beigi E, Tsai FT-C, Singh VP, Kao S-C. Bayesian Hierarchical Model Uncertainty Quantification for Future Hydroclimate
-Projections in Southern Hills-Gulf Region, USA. Water. 2019; 11(2):268. https://doi.org/10.3390/w11020268
+Beigi, E., Tsai, F. T.-C., Singh, V.P., & Kao S.-C. Bayesian Hierarchical Model Uncertainty Quantification for Future
+Hydroclimate Projections in Southern Hills-Gulf Region, USA. Water. 2019; 11(2):268. https://doi.org/10.3390/w11020268
 
 Related bixtex entries:
  - yip_2011
@@ -47,10 +47,9 @@ Related bixtex entries:
  - goldenson_2018
  - lehner_2020
  - evin_2019
+ - brekke_2013
 """
 # pylint: enable=pointless-string-statement
-
-# TODO: Add ref for Brekke and Barsugli (2013)
 
 
 def hawkins_sutton(
@@ -210,7 +209,7 @@ def lafferty_sriver(
         4th-order polynomial. Results are sensitive to the choice of smoothing function, use this to set another
         polynomial order, or a LOESS curve.
     bb13 : bool
-        Whether to apply the Brekke and Barsugli (2013) method to estimate scenario uncertainty, where the variance
+        Whether to apply the :cite:t:`brekke_2013` method to estimate scenario uncertainty, where the variance
         over scenarios is computed before taking the mean over models and downscaling methods.
         Default: False.
 
@@ -232,7 +231,7 @@ def lafferty_sriver(
 
     References
     ----------
-    :cite:cts:`Lafferty2023`
+    :cite:cts:`brekke_2013,Lafferty2023`
     """
     if xr.infer_freq(da.time)[0] not in ["A", "Y"]:
         raise ValueError("This algorithm expects annual time series.")

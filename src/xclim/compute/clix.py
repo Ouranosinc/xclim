@@ -23,6 +23,8 @@ This version of xclim implements clix-meta v0.6.1 .
 
 from __future__ import annotations
 
+from typing import Literal
+
 import xarray as xr
 
 from xclim.compute import generic
@@ -242,7 +244,10 @@ def count_thresholded_percentile_occurrences(
 
 @declare_relative_units(high_data="<low_data>")
 def diurnal_temperature_range(
-    low_data: xr.DataArray, high_data: xr.DataArray, statistic: Reducer, freq: Freq
+    low_data: xr.DataArray,
+    high_data: xr.DataArray,
+    statistic: Literal["max", "min", "mean", "std", "var", "sum"],
+    freq: Freq,
 ) -> xr.DataArray:
     """
     Calculate a statistical measure on the diurnal temperature range during the specified time period.

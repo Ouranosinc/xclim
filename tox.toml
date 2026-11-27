@@ -4,7 +4,6 @@ env_list = [
   "doctests",
   "lint",
   "notebooks",
-  "sbck",
   "upstream"
 ]
 skip_missing_interpreters = true
@@ -71,12 +70,6 @@ commands = [
   ["pytest", "{posargs}"]
 ]
 
-[env.sbck]
-commands_pre = [
-  ["python", "-c", "print('The sbck dependency requires the \"libeigen3-dev\" package to be installed on the system.')"],
-  ["python", "-m", "pip", "install", "sbck>=1.4.2"]
-]
-
 [env.upstream]
 deps = ["-r CI{/}requirements_upstream.txt"]
 
@@ -108,7 +101,7 @@ commands_post = [
 allowlist_externals = ["git", "xclim"]
 
 [gh.python]
-"3.11" = ["sbck"]
+"3.11" = ["py3.11"]
 "3.12" = ["py3.12"]
 "3.13" = ["complete"]
 "3.14" = ["py3.14"]

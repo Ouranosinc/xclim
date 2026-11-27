@@ -3225,7 +3225,7 @@ def degree_days_exceedance_date(
     -----
     Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`,
     :math:`T` is the reference threshold and :math:`ST` is the sum threshold. Then, starting
-    at day :math:i_0:, the degree days exceedance date is the first day :math:`k` such that:
+    at day :math:`i_0`, the degree days exceedance date is the first day :math:`k` such that:
 
     .. math::
 

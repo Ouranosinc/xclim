@@ -444,7 +444,7 @@ def cli(ctx, **kwargs):  # numpydoc ignore=PR01
         kwargs["input"] = kwargs["input"][0]
 
     if kwargs["dask_nthreads"] is not None:
-        if not distributed:
+        if Client is None or not distributed:
             raise click.BadOptionUsage(
                 "dask_nthreads",
                 "Dask's distributed scheduler is not installed, only the "
@@ -485,7 +485,7 @@ def write_file(ctx, *_, **kwargs):  # numpydoc ignore=PR01
             click.echo(f"Writing to file {ctx.obj['output']}")
         with ProgressBar():
             r = ctx.obj["ds_out"].to_netcdf(ctx.obj["output"], engine=kwargs["engine"], compute=False)
-            if ctx.obj["dask_nthreads"] is not None:
+            if progress is not None and ctx.obj["dask_nthreads"] is not None:
                 progress(r.data)
             r.compute()
         if ctx.obj["dask_nthreads"] is not None:
